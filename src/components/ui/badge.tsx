@@ -26,6 +26,8 @@ const badgeVariants = cva(
         low: "bg-low-soft text-low-ink",
         success: "bg-success-soft text-success-ink",
         warning: "bg-warning-soft text-warning-ink",
+        // Compliance lifecycle: 30-day stage — distinct orange, one step past amber
+        orange: "bg-chart-orange-soft text-chart-orange-ink",
         info: "bg-medium-soft text-medium-ink",
         danger: "bg-critical-soft text-critical-ink",
         purple: "bg-purple-soft text-purple-ink",

@@ -1,14 +1,15 @@
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
+import { Upload, ChevronRight } from "lucide-react";
 import { DOCS } from "../data";
 import { Badge } from "@/components/ui/badge";
 import { Pill } from "@/components/yarowa/pill";
 import { AlertBanner } from "@/components/yarowa/alert-banner";
 import type { SupplierDoc, DocStatus } from "../types";
 
-const STATUS_META: Record<DocStatus, { label: string; tone: "success" | "warning" | "danger" | "info" | "neutral" }> = {
+const STATUS_META: Record<DocStatus, { label: string; tone: "success" | "warning" | "orange" | "danger" | "info" | "neutral" }> = {
   valid: { label: "Valid", tone: "success" },
   "warning-60": { label: "60-Day Warning", tone: "warning" },
-  "warning-30": { label: "30-Day Warning", tone: "warning" },
+  "warning-30": { label: "30-Day Auto-Notify", tone: "orange" },
   "pending-review": { label: "Pending Review", tone: "info" },
   "rejected-resubmit": { label: "Rejected — Resubmit", tone: "danger" },
   blocked: { label: "Blocked", tone: "neutral" },
@@ -16,11 +17,23 @@ const STATUS_META: Record<DocStatus, { label: string; tone: "success" | "warning
 
 const TABS = ["All", "Action Required", "Warnings", "Pending Review", "Blocked", "Compliant"] as const;
 
+// Document lifecycle — the stages a compliance document moves through, in order.
+// Dot colours mirror the status badges (60-day amber, 30-day orange, etc.).
+const LIFECYCLE: { label: string; dot: string }[] = [
+  { label: "Valid", dot: "bg-success" },
+  { label: "60-Day Warning", dot: "bg-warning" },
+  { label: "30-Day Auto-Notify", dot: "bg-chart-orange" },
+  { label: "Expired → Blocked", dot: "bg-critical" },
+  { label: "Upload → Review", dot: "bg-medium" },
+  { label: "Accept → Reactivated", dot: "bg-success" },
+];
+
 export function ComplianceMonitoring({
   onSelectDoc,
-  initialSelectedId,
+  selectedDocId,
 }: {
   onSelectDoc: (doc: SupplierDoc) => void;
+  selectedDocId?: string | null;
   initialSelectedId?: string | null;
 }) {
   const [tab, setTab] = useState<(typeof TABS)[number]>("All");
@@ -58,7 +71,7 @@ export function ComplianceMonitoring({
       </p>
 
       {counts.blocked > 0 && (
-        <AlertBanner type="warning" title={`${counts.blocked} supplier blocked from work orders`} className="mb-4">
+        <AlertBanner type="error" title={`${counts.blocked} supplier blocked from work orders`} className="mb-4">
           Document expiry passed without renewal. Review any uploaded renewals to reactivate.
         </AlertBanner>
       )}
@@ -75,6 +88,20 @@ export function ComplianceMonitoring({
             <div className="text-xs text-muted-foreground mb-1">{c.label}</div>
             <div className="text-xl font-bold">{c.value}</div>
           </div>
+        ))}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-1.5 mb-4">
+        {LIFECYCLE.map((stage, i) => (
+          <Fragment key={stage.label}>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 text-xs text-muted-foreground">
+              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${stage.dot}`} aria-hidden="true" />
+              {stage.label}
+            </span>
+            {i < LIFECYCLE.length - 1 && (
+              <ChevronRight size={13} className="text-muted-foreground/50 shrink-0" aria-hidden="true" />
+            )}
+          </Fragment>
         ))}
       </div>
 
@@ -102,7 +129,7 @@ export function ComplianceMonitoring({
                 key={d.id}
                 onClick={() => onSelectDoc(d)}
                 className={`border-b border-border last:border-0 cursor-pointer hover:bg-secondary/50 ${
-                  initialSelectedId === d.id ? "bg-secondary/50" : ""
+                  selectedDocId === d.id ? "bg-secondary/50" : ""
                 }`}
               >
                 <td className="px-4 py-3">
@@ -113,13 +140,29 @@ export function ComplianceMonitoring({
                 </td>
                 <td className="px-4 py-3">{d.documentCategory}</td>
                 <td className="px-4 py-3">
-                  <div className={d.daysUntilExpiry < 0 ? "text-critical" : "text-warning-ink"}>{d.expiryDate}</div>
+                  <div
+                    className={
+                      d.daysUntilExpiry < 0
+                        ? "text-critical"
+                        : d.status === "warning-30"
+                          ? "text-chart-orange-ink"
+                          : "text-warning-ink"
+                    }
+                  >
+                    {d.expiryDate}
+                  </div>
                   <div className="text-xs text-muted-foreground">
                     {d.daysUntilExpiry < 0 ? `Expired ${Math.abs(d.daysUntilExpiry)}d ago` : `${d.daysUntilExpiry}d remaining`}
                   </div>
                 </td>
                 <td className="px-4 py-3">
                   <Badge variant={STATUS_META[d.status].tone}>{STATUS_META[d.status].label}</Badge>
+                  {d.renewal && (
+                    <div className="flex items-center gap-1 text-xs text-accent mt-1">
+                      <Upload size={11} />
+                      Upload awaiting review
+                    </div>
+                  )}
                 </td>
               </tr>
             ))}

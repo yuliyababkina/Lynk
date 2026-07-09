@@ -3,6 +3,7 @@ import { CATALOGUES, PARSED_LINES, DIFF_LINES } from "../data";
 import { ServiceCatalogueList } from "./ServiceCatalogueList";
 import { ServiceCatalogueDetail } from "./ServiceCatalogueDetail";
 import { ServiceCatalogueWizard, type WizardResult } from "./ServiceCatalogueWizard";
+import { toast } from "@/components/yarowa/toast";
 import type { Catalogue } from "../types";
 
 type Mode =
@@ -52,6 +53,13 @@ export function ServiceCatalogue({ initialSelectedId }: { initialSelectedId?: st
       suppliers: result.suppliers.map((s) => ({ ...s, confirmed: false })),
     };
     setCatalogues([newCatalogue, ...catalogues]);
+    toast({
+      title: result.publish ? "Catalogue published" : "Draft saved",
+      description: result.publish
+        ? `${newCatalogue.name} · shared with ${result.suppliers.length} supplier${result.suppliers.length === 1 ? "" : "s"}`
+        : `${newCatalogue.name} · not yet shared`,
+      tone: result.publish ? "success" : "default",
+    });
     setMode(result.publish ? { kind: "detail", catalogueId: id } : { kind: "list" });
   }
 
@@ -73,6 +81,12 @@ export function ServiceCatalogue({ initialSelectedId }: { initialSelectedId?: st
         };
       })
     );
+    const updated = catalogues.find((c) => c.id === catalogueId);
+    toast({
+      title: "New version published",
+      description: updated ? `${updated.name} · ${updated.suppliers.length} suppliers notified to re-confirm` : undefined,
+      tone: "success",
+    });
     setMode({ kind: "detail", catalogueId });
   }
 

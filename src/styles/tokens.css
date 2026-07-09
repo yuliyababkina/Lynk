@@ -14,40 +14,26 @@
   /* Status tones (preset owns --destructive; we add its foreground + success/warning) */
   --success: #047857;
   --success-foreground: #ffffff;
-  --warning: #d97706;
+  --warning: #ca8a04;
   --warning-foreground: #ffffff;
   --destructive-foreground: #ffffff;
 
   /* Ticket criticality */
   --critical: #dc2626;
-  --high: #d97706;
+  --high: #ca8a04;
   --medium: #2563eb;
   --low: #64748b;
 
-  /* Extra hues (charts, "Blocked"/"Provider" tags) */
+  /* Extra hues (charts, compliance lifecycle, "Blocked"/"Provider" tags) */
   --purple: #7c3aed;
-  --chart-orange: #ea580c;
-
   /*
-   * Alert palette — per semantic type: bg (200 tint) / border (400) / icon (700).
-   * Text on every alert is --foreground (primary). Icon uses the 700 shade so
-   * amber & green marks clear 3:1 on their tint (WCAG 2.2 AA, 1.4.11).
+   * The warm SEMANTIC tone is a single amber/yellow scale (--warning). Orange is
+   * NOT a global semantic — it lives here as a distinct hue used only where a
+   * second warm step is genuinely needed: the Compliance lifecycle, where the
+   * 60-day (amber) and 30-day (orange) stages must read as different urgency,
+   * and chart series. Its -soft/-ink pair powers the orange status badge.
    */
-  --alert-error-bg: #fecaca;
-  --alert-error-border: #f87171;
-  --alert-error-icon: #b91c1c;
-  --alert-warning-bg: #fde68a;
-  --alert-warning-border: #fbbf24;
-  --alert-warning-icon: #b45309;
-  --alert-info-bg: #bfdbfe;
-  --alert-info-border: #60a5fa;
-  --alert-info-icon: #1d4ed8;
-  --alert-success-bg: #a7f3d0;
-  --alert-success-border: #34d399;
-  --alert-success-icon: #047857;
-  --alert-neutral-bg: #e2e8f0;
-  --alert-neutral-border: #94a3b8;
-  --alert-neutral-icon: #334155;
+  --chart-orange: #ea580c;
 }
 
 @theme inline {
@@ -83,4 +69,7 @@
   --color-warning-ink: color-mix(in srgb, var(--warning), black 35%);
   --color-purple-soft: color-mix(in srgb, var(--purple), white 88%);
   --color-purple-ink: color-mix(in srgb, var(--purple), black 35%);
+  /* Orange — compliance 30-day stage + charts (not a global semantic). */
+  --color-chart-orange-soft: color-mix(in srgb, var(--chart-orange), white 88%);
+  --color-chart-orange-ink: color-mix(in srgb, var(--chart-orange), black 35%);
 }

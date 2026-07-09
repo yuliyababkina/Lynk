@@ -177,16 +177,111 @@ export const TICKETS: Ticket[] = [
 ];
 
 export const DOCS: SupplierDoc[] = [
-  { id: "doc-001", supplierId: "riedel", supplierName: "Riedel Fertigungen GmbH", trade: "Manufacturing", documentName: "Public Liability Insurance", documentCategory: "Insurance", expiryDate: "10 Jun 2026", daysUntilExpiry: -8, status: "blocked", history: [
-    { date: "10 Dec 2025", event: "Document verified — valid", actor: "System" },
-    { date: "11 Apr 2026", event: "60-day expiry warning triggered", actor: "System" },
-  ]},
-  { id: "doc-002", supplierId: "bauparts", supplierName: "BauParts GmbH", trade: "Construction", documentName: "Conflict Minerals Declaration", documentCategory: "Compliance", expiryDate: "30 Sep 2026", daysUntilExpiry: 104, status: "rejected-resubmit", history: [] },
-  { id: "doc-003", supplierId: "bauparts", supplierName: "BauParts GmbH", trade: "Construction", documentName: "ISO 9001 Certificate", documentCategory: "Certification", expiryDate: "18 Jul 2026", daysUntilExpiry: 30, status: "pending-review", history: [] },
-  { id: "doc-004", supplierId: "muellerlogistik", supplierName: "Müller Logistik KG", trade: "Logistics", documentName: "Trade Licence", documentCategory: "Licence", expiryDate: "6 Aug 2026", daysUntilExpiry: 49, status: "warning-60", history: [] },
-  { id: "doc-005", supplierId: "zimmer", supplierName: "Zimmer IT Services", trade: "IT Services", documentName: "Cyber Liability Insurance", documentCategory: "Insurance", expiryDate: "12 Aug 2026", daysUntilExpiry: 55, status: "warning-60", history: [] },
-  { id: "doc-006", supplierId: "bauparts", supplierName: "BauParts GmbH", trade: "Construction", documentName: "Trade Licence", documentCategory: "Licence", expiryDate: "31 Aug 2026", daysUntilExpiry: 74, status: "warning-60", history: [] },
-  { id: "doc-007", supplierId: "techparts", supplierName: "TechParts Europa AG", trade: "Electronics", documentName: "ISO 9001 Certificate", documentCategory: "Certification", expiryDate: "14 Dec 2026", daysUntilExpiry: 179, status: "valid", history: [] },
+  {
+    id: "doc-001", supplierId: "riedel", supplierName: "Riedel Fertigungen GmbH", trade: "Manufacturing",
+    documentName: "Public Liability Insurance", documentCategory: "Insurance",
+    expiryDate: "10 Jun 2026", daysUntilExpiry: -8, status: "blocked",
+    autoNotified: "11 May 2026",
+    statusNote:
+      "Riedel Fertigungen GmbH cannot be assigned new work orders until this document is renewed and accepted. A renewal has been uploaded and is awaiting your review.",
+    renewal: {
+      fileName: "riedel_liability_renewal_2026.pdf",
+      fileSize: "1.2 MB",
+      uploadedAt: "13 Jun 2026, 09:44",
+      uploadedBy: "Petra Riedel",
+    },
+    history: [
+      { date: "10 Dec 2025", event: "Document verified — valid", actor: "System", type: "verified" },
+      { date: "11 Apr 2026", event: "60-day expiry warning triggered", actor: "System", type: "warning" },
+      { date: "15 Apr 2026", event: "Manual reminder sent", actor: "Sabine Müller", type: "reminder" },
+      { date: "11 May 2026", event: "30-day auto-notification sent to supplier portal", actor: "System", type: "notification" },
+      { date: "11 Jun 2026", event: "Document expired — supplier blocked from work orders", actor: "System", type: "blocked" },
+      { date: "13 Jun 2026", event: "Renewal document uploaded by supplier", actor: "Petra Riedel", type: "upload" },
+    ],
+  },
+  {
+    id: "doc-002", supplierId: "bauparts", supplierName: "BauParts GmbH", trade: "Construction",
+    documentName: "Conflict Minerals Declaration", documentCategory: "Compliance",
+    expiryDate: "30 Sep 2026", daysUntilExpiry: 104, status: "rejected-resubmit",
+    statusNote:
+      "The submitted declaration was rejected during review. BauParts GmbH has been asked to correct and resubmit the document.",
+    history: [
+      { date: "02 Feb 2026", event: "Document uploaded by supplier", actor: "Jonas Bauer", type: "upload" },
+      { date: "05 Feb 2026", event: "Rejected — incomplete smelter list", actor: "Sabine Müller", type: "blocked" },
+    ],
+  },
+  {
+    id: "doc-003", supplierId: "bauparts", supplierName: "BauParts GmbH", trade: "Construction",
+    documentName: "ISO 9001 Certificate", documentCategory: "Certification",
+    expiryDate: "18 Jul 2026", daysUntilExpiry: 30, status: "pending-review",
+    autoNotified: "18 Jun 2026",
+    statusNote:
+      "A renewed certificate has been uploaded ahead of expiry and is awaiting your review before it replaces the current version.",
+    renewal: {
+      fileName: "bauparts_iso9001_2026.pdf",
+      fileSize: "860 KB",
+      uploadedAt: "20 Jun 2026, 14:12",
+      uploadedBy: "Jonas Bauer",
+    },
+    history: [
+      { date: "18 Jul 2023", event: "Document verified — valid", actor: "System", type: "verified" },
+      { date: "18 May 2026", event: "60-day expiry warning triggered", actor: "System", type: "warning" },
+      { date: "18 Jun 2026", event: "30-day auto-notification sent to supplier portal", actor: "System", type: "notification" },
+      { date: "20 Jun 2026", event: "Renewal document uploaded by supplier", actor: "Jonas Bauer", type: "upload" },
+    ],
+  },
+  {
+    id: "doc-004", supplierId: "muellerlogistik", supplierName: "Müller Logistik KG", trade: "Logistics",
+    documentName: "Trade Licence", documentCategory: "Licence",
+    expiryDate: "6 Aug 2026", daysUntilExpiry: 49, status: "warning-60",
+    statusNote: "This document expires within 60 days. The supplier has been notified to upload a renewal.",
+    history: [
+      { date: "06 Aug 2024", event: "Document verified — valid", actor: "System", type: "verified" },
+      { date: "07 Jun 2026", event: "60-day expiry warning triggered", actor: "System", type: "warning" },
+    ],
+  },
+  {
+    id: "doc-005", supplierId: "zimmer", supplierName: "Zimmer IT Services", trade: "IT Services",
+    documentName: "Cyber Liability Insurance", documentCategory: "Insurance",
+    expiryDate: "12 Aug 2026", daysUntilExpiry: 55, status: "warning-60",
+    statusNote: "This document expires within 60 days. The supplier has been notified to upload a renewal.",
+    history: [
+      { date: "12 Aug 2025", event: "Document verified — valid", actor: "System", type: "verified" },
+      { date: "13 Jun 2026", event: "60-day expiry warning triggered", actor: "System", type: "warning" },
+    ],
+  },
+  {
+    id: "doc-008", supplierId: "werner", supplierName: "Werner & Co KG", trade: "Construction",
+    documentName: "Environmental Permit", documentCategory: "Compliance",
+    expiryDate: "5 Aug 2026", daysUntilExpiry: 26, status: "warning-30",
+    autoNotified: "6 Jul 2026",
+    statusNote:
+      "This document expires within 30 days. The 30-day auto-notification has been sent to the supplier portal.",
+    history: [
+      { date: "05 Aug 2024", event: "Document verified — valid", actor: "System", type: "verified" },
+      { date: "06 Jun 2026", event: "60-day expiry warning triggered", actor: "System", type: "warning" },
+      { date: "06 Jul 2026", event: "30-day auto-notification sent to supplier portal", actor: "System", type: "notification" },
+    ],
+  },
+  {
+    id: "doc-006", supplierId: "bauparts", supplierName: "BauParts GmbH", trade: "Construction",
+    documentName: "Trade Licence", documentCategory: "Licence",
+    expiryDate: "31 Aug 2026", daysUntilExpiry: 74, status: "warning-60",
+    statusNote: "This document expires within 60 days. The supplier has been notified to upload a renewal.",
+    history: [
+      { date: "31 Aug 2024", event: "Document verified — valid", actor: "System", type: "verified" },
+      { date: "18 Jun 2026", event: "60-day expiry warning triggered", actor: "System", type: "warning" },
+    ],
+  },
+  {
+    id: "doc-007", supplierId: "techparts", supplierName: "TechParts Europa AG", trade: "Electronics",
+    documentName: "ISO 9001 Certificate", documentCategory: "Certification",
+    expiryDate: "14 Dec 2026", daysUntilExpiry: 179, status: "valid",
+    statusNote: "This document is valid and no action is required.",
+    history: [
+      { date: "14 Dec 2025", event: "Document verified — valid", actor: "System", type: "verified" },
+    ],
+  },
 ];
 
 export const CONTRACTS: Contract[] = [

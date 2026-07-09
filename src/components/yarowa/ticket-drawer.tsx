@@ -1,8 +1,9 @@
 import { X, ArrowUpRight } from "lucide-react";
-import type { Ticket } from "@/types";
+import type { Ticket, SupplierDoc } from "@/types";
 import { DOCS, CONTRACTS, DATA_GOVERNANCE_REQUESTS, ONBOARDING_CASES } from "@/data";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { RenewalReviewCard } from "@/components/yarowa/renewal-review-card";
 import type { View } from "@/App";
 
 const sourceToView: Record<string, View> = {
@@ -25,10 +26,14 @@ export function TicketDrawer({
   ticket,
   onClose,
   onNavigate,
+  onResolve,
+  onReview,
 }: {
   ticket: Ticket;
   onClose: () => void;
   onNavigate: (view: View, selectedId?: string) => void;
+  onResolve: (ticket: Ticket, action: string) => void;
+  onReview: (doc: SupplierDoc) => void;
 }) {
   const doc = ticket.source === "compliance-monitoring" ? DOCS.find((d) => d.id === ticket.targetId) : undefined;
   const contract = ticket.source === "contracts" ? CONTRACTS.find((c) => c.id === ticket.targetId) : undefined;
@@ -38,7 +43,7 @@ export function TicketDrawer({
   const targetView = sourceToView[ticket.source];
 
   return (
-    <div className="w-[380px] shrink-0 border-l border-border bg-card h-full overflow-y-auto">
+    <div className="w-[380px] shrink-0 border-l border-border bg-card h-full overflow-y-auto animate-in slide-in-from-right-6 fade-in duration-200">
       <div className="p-4 flex items-start justify-between border-b border-border">
         <div className="flex gap-2">
           <Badge variant={ticket.criticality}>{ticket.criticality}</Badge>
@@ -131,18 +136,30 @@ export function TicketDrawer({
           </div>
         )}
 
-        <div className="text-xs text-muted-foreground mb-4">
-          <div className="mb-1 font-medium text-foreground">What needs attention</div>
-          Review this item and take the recommended action below, or open the full record for more
-          context.
-        </div>
+        {doc?.renewal ? (
+          <div className="mb-4">
+            <RenewalReviewCard doc={doc} onReview={() => onReview(doc)} />
+          </div>
+        ) : (
+          <>
+            <div className="text-xs text-muted-foreground mb-4">
+              <div className="mb-1 font-medium text-foreground">What needs attention</div>
+              Review this item and take the recommended action below, or open the full record for more
+              context.
+            </div>
 
-        <div className="flex gap-2 mb-4">
-          <Button variant="default" className="flex-1">
-            {ticket.primaryAction}
-          </Button>
-          <Button variant="outline">Escalate</Button>
-        </div>
+            <div className="flex gap-2 mb-4">
+              <Button variant="default" className="flex-1" onClick={() => onResolve(ticket, ticket.primaryAction)}>
+                {ticket.primaryAction}
+              </Button>
+              {ticket.primaryAction !== "Escalate" && (
+                <Button variant="outline" onClick={() => onResolve(ticket, "Escalate")}>
+                  Escalate
+                </Button>
+              )}
+            </div>
+          </>
+        )}
 
         {targetView && (
           <button

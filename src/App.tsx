@@ -1,6 +1,11 @@
 import { useState } from "react";
 import { Sidebar } from "@/components/yarowa/sidebar";
 import { TicketDrawer } from "@/components/yarowa/ticket-drawer";
+import { ComplianceDrawer } from "@/components/yarowa/compliance-drawer";
+import { DocumentLightbox } from "@/components/yarowa/document-lightbox";
+import { Toaster, toast } from "@/components/yarowa/toast";
+import { actionResult } from "@/lib/ticket-actions";
+import { TICKETS } from "./data";
 import { Dashboard } from "./pages/Dashboard";
 import { SuppliersOverview } from "./pages/SuppliersOverview";
 import { SupplierProfile } from "./pages/SupplierProfile";
@@ -40,11 +45,64 @@ export default function App() {
   const [activeTicket, setActiveTicket] = useState<Ticket | null>(null);
   const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(null);
   const [pendingSelected, setPendingSelected] = useState<string | null>(null);
+  const [resolvedIds, setResolvedIds] = useState<Set<string>>(new Set());
+  const [activeDoc, setActiveDoc] = useState<SupplierDoc | null>(null);
+  const [reviewDoc, setReviewDoc] = useState<SupplierDoc | null>(null);
 
   function navigate(v: View, selectedId?: string) {
     setActiveTicket(null);
+    setActiveDoc(null);
     setPendingSelected(selectedId ?? null);
     setView(v);
+  }
+
+  function resolveTicket(ticket: Ticket, action: string) {
+    setResolvedIds((prev) => new Set(prev).add(ticket.id));
+    setActiveTicket((cur) => (cur?.id === ticket.id ? null : cur));
+    const result = actionResult(action);
+    toast({
+      title: result.title,
+      description: `${ticket.entityName} · ${ticket.title}`,
+      tone: result.tone,
+      action: {
+        label: "Undo",
+        onClick: () =>
+          setResolvedIds((prev) => {
+            const next = new Set(prev);
+            next.delete(ticket.id);
+            return next;
+          }),
+      },
+    });
+  }
+
+  // A renewal decision is the same act no matter where it was triggered from, so
+  // it clears the lightbox, closes the compliance drawer, and resolves the linked
+  // dashboard ticket — keeping the ticket consistent across every space.
+  function decideRenewal(doc: SupplierDoc, decision: "accept" | "reject") {
+    if (decision === "accept") {
+      toast({
+        title: "Renewal accepted",
+        description:
+          doc.status === "blocked"
+            ? `${doc.supplierName} reactivated for work orders.`
+            : `New version of ${doc.documentName} is now active.`,
+        tone: "success",
+      });
+    } else {
+      toast({
+        title: "Renewal rejected",
+        description: `${doc.supplierName} asked to re-upload ${doc.documentName}.`,
+        tone: "warning",
+      });
+    }
+    setReviewDoc(null);
+    setActiveDoc(null);
+    const linked = TICKETS.find((t) => t.source === "compliance-monitoring" && t.targetId === doc.id);
+    if (linked) {
+      setResolvedIds((prev) => new Set(prev).add(linked.id));
+      setActiveTicket((cur) => (cur?.id === linked.id ? null : cur));
+    }
   }
 
   function openProfile(id: string) {
@@ -53,6 +111,7 @@ export default function App() {
   }
 
   function selectTicket(t: Ticket) {
+    setActiveDoc(null);
     setActiveTicket(t);
   }
 
@@ -73,7 +132,13 @@ export default function App() {
 
         <div className="flex-1 flex min-w-0 overflow-hidden">
           <main className="flex-1 overflow-y-auto min-w-0">
-            {view === "dashboard" && <Dashboard onSelectTicket={selectTicket} />}
+            {view === "dashboard" && (
+              <Dashboard
+                onSelectTicket={selectTicket}
+                resolvedIds={resolvedIds}
+                onResolve={resolveTicket}
+              />
+            )}
             {view === "suppliers" && (
               <SuppliersOverview onOpenProfile={openProfile} initialSelectedId={pendingSelected} />
             )}
@@ -88,20 +153,11 @@ export default function App() {
             {view === "onboarding" && <Onboarding initialSelectedId={pendingSelected} />}
             {view === "compliance" && (
               <ComplianceMonitoring
-                onSelectDoc={(doc: SupplierDoc) =>
-                  selectTicket({
-                    id: `doc-${doc.id}`,
-                    title: `${doc.documentName} — ${doc.supplierName}`,
-                    criticality: doc.status === "blocked" ? "critical" : "medium",
-                    entityName: doc.supplierName,
-                    entityType: "Supplier",
-                    ageLabel: doc.expiryDate,
-                    primaryAction: "Review",
-                    source: "compliance-monitoring",
-                    category: "Document compliance",
-                    targetId: doc.id,
-                  })
-                }
+                onSelectDoc={(doc: SupplierDoc) => {
+                  setActiveTicket(null);
+                  setActiveDoc(doc);
+                }}
+                selectedDocId={activeDoc?.id ?? pendingSelected}
                 initialSelectedId={pendingSelected}
               />
             )}
@@ -128,11 +184,29 @@ export default function App() {
             {view === "service-catalogue" && <ServiceCatalogue initialSelectedId={pendingSelected} />}
           </main>
 
-          {activeTicket && (
-            <TicketDrawer ticket={activeTicket} onClose={() => setActiveTicket(null)} onNavigate={navigate} />
-          )}
+          {activeDoc ? (
+            <ComplianceDrawer doc={activeDoc} onClose={() => setActiveDoc(null)} onReview={setReviewDoc} />
+          ) : activeTicket ? (
+            <TicketDrawer
+              ticket={activeTicket}
+              onClose={() => setActiveTicket(null)}
+              onNavigate={navigate}
+              onResolve={resolveTicket}
+              onReview={setReviewDoc}
+            />
+          ) : null}
         </div>
       </div>
+
+      {reviewDoc && (
+        <DocumentLightbox
+          doc={reviewDoc}
+          onClose={() => setReviewDoc(null)}
+          onDecision={(decision) => decideRenewal(reviewDoc, decision)}
+        />
+      )}
+
+      <Toaster />
     </div>
   );
 }

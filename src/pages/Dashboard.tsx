@@ -4,7 +4,7 @@ import {
   ShieldCheck, Shield, FileText, ClipboardList, Rocket,
   type LucideIcon,
 } from "lucide-react";
-import { TICKETS } from "../data";
+import { TICKETS, DOCS } from "../data";
 import { Button } from "@/components/ui/button";
 import { criticalityDot, criticalityLabel } from "@/lib/theme";
 import type { Ticket, Criticality, TicketCategory } from "../types";
@@ -35,12 +35,22 @@ const CATEGORY_ICON: Record<TicketCategory, LucideIcon> = {
   Onboarding: Rocket,
 };
 
-export function Dashboard({ onSelectTicket }: { onSelectTicket: (t: Ticket) => void }) {
+export function Dashboard({
+  onSelectTicket,
+  resolvedIds,
+  onResolve,
+}: {
+  onSelectTicket: (t: Ticket) => void;
+  resolvedIds: Set<string>;
+  onResolve: (t: Ticket, action: string) => void;
+}) {
   const [filter, setFilter] = useState<"All tickets" | TicketCategory>("All tickets");
 
+  const open = useMemo(() => TICKETS.filter((t) => !resolvedIds.has(t.id)), [resolvedIds]);
+
   const filtered = useMemo(
-    () => (filter === "All tickets" ? TICKETS : TICKETS.filter((t) => t.category === filter)),
-    [filter]
+    () => (filter === "All tickets" ? open : open.filter((t) => t.category === filter)),
+    [filter, open]
   );
 
   const grouped = CRITICALITY_ORDER.map((c) => ({
@@ -49,9 +59,9 @@ export function Dashboard({ onSelectTicket }: { onSelectTicket: (t: Ticket) => v
   })).filter((g) => g.tickets.length > 0);
 
   const counts: Record<"All tickets" | TicketCategory, number> = {
-    "All tickets": TICKETS.length,
+    "All tickets": open.length,
     ...Object.fromEntries(
-      CATEGORIES.map((c) => [c, TICKETS.filter((t) => t.category === c).length])
+      CATEGORIES.map((c) => [c, open.filter((t) => t.category === c).length])
     ),
   } as Record<"All tickets" | TicketCategory, number>;
 
@@ -83,6 +93,16 @@ export function Dashboard({ onSelectTicket }: { onSelectTicket: (t: Ticket) => v
         ))}
       </div>
 
+      {grouped.length === 0 && (
+        <div className="border border-dashed border-border rounded-2xl py-16 text-center">
+          <Check className="mx-auto mb-3 text-success-ink" size={28} />
+          <p className="text-sm font-medium">You're all caught up</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            No open tickets{filter !== "All tickets" ? ` in ${filter}` : ""}.
+          </p>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-4">
         {grouped.map((group) => (
           <div key={group.criticality} className="bg-card border border-border rounded-2xl overflow-hidden">
@@ -99,10 +119,21 @@ export function Dashboard({ onSelectTicket }: { onSelectTicket: (t: Ticket) => v
               {group.tickets.map((t, i) => {
                 const ActionIcon = ACTION_ICON[t.primaryAction];
                 const CategoryIcon = CATEGORY_ICON[t.category];
+                // A ticket with an uploaded renewal is reviewed (opens the doc), not dismissed.
+                const reviewable =
+                  t.source === "compliance-monitoring" && !!DOCS.find((d) => d.id === t.targetId)?.renewal;
                 return (
-                  <button
+                  <div
                     key={t.id}
+                    role="button"
+                    tabIndex={0}
                     onClick={() => onSelectTicket(t)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        onSelectTicket(t);
+                      }
+                    }}
                     className={`w-full text-left flex items-center justify-between gap-3 px-4 py-3.5 hover:bg-secondary/40 transition-colors ${
                       i < group.tickets.length - 1 ? "border-b border-border" : ""
                     }`}
@@ -121,11 +152,16 @@ export function Dashboard({ onSelectTicket }: { onSelectTicket: (t: Ticket) => v
                     <Button
                       variant={t.criticality === "critical" || t.criticality === "high" ? "default" : "outline"}
                       className="shrink-0"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (reviewable) onSelectTicket(t);
+                        else onResolve(t, t.primaryAction);
+                      }}
                     >
                       {ActionIcon && <ActionIcon size={14} />}
                       {t.primaryAction}
                     </Button>
-                  </button>
+                  </div>
                 );
               })}
             </div>

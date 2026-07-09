@@ -64,10 +64,26 @@ export type DocStatus =
   | "rejected-resubmit"
   | "blocked";
 
+export type ComplianceEventType =
+  | "verified"
+  | "warning"
+  | "reminder"
+  | "notification"
+  | "blocked"
+  | "upload";
+
 export interface ComplianceEvent {
   date: string;
   event: string;
   actor: string;
+  type?: ComplianceEventType;
+}
+
+export interface RenewalUpload {
+  fileName: string;
+  fileSize: string;
+  uploadedAt: string;
+  uploadedBy: string;
 }
 
 export interface SupplierDoc {
@@ -80,6 +96,12 @@ export interface SupplierDoc {
   expiryDate: string;
   daysUntilExpiry: number;
   status: DocStatus;
+  /** Date the 30-day auto-notification was sent to the supplier portal. */
+  autoNotified?: string;
+  /** Contextual note explaining the current status (shown in the drawer callout). */
+  statusNote?: string;
+  /** A renewal file the supplier uploaded that is awaiting the manager's review. */
+  renewal?: RenewalUpload;
   history: ComplianceEvent[];
 }
 
