@@ -1,6 +1,6 @@
 import { ArrowLeft, Building2, Edit, Mail, MoreHorizontal } from "lucide-react";
 import { SUPPLIERS, TICKETS, CONTRACTS, DOCS } from "../data";
-import { Badge, Button } from "../components/ui";
+import { Alert, Badge, Button } from "../ui";
 import type { Ticket } from "../types";
 
 const ACTIVITY: Record<string, { label: string; who: string; date: string; tone: "warning" | "success" | "danger" | "neutral" }[]> = {
@@ -159,7 +159,7 @@ export function SupplierProfile({
         <div className="bg-card border border-border rounded-lg p-4">
           <div className="flex items-center justify-between mb-3">
             <div className="text-xs font-semibold uppercase text-muted-foreground">Compliance Snapshot</div>
-            <span className="text-xs text-blue-600">View all</span>
+            <span className="text-xs text-accent">View all</span>
           </div>
           <div className="space-y-2 text-sm">
             {(docs.length ? docs : []).map((d) => (
@@ -177,7 +177,7 @@ export function SupplierProfile({
         <div className="bg-card border border-border rounded-lg p-4">
           <div className="flex items-center justify-between mb-3">
             <div className="text-xs font-semibold uppercase text-muted-foreground">Contracts</div>
-            <span className="text-xs text-blue-600">View all</span>
+            <span className="text-xs text-accent">View all</span>
           </div>
           <div className="space-y-2 text-sm">
             {contracts.map((c) => (
@@ -212,9 +212,9 @@ export function SupplierProfile({
                 <span className="font-medium">{supplier.address}</span>
               </div>
             </div>
-            <div className="mt-3 bg-amber-50 text-amber-800 text-xs rounded-md px-3 py-2">
+            <Alert type="warning" className="mt-3">
               IBAN change request pending four-eyes approval
-            </div>
+            </Alert>
           </div>
         )}
 
@@ -227,12 +227,12 @@ export function SupplierProfile({
                   <span
                     className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${
                       a.tone === "success"
-                        ? "bg-emerald-500"
+                        ? "bg-success"
                         : a.tone === "danger"
-                        ? "bg-red-500"
+                        ? "bg-critical"
                         : a.tone === "warning"
-                        ? "bg-amber-500"
-                        : "bg-slate-400"
+                        ? "bg-high"
+                        : "bg-low"
                     }`}
                   />
                   <div>

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Eye, AlertTriangle, RefreshCw, Bell, Check, Send, type LucideIcon } from "lucide-react";
 import { TICKETS } from "../data";
-import { Button } from "../components/ui";
+import { Button, criticalityDot, criticalityLabel } from "../ui";
 import type { Ticket, Criticality, TicketCategory } from "../types";
 
 const CATEGORIES: TicketCategory[] = [
@@ -13,18 +13,6 @@ const CATEGORIES: TicketCategory[] = [
 ];
 
 const CRITICALITY_ORDER: Criticality[] = ["critical", "high", "medium", "low"];
-const CRITICALITY_LABEL: Record<Criticality, string> = {
-  critical: "Critical",
-  high: "High",
-  medium: "Medium",
-  low: "Low",
-};
-const CRITICALITY_DOT: Record<Criticality, string> = {
-  critical: "bg-red-500",
-  high: "bg-amber-500",
-  medium: "bg-blue-500",
-  low: "bg-slate-400",
-};
 const ACTION_ICON: Record<string, LucideIcon> = {
   Review: Eye,
   Escalate: AlertTriangle,
@@ -86,9 +74,9 @@ export function Dashboard({ onSelectTicket }: { onSelectTicket: (t: Ticket) => v
         {grouped.map((group) => (
           <div key={group.criticality} className="bg-card border border-border rounded-2xl overflow-hidden">
             <div className="flex items-center gap-2.5 bg-secondary/60 border-b border-border px-4 py-2.5">
-              <span className={`w-2 h-2 rounded-full ${CRITICALITY_DOT[group.criticality]}`} />
+              <span className={`w-2 h-2 rounded-full ${criticalityDot[group.criticality]}`} />
               <span className="text-[11px] font-bold tracking-wide uppercase">
-                {CRITICALITY_LABEL[group.criticality]}
+                {criticalityLabel[group.criticality]}
               </span>
               <span className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-full bg-white border border-border text-xs font-bold text-foreground">
                 {group.tickets.length}

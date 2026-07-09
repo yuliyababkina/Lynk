@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "../lib/utils";
+import { toneClass, type Tone } from "./theme";
 
 export function Card({ className, children }: { className?: string; children: ReactNode }) {
   return (
@@ -22,10 +23,10 @@ export function StatTile({
 }) {
   const toneColor: Record<string, string> = {
     default: "text-foreground",
-    danger: "text-red-600",
-    warning: "text-amber-600",
-    success: "text-emerald-600",
-    info: "text-blue-600",
+    danger: "text-critical-ink",
+    warning: "text-warning-ink",
+    success: "text-success-ink",
+    info: "text-accent",
   };
   return (
     <Card className="p-4 flex-1">
@@ -38,26 +39,12 @@ export function StatTile({
   );
 }
 
-const badgeTones: Record<string, string> = {
-  critical: "bg-red-100 text-red-700",
-  high: "bg-amber-100 text-amber-700",
-  medium: "bg-blue-100 text-blue-700",
-  low: "bg-slate-100 text-slate-600",
-  success: "bg-emerald-100 text-emerald-700",
-  warning: "bg-amber-100 text-amber-700",
-  danger: "bg-red-100 text-red-700",
-  info: "bg-blue-100 text-blue-700",
-  neutral: "bg-slate-100 text-slate-600",
-  purple: "bg-purple-100 text-purple-700",
-  dark: "bg-slate-900 text-white",
-};
-
 export function Badge({
   tone = "neutral",
   children,
   className,
 }: {
-  tone?: keyof typeof badgeTones;
+  tone?: Tone;
   children: ReactNode;
   className?: string;
 }) {
@@ -65,7 +52,7 @@ export function Badge({
     <span
       className={cn(
         "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium",
-        badgeTones[tone],
+        toneClass[tone],
         className
       )}
     >

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { ONBOARDING_CASES } from "../data";
-import { Badge, Button, Pill } from "../components/ui";
+import { Badge, Button, Pill } from "../ui";
 
 export function Onboarding({ initialSelectedId }: { initialSelectedId?: string | null }) {
   const [tab, setTab] = useState<"All" | "Stale">("All");

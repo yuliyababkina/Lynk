@@ -1,15 +1,8 @@
 import { X, ArrowUpRight } from "lucide-react";
 import type { Ticket } from "../types";
 import { DOCS, CONTRACTS, DATA_GOVERNANCE_REQUESTS, ONBOARDING_CASES } from "../data";
-import { Badge, Button } from "./ui";
+import { Badge, Button } from "../ui";
 import type { View } from "../App";
-
-const criticalityTone: Record<string, "critical" | "high" | "medium" | "low"> = {
-  critical: "critical",
-  high: "high",
-  medium: "medium",
-  low: "low",
-};
 
 const sourceToView: Record<string, View> = {
   "compliance-monitoring": "compliance",
@@ -47,7 +40,7 @@ export function TicketDrawer({
     <div className="w-[380px] shrink-0 border-l border-border bg-card h-full overflow-y-auto">
       <div className="p-4 flex items-start justify-between border-b border-border">
         <div className="flex gap-2">
-          <Badge tone={criticalityTone[ticket.criticality]}>{ticket.criticality}</Badge>
+          <Badge tone={ticket.criticality}>{ticket.criticality}</Badge>
           <Badge tone="neutral">{sourceLabel[ticket.source]}</Badge>
         </div>
         <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
@@ -62,7 +55,7 @@ export function TicketDrawer({
           <div>
             <div className="text-muted-foreground mb-0.5">ENTITY</div>
             <button
-              className="text-blue-600 underline font-medium"
+              className="text-accent underline font-medium"
               onClick={() => onNavigate("suppliers")}
             >
               {ticket.entityName}
@@ -153,7 +146,7 @@ export function TicketDrawer({
         {targetView && (
           <button
             onClick={() => onNavigate(targetView, ticket.targetId)}
-            className="w-full flex items-center justify-center gap-1.5 text-sm text-blue-600 font-medium py-2 border-t border-border pt-3"
+            className="w-full flex items-center justify-center gap-1.5 text-sm text-accent font-medium py-2 border-t border-border pt-3"
           >
             Open in {sourceLabel[ticket.source]}
             <ArrowUpRight size={14} />

@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
-import { AlertTriangle } from "lucide-react";
 import { CONTRACTS } from "../data";
-import { Badge, Pill } from "../components/ui";
+import { Alert, Badge, Pill } from "../ui";
 import type { Contract, ContractStatus } from "../types";
 
 const STATUS_TONE: Record<ContractStatus, "success" | "warning" | "danger" | "info" | "neutral"> = {
@@ -50,15 +49,10 @@ export function ContractManagement({
       </p>
 
       {urgent > 0 && (
-        <div className="flex items-start gap-2 bg-red-50 text-red-900 text-sm rounded-lg px-4 py-3 mb-4">
-          <AlertTriangle size={16} className="mt-0.5" />
-          <div>
-            <div className="font-medium">{urgent} contract require immediate action</div>
-            <div className="text-xs opacity-80">
-              The renewal deadline has passed or is within 30 days. Initiate renewal or opt-out now to avoid a lapsed contract.
-            </div>
-          </div>
-        </div>
+        <Alert type="error" title={`${urgent} contract require immediate action`} className="mb-4">
+          The renewal deadline has passed or is within 30 days. Initiate renewal or opt-out now to
+          avoid a lapsed contract.
+        </Alert>
       )}
 
       <div className="grid grid-cols-4 gap-3 mb-4">

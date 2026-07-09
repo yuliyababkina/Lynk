@@ -1,5 +1,5 @@
 import { Download } from "lucide-react";
-import { Button, Pill } from "../components/ui";
+import { Button, Pill } from "../ui";
 import { useState } from "react";
 
 export function Reporting() {
@@ -62,11 +62,11 @@ export function Reporting() {
           <div className="text-xs text-muted-foreground mb-3">Active suppliers by score band</div>
           <div className="h-40 flex items-end gap-3 px-2">
             {[
-              { band: "90-100", v: 2, color: "bg-emerald-500" },
-              { band: "80-89", v: 3, color: "bg-emerald-400" },
-              { band: "70-79", v: 2, color: "bg-amber-500" },
-              { band: "60-69", v: 1, color: "bg-orange-500" },
-              { band: "<60", v: 1, color: "bg-red-500" },
+              { band: "90-100", v: 2, color: "bg-success" },
+              { band: "80-89", v: 3, color: "bg-success/70" },
+              { band: "70-79", v: 2, color: "bg-high" },
+              { band: "60-69", v: 1, color: "bg-chart-orange" },
+              { band: "<60", v: 1, color: "bg-critical" },
             ].map((b) => (
               <div key={b.band} className="flex-1 flex flex-col items-center gap-1">
                 <div className={`w-full ${b.color} rounded-t`} style={{ height: `${b.v * 25}%` }} />
@@ -83,11 +83,11 @@ export function Reporting() {
           <div className="text-xs text-muted-foreground mb-3">Percentage of suppliers with no critical flags</div>
           <div className="space-y-2">
             {[
-              { label: "Consulting", v: 100, color: "bg-emerald-500" },
-              { label: "HVAC", v: 100, color: "bg-emerald-500" },
-              { label: "Plumbing", v: 100, color: "bg-emerald-500" },
-              { label: "IT Services", v: 65, color: "bg-red-500" },
-              { label: "Manufacturing", v: 40, color: "bg-red-500" },
+              { label: "Consulting", v: 100, color: "bg-success" },
+              { label: "HVAC", v: 100, color: "bg-success" },
+              { label: "Plumbing", v: 100, color: "bg-success" },
+              { label: "IT Services", v: 65, color: "bg-critical" },
+              { label: "Manufacturing", v: 40, color: "bg-critical" },
             ].map((r) => (
               <div key={r.label} className="flex items-center gap-2 text-xs">
                 <span className="w-24 text-muted-foreground">{r.label}</span>
@@ -102,16 +102,16 @@ export function Reporting() {
           <div className="font-semibold text-sm mb-1">Network Composition</div>
           <div className="text-xs text-muted-foreground mb-3">Contacts by lifecycle stage</div>
           <div className="flex items-center gap-6">
-            <div className="w-28 h-28 rounded-full border-[14px] border-blue-500 border-r-emerald-500 border-b-purple-500" />
+            <div className="w-28 h-28 rounded-full border-[14px] border-accent border-r-success border-b-purple" />
             <div className="space-y-1 text-sm">
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-blue-500" /> 3 Prospects
+                <span className="w-2 h-2 rounded-full bg-medium" /> 3 Prospects
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" /> 5 Suppliers
+                <span className="w-2 h-2 rounded-full bg-success" /> 5 Suppliers
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-purple-500" /> 2 Providers
+                <span className="w-2 h-2 rounded-full bg-purple" /> 2 Providers
               </div>
               <div className="text-xs text-muted-foreground pt-1">10 total network contacts</div>
             </div>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AlertTriangle, Upload, Bell, CheckCircle2 } from "lucide-react";
-import { Badge, Button } from "../components/ui";
+import { Badge, Button } from "../ui";
 import { cn } from "../lib/utils";
 import type { Catalogue } from "../types";
 
@@ -43,7 +43,7 @@ export function ServiceCatalogueDetail({
               </p>
               <button
                 onClick={() => setViewingVersion(catalogue.currentVersion)}
-                className="text-sm text-blue-600 font-medium hover:underline"
+                className="text-sm text-accent font-medium hover:underline"
               >
                 ← Back to current version
               </button>
@@ -90,20 +90,20 @@ export function ServiceCatalogueDetail({
             </div>
             {nonCompliant.length === 0 ? (
               <div className="px-4 py-4 text-sm text-muted-foreground flex items-center gap-2">
-                <CheckCircle2 size={15} className="text-emerald-600" /> All suppliers compliant
+                <CheckCircle2 size={15} className="text-success" /> All suppliers compliant
               </div>
             ) : (
               <>
                 {nonCompliant.map((s) => (
                   <div key={s.id} className="px-4 py-2.5 border-b border-border flex items-center gap-2 text-sm">
-                    <AlertTriangle size={14} className="text-amber-500 shrink-0" />
+                    <AlertTriangle size={14} className="text-warning shrink-0" />
                     <span className="font-medium truncate">{s.name}</span>
                     <span className="text-xs text-muted-foreground ml-auto shrink-0">Not confirmed</span>
                   </div>
                 ))}
                 <div className="px-4 py-3">
                   {remindersSent ? (
-                    <div className="text-sm text-emerald-700 flex items-center gap-1.5">
+                    <div className="text-sm text-success-ink flex items-center gap-1.5">
                       <CheckCircle2 size={14} /> Reminders sent to {nonCompliant.length} suppliers
                     </div>
                   ) : (

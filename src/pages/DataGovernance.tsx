@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { AlertTriangle, ChevronDown, ChevronUp, Lock } from "lucide-react";
+import { ChevronDown, ChevronUp, Lock } from "lucide-react";
 import { DATA_GOVERNANCE_REQUESTS } from "../data";
-import { Badge, Button, Pill } from "../components/ui";
+import { Alert, Badge, Button, Pill } from "../ui";
 
 const TABS = ["All Requests", "Awaiting Review", "Endorsed — Awaiting 2nd Approval", "Approved", "Rejected"] as const;
 
@@ -27,15 +27,14 @@ export function DataGovernance({ initialSelectedId }: { initialSelectedId?: stri
       </p>
 
       {counts.awaiting > 0 && (
-        <div className="flex items-start gap-2 bg-red-50 text-red-900 text-sm rounded-lg px-4 py-3 mb-4">
-          <AlertTriangle size={16} className="mt-0.5" />
-          <div>
-            <div className="font-medium">{counts.awaiting} critical payment data change awaiting review</div>
-            <div className="text-xs opacity-80">
-              IBAN and banking changes carry the highest fraud risk. Review carefully and verify with the supplier directly before endorsing.
-            </div>
-          </div>
-        </div>
+        <Alert
+          type="error"
+          title={`${counts.awaiting} critical payment data change awaiting review`}
+          className="mb-4"
+        >
+          IBAN and banking changes carry the highest fraud risk. Review carefully and verify with the
+          supplier directly before endorsing.
+        </Alert>
       )}
 
       <div className="grid grid-cols-4 gap-3 mb-4">
@@ -100,7 +99,7 @@ export function DataGovernance({ initialSelectedId }: { initialSelectedId?: stri
                       <div className="flex items-center justify-between px-3 py-1.5 bg-secondary/60 text-xs font-medium">
                         {f.label}
                         {f.sensitive && (
-                          <span className="flex items-center gap-1 text-amber-700">
+                          <span className="flex items-center gap-1 text-warning-ink">
                             <Lock size={11} /> Sensitive
                           </span>
                         )}
@@ -110,7 +109,7 @@ export function DataGovernance({ initialSelectedId }: { initialSelectedId?: stri
                           <div className="text-xs text-muted-foreground">Before</div>
                           <div className="font-mono text-xs">{f.before}</div>
                         </div>
-                        <div className="px-3 py-2 bg-emerald-50">
+                        <div className="px-3 py-2 bg-success/10">
                           <div className="text-xs text-muted-foreground">After</div>
                           <div className="font-mono text-xs">{f.after}</div>
                         </div>

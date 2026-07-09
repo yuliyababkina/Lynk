@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Check, Upload, Loader2 } from "lucide-react";
 import { CATALOGUE_REGIONS, CATALOGUE_TRADES, PARSED_LINES, DIFF_LINES } from "../data";
-import { Button } from "../components/ui";
+import { Button, diffRow, diffLabel } from "../ui";
 import { cn } from "../lib/utils";
 import type { Catalogue, CatalogueLineDiff, ResponseModel } from "../types";
 
@@ -48,7 +48,7 @@ function Stepper({ current, onStepClick }: { current: Step; onStepClick: (s: Vis
               className={cn(
                 "w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold border",
                 i < currentIdx
-                  ? "bg-emerald-600 border-emerald-600 text-white"
+                  ? "bg-success border-success text-white"
                   : i === currentIdx
                     ? "bg-primary border-primary text-primary-foreground"
                     : "bg-card border-border text-muted-foreground"
@@ -89,12 +89,7 @@ function DiffTable({ lines, showDiff }: { lines: CatalogueLineDiff[]; showDiff: 
           {lines.map((l) => (
             <tr
               key={l.id}
-              className={cn(
-                "border-b border-border last:border-0",
-                showDiff && l.change === "added" && "bg-emerald-50",
-                showDiff && l.change === "changed" && "bg-amber-50",
-                showDiff && l.change === "removed" && "bg-red-50 text-muted-foreground line-through"
-              )}
+              className={cn("border-b border-border last:border-0", showDiff && diffRow[l.change])}
             >
               <td className="px-4 py-2.5 font-medium">{l.service}</td>
               <td className="px-4 py-2.5">{l.category}</td>
@@ -109,9 +104,9 @@ function DiffTable({ lines, showDiff }: { lines: CatalogueLineDiff[]; showDiff: 
               </td>
               {showDiff && (
                 <td className="px-4 py-2.5 text-xs font-medium">
-                  {l.change === "added" && <span className="text-emerald-700">Added</span>}
-                  {l.change === "changed" && <span className="text-amber-700">Changed</span>}
-                  {l.change === "removed" && <span className="text-red-600 no-underline">Removed</span>}
+                  {l.change === "added" && <span className={diffLabel.added}>Added</span>}
+                  {l.change === "changed" && <span className={diffLabel.changed}>Changed</span>}
+                  {l.change === "removed" && <span className={cn(diffLabel.removed, "no-underline")}>Removed</span>}
                   {l.change === "unchanged" && <span className="text-muted-foreground">—</span>}
                 </td>
               )}
@@ -236,9 +231,9 @@ export function ServiceCatalogueWizard({
           <div className="flex gap-3 mb-4">
             {isUpdate ? (
               <>
-                <SummaryTile label="Rows added" value={String(added)} tone="text-emerald-600" />
-                <SummaryTile label="Rows changed" value={String(changed)} tone="text-amber-600" />
-                <SummaryTile label="Rows removed" value={String(removed)} tone="text-red-600" />
+                <SummaryTile label="Rows added" value={String(added)} tone="text-success-ink" />
+                <SummaryTile label="Rows changed" value={String(changed)} tone="text-warning-ink" />
+                <SummaryTile label="Rows removed" value={String(removed)} tone="text-critical" />
                 <SummaryTile label="Total rows" value={String(lines.length)} />
               </>
             ) : (

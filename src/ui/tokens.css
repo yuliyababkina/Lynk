@@ -1,0 +1,153 @@
+/*
+ * Lynk UI Library — Design Tokens
+ * ---------------------------------
+ * This is the single source of truth for every colour in the app.
+ * Tweak a value here and it updates everywhere it is used.
+ * Values are exposed to Tailwind as utilities, e.g. `--critical`
+ * becomes `bg-critical`, `text-critical`, `border-critical`,
+ * and `bg-critical/10` for a soft tinted background.
+ */
+
+:root {
+  /* Surfaces & text */
+  --background: #f1f5f9;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+
+  /* Brand / actions */
+  --primary: #0f172a;
+  --primary-foreground: #ffffff;
+  --secondary: #e2e8f0;
+  --secondary-foreground: #0f172a;
+  --muted: #e2e8f0;
+  --muted-foreground: #5b6675;
+  --accent: #2563eb;
+  --accent-foreground: #ffffff;
+
+  /* Form / structure */
+  --border: #cbd5e1;
+  --input: transparent;
+  --input-background: #f8fafc;
+  --ring: #2563eb;
+  --radius: 0.5rem;
+
+  /* Sidebar */
+  --sidebar: #0f172a;
+  --sidebar-foreground: #e2e8f0;
+  --sidebar-primary: #2563eb;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1e293b;
+  --sidebar-accent-foreground: #f1f5f9;
+  --sidebar-border: #1e293b;
+  --sidebar-ring: #2563eb;
+
+  /* ---- Semantic palette — tweak to recolour the whole app ---- */
+
+  /* Status tones */
+  --success: #047857;
+  --success-foreground: #ffffff;
+  --warning: #d97706;
+  --warning-foreground: #ffffff;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+
+  /* Ticket criticality */
+  --critical: #dc2626;
+  --high: #d97706;
+  --medium: #2563eb;
+  --low: #64748b;
+
+  /* Extra hues (charts, "Blocked"/"Provider" tags) */
+  --purple: #7c3aed;
+  --chart-orange: #ea580c;
+
+  /*
+   * Alert palette — per semantic type: bg (200 tint) / border (400) / icon (700).
+   * Text on every alert is --foreground (primary). Icon uses the 700 shade so
+   * amber & green marks clear 3:1 on their tint (WCAG 2.2 AA, 1.4.11).
+   */
+  --alert-error-bg: #fecaca;
+  --alert-error-border: #f87171;
+  --alert-error-icon: #b91c1c;
+  --alert-warning-bg: #fde68a;
+  --alert-warning-border: #fbbf24;
+  --alert-warning-icon: #b45309;
+  --alert-info-bg: #bfdbfe;
+  --alert-info-border: #60a5fa;
+  --alert-info-icon: #1d4ed8;
+  --alert-success-bg: #a7f3d0;
+  --alert-success-border: #34d399;
+  --alert-success-icon: #047857;
+  --alert-neutral-bg: #e2e8f0;
+  --alert-neutral-border: #94a3b8;
+  --alert-neutral-icon: #334155;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-critical: var(--critical);
+  --color-high: var(--high);
+  --color-medium: var(--medium);
+  --color-low: var(--low);
+  --color-purple: var(--purple);
+  --color-chart-orange: var(--chart-orange);
+
+  /*
+   * Accessible pairs derived from each base colour (WCAG 2.2 AA):
+   *   -soft = tint for badge/callout backgrounds
+   *   -ink  = darkened text that clears 4.5:1 on that tint and on white
+   * Tweak only the base colour above — these follow automatically.
+   */
+  --color-critical-soft: color-mix(in srgb, var(--critical), white 88%);
+  --color-critical-ink: color-mix(in srgb, var(--critical), black 35%);
+  --color-high-soft: color-mix(in srgb, var(--high), white 88%);
+  --color-high-ink: color-mix(in srgb, var(--high), black 35%);
+  --color-medium-soft: color-mix(in srgb, var(--medium), white 88%);
+  --color-medium-ink: color-mix(in srgb, var(--medium), black 35%);
+  --color-low-soft: color-mix(in srgb, var(--low), white 88%);
+  --color-low-ink: color-mix(in srgb, var(--low), black 35%);
+  --color-success-soft: color-mix(in srgb, var(--success), white 88%);
+  --color-success-ink: color-mix(in srgb, var(--success), black 35%);
+  --color-warning-soft: color-mix(in srgb, var(--warning), white 88%);
+  --color-warning-ink: color-mix(in srgb, var(--warning), black 35%);
+  --color-purple-soft: color-mix(in srgb, var(--purple), white 88%);
+  --color-purple-ink: color-mix(in srgb, var(--purple), black 35%);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+}

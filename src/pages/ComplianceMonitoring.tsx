@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
-import { Wand2 } from "lucide-react";
 import { DOCS } from "../data";
-import { Badge, Pill } from "../components/ui";
+import { Alert, Badge, Pill } from "../ui";
 import type { SupplierDoc, DocStatus } from "../types";
 
 const STATUS_META: Record<DocStatus, { label: string; tone: "success" | "warning" | "danger" | "info" | "neutral" }> = {
@@ -57,13 +56,9 @@ export function ComplianceMonitoring({
       </p>
 
       {counts.blocked > 0 && (
-        <div className="flex items-start gap-2 bg-purple-50 text-purple-900 text-sm rounded-lg px-4 py-3 mb-4">
-          <Wand2 size={16} className="mt-0.5" />
-          <div>
-            <div className="font-medium">{counts.blocked} supplier blocked from work orders</div>
-            <div className="text-xs opacity-80">Document expiry passed without renewal. Review any uploaded renewals to reactivate.</div>
-          </div>
-        </div>
+        <Alert type="warning" title={`${counts.blocked} supplier blocked from work orders`} className="mb-4">
+          Document expiry passed without renewal. Review any uploaded renewals to reactivate.
+        </Alert>
       )}
 
       <div className="grid grid-cols-5 gap-3 mb-4">
@@ -116,7 +111,7 @@ export function ComplianceMonitoring({
                 </td>
                 <td className="px-4 py-3">{d.documentCategory}</td>
                 <td className="px-4 py-3">
-                  <div className={d.daysUntilExpiry < 0 ? "text-red-600" : "text-amber-600"}>{d.expiryDate}</div>
+                  <div className={d.daysUntilExpiry < 0 ? "text-critical" : "text-warning-ink"}>{d.expiryDate}</div>
                   <div className="text-xs text-muted-foreground">
                     {d.daysUntilExpiry < 0 ? `Expired ${Math.abs(d.daysUntilExpiry)}d ago` : `${d.daysUntilExpiry}d remaining`}
                   </div>

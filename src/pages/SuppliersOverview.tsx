@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Search, Plus, Star } from "lucide-react";
 import { SUPPLIERS } from "../data";
-import { Badge, Button, Pill } from "../components/ui";
+import { Badge, Button, Pill } from "../ui";
 import type { Supplier } from "../types";
 
 const complianceTone: Record<string, "success" | "warning" | "danger" | "neutral" | "purple"> = {
@@ -118,7 +118,7 @@ export function SuppliersOverview({
                 <td className="px-4 py-3">
                   {s.rating ? (
                     <span className="inline-flex items-center gap-1 font-medium">
-                      <Star size={12} className="fill-amber-400 text-amber-400" />
+                      <Star size={12} className="fill-warning text-warning" />
                       {s.rating}%
                     </span>
                   ) : (

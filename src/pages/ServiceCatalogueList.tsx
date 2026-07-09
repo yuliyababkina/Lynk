@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Upload, Users, FileSpreadsheet } from "lucide-react";
 import { CATALOGUE_REGIONS, CATALOGUE_TRADES } from "../data";
-import { Badge, Button } from "../components/ui";
+import { Badge, Button } from "../ui";
 import type { Catalogue, CatalogueStatus } from "../types";
 
 const STATUS_TONE: Record<CatalogueStatus, "success" | "neutral" | "info"> = {

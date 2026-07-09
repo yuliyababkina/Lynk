@@ -33,7 +33,7 @@ export function Sidebar({ view, onNavigate }: { view: View; onNavigate: (v: View
         </div>
         <div>
           <div className="text-sm font-semibold text-white leading-none">Lynk</div>
-          <div className="text-[10px] text-slate-400 leading-none mt-0.5">Procurement Platform</div>
+          <div className="text-[10px] text-muted-foreground leading-none mt-0.5">Procurement Platform</div>
         </div>
       </div>
 
@@ -49,20 +49,20 @@ export function Sidebar({ view, onNavigate }: { view: View; onNavigate: (v: View
                 "w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm transition-colors",
                 isActive
                   ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                  : "text-slate-300 hover:bg-sidebar-accent/60"
+                  : "text-muted-foreground hover:bg-sidebar-accent/60"
               )}
             >
               <Icon size={16} />
               <span className="flex-1 text-left">{item.label}</span>
               {!!item.badge && (
-                <span className="text-[10px] bg-slate-700 text-slate-200 rounded-full px-1.5 py-0.5">
+                <span className="text-[10px] bg-sidebar-accent text-muted-foreground rounded-full px-1.5 py-0.5">
                   {item.badge}
                 </span>
               )}
             </button>
           );
         })}
-        <button className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm text-slate-400 hover:bg-sidebar-accent/60 mt-2">
+        <button className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm text-muted-foreground hover:bg-sidebar-accent/60 mt-2">
           <Plus size={16} />
           <span>Invite Supplier</span>
         </button>
@@ -74,7 +74,7 @@ export function Sidebar({ view, onNavigate }: { view: View; onNavigate: (v: View
         </div>
         <div>
           <div className="text-xs font-medium text-white leading-none">Sabine Müller</div>
-          <div className="text-[10px] text-slate-400 leading-none mt-0.5">Procurement Manager</div>
+          <div className="text-[10px] text-muted-foreground leading-none mt-0.5">Procurement Manager</div>
         </div>
       </div>
     </aside>
