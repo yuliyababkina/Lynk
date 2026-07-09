@@ -1,17 +1,18 @@
 import { useEffect, useState } from "react";
-import { Check, Upload, Loader2 } from "lucide-react";
 import { CATALOGUE_REGIONS, CATALOGUE_TRADES, PARSED_LINES, DIFF_LINES } from "../data";
-import { Button } from "@/components/ui/button";
-import { diffRow, diffLabel } from "@/lib/theme";
 import { cn } from "../lib/utils";
-import type { Catalogue, CatalogueLineDiff, ResponseModel } from "../types";
+import { WizardStepper } from "@/components/yarowa/wizard-stepper";
+import { FileUploadCard } from "@/components/yarowa/file-upload-card";
+import { CataloguePreviewTable } from "@/components/yarowa/catalogue-preview-table";
+import { SupplierReviewTable } from "@/components/yarowa/supplier-review-table";
+import { BottomActionBar } from "@/components/yarowa/bottom-action-bar";
+import type { Catalogue, ResponseModel } from "../types";
 
 const STEPS = ["Upload", "Parsing", "Preview", "Details", "Distribution"] as const;
 type Step = (typeof STEPS)[number];
 
 // Parsing is a transient loading state, not a numbered step in the header.
 const VISIBLE_STEPS = ["Upload", "Preview", "Details", "Distribution"] as const;
-type VisibleStep = (typeof VISIBLE_STEPS)[number];
 
 export interface WizardResult {
   name: string;
@@ -30,93 +31,6 @@ function nextVersionOf(current: string): string {
   return match[2] !== undefined
     ? `Version ${match[1]}.${Number(match[2]) + 1}`
     : `Version ${Number(match[1]) + 1}`;
-}
-
-function Stepper({ current, onStepClick }: { current: Step; onStepClick: (s: VisibleStep) => void }) {
-  // Parsing loads toward Preview, so highlight Preview while it runs.
-  const activeStep: VisibleStep = current === "Parsing" ? "Preview" : current;
-  const currentIdx = VISIBLE_STEPS.indexOf(activeStep);
-  return (
-    <div className="flex items-center justify-center gap-2 mb-8">
-      {VISIBLE_STEPS.map((s, i) => (
-        <div key={s} className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => onStepClick(s)}
-            className="flex items-center gap-2 rounded-md px-1 -mx-1 hover:opacity-70 transition-opacity"
-          >
-            <span
-              className={cn(
-                "w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold border",
-                i < currentIdx
-                  ? "bg-success border-success text-white"
-                  : i === currentIdx
-                    ? "bg-primary border-primary text-primary-foreground"
-                    : "bg-card border-border text-muted-foreground"
-              )}
-            >
-              {i < currentIdx ? <Check size={14} /> : i + 1}
-            </span>
-            <span
-              className={cn(
-                "text-sm",
-                i === currentIdx ? "font-semibold" : "text-muted-foreground"
-              )}
-            >
-              {s}
-            </span>
-          </button>
-          {i < VISIBLE_STEPS.length - 1 && <div className="w-8 h-px bg-border" />}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function DiffTable({ lines, showDiff }: { lines: CatalogueLineDiff[]; showDiff: boolean }) {
-  return (
-    <div className="bg-card border border-border rounded-lg overflow-hidden mb-6">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="text-left text-xs text-muted-foreground border-b border-border">
-            <th className="px-4 py-2 font-medium">SERVICE</th>
-            <th className="px-4 py-2 font-medium">CATEGORY</th>
-            <th className="px-4 py-2 font-medium">UNIT</th>
-            <th className="px-4 py-2 font-medium">RATE</th>
-            {showDiff && <th className="px-4 py-2 font-medium">CHANGE</th>}
-          </tr>
-        </thead>
-        <tbody>
-          {lines.map((l) => (
-            <tr
-              key={l.id}
-              className={cn("border-b border-border last:border-0", showDiff && diffRow[l.change])}
-            >
-              <td className="px-4 py-2.5 font-medium">{l.service}</td>
-              <td className="px-4 py-2.5">{l.category}</td>
-              <td className="px-4 py-2.5">{l.unit}</td>
-              <td className="px-4 py-2.5">
-                €{l.rate.toFixed(2)}
-                {showDiff && l.change === "changed" && l.previousRate !== undefined && (
-                  <span className="text-xs text-muted-foreground line-through ml-2">
-                    €{l.previousRate.toFixed(2)}
-                  </span>
-                )}
-              </td>
-              {showDiff && (
-                <td className="px-4 py-2.5 text-xs font-medium">
-                  {l.change === "added" && <span className={diffLabel.added}>Added</span>}
-                  {l.change === "changed" && <span className={diffLabel.changed}>Changed</span>}
-                  {l.change === "removed" && <span className={cn(diffLabel.removed, "no-underline")}>Removed</span>}
-                  {l.change === "unchanged" && <span className="text-muted-foreground">—</span>}
-                </td>
-              )}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
 }
 
 function SummaryTile({ label, value, tone }: { label: string; value: string; tone?: string }) {
@@ -174,6 +88,15 @@ export function ServiceCatalogueWizard({
   const inputCls = "bg-card border border-border rounded-md px-3 py-1.5 text-sm w-full";
   const title = isUpdate ? `Upload new version — ${catalogue?.name}` : "Create a Service catalogue";
 
+  function toggleSupplier(id: string) {
+    setSelectedSuppliers((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
   function finish(publish: boolean) {
     onFinish({
       name: name || "Untitled catalogue",
@@ -195,36 +118,34 @@ export function ServiceCatalogueWizard({
         ← Cancel and go back
       </button>
       <h1 className="text-2xl font-bold mb-6 text-center">{title}</h1>
-      <Stepper current={step} onStepClick={(s) => setStep(s)} />
+      <div className="mb-8">
+        <WizardStepper
+          steps={VISIBLE_STEPS}
+          current={step === "Parsing" ? "Preview" : step}
+          onStepClick={(s) => setStep(s as Step)}
+        />
+      </div>
 
       {step === "Upload" && (
         <div className="max-w-lg mx-auto">
-          <div className="border-2 border-dashed border-border rounded-2xl py-20 flex flex-col items-center justify-center text-center bg-card">
-            <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center mb-3">
-              <Upload size={22} className="text-muted-foreground" />
-            </div>
-            <p className="text-sm text-muted-foreground mb-4 max-w-xs">
-              {isUpdate
+          <FileUploadCard
+            description={
+              isUpdate
                 ? "Upload the updated price list. It will be compared against the current active version."
-                : "Drag an XLS file here, or choose one from your computer."}
-            </p>
-            <Button onClick={() => setStep("Parsing")}>
-              <Upload size={14} /> {isUpdate ? "Upload updated file" : "Upload XLS file"}
-            </Button>
-          </div>
+                : "Drag an XLS file here, or choose one from your computer."
+            }
+            buttonLabel={isUpdate ? "Upload updated file" : "Upload XLS file"}
+            onUpload={() => setStep("Parsing")}
+          />
         </div>
       )}
 
       {step === "Parsing" && (
-        <div className="border border-border rounded-2xl py-20 flex flex-col items-center justify-center bg-card">
-          <Loader2 size={28} className="animate-spin text-muted-foreground mb-4" />
-          <p className="text-sm font-medium mb-1">
-            {isUpdate ? "Comparing with current version…" : "Parsing file…"}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            {isUpdate ? "services_painting_2027.xlsx" : "services_painting.xlsx"}
-          </p>
-        </div>
+        <FileUploadCard
+          loading
+          loadingLabel={isUpdate ? "Comparing with current version…" : "Parsing file…"}
+          loadingFilename={isUpdate ? "services_painting_2027.xlsx" : "services_painting.xlsx"}
+        />
       )}
 
       {step === "Preview" && (
@@ -246,13 +167,14 @@ export function ServiceCatalogueWizard({
               </>
             )}
           </div>
-          <DiffTable lines={lines} showDiff={isUpdate} />
-          <div className="flex justify-between">
-            <Button variant="outline" onClick={() => setStep("Upload")}>
-              Back
-            </Button>
-            <Button onClick={() => setStep("Details")}>Next</Button>
+          <div className="mb-6">
+            <CataloguePreviewTable lines={lines} showDiff={isUpdate} />
           </div>
+          <BottomActionBar
+            onBack={() => setStep("Upload")}
+            onPrimary={() => setStep("Details")}
+            primaryLabel="Next"
+          />
         </div>
       )}
 
@@ -309,7 +231,7 @@ export function ServiceCatalogueWizard({
                   <input
                     type="radio"
                     name="response-model"
-                    className="mt-0.5 accent-slate-900"
+                    className="mt-0.5 accent-primary"
                     checked={responseModel === "actively-agree"}
                     onChange={() => setResponseModel("actively-agree")}
                   />
@@ -324,7 +246,7 @@ export function ServiceCatalogueWizard({
                   <input
                     type="radio"
                     name="response-model"
-                    className="mt-0.5 accent-slate-900"
+                    className="mt-0.5 accent-primary"
                     checked={responseModel === "actively-disagree"}
                     onChange={() => setResponseModel("actively-disagree")}
                   />
@@ -338,11 +260,12 @@ export function ServiceCatalogueWizard({
               </div>
             </div>
           </div>
-          <div className="flex justify-between max-w-lg mx-auto">
-            <Button variant="outline" onClick={() => setStep("Preview")}>
-              Back
-            </Button>
-            <Button onClick={() => setStep("Distribution")}>Next</Button>
+          <div className="max-w-lg mx-auto">
+            <BottomActionBar
+              onBack={() => setStep("Preview")}
+              onPrimary={() => setStep("Distribution")}
+              primaryLabel="Next"
+            />
           </div>
         </div>
       )}
@@ -354,61 +277,22 @@ export function ServiceCatalogueWizard({
               ? `Suppliers linked to this catalogue will be notified to re-confirm ${nextVersion ?? "the new version"}.`
               : `Suppliers matched automatically by ${region} + ${trade}. Untick any you want to exclude.`}
           </p>
-          <div className="flex gap-2 mb-3">
-            <Button variant="outline" onClick={() => setSelectedSuppliers(new Set(supplierPool.map((s) => s.id)))}>
-              Select all
-            </Button>
-            <Button variant="outline" onClick={() => setSelectedSuppliers(new Set())}>
-              Deselect all
-            </Button>
+          <div className="mb-6">
+            <SupplierReviewTable
+              suppliers={supplierPool}
+              selected={selectedSuppliers}
+              onToggle={toggleSupplier}
+              onSelectAll={() => setSelectedSuppliers(new Set(supplierPool.map((s) => s.id)))}
+              onDeselectAll={() => setSelectedSuppliers(new Set())}
+            />
           </div>
-          <div className="bg-card border border-border rounded-lg overflow-hidden mb-6">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-xs text-muted-foreground border-b border-border">
-                  <th className="px-4 py-2 font-medium w-10"></th>
-                  <th className="px-4 py-2 font-medium">SUPPLIER</th>
-                  <th className="px-4 py-2 font-medium">REGION</th>
-                </tr>
-              </thead>
-              <tbody>
-                {supplierPool.map((s) => (
-                  <tr key={s.id} className="border-b border-border last:border-0">
-                    <td className="px-4 py-2.5">
-                      <input
-                        type="checkbox"
-                        className="w-4 h-4 accent-slate-900"
-                        checked={selectedSuppliers.has(s.id)}
-                        onChange={(e) => {
-                          const next = new Set(selectedSuppliers);
-                          if (e.target.checked) next.add(s.id);
-                          else next.delete(s.id);
-                          setSelectedSuppliers(next);
-                        }}
-                      />
-                    </td>
-                    <td className="px-4 py-2.5 font-medium">{s.name}</td>
-                    <td className="px-4 py-2.5">{s.region}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="flex justify-between">
-            <Button variant="outline" onClick={() => setStep("Details")}>
-              Back
-            </Button>
-            <div className="flex gap-2">
-              {!isUpdate && (
-                <Button variant="outline" onClick={() => finish(false)}>
-                  Save as draft
-                </Button>
-              )}
-              <Button onClick={() => finish(true)}>
-                {isUpdate ? "Publish & notify suppliers" : "Publish & share with suppliers"}
-              </Button>
-            </div>
-          </div>
+          <BottomActionBar
+            onBack={() => setStep("Details")}
+            showSaveDraft={!isUpdate}
+            onSaveDraft={() => finish(false)}
+            onPrimary={() => finish(true)}
+            primaryLabel={isUpdate ? "Publish & notify suppliers" : "Publish & share with suppliers"}
+          />
         </div>
       )}
     </div>
