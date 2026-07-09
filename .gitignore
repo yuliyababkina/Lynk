@@ -8,3 +8,9 @@ tsconfig.tsbuildinfo
 
 # local backups
 *.bak
+
+*storybook.log
+storybook-static
+
+# storybook
+storybook-static
