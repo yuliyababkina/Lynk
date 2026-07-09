@@ -5,3 +5,6 @@ dist
 
 # build info
 tsconfig.tsbuildinfo
+
+# local backups
+*.bak

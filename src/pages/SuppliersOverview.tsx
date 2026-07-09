@@ -63,7 +63,7 @@ export function SuppliersOverview({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search..."
-            className="pl-8 pr-3 py-1.5 text-sm rounded-md border border-border bg-[var(--input-background)] w-56"
+            className="pl-8 pr-3 py-1.5 text-sm rounded-md border border-border bg-background w-56"
           />
         </div>
       </div>

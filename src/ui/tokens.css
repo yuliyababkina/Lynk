@@ -1,57 +1,21 @@
 /*
- * Lynk UI Library — Design Tokens
- * ---------------------------------
- * This is the single source of truth for every colour in the app.
- * Tweak a value here and it updates everywhere it is used.
- * Values are exposed to Tailwind as utilities, e.g. `--critical`
- * becomes `bg-critical`, `text-critical`, `border-critical`,
- * and `bg-critical/10` for a soft tinted background.
+ * Lynk UI Library — Semantic Design Tokens
+ * ----------------------------------------
+ * Base tokens (background, primary, secondary, border, radius, dark mode)
+ * are owned by the shadcn preset in ../index.css. This file adds the
+ * project-specific SEMANTIC layer on top and is imported from index.css.
+ *
+ * Tweak a value here and it updates everywhere it is used. Values are exposed
+ * to Tailwind as utilities, e.g. `--critical` → `bg-critical` / `text-critical`,
+ * and the derived `-soft` / `-ink` pairs give WCAG-AA badge tints + text.
  */
 
 :root {
-  /* Surfaces & text */
-  --background: #f1f5f9;
-  --foreground: #0f172a;
-  --card: #ffffff;
-  --card-foreground: #0f172a;
-  --popover: #ffffff;
-  --popover-foreground: #0f172a;
-
-  /* Brand / actions */
-  --primary: #0f172a;
-  --primary-foreground: #ffffff;
-  --secondary: #e2e8f0;
-  --secondary-foreground: #0f172a;
-  --muted: #e2e8f0;
-  --muted-foreground: #5b6675;
-  --accent: #2563eb;
-  --accent-foreground: #ffffff;
-
-  /* Form / structure */
-  --border: #cbd5e1;
-  --input: transparent;
-  --input-background: #f8fafc;
-  --ring: #2563eb;
-  --radius: 0.5rem;
-
-  /* Sidebar */
-  --sidebar: #0f172a;
-  --sidebar-foreground: #e2e8f0;
-  --sidebar-primary: #2563eb;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #1e293b;
-  --sidebar-accent-foreground: #f1f5f9;
-  --sidebar-border: #1e293b;
-  --sidebar-ring: #2563eb;
-
-  /* ---- Semantic palette — tweak to recolour the whole app ---- */
-
-  /* Status tones */
+  /* Status tones (preset owns --destructive; we add its foreground + success/warning) */
   --success: #047857;
   --success-foreground: #ffffff;
   --warning: #d97706;
   --warning-foreground: #ffffff;
-  --destructive: #dc2626;
   --destructive-foreground: #ffffff;
 
   /* Ticket criticality */
@@ -87,38 +51,11 @@
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-input-background: var(--input-background);
-  --color-ring: var(--ring);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-critical: var(--critical);
   --color-high: var(--high);
   --color-medium: var(--medium);
@@ -146,8 +83,4 @@
   --color-warning-ink: color-mix(in srgb, var(--warning), black 35%);
   --color-purple-soft: color-mix(in srgb, var(--purple), white 88%);
   --color-purple-ink: color-mix(in srgb, var(--purple), black 35%);
-
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
 }
