@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { expect } from "storybook/test";
 import { SupplierReviewTable, type ReviewSupplier } from "./supplier-review-table";
 
 const SUPPLIERS: ReviewSupplier[] = [
@@ -52,6 +53,13 @@ type Story = StoryObj<typeof meta>;
 /** All auto-matched suppliers selected (default share). */
 export const Default: Story = {
   render: () => <Harness suppliers={SUPPLIERS} initial={SUPPLIERS.map((s) => s.id)} />,
+  // Proves "Deselect all" clears every checkbox (interaction + state).
+  play: async ({ canvas, userEvent }) => {
+    const boxes = canvas.getAllByRole("checkbox");
+    await expect(boxes[0]).toBeChecked();
+    await userEvent.click(canvas.getByRole("button", { name: /deselect all/i }));
+    for (const b of boxes) await expect(b).not.toBeChecked();
+  },
 };
 
 /** None selected — after "Deselect all" (edge case: nothing will be shared). */

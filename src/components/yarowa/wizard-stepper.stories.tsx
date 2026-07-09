@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { fn } from "storybook/test";
+import { expect, fn } from "storybook/test";
 import { WizardStepper } from "./wizard-stepper";
 
 const STEPS = ["Upload", "Preview", "Details", "Distribution"];
@@ -18,7 +18,14 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /** Mid-flow: first two steps complete, "Details" not yet reached. */
-export const Default: Story = { args: { current: "Details" } };
+export const Default: Story = {
+  args: { current: "Details" },
+  // Proves step clicks are wired through onStepClick.
+  play: async ({ canvas, args, userEvent }) => {
+    await userEvent.click(canvas.getByText("Upload"));
+    await expect(args.onStepClick).toHaveBeenCalledWith("Upload");
+  },
+};
 
 /** First step active — nothing completed yet (edge case). */
 export const FirstStep: Story = { args: { current: "Upload" } };

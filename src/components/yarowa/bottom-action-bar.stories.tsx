@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { fn } from "storybook/test";
+import { expect, fn } from "storybook/test";
 import { BottomActionBar } from "./bottom-action-bar";
 
 const meta = {
@@ -14,7 +14,14 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /** Mid-wizard footer: Back + Next. */
-export const Default: Story = { args: { primaryLabel: "Next" } };
+export const Default: Story = {
+  args: { primaryLabel: "Next" },
+  // Proves the primary action fires.
+  play: async ({ canvas, args, userEvent }) => {
+    await userEvent.click(canvas.getByRole("button", { name: "Next" }));
+    await expect(args.onPrimary).toHaveBeenCalled();
+  },
+};
 
 /** Final step of the create flow: Back / Save as draft / Publish & share. */
 export const CreatePublish: Story = {
