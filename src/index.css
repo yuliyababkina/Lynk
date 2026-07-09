@@ -96,8 +96,9 @@ body {
   --secondary-foreground: oklch(0.21 0.006 285.885);
   --muted: oklch(0.97 0.001 106.424);
   --muted-foreground: oklch(0.553 0.013 58.071);
-  --accent: oklch(0.508 0.118 165.612);
-  --accent-foreground: oklch(0.979 0.021 166.113);
+  /* Brand override: keep links/accent blue (not the preset's green). */
+  --accent: #2563eb;
+  --accent-foreground: #ffffff;
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.923 0.003 48.717);
   --input: oklch(0.923 0.003 48.717);
@@ -131,8 +132,9 @@ body {
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.268 0.007 34.298);
   --muted-foreground: oklch(0.709 0.01 56.259);
-  --accent: oklch(0.432 0.095 166.913);
-  --accent-foreground: oklch(0.979 0.021 166.113);
+  /* Brand override: keep links/accent blue (not the preset's green). */
+  --accent: #3b82f6;
+  --accent-foreground: #ffffff;
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
