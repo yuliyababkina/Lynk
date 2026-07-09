@@ -32,7 +32,7 @@ export function Sidebar({ view, onNavigate }: { view: View; onNavigate: (v: View
           L
         </div>
         <div>
-          <div className="text-sm font-semibold text-white leading-none">Lynk</div>
+          <div className="text-sm font-semibold text-sidebar-foreground leading-none">Lynk</div>
           <div className="text-[10px] text-muted-foreground leading-none mt-0.5">Procurement Platform</div>
         </div>
       </div>
@@ -73,7 +73,7 @@ export function Sidebar({ view, onNavigate }: { view: View; onNavigate: (v: View
           SM
         </div>
         <div>
-          <div className="text-xs font-medium text-white leading-none">Sabine Müller</div>
+          <div className="text-xs font-medium text-sidebar-foreground leading-none">Sabine Müller</div>
           <div className="text-[10px] text-muted-foreground leading-none mt-0.5">Procurement Manager</div>
         </div>
       </div>
