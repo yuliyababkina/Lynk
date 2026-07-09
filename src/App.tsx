@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Sidebar } from "./components/Sidebar";
-import { TicketDrawer } from "./components/TicketDrawer";
+import { Sidebar } from "@/components/yarowa/sidebar";
+import { TicketDrawer } from "@/components/yarowa/ticket-drawer";
 import { Dashboard } from "./pages/Dashboard";
 import { SuppliersOverview } from "./pages/SuppliersOverview";
 import { SupplierProfile } from "./pages/SupplierProfile";

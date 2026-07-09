@@ -1,9 +1,9 @@
 import { X, ArrowUpRight } from "lucide-react";
-import type { Ticket } from "../types";
-import { DOCS, CONTRACTS, DATA_GOVERNANCE_REQUESTS, ONBOARDING_CASES } from "../data";
+import type { Ticket } from "@/types";
+import { DOCS, CONTRACTS, DATA_GOVERNANCE_REQUESTS, ONBOARDING_CASES } from "@/data";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { View } from "../App";
+import type { View } from "@/App";
 
 const sourceToView: Record<string, View> = {
   "compliance-monitoring": "compliance",

@@ -10,8 +10,8 @@ import {
   Plus,
   type LucideIcon,
 } from "lucide-react";
-import { cn } from "../lib/utils";
-import type { View } from "../App";
+import { cn } from "@/lib/utils";
+import type { View } from "@/App";
 
 const NAV: { id: View; label: string; icon: LucideIcon; badge?: number }[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutGrid },
