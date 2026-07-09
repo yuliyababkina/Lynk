@@ -1,5 +1,9 @@
 import { useMemo, useState } from "react";
-import { Eye, AlertTriangle, RefreshCw, Bell, Check, Send, type LucideIcon } from "lucide-react";
+import {
+  Eye, AlertTriangle, RefreshCw, Bell, Check, Send,
+  ShieldCheck, Shield, FileText, ClipboardList, Rocket,
+  type LucideIcon,
+} from "lucide-react";
 import { TICKETS } from "../data";
 import { Button } from "@/components/ui/button";
 import { criticalityDot, criticalityLabel } from "@/lib/theme";
@@ -21,6 +25,14 @@ const ACTION_ICON: Record<string, LucideIcon> = {
   Remind: Bell,
   Approve: Check,
   Request: Send,
+};
+// Icon illustrating each ticket type (mirrors the sidebar module iconography).
+const CATEGORY_ICON: Record<TicketCategory, LucideIcon> = {
+  "Document compliance": ShieldCheck,
+  "Data governance": Shield,
+  Contracts: FileText,
+  "Service agreements": ClipboardList,
+  Onboarding: Rocket,
 };
 
 export function Dashboard({ onSelectTicket }: { onSelectTicket: (t: Ticket) => void }) {
@@ -86,6 +98,7 @@ export function Dashboard({ onSelectTicket }: { onSelectTicket: (t: Ticket) => v
             <div>
               {group.tickets.map((t, i) => {
                 const ActionIcon = ACTION_ICON[t.primaryAction];
+                const CategoryIcon = CATEGORY_ICON[t.category];
                 return (
                   <button
                     key={t.id}
@@ -94,10 +107,15 @@ export function Dashboard({ onSelectTicket }: { onSelectTicket: (t: Ticket) => v
                       i < group.tickets.length - 1 ? "border-b border-border" : ""
                     }`}
                   >
-                    <div className="min-w-0">
-                      <div className="text-sm font-medium truncate">{t.title}</div>
-                      <div className="text-xs text-muted-foreground mt-0.5">
-                        {t.entityType} · {t.entityName} · {t.ageLabel}
+                    <div className="flex items-start gap-3 min-w-0">
+                      {CategoryIcon && (
+                        <CategoryIcon size={16} className="text-muted-foreground shrink-0 mt-0.5" aria-hidden="true" />
+                      )}
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium truncate">{t.title}</div>
+                        <div className="text-xs text-muted-foreground mt-0.5">
+                          {t.entityType} · {t.entityName} · {t.ageLabel}
+                        </div>
                       </div>
                     </div>
                     <Button
