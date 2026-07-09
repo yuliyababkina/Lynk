@@ -1,15 +1,18 @@
 import type { ReactNode } from "react";
 import { CircleAlert, TriangleAlert, Info, CircleCheck, type LucideIcon } from "lucide-react";
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
-export type AlertType = "error" | "warning" | "info" | "success" | "neutral";
+export type AlertBannerType = "error" | "warning" | "info" | "success" | "neutral";
 
 /*
  * Semantic alert banner. Per type: 200 tint background, 400 border, 700 icon,
  * primary (--foreground) text. All combinations verified against WCAG 2.2 AA.
- * Colours come from the --alert-* tokens in tokens.css — tweak them there.
+ * Colours come from the --alert-* tokens in ui/tokens.css — tweak them there.
+ *
+ * This is our opinionated product banner (5 semantic types), distinct from the
+ * shadcn `Alert` primitive in components/ui/alert.tsx (2 variants).
  */
-const STYLES: Record<AlertType, { wrap: string; icon: string; Icon: LucideIcon }> = {
+const STYLES: Record<AlertBannerType, { wrap: string; icon: string; Icon: LucideIcon }> = {
   error: {
     wrap: "bg-[var(--alert-error-bg)] border-[color:var(--alert-error-border)]",
     icon: "text-[color:var(--alert-error-icon)]",
@@ -37,14 +40,14 @@ const STYLES: Record<AlertType, { wrap: string; icon: string; Icon: LucideIcon }
   },
 };
 
-export function Alert({
+export function AlertBanner({
   type = "info",
   title,
   children,
   icon = true,
   className,
 }: {
-  type?: AlertType;
+  type?: AlertBannerType;
   title?: ReactNode;
   children?: ReactNode;
   /** Show the semantic icon (default true). */

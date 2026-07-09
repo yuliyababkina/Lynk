@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Check, Upload, Loader2 } from "lucide-react";
 import { CATALOGUE_REGIONS, CATALOGUE_TRADES, PARSED_LINES, DIFF_LINES } from "../data";
-import { Button, diffRow, diffLabel } from "../ui";
+import { Button } from "@/components/ui/button";
+import { diffRow, diffLabel } from "@/lib/theme";
 import { cn } from "../lib/utils";
 import type { Catalogue, CatalogueLineDiff, ResponseModel } from "../types";
 

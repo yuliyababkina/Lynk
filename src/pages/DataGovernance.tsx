@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp, Lock } from "lucide-react";
 import { DATA_GOVERNANCE_REQUESTS } from "../data";
-import { Alert, Badge, Button, Pill } from "../ui";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Pill } from "@/components/yarowa/pill";
+import { AlertBanner } from "@/components/yarowa/alert-banner";
 
 const TABS = ["All Requests", "Awaiting Review", "Endorsed — Awaiting 2nd Approval", "Approved", "Rejected"] as const;
 
@@ -27,14 +30,14 @@ export function DataGovernance({ initialSelectedId }: { initialSelectedId?: stri
       </p>
 
       {counts.awaiting > 0 && (
-        <Alert
+        <AlertBanner
           type="error"
           title={`${counts.awaiting} critical payment data change awaiting review`}
           className="mb-4"
         >
           IBAN and banking changes carry the highest fraud risk. Review carefully and verify with the
           supplier directly before endorsing.
-        </Alert>
+        </AlertBanner>
       )}
 
       <div className="grid grid-cols-4 gap-3 mb-4">
@@ -70,14 +73,14 @@ export function DataGovernance({ initialSelectedId }: { initialSelectedId?: stri
               >
                 <div className="flex items-center gap-2 text-left">
                   <span className="font-medium">{r.supplierName}</span>
-                  <Badge tone="neutral">{r.category}</Badge>
-                  {r.risk === "Critical" && <Badge tone="danger">Critical</Badge>}
+                  <Badge variant="neutral">{r.category}</Badge>
+                  {r.risk === "Critical" && <Badge variant="danger">Critical</Badge>}
                   <span className="text-xs text-muted-foreground">
                     Requested by {r.requestedBy} · {r.requestedAt}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge tone="warning">{r.status}</Badge>
+                  <Badge variant="warning">{r.status}</Badge>
                   {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </div>
               </button>
@@ -121,8 +124,8 @@ export function DataGovernance({ initialSelectedId }: { initialSelectedId?: stri
                     <div className="text-xs">
                       <div className="text-muted-foreground">Four-eyes approval progress</div>
                       <div className="flex items-center gap-2 mt-1">
-                        <Badge tone={r.approvalStep >= 1 ? "info" : "neutral"}>1. First Review</Badge>
-                        <Badge tone="neutral">2. Final Approval</Badge>
+                        <Badge variant={r.approvalStep >= 1 ? "info" : "neutral"}>1. First Review</Badge>
+                        <Badge variant="neutral">2. Final Approval</Badge>
                       </div>
                     </div>
                   </div>

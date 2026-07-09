@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
 import { Search, Plus, Star } from "lucide-react";
 import { SUPPLIERS } from "../data";
-import { Badge, Button, Pill } from "../ui";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Pill } from "@/components/yarowa/pill";
 import type { Supplier } from "../types";
 
 const complianceTone: Record<string, "success" | "warning" | "danger" | "neutral" | "purple"> = {
@@ -95,13 +97,13 @@ export function SuppliersOverview({
                   <div className="text-xs text-muted-foreground">{s.contacts[0]?.name}</div>
                 </td>
                 <td className="px-4 py-3">
-                  <Badge tone="neutral">{s.stage}</Badge>
+                  <Badge variant="neutral">{s.stage}</Badge>
                 </td>
                 <td className="px-4 py-3">{s.trade}</td>
                 <td className="px-4 py-3">{s.region}</td>
                 <td className="px-4 py-3">
                   {s.openTickets > 0 ? (
-                    <Badge tone="warning">
+                    <Badge variant="warning">
                       {s.openTickets} ticket{s.openTickets > 1 ? "s" : ""}
                     </Badge>
                   ) : (
@@ -112,7 +114,7 @@ export function SuppliersOverview({
                   {s.compliance === "—" ? (
                     <span className="text-muted-foreground">—</span>
                   ) : (
-                    <Badge tone={complianceTone[s.compliance]}>{s.compliance}</Badge>
+                    <Badge variant={complianceTone[s.compliance]}>{s.compliance}</Badge>
                   )}
                 </td>
                 <td className="px-4 py-3">

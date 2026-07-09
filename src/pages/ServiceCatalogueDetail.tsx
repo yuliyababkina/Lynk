@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { AlertTriangle, Upload, Bell, CheckCircle2 } from "lucide-react";
-import { Badge, Button } from "../ui";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { cn } from "../lib/utils";
 import type { Catalogue } from "../types";
 
@@ -86,7 +87,7 @@ export function ServiceCatalogueDetail({
           <div className="bg-card border border-border rounded-lg overflow-hidden">
             <div className="px-4 py-3 border-b border-border flex items-center justify-between">
               <span className="font-semibold text-sm">Service catalogue alerts</span>
-              <Badge tone={nonCompliant.length > 0 ? "danger" : "success"}>{nonCompliant.length}</Badge>
+              <Badge variant={nonCompliant.length > 0 ? "danger" : "success"}>{nonCompliant.length}</Badge>
             </div>
             {nonCompliant.length === 0 ? (
               <div className="px-4 py-4 text-sm text-muted-foreground flex items-center gap-2">
@@ -129,7 +130,7 @@ export function ServiceCatalogueDetail({
               >
                 <div className="flex items-center gap-2 text-sm">
                   <span className="font-medium">{v.version}</span>
-                  {v.version === catalogue.currentVersion && <Badge tone="success">Current</Badge>}
+                  {v.version === catalogue.currentVersion && <Badge variant="success">Current</Badge>}
                 </div>
                 <div className="text-xs text-muted-foreground mt-0.5">
                   {v.publishedAt} · {v.note}

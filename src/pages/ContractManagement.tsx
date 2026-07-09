@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { CONTRACTS } from "../data";
-import { Alert, Badge, Pill } from "../ui";
+import { Badge } from "@/components/ui/badge";
+import { Pill } from "@/components/yarowa/pill";
+import { AlertBanner } from "@/components/yarowa/alert-banner";
 import type { Contract, ContractStatus } from "../types";
 
 const STATUS_TONE: Record<ContractStatus, "success" | "warning" | "danger" | "info" | "neutral"> = {
@@ -49,10 +51,10 @@ export function ContractManagement({
       </p>
 
       {urgent > 0 && (
-        <Alert type="error" title={`${urgent} contract require immediate action`} className="mb-4">
+        <AlertBanner type="error" title={`${urgent} contract require immediate action`} className="mb-4">
           The renewal deadline has passed or is within 30 days. Initiate renewal or opt-out now to
           avoid a lapsed contract.
-        </Alert>
+        </AlertBanner>
       )}
 
       <div className="grid grid-cols-4 gap-3 mb-4">
@@ -112,7 +114,7 @@ export function ContractManagement({
                 </td>
                 <td className="px-4 py-3">{c.timeLeftLabel}</td>
                 <td className="px-4 py-3">
-                  <Badge tone={STATUS_TONE[c.status]}>{c.status}</Badge>
+                  <Badge variant={STATUS_TONE[c.status]}>{c.status}</Badge>
                 </td>
               </tr>
             ))}

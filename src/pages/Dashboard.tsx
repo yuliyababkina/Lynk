@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { Eye, AlertTriangle, RefreshCw, Bell, Check, Send, type LucideIcon } from "lucide-react";
 import { TICKETS } from "../data";
-import { Button, criticalityDot, criticalityLabel } from "../ui";
+import { Button } from "@/components/ui/button";
+import { criticalityDot, criticalityLabel } from "@/lib/theme";
 import type { Ticket, Criticality, TicketCategory } from "../types";
 
 const CATEGORIES: TicketCategory[] = [

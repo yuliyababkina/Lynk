@@ -1,6 +1,8 @@
 import { ArrowLeft, Building2, Edit, Mail, MoreHorizontal } from "lucide-react";
 import { SUPPLIERS, TICKETS, CONTRACTS, DOCS } from "../data";
-import { Alert, Badge, Button } from "../ui";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { AlertBanner } from "@/components/yarowa/alert-banner";
 import type { Ticket } from "../types";
 
 const ACTIVITY: Record<string, { label: string; who: string; date: string; tone: "warning" | "success" | "danger" | "neutral" }[]> = {
@@ -48,7 +50,7 @@ export function SupplierProfile({
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-bold">{supplier.name}</h1>
-              <Badge tone="neutral">{supplier.stage}</Badge>
+              <Badge variant="neutral">{supplier.stage}</Badge>
             </div>
             <div className="text-xs text-muted-foreground mt-0.5">
               {supplier.trade} · {supplier.region} · Last active {supplier.lastActive}
@@ -108,7 +110,7 @@ export function SupplierProfile({
                 <div className="text-xs text-muted-foreground mt-0.5">{t.ageLabel}</div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <Badge tone={t.criticality}>{t.criticality}</Badge>
+                <Badge variant={t.criticality}>{t.criticality}</Badge>
                 <Button variant="outline">{t.primaryAction}</Button>
               </div>
             </button>
@@ -124,7 +126,7 @@ export function SupplierProfile({
               <div key={c.name} className="flex items-center justify-between text-sm">
                 <div>
                   <span className="font-medium">{c.name}</span>{" "}
-                  {c.primary && <Badge tone="info">Primary</Badge>}
+                  {c.primary && <Badge variant="info">Primary</Badge>}
                   <div className="text-xs text-muted-foreground">{c.role}</div>
                   <div className="text-xs text-muted-foreground">{c.email}</div>
                 </div>
@@ -139,19 +141,19 @@ export function SupplierProfile({
           <div className="text-xs text-muted-foreground mb-1">Trade Categories</div>
           <div className="flex flex-wrap gap-1.5 mb-3">
             {[supplier.trade, "Site Safety"].map((t) => (
-              <Badge key={t} tone="neutral">{t}</Badge>
+              <Badge key={t} variant="neutral">{t}</Badge>
             ))}
           </div>
           <div className="text-xs text-muted-foreground mb-1">Regions Served</div>
           <div className="flex flex-wrap gap-1.5 mb-3">
             {supplier.regionsServed.map((r) => (
-              <Badge key={r} tone="neutral">{r}</Badge>
+              <Badge key={r} variant="neutral">{r}</Badge>
             ))}
           </div>
           <div className="text-xs text-muted-foreground mb-1">Capabilities</div>
           <div className="flex flex-wrap gap-1.5">
             {supplier.capabilities.map((c) => (
-              <Badge key={c} tone="neutral">{c}</Badge>
+              <Badge key={c} variant="neutral">{c}</Badge>
             ))}
           </div>
         </div>
@@ -165,7 +167,7 @@ export function SupplierProfile({
             {(docs.length ? docs : []).map((d) => (
               <div key={d.id} className="flex items-center justify-between">
                 <span>{d.documentName}</span>
-                <Badge tone={d.status === "valid" ? "success" : d.status === "blocked" ? "danger" : "warning"}>
+                <Badge variant={d.status === "valid" ? "success" : d.status === "blocked" ? "danger" : "warning"}>
                   {d.status}
                 </Badge>
               </div>
@@ -188,7 +190,7 @@ export function SupplierProfile({
                     {c.type} · Valid to {c.endDate}
                   </div>
                 </div>
-                <Badge tone="warning">{c.status}</Badge>
+                <Badge variant="warning">{c.status}</Badge>
               </div>
             ))}
             {contracts.length === 0 && <div className="text-muted-foreground">No contracts on file.</div>}
@@ -212,9 +214,9 @@ export function SupplierProfile({
                 <span className="font-medium">{supplier.address}</span>
               </div>
             </div>
-            <Alert type="warning" className="mt-3">
+            <AlertBanner type="warning" className="mt-3">
               IBAN change request pending four-eyes approval
-            </Alert>
+            </AlertBanner>
           </div>
         )}
 

@@ -1,10 +1,9 @@
 /*
- * Lynk UI Library — Semantic class maps
- * -------------------------------------
- * Maps a *meaning* (criticality, status tone, diff state, chart series)
- * to the Tailwind classes that render it. Every class here resolves to a
- * token in tokens.css, so this is the one place to change how a meaning
- * looks — the change flows to every screen that uses it.
+ * Semantic class maps — maps a *meaning* (criticality, diff state, chart series)
+ * to Tailwind classes that resolve to tokens in ui/tokens.css. One place to
+ * change how a meaning looks across every screen.
+ *
+ * Badge tones now live as variants in components/ui/badge.tsx.
  */
 
 import type { Criticality } from "../types";
@@ -23,34 +22,6 @@ export const criticalityLabel: Record<Criticality, string> = {
   high: "High",
   medium: "Medium",
   low: "Low",
-};
-
-export type Tone =
-  | "critical"
-  | "high"
-  | "medium"
-  | "low"
-  | "success"
-  | "warning"
-  | "danger"
-  | "info"
-  | "neutral"
-  | "purple"
-  | "dark";
-
-/** Soft-tinted background + accessible ink text per tone (WCAG 2.2 AA), used by Badge. */
-export const toneClass: Record<Tone, string> = {
-  critical: "bg-critical-soft text-critical-ink",
-  high: "bg-high-soft text-high-ink",
-  medium: "bg-medium-soft text-medium-ink",
-  low: "bg-low-soft text-low-ink",
-  success: "bg-success-soft text-success-ink",
-  warning: "bg-warning-soft text-warning-ink",
-  danger: "bg-critical-soft text-critical-ink",
-  info: "bg-medium-soft text-medium-ink",
-  neutral: "bg-secondary text-secondary-foreground",
-  purple: "bg-purple-soft text-purple-ink",
-  dark: "bg-primary text-primary-foreground",
 };
 
 export type DiffState = "added" | "changed" | "removed" | "unchanged";

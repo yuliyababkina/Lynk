@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { ONBOARDING_CASES } from "../data";
-import { Badge, Button, Pill } from "../ui";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Pill } from "@/components/yarowa/pill";
 
 export function Onboarding({ initialSelectedId }: { initialSelectedId?: string | null }) {
   const [tab, setTab] = useState<"All" | "Stale">("All");
@@ -69,10 +71,10 @@ export function Onboarding({ initialSelectedId }: { initialSelectedId?: string |
                     <div className="text-xs text-muted-foreground">{c.contactName}</div>
                   </td>
                   <td className="px-4 py-3">
-                    <Badge tone="neutral">Prospect</Badge>
+                    <Badge variant="neutral">Prospect</Badge>
                   </td>
                   <td className="px-4 py-3">
-                    <Badge tone={c.status === "Stale" ? "danger" : c.status === "Pending" ? "warning" : "info"}>
+                    <Badge variant={c.status === "Stale" ? "danger" : c.status === "Pending" ? "warning" : "info"}>
                       {c.status}
                     </Badge>
                   </td>

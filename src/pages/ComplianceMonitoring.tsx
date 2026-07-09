@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { DOCS } from "../data";
-import { Alert, Badge, Pill } from "../ui";
+import { Badge } from "@/components/ui/badge";
+import { Pill } from "@/components/yarowa/pill";
+import { AlertBanner } from "@/components/yarowa/alert-banner";
 import type { SupplierDoc, DocStatus } from "../types";
 
 const STATUS_META: Record<DocStatus, { label: string; tone: "success" | "warning" | "danger" | "info" | "neutral" }> = {
@@ -56,9 +58,9 @@ export function ComplianceMonitoring({
       </p>
 
       {counts.blocked > 0 && (
-        <Alert type="warning" title={`${counts.blocked} supplier blocked from work orders`} className="mb-4">
+        <AlertBanner type="warning" title={`${counts.blocked} supplier blocked from work orders`} className="mb-4">
           Document expiry passed without renewal. Review any uploaded renewals to reactivate.
-        </Alert>
+        </AlertBanner>
       )}
 
       <div className="grid grid-cols-5 gap-3 mb-4">
@@ -117,7 +119,7 @@ export function ComplianceMonitoring({
                   </div>
                 </td>
                 <td className="px-4 py-3">
-                  <Badge tone={STATUS_META[d.status].tone}>{STATUS_META[d.status].label}</Badge>
+                  <Badge variant={STATUS_META[d.status].tone}>{STATUS_META[d.status].label}</Badge>
                 </td>
               </tr>
             ))}

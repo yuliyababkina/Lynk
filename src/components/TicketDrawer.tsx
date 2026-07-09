@@ -1,7 +1,8 @@
 import { X, ArrowUpRight } from "lucide-react";
 import type { Ticket } from "../types";
 import { DOCS, CONTRACTS, DATA_GOVERNANCE_REQUESTS, ONBOARDING_CASES } from "../data";
-import { Badge, Button } from "../ui";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import type { View } from "../App";
 
 const sourceToView: Record<string, View> = {
@@ -40,8 +41,8 @@ export function TicketDrawer({
     <div className="w-[380px] shrink-0 border-l border-border bg-card h-full overflow-y-auto">
       <div className="p-4 flex items-start justify-between border-b border-border">
         <div className="flex gap-2">
-          <Badge tone={ticket.criticality}>{ticket.criticality}</Badge>
-          <Badge tone="neutral">{sourceLabel[ticket.source]}</Badge>
+          <Badge variant={ticket.criticality}>{ticket.criticality}</Badge>
+          <Badge variant="neutral">{sourceLabel[ticket.source]}</Badge>
         </div>
         <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
           <X size={18} />

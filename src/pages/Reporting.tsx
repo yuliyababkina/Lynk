@@ -1,5 +1,6 @@
 import { Download } from "lucide-react";
-import { Button, Pill } from "../ui";
+import { Button } from "@/components/ui/button";
+import { Pill } from "@/components/yarowa/pill";
 import { useState } from "react";
 
 export function Reporting() {

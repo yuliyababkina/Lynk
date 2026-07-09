@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Upload, Users, FileSpreadsheet } from "lucide-react";
 import { CATALOGUE_REGIONS, CATALOGUE_TRADES } from "../data";
-import { Badge, Button } from "../ui";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import type { Catalogue, CatalogueStatus } from "../types";
 
 const STATUS_TONE: Record<CatalogueStatus, "success" | "neutral" | "info"> = {
@@ -109,7 +110,7 @@ export function ServiceCatalogueList({
             >
               <div className="flex items-start justify-between gap-2 mb-1">
                 <div className="font-semibold">{c.name}</div>
-                <Badge tone={STATUS_TONE[c.status]}>{c.status}</Badge>
+                <Badge variant={STATUS_TONE[c.status]}>{c.status}</Badge>
               </div>
               <div className="text-xs text-muted-foreground mb-4">
                 {c.versionLabel} · {c.region} · {c.trade}
