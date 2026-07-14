@@ -1,6 +1,6 @@
 import { X, ArrowUpRight } from "lucide-react";
 import type { Ticket, SupplierDoc } from "@/types";
-import { DOCS, CONTRACTS, DATA_GOVERNANCE_REQUESTS, ONBOARDING_CASES } from "@/data";
+import { useLynkData } from "@/lib/LynkDataContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { RenewalReviewCard } from "@/components/yarowa/renewal-review-card";
@@ -35,6 +35,12 @@ export function TicketDrawer({
   onResolve: (ticket: Ticket, action: string) => void;
   onReview: (doc: SupplierDoc) => void;
 }) {
+  const {
+    docs: DOCS,
+    contracts: CONTRACTS,
+    dataGovernanceRequests: DATA_GOVERNANCE_REQUESTS,
+    onboardingCases: ONBOARDING_CASES,
+  } = useLynkData();
   const doc = ticket.source === "compliance-monitoring" ? DOCS.find((d) => d.id === ticket.targetId) : undefined;
   const contract = ticket.source === "contracts" ? CONTRACTS.find((c) => c.id === ticket.targetId) : undefined;
   const dgr = ticket.source === "data-governance" ? DATA_GOVERNANCE_REQUESTS.find((r) => r.id === ticket.targetId) : undefined;

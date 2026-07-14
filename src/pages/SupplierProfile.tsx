@@ -1,5 +1,5 @@
-import { ArrowLeft, Building2, Edit, Mail, MoreHorizontal } from "lucide-react";
-import { SUPPLIERS, TICKETS, CONTRACTS, DOCS } from "../data";
+import { ArrowLeft, Building2, Edit, Mail, MoreHorizontal, FileText } from "lucide-react";
+import { useLynkData } from "../lib/LynkDataContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertBanner } from "@/components/yarowa/alert-banner";
@@ -27,6 +27,7 @@ export function SupplierProfile({
   onBack: () => void;
   onSelectTicket: (t: Ticket) => void;
 }) {
+  const { suppliers: SUPPLIERS, tickets: TICKETS, contracts: CONTRACTS, docs: DOCS } = useLynkData();
   const supplier = SUPPLIERS.find((s) => s.id === supplierId);
   if (!supplier) return null;
 
@@ -165,8 +166,23 @@ export function SupplierProfile({
           </div>
           <div className="space-y-2 text-sm">
             {(docs.length ? docs : []).map((d) => (
-              <div key={d.id} className="flex items-center justify-between">
-                <span>{d.documentName}</span>
+              <div key={d.id} className="flex items-center justify-between gap-2">
+                <span className="flex items-center gap-1.5 min-w-0">
+                  {d.fileUrl ? (
+                    <a
+                      href={d.fileUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-1.5 truncate hover:underline hover:text-accent"
+                      title="View attached document"
+                    >
+                      <FileText size={13} className="text-muted-foreground shrink-0" />
+                      {d.documentName}
+                    </a>
+                  ) : (
+                    <span className="truncate">{d.documentName}</span>
+                  )}
+                </span>
                 <Badge variant={d.status === "valid" ? "success" : d.status === "blocked" ? "danger" : "warning"}>
                   {d.status}
                 </Badge>

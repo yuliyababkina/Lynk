@@ -5,6 +5,7 @@ import type {
   Contract,
   DataGovernanceRequest,
   OnboardingCase,
+  DirectoryCompany,
   Catalogue,
   CatalogueLineDiff,
 } from "./types";
@@ -320,6 +321,28 @@ export const ONBOARDING_CASES: OnboardingCase[] = [
 
 export const CATALOGUE_REGIONS = ["Bavaria", "Baden-Württemberg", "NRW", "Hesse", "Berlin", "All Germany"];
 export const CATALOGUE_TRADES = ["Painting", "Roofing", "Piping", "Electrical", "Sanitary"];
+
+// Trades offered when inviting a supplier (the wizard's Details step).
+export const TRADES = [
+  "Carpentry",
+  "Drywall",
+  "Electrical",
+  "Heating & Plumbing",
+  "Landscaping",
+  "Renovation",
+  "Roofing",
+];
+
+// Company typeahead used in the invite wizard. Matching a name here switches the
+// flow: "on-lynk" → connection request (no email), "connected" → already yours.
+// Any other typed name is treated as a brand-new company (email invite).
+export const COMPANY_DIRECTORY: DirectoryCompany[] = [
+  { name: "Arctis Build Systems", trade: "Roofing", city: "Munich", rating: 88, state: "on-lynk" },
+  { name: "Brandt Electrical", trade: "Electrical", city: "Stuttgart", rating: 76, state: "on-lynk" },
+  { name: "DeltaHaus Roofing GmbH", trade: "Roofing", city: "Munich", rating: 62, state: "connected" },
+  { name: "Fixora Heating", trade: "Heating & Plumbing", city: "Berlin", state: "new" },
+  { name: "Gipfelmontage Drywall", trade: "Drywall", city: "Munich", state: "new" },
+];
 
 export const CATALOGUES: Catalogue[] = [
   {

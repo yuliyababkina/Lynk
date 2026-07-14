@@ -1,6 +1,6 @@
 import { Fragment, useMemo, useState } from "react";
 import { Upload, ChevronRight } from "lucide-react";
-import { DOCS } from "../data";
+import { useLynkData } from "../lib/LynkDataContext";
 import { Badge } from "@/components/ui/badge";
 import { Pill } from "@/components/yarowa/pill";
 import { AlertBanner } from "@/components/yarowa/alert-banner";
@@ -36,6 +36,7 @@ export function ComplianceMonitoring({
   selectedDocId?: string | null;
   initialSelectedId?: string | null;
 }) {
+  const { docs: DOCS } = useLynkData();
   const [tab, setTab] = useState<(typeof TABS)[number]>("All");
 
   const filtered = useMemo(() => {

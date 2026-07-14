@@ -4,7 +4,7 @@ import {
   ShieldCheck, Shield, FileText, ClipboardList, Rocket,
   type LucideIcon,
 } from "lucide-react";
-import { TICKETS, DOCS } from "../data";
+import { useLynkData } from "../lib/LynkDataContext";
 import { Button } from "@/components/ui/button";
 import { criticalityDot, criticalityLabel } from "@/lib/theme";
 import type { Ticket, Criticality, TicketCategory } from "../types";
@@ -44,6 +44,7 @@ export function Dashboard({
   resolvedIds: Set<string>;
   onResolve: (t: Ticket, action: string) => void;
 }) {
+  const { tickets: TICKETS, docs: DOCS } = useLynkData();
   const [filter, setFilter] = useState<"All tickets" | TicketCategory>("All tickets");
 
   const open = useMemo(() => TICKETS.filter((t) => !resolvedIds.has(t.id)), [resolvedIds]);

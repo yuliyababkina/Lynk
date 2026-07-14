@@ -26,6 +26,8 @@ export interface Ticket {
   source: TicketSource;
   category: TicketCategory;
   targetId?: string;
+  /** Set once persistence is wired up (LynkDataContext) — true once resolved in the DB. */
+  resolved?: boolean;
 }
 
 export type SupplierStage = "Prospect" | "Supplier" | "Provider";
@@ -103,6 +105,9 @@ export interface SupplierDoc {
   /** A renewal file the supplier uploaded that is awaiting the manager's review. */
   renewal?: RenewalUpload;
   history: ComplianceEvent[];
+  /** Storage object path + public URL for the CURRENT valid file, if one has been attached. */
+  filePath?: string;
+  fileUrl?: string;
 }
 
 export type ContractStatus = "Active" | "Expiring Soon" | "Renewal Urgent" | "Renewal in Progress" | "Opted Out";
@@ -142,6 +147,22 @@ export interface OnboardingCase {
   status: OnboardingStatus;
   daysNoResponse: number;
   criticality: Criticality;
+}
+
+/**
+ * How a company typed into the invite flow relates to the platform:
+ *  - "new"        → not on Lynk; gets an email onboarding invitation
+ *  - "on-lynk"    → has a verified profile elsewhere; gets a connection request
+ *  - "connected"  → already active in your network; nothing to do
+ */
+export type InviteMatch = "new" | "on-lynk" | "connected";
+
+export interface DirectoryCompany {
+  name: string;
+  trade: string;
+  city: string;
+  rating?: number;
+  state: InviteMatch;
 }
 
 export type CatalogueStatus = "Active" | "Draft" | "Upcoming";

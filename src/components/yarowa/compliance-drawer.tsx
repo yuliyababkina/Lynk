@@ -1,6 +1,6 @@
 import {
   X, ShieldAlert, XCircle, Clock, CheckCircle2, AlertTriangle,
-  Upload, Bell, Send, Ban, type LucideIcon,
+  Upload, Bell, Send, Ban, FileText, type LucideIcon,
 } from "lucide-react";
 import type { SupplierDoc, DocStatus, ComplianceEventType } from "@/types";
 import { Badge } from "@/components/ui/badge";
@@ -193,6 +193,18 @@ export function ComplianceDrawer({
           />
           {doc.autoNotified && <MetaField label="Auto-notified" value={doc.autoNotified} />}
         </div>
+
+        {doc.fileUrl && (
+          <a
+            href={doc.fileUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-2 rounded-lg border border-border bg-secondary/30 px-3 py-2 text-sm font-medium hover:bg-secondary/50 transition-colors"
+          >
+            <FileText size={15} className="text-muted-foreground shrink-0" />
+            View attached document
+          </a>
+        )}
 
         {doc.renewal ? (
           <>

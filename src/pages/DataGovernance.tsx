@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp, Lock } from "lucide-react";
-import { DATA_GOVERNANCE_REQUESTS } from "../data";
+import { useLynkData } from "../lib/LynkDataContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Pill } from "@/components/yarowa/pill";
@@ -9,6 +9,7 @@ import { AlertBanner } from "@/components/yarowa/alert-banner";
 const TABS = ["All Requests", "Awaiting Review", "Endorsed — Awaiting 2nd Approval", "Approved", "Rejected"] as const;
 
 export function DataGovernance({ initialSelectedId }: { initialSelectedId?: string | null }) {
+  const { dataGovernanceRequests: DATA_GOVERNANCE_REQUESTS } = useLynkData();
   const [tab, setTab] = useState<(typeof TABS)[number]>("All Requests");
   const [expanded, setExpanded] = useState<string | null>(initialSelectedId ?? DATA_GOVERNANCE_REQUESTS[0]?.id ?? null);
 

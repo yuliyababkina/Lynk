@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { CONTRACTS } from "../data";
+import { useLynkData } from "../lib/LynkDataContext";
 import { Badge } from "@/components/ui/badge";
 import { Pill } from "@/components/yarowa/pill";
 import { AlertBanner } from "@/components/yarowa/alert-banner";
@@ -22,6 +22,7 @@ export function ContractManagement({
   onSelectContract: (c: Contract) => void;
   initialSelectedId?: string | null;
 }) {
+  const { contracts: CONTRACTS } = useLynkData();
   const [tab, setTab] = useState<(typeof TABS)[number]>("All");
 
   const filtered = useMemo(() => {

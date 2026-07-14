@@ -3,9 +3,10 @@ import { Sidebar } from "@/components/yarowa/sidebar";
 import { TicketDrawer } from "@/components/yarowa/ticket-drawer";
 import { ComplianceDrawer } from "@/components/yarowa/compliance-drawer";
 import { DocumentLightbox } from "@/components/yarowa/document-lightbox";
+import { InviteSupplierModal } from "@/components/yarowa/invite-supplier-modal";
 import { Toaster, toast } from "@/components/yarowa/toast";
 import { actionResult } from "@/lib/ticket-actions";
-import { TICKETS } from "./data";
+import { useLynkData } from "./lib/LynkDataContext";
 import { Dashboard } from "./pages/Dashboard";
 import { SuppliersOverview } from "./pages/SuppliersOverview";
 import { SupplierProfile } from "./pages/SupplierProfile";
@@ -41,13 +42,22 @@ const VIEW_LABEL: Record<View, string> = {
 };
 
 export default function App() {
+  const {
+    tickets: TICKETS,
+    resolvedTicketIds,
+    resolveTicket: persistResolveTicket,
+    unresolveTicket,
+    decideRenewal: persistDecideRenewal,
+    addOnboardingCase,
+  } = useLynkData();
+
   const [view, setView] = useState<View>("dashboard");
   const [activeTicket, setActiveTicket] = useState<Ticket | null>(null);
   const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(null);
   const [pendingSelected, setPendingSelected] = useState<string | null>(null);
-  const [resolvedIds, setResolvedIds] = useState<Set<string>>(new Set());
   const [activeDoc, setActiveDoc] = useState<SupplierDoc | null>(null);
   const [reviewDoc, setReviewDoc] = useState<SupplierDoc | null>(null);
+  const [inviteOpen, setInviteOpen] = useState(false);
 
   function navigate(v: View, selectedId?: string) {
     setActiveTicket(null);
@@ -56,8 +66,13 @@ export default function App() {
     setView(v);
   }
 
+  // resolvedIds keeps the same name/shape the pages already expect; it's now
+  // backed by the DB (via LynkDataContext) instead of local-only state, so a
+  // resolved ticket stays resolved across reloads and browser sessions.
+  const resolvedIds = resolvedTicketIds;
+
   function resolveTicket(ticket: Ticket, action: string) {
-    setResolvedIds((prev) => new Set(prev).add(ticket.id));
+    persistResolveTicket(ticket, action);
     setActiveTicket((cur) => (cur?.id === ticket.id ? null : cur));
     const result = actionResult(action);
     toast({
@@ -66,20 +81,18 @@ export default function App() {
       tone: result.tone,
       action: {
         label: "Undo",
-        onClick: () =>
-          setResolvedIds((prev) => {
-            const next = new Set(prev);
-            next.delete(ticket.id);
-            return next;
-          }),
+        onClick: () => unresolveTicket(ticket.id),
       },
     });
   }
 
   // A renewal decision is the same act no matter where it was triggered from, so
   // it clears the lightbox, closes the compliance drawer, and resolves the linked
-  // dashboard ticket — keeping the ticket consistent across every space.
+  // dashboard ticket — keeping the ticket consistent across every space. The
+  // actual document status change and ticket resolution are persisted via
+  // LynkDataContext (decideRenewal / resolveTicket), so they survive a reload.
   function decideRenewal(doc: SupplierDoc, decision: "accept" | "reject") {
+    persistDecideRenewal(doc, decision);
     if (decision === "accept") {
       toast({
         title: "Renewal accepted",
@@ -100,7 +113,7 @@ export default function App() {
     setActiveDoc(null);
     const linked = TICKETS.find((t) => t.source === "compliance-monitoring" && t.targetId === doc.id);
     if (linked) {
-      setResolvedIds((prev) => new Set(prev).add(linked.id));
+      persistResolveTicket(linked, decision === "accept" ? "Review" : "Escalate");
       setActiveTicket((cur) => (cur?.id === linked.id ? null : cur));
     }
   }
@@ -117,7 +130,7 @@ export default function App() {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-background text-foreground">
-      <Sidebar view={view} onNavigate={(v) => navigate(v)} />
+      <Sidebar view={view} onNavigate={(v) => navigate(v)} onInvite={() => setInviteOpen(true)} />
 
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-14 border-b border-border flex items-center px-6 shrink-0 bg-card">
@@ -205,6 +218,12 @@ export default function App() {
           onDecision={(decision) => decideRenewal(reviewDoc, decision)}
         />
       )}
+
+      <InviteSupplierModal
+        open={inviteOpen}
+        onClose={() => setInviteOpen(false)}
+        onCreateProspect={(c) => addOnboardingCase(c)}
+      />
 
       <Toaster />
     </div>

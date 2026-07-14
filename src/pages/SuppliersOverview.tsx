@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Search, Plus, Star } from "lucide-react";
-import { SUPPLIERS } from "../data";
+import { useLynkData } from "../lib/LynkDataContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Pill } from "@/components/yarowa/pill";
@@ -21,6 +21,7 @@ export function SuppliersOverview({
   onOpenProfile: (id: string) => void;
   initialSelectedId?: string | null;
 }) {
+  const { suppliers: SUPPLIERS } = useLynkData();
   const [stage, setStage] = useState<"All" | "Prospect" | "Supplier" | "Provider">("All");
   const [query, setQuery] = useState("");
 

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { CATALOGUES, PARSED_LINES, DIFF_LINES } from "../data";
+import { PARSED_LINES, DIFF_LINES } from "../data";
+import { useLynkData } from "../lib/LynkDataContext";
 import { ServiceCatalogueList } from "./ServiceCatalogueList";
 import { ServiceCatalogueDetail } from "./ServiceCatalogueDetail";
 import { ServiceCatalogueWizard, type WizardResult } from "./ServiceCatalogueWizard";
@@ -21,9 +22,9 @@ function nextVersionOf(current: string): string {
 }
 
 export function ServiceCatalogue({ initialSelectedId }: { initialSelectedId?: string | null }) {
-  const [catalogues, setCatalogues] = useState<Catalogue[]>(CATALOGUES);
+  const { catalogues, setCatalogues, persistCatalogue } = useLynkData();
   const [mode, setMode] = useState<Mode>(() =>
-    initialSelectedId && CATALOGUES.some((c) => c.id === initialSelectedId)
+    initialSelectedId && catalogues.some((c) => c.id === initialSelectedId)
       ? { kind: "detail", catalogueId: initialSelectedId }
       : { kind: "list" }
   );
@@ -52,7 +53,8 @@ export function ServiceCatalogue({ initialSelectedId }: { initialSelectedId?: st
       ],
       suppliers: result.suppliers.map((s) => ({ ...s, confirmed: false })),
     };
-    setCatalogues([newCatalogue, ...catalogues]);
+    setCatalogues((prev) => [newCatalogue, ...prev]);
+    persistCatalogue(newCatalogue);
     toast({
       title: result.publish ? "Catalogue published" : "Draft saved",
       description: result.publish
@@ -64,27 +66,25 @@ export function ServiceCatalogue({ initialSelectedId }: { initialSelectedId?: st
   }
 
   function handleUpdateFinish(catalogueId: string) {
-    setCatalogues((prev) =>
-      prev.map((c) => {
-        if (c.id !== catalogueId) return c;
-        const next = nextVersionOf(c.currentVersion);
-        return {
-          ...c,
-          currentVersion: next,
-          versionLabel: `${next} (2027)`,
-          awaitingFirstResponse: false,
-          versions: [{ version: next, publishedAt: "Today", note: "New version published" }, ...c.versions],
-          suppliers: c.suppliers.map((s) => ({ ...s, confirmed: false })),
-          services: DIFF_LINES.filter((l) => l.change !== "removed").map(
-            ({ change: _change, previousRate: _prev, ...line }) => line
-          ),
-        };
-      })
-    );
-    const updated = catalogues.find((c) => c.id === catalogueId);
+    const current = catalogues.find((c) => c.id === catalogueId);
+    if (!current) return;
+    const next = nextVersionOf(current.currentVersion);
+    const updated: Catalogue = {
+      ...current,
+      currentVersion: next,
+      versionLabel: `${next} (2027)`,
+      awaitingFirstResponse: false,
+      versions: [{ version: next, publishedAt: "Today", note: "New version published" }, ...current.versions],
+      suppliers: current.suppliers.map((s) => ({ ...s, confirmed: false })),
+      services: DIFF_LINES.filter((l) => l.change !== "removed").map(
+        ({ change: _change, previousRate: _prev, ...line }) => line
+      ),
+    };
+    setCatalogues((prev) => prev.map((c) => (c.id === catalogueId ? updated : c)));
+    persistCatalogue(updated);
     toast({
       title: "New version published",
-      description: updated ? `${updated.name} · ${updated.suppliers.length} suppliers notified to re-confirm` : undefined,
+      description: `${updated.name} · ${updated.suppliers.length} suppliers notified to re-confirm`,
       tone: "success",
     });
     setMode({ kind: "detail", catalogueId });

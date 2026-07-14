@@ -3,6 +3,10 @@ dist
 .DS_Store
 *.local
 
+# Supabase credentials — never commit these
+.env
+.env.local
+
 # build info
 tsconfig.tsbuildinfo
 

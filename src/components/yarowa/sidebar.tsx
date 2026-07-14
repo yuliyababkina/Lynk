@@ -24,7 +24,15 @@ const NAV: { id: View; label: string; icon: LucideIcon; badge?: number }[] = [
   { id: "service-catalogue", label: "Service Catalogue", icon: ClipboardList },
 ];
 
-export function Sidebar({ view, onNavigate }: { view: View; onNavigate: (v: View) => void }) {
+export function Sidebar({
+  view,
+  onNavigate,
+  onInvite,
+}: {
+  view: View;
+  onNavigate: (v: View) => void;
+  onInvite: () => void;
+}) {
   return (
     <aside className="w-[220px] bg-sidebar text-sidebar-foreground flex flex-col shrink-0">
       <div className="h-14 flex items-center gap-2 px-4 border-b border-sidebar-border">
@@ -62,7 +70,10 @@ export function Sidebar({ view, onNavigate }: { view: View; onNavigate: (v: View
             </button>
           );
         })}
-        <button className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm text-muted-foreground hover:bg-sidebar-accent/60 mt-2">
+        <button
+          onClick={onInvite}
+          className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm text-muted-foreground hover:bg-sidebar-accent/60 mt-2"
+        >
           <Plus size={16} />
           <span>Invite Supplier</span>
         </button>

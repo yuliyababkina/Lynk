@@ -1,21 +1,30 @@
 import { useMemo, useState } from "react";
-import { ONBOARDING_CASES } from "../data";
+import { useLynkData } from "../lib/LynkDataContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Pill } from "@/components/yarowa/pill";
 
-export function Onboarding({ initialSelectedId }: { initialSelectedId?: string | null }) {
+export function Onboarding({
+  initialSelectedId,
+}: {
+  initialSelectedId?: string | null;
+}) {
+  const { onboardingCases: ONBOARDING_CASES } = useLynkData();
   const [tab, setTab] = useState<"All" | "Stale">("All");
   const [selected, setSelected] = useState<string | null>(initialSelectedId ?? null);
 
+  // Newly invited prospects (added via addOnboardingCase) already sit at the
+  // front of ONBOARDING_CASES — see LynkDataContext.
+  const cases = useMemo(() => ONBOARDING_CASES, [ONBOARDING_CASES]);
+
   const filtered = useMemo(
-    () => (tab === "Stale" ? ONBOARDING_CASES.filter((c) => c.status === "Stale") : ONBOARDING_CASES),
-    [tab]
+    () => (tab === "Stale" ? cases.filter((c) => c.status === "Stale") : cases),
+    [tab, cases]
   );
 
-  const stale = ONBOARDING_CASES.filter((c) => c.status === "Stale").length;
-  const highPriority = ONBOARDING_CASES.filter((c) => c.criticality === "high").length;
-  const selectedCase = ONBOARDING_CASES.find((c) => c.id === selected);
+  const stale = cases.filter((c) => c.status === "Stale").length;
+  const highPriority = cases.filter((c) => c.criticality === "high").length;
+  const selectedCase = cases.find((c) => c.id === selected);
 
   return (
     <div className="p-6 flex gap-6">
@@ -27,7 +36,7 @@ export function Onboarding({ initialSelectedId }: { initialSelectedId?: string |
 
         <div className="grid grid-cols-3 gap-3 mb-4">
           {[
-            { label: "Open Invitations", value: ONBOARDING_CASES.length },
+            { label: "Open Invitations", value: cases.length },
             { label: "High Priority", value: highPriority },
             { label: "Stale", value: stale },
           ].map((c) => (
@@ -39,7 +48,7 @@ export function Onboarding({ initialSelectedId }: { initialSelectedId?: string |
         </div>
 
         <div className="flex gap-1 mb-4">
-          <Pill active={tab === "All"} onClick={() => setTab("All")} count={ONBOARDING_CASES.length}>
+          <Pill active={tab === "All"} onClick={() => setTab("All")} count={cases.length}>
             All
           </Pill>
           <Pill active={tab === "Stale"} onClick={() => setTab("Stale")} count={stale}>
