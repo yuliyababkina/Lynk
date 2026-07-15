@@ -1,9 +1,11 @@
 import { X, ArrowUpRight } from "lucide-react";
-import type { Ticket, SupplierDoc } from "@/types";
+import type { Ticket, SupplierDoc, TicketStatus } from "@/types";
 import { useLynkData } from "@/lib/LynkDataContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { RenewalReviewCard } from "@/components/yarowa/renewal-review-card";
+import { TicketStatusMenu } from "@/components/yarowa/ticket-status-menu";
+import { CriticalityIcon } from "@/components/yarowa/criticality-icon";
 import type { View } from "@/App";
 
 const sourceToView: Record<string, View> = {
@@ -40,7 +42,10 @@ export function TicketDrawer({
     contracts: CONTRACTS,
     dataGovernanceRequests: DATA_GOVERNANCE_REQUESTS,
     onboardingCases: ONBOARDING_CASES,
+    ticketStatusById,
+    setTicketStatus,
   } = useLynkData();
+  const status: TicketStatus = ticketStatusById.get(ticket.id) ?? "To do";
   const doc = ticket.source === "compliance-monitoring" ? DOCS.find((d) => d.id === ticket.targetId) : undefined;
   const contract = ticket.source === "contracts" ? CONTRACTS.find((c) => c.id === ticket.targetId) : undefined;
   const dgr = ticket.source === "data-governance" ? DATA_GOVERNANCE_REQUESTS.find((r) => r.id === ticket.targetId) : undefined;
@@ -51,9 +56,15 @@ export function TicketDrawer({
   return (
     <div className="w-[380px] shrink-0 border-l border-border bg-card h-full overflow-y-auto animate-in slide-in-from-right-6 fade-in duration-200">
       <div className="p-4 flex items-start justify-between border-b border-border">
-        <div className="flex gap-2">
-          <Badge variant={ticket.criticality}>{ticket.criticality}</Badge>
-          <Badge variant="neutral">{sourceLabel[ticket.source]}</Badge>
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
+            <Badge variant={ticket.criticality}>
+              <CriticalityIcon criticality={ticket.criticality} />
+              {ticket.criticality}
+            </Badge>
+            <Badge variant="neutral">{sourceLabel[ticket.source]}</Badge>
+          </div>
+          <TicketStatusMenu status={status} onChange={(s) => setTicketStatus(ticket, s)} />
         </div>
         <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
           <X size={18} />

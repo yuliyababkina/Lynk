@@ -40,6 +40,45 @@ body {
   }
 }
 
+/*
+ * Task Queue ticket row — responsive reflow via grid template areas.
+ * Classical breakpoints (lg 1024, xl 1280):
+ *   • base  (narrow) : title / supplier / status / action stacked in one column
+ *   • lg    (medium) : status drops to a third row under the supplier; action on the right
+ *   • xl    (wide)   : status + action sit inline on the right, level with the heading
+ */
+.ticket-row {
+  display: grid;
+  align-items: start;
+  gap: 0.5rem 0.75rem;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    "icon   main"
+    ".      status"
+    ".      action";
+}
+.ticket-row .tr-icon { grid-area: icon; }
+.ticket-row .tr-main { grid-area: main; min-width: 0; }
+.ticket-row .tr-status { grid-area: status; justify-self: start; }
+.ticket-row .tr-action { grid-area: action; justify-self: start; }
+
+@media (min-width: 1024px) {
+  .ticket-row {
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas:
+      "icon main   action"
+      ".    status action";
+  }
+  .ticket-row .tr-action { justify-self: end; }
+}
+
+@media (min-width: 1280px) {
+  .ticket-row {
+    grid-template-columns: auto 1fr auto auto;
+    grid-template-areas: "icon main status action";
+  }
+}
+
 @theme inline {
   --font-heading: var(--font-sans);
   --font-sans: 'Geist Variable', sans-serif;

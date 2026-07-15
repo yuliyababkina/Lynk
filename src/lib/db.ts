@@ -10,6 +10,7 @@ import type {
   Catalogue,
   CatalogueSupplier,
   DocStatus,
+  TicketStatus,
 } from "../types";
 
 export interface LynkDataset {
@@ -60,6 +61,8 @@ function mapTicket(row: any): Ticket & { resolved?: boolean } {
     source: row.source,
     category: row.category,
     targetId: row.target_id ?? undefined,
+    // `status` column may not exist yet on older projects — derive from `resolved`.
+    status: (row.status as Ticket["status"]) ?? (row.resolved ? "Resolved" : "To do"),
     resolved: row.resolved ?? false,
   };
 }
@@ -221,13 +224,24 @@ export async function fetchAllData(): Promise<LynkDataset> {
 /* isn't configured, so the app never throws before the project exists.   */
 /* ---------------------------------------------------------------------- */
 
-export async function resolveTicketDb(ticketId: string, resolved: boolean) {
+export async function setTicketStatusDb(ticketId: string, status: TicketStatus) {
   if (!isSupabaseConfigured) return;
+  const resolved = status === "Resolved";
+  const resolved_at = resolved ? new Date().toISOString() : null;
+  // Try to persist the full workflow status. If the `status` column doesn't
+  // exist yet (migration pending), fall back to the legacy `resolved` flag so
+  // resolutions still stick — To do / In progress just won't survive a reload
+  // until the column is added.
   const { error } = await supabase
     .from("tickets")
-    .update({ resolved, resolved_at: resolved ? new Date().toISOString() : null })
+    .update({ status, resolved, resolved_at })
     .eq("id", ticketId);
-  if (error) console.error("[Lynk] resolveTicketDb failed:", error.message);
+  if (!error) return;
+  const { error: fallbackError } = await supabase
+    .from("tickets")
+    .update({ resolved, resolved_at })
+    .eq("id", ticketId);
+  if (fallbackError) console.error("[Lynk] setTicketStatusDb failed:", fallbackError.message);
 }
 
 export async function setDocStatusDb(docId: string, status: DocStatus) {

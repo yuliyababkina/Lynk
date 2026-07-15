@@ -3,6 +3,7 @@ import { useLynkData } from "../lib/LynkDataContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertBanner } from "@/components/yarowa/alert-banner";
+import { CriticalityIcon } from "@/components/yarowa/criticality-icon";
 import type { Ticket } from "../types";
 
 const ACTIVITY: Record<string, { label: string; who: string; date: string; tone: "warning" | "success" | "danger" | "neutral" }[]> = {
@@ -111,7 +112,10 @@ export function SupplierProfile({
                 <div className="text-xs text-muted-foreground mt-0.5">{t.ageLabel}</div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <Badge variant={t.criticality}>{t.criticality}</Badge>
+                <Badge variant={t.criticality}>
+                  <CriticalityIcon criticality={t.criticality} />
+                  {t.criticality}
+                </Badge>
                 <Button variant="outline">{t.primaryAction}</Button>
               </div>
             </button>

@@ -2,13 +2,15 @@ import { useMemo, useState } from "react";
 import {
   Eye, AlertTriangle, RefreshCw, Bell, Check, Send,
   ShieldCheck, Shield, FileText, ClipboardList, Rocket,
-  ChevronDown,
+  ChevronDown, CircleCheck,
   type LucideIcon,
 } from "lucide-react";
 import { useLynkData } from "../lib/LynkDataContext";
 import { Button } from "@/components/ui/button";
-import { criticalityDot, criticalityLabel } from "@/lib/theme";
-import type { Ticket, Criticality, TicketCategory } from "../types";
+import { TicketStatusMenu } from "@/components/yarowa/ticket-status-menu";
+import { CriticalityIcon } from "@/components/yarowa/criticality-icon";
+import { criticalityLabel } from "@/lib/theme";
+import type { Ticket, Criticality, TicketCategory, TicketStatus } from "../types";
 
 const CATEGORIES: TicketCategory[] = [
   "Document compliance",
@@ -19,7 +21,7 @@ const CATEGORIES: TicketCategory[] = [
 ];
 
 const CRITICALITY_ORDER: Criticality[] = ["critical", "high", "medium", "low"];
-// Rows shown per criticality group before the "show more" toggle appears.
+// Rows shown per group before the "show more" toggle appears.
 const COLLAPSED_ROWS = 5;
 const ACTION_ICON: Record<string, LucideIcon> = {
   Review: Eye,
@@ -47,9 +49,13 @@ export function Dashboard({
   resolvedIds: Set<string>;
   onResolve: (t: Ticket, action: string) => void;
 }) {
-  const { tickets: TICKETS, docs: DOCS } = useLynkData();
+  const { tickets: TICKETS, docs: DOCS, ticketStatusById, setTicketStatus } = useLynkData();
   const [filter, setFilter] = useState<"All tickets" | TicketCategory>("All tickets");
   const [expanded, setExpanded] = useState<Set<Criticality>>(new Set());
+  const [resolvedExpanded, setResolvedExpanded] = useState(false);
+
+  const statusOf = (t: Ticket): TicketStatus =>
+    ticketStatusById.get(t.id) ?? (resolvedIds.has(t.id) ? "Resolved" : "To do");
 
   const toggleExpanded = (c: Criticality) =>
     setExpanded((prev) => {
@@ -58,12 +64,14 @@ export function Dashboard({
       return next;
     });
 
-  const open = useMemo(() => TICKETS.filter((t) => !resolvedIds.has(t.id)), [resolvedIds]);
+  const byCategory = (list: Ticket[]) =>
+    filter === "All tickets" ? list : list.filter((t) => t.category === filter);
 
-  const filtered = useMemo(
-    () => (filter === "All tickets" ? open : open.filter((t) => t.category === filter)),
-    [filter, open]
-  );
+  const open = useMemo(() => TICKETS.filter((t) => !resolvedIds.has(t.id)), [TICKETS, resolvedIds]);
+  const resolved = useMemo(() => TICKETS.filter((t) => resolvedIds.has(t.id)), [TICKETS, resolvedIds]);
+
+  const filtered = byCategory(open);
+  const resolvedFiltered = byCategory(resolved);
 
   const grouped = CRITICALITY_ORDER.map((c) => ({
     criticality: c,
@@ -76,6 +84,15 @@ export function Dashboard({
       CATEGORIES.map((c) => [c, open.filter((t) => t.category === c).length])
     ),
   } as Record<"All tickets" | TicketCategory, number>;
+
+  // Move a ticket via the status pill. Resolving routes through onResolve so the
+  // user still gets the toast + undo; other transitions persist directly.
+  const changeStatus = (t: Ticket, next: TicketStatus) => {
+    if (next === "Resolved") onResolve(t, t.primaryAction);
+    else setTicketStatus(t, next);
+  };
+
+  const resolvedVisible = resolvedExpanded ? resolvedFiltered : resolvedFiltered.slice(0, COLLAPSED_ROWS);
 
   return (
     <div className="p-6">
@@ -116,91 +133,159 @@ export function Dashboard({
       )}
 
       <div className="grid grid-cols-2 gap-4">
-        {grouped.map((group) => (
-          <div key={group.criticality} className="bg-card border border-border rounded-2xl overflow-hidden">
-            <div className="flex items-center gap-2.5 bg-secondary/60 border-b border-border px-4 py-2.5">
-              <span className={`w-2 h-2 rounded-full ${criticalityDot[group.criticality]}`} />
-              <span className="text-[11px] font-bold tracking-wide uppercase">
-                {criticalityLabel[group.criticality]}
-              </span>
-              <span className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-full bg-white border border-border text-xs font-bold text-foreground">
-                {group.tickets.length}
-              </span>
-            </div>
-            <div>
-              {(() => {
-                const isExpanded = expanded.has(group.criticality);
-                const hasOverflow = group.tickets.length > COLLAPSED_ROWS;
-                const visible = isExpanded ? group.tickets : group.tickets.slice(0, COLLAPSED_ROWS);
-                return (<>
-              {visible.map((t, i) => {
-                const ActionIcon = ACTION_ICON[t.primaryAction];
-                const CategoryIcon = CATEGORY_ICON[t.category];
-                // A ticket with an uploaded renewal is reviewed (opens the doc), not dismissed.
-                const reviewable =
-                  t.source === "compliance-monitoring" && !!DOCS.find((d) => d.id === t.targetId)?.renewal;
-                return (
-                  <div
-                    key={t.id}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => onSelectTicket(t)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        onSelectTicket(t);
-                      }
-                    }}
-                    className={`w-full text-left flex items-center justify-between gap-3 px-4 py-3.5 hover:bg-secondary/40 transition-colors ${
-                      i < visible.length - 1 ? "border-b border-border" : ""
-                    }`}
-                  >
-                    <div className="flex items-start gap-3 min-w-0">
+        {grouped.map((group) => {
+          const isExpanded = expanded.has(group.criticality);
+          const hasOverflow = group.tickets.length > COLLAPSED_ROWS;
+          const visible = isExpanded ? group.tickets : group.tickets.slice(0, COLLAPSED_ROWS);
+          return (
+            <div key={group.criticality} className="bg-card border border-border rounded-2xl">
+              <div className="flex items-center gap-2 bg-secondary/60 border-b border-border px-4 py-2.5 rounded-t-2xl">
+                <CriticalityIcon criticality={group.criticality} size={17} />
+                <span className="text-[11px] font-bold tracking-wide uppercase">
+                  {criticalityLabel[group.criticality]}
+                </span>
+                <span className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-full bg-white border border-border text-xs font-bold text-foreground">
+                  {group.tickets.length}
+                </span>
+              </div>
+              <div>
+                {visible.map((t, i) => {
+                  const ActionIcon = ACTION_ICON[t.primaryAction];
+                  const CategoryIcon = CATEGORY_ICON[t.category];
+                  // A ticket with an uploaded renewal is reviewed (opens the doc), not dismissed.
+                  const reviewable =
+                    t.source === "compliance-monitoring" && !!DOCS.find((d) => d.id === t.targetId)?.renewal;
+                  return (
+                    <div
+                      key={t.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => onSelectTicket(t)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          onSelectTicket(t);
+                        }
+                      }}
+                      className={`ticket-row w-full text-left px-4 py-3.5 hover:bg-secondary/40 transition-colors ${
+                        i < visible.length - 1 ? "border-b border-border" : ""
+                      }`}
+                    >
                       {CategoryIcon && (
-                        <CategoryIcon size={16} className="text-muted-foreground shrink-0 mt-0.5" aria-hidden="true" />
+                        <CategoryIcon size={16} className="tr-icon text-muted-foreground mt-0.5" aria-hidden="true" />
                       )}
-                      <div className="min-w-0">
+                      <div className="tr-main">
                         <div className="text-sm font-medium truncate">{t.title}</div>
                         <div className="text-xs text-muted-foreground mt-0.5">
                           {t.entityType} · {t.entityName} · {t.ageLabel}
                         </div>
                       </div>
+                      <div className="tr-status">
+                        <TicketStatusMenu
+                          status={statusOf(t)}
+                          onChange={(s) => changeStatus(t, s)}
+                          align="start"
+                        />
+                      </div>
+                      <Button
+                        className="tr-action"
+                        variant={t.criticality === "critical" || t.criticality === "high" ? "default" : "outline"}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (reviewable) onSelectTicket(t);
+                          else onResolve(t, t.primaryAction);
+                        }}
+                      >
+                        {ActionIcon && <ActionIcon size={14} />}
+                        {t.primaryAction}
+                      </Button>
                     </div>
-                    <Button
-                      variant={t.criticality === "critical" || t.criticality === "high" ? "default" : "outline"}
-                      className="shrink-0"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (reviewable) onSelectTicket(t);
-                        else onResolve(t, t.primaryAction);
-                      }}
-                    >
-                      {ActionIcon && <ActionIcon size={14} />}
-                      {t.primaryAction}
-                    </Button>
-                  </div>
-                );
-              })}
-              {hasOverflow && (
-                <button
-                  onClick={() => toggleExpanded(group.criticality)}
-                  className="w-full flex items-center justify-center gap-1.5 border-t border-border px-4 py-2.5 text-xs font-medium text-muted-foreground hover:bg-secondary/40 transition-colors"
-                >
-                  <ChevronDown
-                    size={14}
-                    className={`transition-transform ${isExpanded ? "rotate-180" : ""}`}
-                  />
-                  {isExpanded
-                    ? "Show less"
-                    : `Show ${group.tickets.length - COLLAPSED_ROWS} more`}
-                </button>
-              )}
-                </>);
-              })()}
+                  );
+                })}
+                {hasOverflow && (
+                  <button
+                    onClick={() => toggleExpanded(group.criticality)}
+                    className="w-full flex items-center justify-center gap-1.5 border-t border-border px-4 py-2.5 text-xs font-medium text-muted-foreground hover:bg-secondary/40 transition-colors"
+                  >
+                    <ChevronDown
+                      size={14}
+                      className={`transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                    />
+                    {isExpanded ? "Show less" : `Show ${group.tickets.length - COLLAPSED_ROWS} more`}
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
+
+      {resolvedFiltered.length > 0 && (
+        <div className="bg-card border border-border rounded-2xl mt-4">
+          <div className="flex items-center gap-2 bg-secondary/60 border-b border-border px-4 py-2.5 rounded-t-2xl">
+            <CircleCheck size={17} strokeWidth={2.25} className="text-success" />
+            <span className="text-[11px] font-bold tracking-wide uppercase">Resolved</span>
+            <span className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-full bg-white border border-border text-xs font-bold text-foreground">
+              {resolvedFiltered.length}
+            </span>
+          </div>
+          <div>
+            {resolvedVisible.map((t, i) => {
+              const CategoryIcon = CATEGORY_ICON[t.category];
+              return (
+                <div
+                  key={t.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => onSelectTicket(t)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      onSelectTicket(t);
+                    }
+                  }}
+                  className={`w-full text-left flex items-center justify-between gap-3 px-4 py-3 hover:bg-secondary/40 transition-colors ${
+                    i < resolvedVisible.length - 1 ? "border-b border-border" : ""
+                  }`}
+                >
+                  <div className="flex items-start gap-3 min-w-0">
+                    {CategoryIcon && (
+                      <CategoryIcon size={16} className="text-muted-foreground shrink-0 mt-0.5" aria-hidden="true" />
+                    )}
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium truncate text-muted-foreground">{t.title}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                        {/* criticality demoted to a secondary tag once resolved */}
+                        <CriticalityIcon criticality={t.criticality} size={14} />
+                        {criticalityLabel[t.criticality]}
+                        <span>·</span>
+                        {t.entityName}
+                      </div>
+                    </div>
+                  </div>
+                  <TicketStatusMenu
+                    status={statusOf(t)}
+                    onChange={(s) => changeStatus(t, s)}
+                    align="end"
+                  />
+                </div>
+              );
+            })}
+            {resolvedFiltered.length > COLLAPSED_ROWS && (
+              <button
+                onClick={() => setResolvedExpanded((v) => !v)}
+                className="w-full flex items-center justify-center gap-1.5 border-t border-border px-4 py-2.5 text-xs font-medium text-muted-foreground hover:bg-secondary/40 transition-colors"
+              >
+                <ChevronDown
+                  size={14}
+                  className={`transition-transform ${resolvedExpanded ? "rotate-180" : ""}`}
+                />
+                {resolvedExpanded ? "Show less" : `Show ${resolvedFiltered.length - COLLAPSED_ROWS} more`}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

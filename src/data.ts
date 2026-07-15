@@ -160,8 +160,6 @@ export const SUPPLIERS: Supplier[] = [
 ];
 
 export const TICKETS: Ticket[] = [
-  { id: "t1", title: "Public Liability Insurance — expired 8 days ago", criticality: "critical", entityName: "Riedel Fertigungen GmbH", entityType: "Supplier", ageLabel: "8 days ago", primaryAction: "Review", source: "compliance-monitoring", category: "Document compliance", targetId: "doc-001" },
-  { id: "t2", title: "Framework Contract FWK-2024-0047 — 12 days to expiry", criticality: "critical", entityName: "BauParts GmbH", entityType: "Supplier", ageLabel: "3 days ago", primaryAction: "Renew", source: "contracts", category: "Contracts", targetId: "c1" },
   { id: "t3", title: "Conflict Minerals Declaration — rejected, resubmission pending", criticality: "critical", entityName: "Riedel Fertigungen GmbH", entityType: "Supplier", ageLabel: "12 days ago", primaryAction: "Escalate", source: "compliance-monitoring", category: "Document compliance" },
   { id: "t4", title: "ISO 9001 Certificate — expiring in 30 days", criticality: "high", entityName: "BauParts GmbH", entityType: "Supplier", ageLabel: "1 day ago", primaryAction: "Review", source: "compliance-monitoring", category: "Document compliance", targetId: "doc-003" },
   { id: "t5", title: "IBAN change request — awaiting first-eye endorsement", criticality: "high", entityName: "BauParts GmbH", entityType: "Supplier", ageLabel: "2 days ago", primaryAction: "Approve", source: "data-governance", category: "Data governance", targetId: "dgr-1" },

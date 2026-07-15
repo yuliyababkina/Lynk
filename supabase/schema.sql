@@ -52,6 +52,7 @@ create table if not exists tickets (
   source text not null,
   category text not null,
   target_id text,
+  status text not null default 'To do' check (status in ('To do','In progress','Resolved')),
   resolved boolean not null default false,
   resolved_at timestamptz,
   created_at timestamptz not null default now()

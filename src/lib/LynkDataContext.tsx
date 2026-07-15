@@ -9,7 +9,7 @@ import {
 } from "react";
 import {
   fetchAllData,
-  resolveTicketDb,
+  setTicketStatusDb,
   setDocStatusDb,
   insertOnboardingCaseDb,
   upsertCatalogueDb,
@@ -17,13 +17,17 @@ import {
   type LynkDataset,
 } from "./db";
 import { isSupabaseConfigured } from "./supabase";
-import type { Ticket, SupplierDoc, Catalogue, OnboardingCase } from "../types";
+import type { Ticket, SupplierDoc, Catalogue, OnboardingCase, TicketStatus } from "../types";
 
 interface LynkDataValue extends LynkDataset {
   loading: boolean;
   error: string | null;
   /** True when actions are actually being written to Supabase. */
   persisted: boolean;
+  /** Current workflow status per ticket id (live overrides + fetched base). */
+  ticketStatusById: Map<string, TicketStatus>;
+  /** Move a ticket to any workflow status (To do / In progress / Resolved). */
+  setTicketStatus: (ticket: Ticket, status: TicketStatus) => void;
   resolvedTicketIds: Set<string>;
   resolveTicket: (ticket: Ticket, action: string) => void;
   unresolveTicket: (ticketId: string) => void;
@@ -39,7 +43,7 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<LynkDataset | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [resolvedTicketIds, setResolvedTicketIds] = useState<Set<string>>(new Set());
+  const [ticketStatusById, setTicketStatusById] = useState<Map<string, TicketStatus>>(new Map());
 
   useEffect(() => {
     let cancelled = false;
@@ -47,8 +51,10 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
       .then((d) => {
         if (cancelled) return;
         setData(d);
-        setResolvedTicketIds(
-          new Set(d.tickets.filter((t) => t.resolved).map((t) => t.id))
+        setTicketStatusById(
+          new Map(
+            d.tickets.map((t) => [t.id, t.status ?? (t.resolved ? "Resolved" : "To do")])
+          )
         );
       })
       .catch((e) => {
@@ -62,20 +68,29 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  const setTicketStatus = useCallback((ticket: Ticket, status: TicketStatus) => {
+    setTicketStatusById((prev) => new Map(prev).set(ticket.id, status));
+    setTicketStatusDb(ticket.id, status).catch(console.error);
+  }, []);
+
   const resolveTicket = useCallback((ticket: Ticket, action: string) => {
-    setResolvedTicketIds((prev) => new Set(prev).add(ticket.id));
-    resolveTicketDb(ticket.id, true).catch(console.error);
+    setTicketStatusById((prev) => new Map(prev).set(ticket.id, "Resolved"));
+    setTicketStatusDb(ticket.id, "Resolved").catch(console.error);
     logActivity(ticket.entityName, `${action} — ${ticket.title}`).catch(console.error);
   }, []);
 
   const unresolveTicket = useCallback((ticketId: string) => {
-    setResolvedTicketIds((prev) => {
-      const next = new Set(prev);
-      next.delete(ticketId);
-      return next;
-    });
-    resolveTicketDb(ticketId, false).catch(console.error);
+    setTicketStatusById((prev) => new Map(prev).set(ticketId, "To do"));
+    setTicketStatusDb(ticketId, "To do").catch(console.error);
   }, []);
+
+  const resolvedTicketIds = useMemo(
+    () =>
+      new Set(
+        [...ticketStatusById].filter(([, s]) => s === "Resolved").map(([id]) => id)
+      ),
+    [ticketStatusById]
+  );
 
   const decideRenewal = useCallback((doc: SupplierDoc, decision: "accept" | "reject") => {
     const nextStatus = decision === "accept" ? "valid" : "rejected-resubmit";
@@ -116,6 +131,8 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
       loading,
       error,
       persisted: isSupabaseConfigured,
+      ticketStatusById,
+      setTicketStatus,
       resolvedTicketIds,
       resolveTicket,
       unresolveTicket,
@@ -128,6 +145,8 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
     data,
     loading,
     error,
+    ticketStatusById,
+    setTicketStatus,
     resolvedTicketIds,
     resolveTicket,
     unresolveTicket,

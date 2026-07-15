@@ -1,5 +1,8 @@
 export type Criticality = "critical" | "high" | "medium" | "low";
 
+/** Workflow status of a Task Queue ticket. */
+export type TicketStatus = "To do" | "In progress" | "Resolved";
+
 export type TicketSource =
   | "compliance-monitoring"
   | "contracts"
@@ -26,7 +29,9 @@ export interface Ticket {
   source: TicketSource;
   category: TicketCategory;
   targetId?: string;
-  /** Set once persistence is wired up (LynkDataContext) — true once resolved in the DB. */
+  /** Workflow status. Defaults to "To do" when the DB row predates the column. */
+  status?: TicketStatus;
+  /** Legacy flag kept in sync with status === "Resolved" for backward compatibility. */
   resolved?: boolean;
 }
 

@@ -262,12 +262,10 @@ insert into onboarding_cases (id, company_name, contact_name, status, days_no_re
 ('onb-8','Vogt Sicherheitstechnik','Nadine Vogt','Pending',20,'medium');
 
 -- ─────────────────────────────────────────────────────────────────────────
--- TICKETS (Task Queue) — 34 total across all criticalities/categories
+-- TICKETS (Task Queue) — 32 total across all criticalities/categories
 -- ─────────────────────────────────────────────────────────────────────────
 
 insert into tickets (id, title, criticality, entity_name, entity_type, age_label, primary_action, source, category, target_id) values
-('t1','Public Liability Insurance — expired 8 days ago','critical','Riedel Fertigungen GmbH','Supplier','8 days ago','Review','compliance-monitoring','Document compliance','doc-001'),
-('t2','Framework Contract FWK-2024-0047 — 12 days to expiry','critical','BauParts GmbH','Supplier','3 days ago','Renew','contracts','Contracts','c1'),
 ('t3','Conflict Minerals Declaration — rejected, resubmission pending','critical','Riedel Fertigungen GmbH','Supplier','12 days ago','Escalate','compliance-monitoring','Document compliance',null),
 ('t4','ISO 9001 Certificate — expiring in 30 days','high','BauParts GmbH','Supplier','1 day ago','Review','compliance-monitoring','Document compliance','doc-003'),
 ('t5','IBAN change request — awaiting first-eye endorsement','high','BauParts GmbH','Supplier','2 days ago','Approve','data-governance','Data governance','dgr-1'),
@@ -302,6 +300,11 @@ insert into tickets (id, title, criticality, entity_name, entity_type, age_label
 ('t32','Profile completeness 80% — below 85% preferred','low','Lang Gebäudereinigung GmbH','Service Provider','8 days ago','Request','data-quality','Onboarding',null),
 ('t33','Invitation sent — 1 day without response','low','Ziegler Bodenbeläge','Prospect','1 day ago','Remind','onboarding','Onboarding','onb-7'),
 ('t34','Service Agreement SVC-2021-0015 — renewal in progress','low','Neumann Sicherheitsdienst GmbH','Service Provider','5 days ago','Review','contracts','Contracts','c10');
+
+-- Workflow status spread (everything else defaults to 'To do'). None of the
+-- critical tickets are resolved, so the Critical group keeps 5 active items.
+update tickets set status = 'In progress' where id in ('t3','t18','t8','t20','t10','t28');
+update tickets set status = 'Resolved', resolved = true, resolved_at = now() where id in ('t13','t15','t29','t32');
 
 -- ─────────────────────────────────────────────────────────────────────────
 -- SERVICE CATALOGUES (unchanged from the original prototype)
