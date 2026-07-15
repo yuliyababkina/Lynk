@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import {
   Eye, AlertTriangle, RefreshCw, Bell, Check, Send,
   ShieldCheck, Shield, FileText, ClipboardList, Rocket,
+  ChevronDown,
   type LucideIcon,
 } from "lucide-react";
 import { useLynkData } from "../lib/LynkDataContext";
@@ -18,6 +19,8 @@ const CATEGORIES: TicketCategory[] = [
 ];
 
 const CRITICALITY_ORDER: Criticality[] = ["critical", "high", "medium", "low"];
+// Rows shown per criticality group before the "show more" toggle appears.
+const COLLAPSED_ROWS = 5;
 const ACTION_ICON: Record<string, LucideIcon> = {
   Review: Eye,
   Escalate: AlertTriangle,
@@ -46,6 +49,14 @@ export function Dashboard({
 }) {
   const { tickets: TICKETS, docs: DOCS } = useLynkData();
   const [filter, setFilter] = useState<"All tickets" | TicketCategory>("All tickets");
+  const [expanded, setExpanded] = useState<Set<Criticality>>(new Set());
+
+  const toggleExpanded = (c: Criticality) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      next.has(c) ? next.delete(c) : next.add(c);
+      return next;
+    });
 
   const open = useMemo(() => TICKETS.filter((t) => !resolvedIds.has(t.id)), [resolvedIds]);
 
@@ -117,7 +128,12 @@ export function Dashboard({
               </span>
             </div>
             <div>
-              {group.tickets.map((t, i) => {
+              {(() => {
+                const isExpanded = expanded.has(group.criticality);
+                const hasOverflow = group.tickets.length > COLLAPSED_ROWS;
+                const visible = isExpanded ? group.tickets : group.tickets.slice(0, COLLAPSED_ROWS);
+                return (<>
+              {visible.map((t, i) => {
                 const ActionIcon = ACTION_ICON[t.primaryAction];
                 const CategoryIcon = CATEGORY_ICON[t.category];
                 // A ticket with an uploaded renewal is reviewed (opens the doc), not dismissed.
@@ -136,7 +152,7 @@ export function Dashboard({
                       }
                     }}
                     className={`w-full text-left flex items-center justify-between gap-3 px-4 py-3.5 hover:bg-secondary/40 transition-colors ${
-                      i < group.tickets.length - 1 ? "border-b border-border" : ""
+                      i < visible.length - 1 ? "border-b border-border" : ""
                     }`}
                   >
                     <div className="flex items-start gap-3 min-w-0">
@@ -165,6 +181,22 @@ export function Dashboard({
                   </div>
                 );
               })}
+              {hasOverflow && (
+                <button
+                  onClick={() => toggleExpanded(group.criticality)}
+                  className="w-full flex items-center justify-center gap-1.5 border-t border-border px-4 py-2.5 text-xs font-medium text-muted-foreground hover:bg-secondary/40 transition-colors"
+                >
+                  <ChevronDown
+                    size={14}
+                    className={`transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                  />
+                  {isExpanded
+                    ? "Show less"
+                    : `Show ${group.tickets.length - COLLAPSED_ROWS} more`}
+                </button>
+              )}
+                </>);
+              })()}
             </div>
           </div>
         ))}
