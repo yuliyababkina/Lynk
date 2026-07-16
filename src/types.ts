@@ -35,7 +35,7 @@ export interface Ticket {
   resolved?: boolean;
 }
 
-export type SupplierStage = "Prospect" | "Supplier" | "Provider";
+export type SupplierStage = "prospect" | "supplier" | "provider" | "inactive";
 
 export interface Contact {
   name: string;
@@ -45,10 +45,23 @@ export interface Contact {
   primary?: boolean;
 }
 
+export interface SupplierRelationship {
+  id: string;
+  principal_id: string;
+  supplier_id: string;
+  status: SupplierStage;
+  invited_by?: string;
+  invited_at?: string;
+  onboarded_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Supplier {
   id: string;
   name: string;
   stage: SupplierStage;
+  relationshipId: string;
   trade: string;
   region: string;
   compliance: "Fully Compliant" | "Pending Review" | "Blocked" | "Action Required" | "—";
