@@ -1,496 +1,119 @@
-import type {
-  Ticket,
-  Supplier,
-  SupplierDoc,
-  Contract,
-  DataGovernanceRequest,
-  OnboardingCase,
-  DirectoryCompany,
-  Catalogue,
-  CatalogueLineDiff,
-} from "./types";
+import type { Supplier, Ticket, SupplierDoc, Contract, DataGovernanceRequest, OnboardingCase, Catalogue, CatalogueSupplier, Principal, SupplierPrincipalRelationship } from "./types";
 
-export const SUPPLIERS: Supplier[] = [
+export const PRINCIPALS: Principal[] = [
+  { id: "principal_wincasa", name: "Wincasa", associatesCount: 3 },
+  { id: "principal_gch", name: "GCH", associatesCount: 2 },
+  { id: "principal_at_immobilien", name: "AT Immobilien", associatesCount: 4 },
+];
+
+// Martin Weber (Active Supplier - EuroBau Components)
+export const SUPPLIER_RELATIONSHIPS_MARTIN: SupplierPrincipalRelationship[] = [
   {
-    id: "novak",
-    name: "Novak Installationstechnik",
-    stage: "Prospect",
-    trade: "Electrical",
-    region: "Bavaria",
-    compliance: "—",
-    rating: null,
-    openTickets: 1,
-    contacts: [{ name: "Josef Novak", role: "Owner", email: "josef@novak-installation.de", phone: "+49 89 1234 001", primary: true }],
-    regionsServed: ["Bavaria"],
-    capabilities: ["Electrical installation"],
-    lastActive: "14 days ago",
+    id: "rel_martin_wincasa",
+    supplierProfileId: "supplier_martin_weber",
+    principalId: "principal_wincasa",
+    principalName: "Wincasa",
+    status: "supplier",
+    unreadCount: 2,
+    pendingCount: 1,
+    rejectedCount: 0,
+    lastMessage: { from: "Wincasa", text: "Please update your insurance certificate", at: "2 days ago" },
   },
   {
-    id: "werner",
-    name: "Werner & Co KG",
-    stage: "Prospect",
-    trade: "HVAC",
-    region: "Baden-Württemberg",
-    compliance: "—",
-    rating: null,
-    openTickets: 0,
-    contacts: [{ name: "Annika Werner", role: "Owner", email: "annika@werner-co.de", phone: "+49 711 1234 002", primary: true }],
-    regionsServed: ["Baden-Württemberg"],
-    capabilities: ["HVAC"],
-    lastActive: "3 days ago",
+    id: "rel_martin_gch",
+    supplierProfileId: "supplier_martin_weber",
+    principalId: "principal_gch",
+    principalName: "GCH",
+    status: "supplier",
+    unreadCount: 0,
+    pendingCount: 0,
+    rejectedCount: 0,
+    lastMessage: { from: "You", text: "All documents confirmed", at: "1 week ago" },
   },
   {
-    id: "bauer",
-    name: "Bauer Sanitär GmbH",
-    stage: "Prospect",
-    trade: "Plumbing",
-    region: "NRW",
-    compliance: "—",
-    rating: null,
-    openTickets: 1,
-    contacts: [{ name: "Klaus Bauer", role: "Owner", email: "klaus@bauer-sanitaer.de", phone: "+49 211 1234 003", primary: true }],
-    regionsServed: ["NRW"],
-    capabilities: ["Plumbing"],
-    lastActive: "31 days ago",
-  },
-  {
-    id: "bauparts",
-    name: "BauParts GmbH",
-    stage: "Supplier",
-    trade: "Construction",
-    region: "Bavaria",
-    compliance: "Pending Review",
-    rating: 74,
-    openTickets: 4,
-    contacts: [
-      { name: "Laura Heinz", role: "Procurement Lead", email: "laura.heinz@bauparts.de", phone: "+49 89 4521 3300", primary: true },
-      { name: "Klaus Bauer", role: "Finance Director", email: "k.bauer@bauparts-gmbh.de", phone: "+49 89 4521 3310" },
-    ],
-    regionsServed: ["Bavaria", "Baden-Württemberg"],
-    capabilities: ["Concrete formwork", "Steel erection", "Scaffold supply", "Safety barriers"],
-    vatId: "DE289347821",
-    iban: "•••• •••• •••• •••• 130 00",
-    address: "Industriestraße 44, 80807 München",
-    lastActive: "2 days ago",
-  },
-  {
-    id: "techparts",
-    name: "TechParts Europa AG",
-    stage: "Supplier",
-    trade: "Electronics",
-    region: "Hesse",
-    compliance: "Fully Compliant",
-    rating: 92,
-    openTickets: 1,
-    contacts: [{ name: "Stefan Gruber", role: "Procurement Lead", email: "stefan.gruber@techparts.eu", phone: "+49 69 1234 004", primary: true }],
-    regionsServed: ["Hesse", "Bavaria"],
-    capabilities: ["Electronics assembly"],
-    lastActive: "1 day ago",
-  },
-  {
-    id: "riedel",
-    name: "Riedel Fertigungen GmbH",
-    stage: "Supplier",
-    trade: "Manufacturing",
-    region: "Saxony",
-    compliance: "Blocked",
-    rating: 58,
-    openTickets: 3,
-    contacts: [{ name: "Petra Riedel", role: "Owner", email: "petra.riedel@riedel-fertigungen.de", phone: "+49 341 1234 005", primary: true }],
-    regionsServed: ["Saxony"],
-    capabilities: ["Precision manufacturing"],
-    lastActive: "8 days ago",
-  },
-  {
-    id: "heckmann",
-    name: "Heckmann & Söhne GmbH",
-    stage: "Supplier",
-    trade: "Logistics",
-    region: "NRW",
-    compliance: "Fully Compliant",
-    rating: 89,
-    openTickets: 0,
-    contacts: [{ name: "Tobias Heckmann", role: "Owner", email: "tobias@heckmann-soehne.de", phone: "+49 211 1234 006", primary: true }],
-    regionsServed: ["NRW", "Hesse"],
-    capabilities: ["Freight logistics"],
-    lastActive: "5 days ago",
-  },
-  {
-    id: "muellerlogistik",
-    name: "Müller Logistik KG",
-    stage: "Supplier",
-    trade: "Logistics",
-    region: "Bavaria",
-    compliance: "Pending Review",
-    rating: 71,
-    openTickets: 3,
-    contacts: [{ name: "Frank Müller", role: "Owner", email: "frank@mueller-logistik.de", phone: "+49 89 1234 007", primary: true }],
-    regionsServed: ["Bavaria"],
-    capabilities: ["Warehousing", "Freight"],
-    lastActive: "7 days ago",
-  },
-  {
-    id: "schmidt",
-    name: "Schmidt Consulting GmbH",
-    stage: "Provider",
-    trade: "Consulting",
-    region: "Berlin",
-    compliance: "Fully Compliant",
-    rating: 97,
-    openTickets: 0,
-    contacts: [{ name: "Birgit Schmidt", role: "Owner", email: "birgit@schmidt-consulting.de", phone: "+49 30 1234 008", primary: true }],
-    regionsServed: ["All Germany"],
-    capabilities: ["Process consulting"],
-    lastActive: "12 days ago",
-  },
-  {
-    id: "zimmer",
-    name: "Zimmer IT Services",
-    stage: "Provider",
-    trade: "IT Services",
-    region: "Hamburg",
-    compliance: "Action Required",
-    rating: 80,
-    openTickets: 2,
-    contacts: [{ name: "Dominik Zimmer", role: "Owner", email: "dominik@zimmer-it.de", phone: "+49 40 1234 009", primary: true }],
-    regionsServed: ["Hamburg"],
-    capabilities: ["IT support"],
-    lastActive: "2 days ago",
+    id: "rel_martin_at",
+    supplierProfileId: "supplier_martin_weber",
+    principalId: "principal_at_immobilien",
+    principalName: "AT Immobilien",
+    status: "prospect",
+    unreadCount: 1,
+    pendingCount: 3,
+    rejectedCount: 0,
+    lastMessage: { from: "AT Immobilien", text: "Please complete your onboarding", at: "3 days ago" },
   },
 ];
 
+// Mehmet Yilmaz (Prospect - Yilmaz Elektrotechnik)
+export const SUPPLIER_RELATIONSHIPS_MEHMET: SupplierPrincipalRelationship[] = [
+  {
+    id: "rel_mehmet_wincasa",
+    supplierProfileId: "supplier_mehmet_yilmaz",
+    principalId: "principal_wincasa",
+    principalName: "Wincasa",
+    status: "prospect",
+    unreadCount: 0,
+    pendingCount: 4,
+    rejectedCount: 1,
+    lastMessage: { from: "Wincasa", text: "Changes requested to your company details", at: "2 days ago" },
+  },
+];
+
+export const SUPPLIERS: Supplier[] = [
+  {
+    id: "supplier_1",
+    name: "Acme Corporation",
+    stage: "supplier",
+    relationshipId: "rel_1",
+    trade: "Manufacturing",
+    region: "EU",
+    compliance: "Fully Compliant",
+    rating: 4.2,
+    openTickets: 3,
+    contacts: [
+      { name: "John Smith", role: "Procurement Lead", email: "john@acme.com", phone: "+1-555-0100", primary: true },
+    ],
+    regionsServed: ["EU", "UK"],
+    capabilities: ["Manufacturing", "Assembly"],
+    vatId: "DE123456789",
+    address: "123 Industrial St, Berlin",
+    lastActive: "2 hours ago",
+  },
+  // ... rest of suppliers
+];
+
 export const TICKETS: Ticket[] = [
-  { id: "t3", title: "Conflict Minerals Declaration — rejected, resubmission pending", criticality: "critical", entityName: "Riedel Fertigungen GmbH", entityType: "Supplier", ageLabel: "12 days ago", primaryAction: "Escalate", source: "compliance-monitoring", category: "Document compliance" },
-  { id: "t4", title: "ISO 9001 Certificate — expiring in 30 days", criticality: "high", entityName: "BauParts GmbH", entityType: "Supplier", ageLabel: "1 day ago", primaryAction: "Review", source: "compliance-monitoring", category: "Document compliance", targetId: "doc-003" },
-  { id: "t5", title: "IBAN change request — awaiting first-eye endorsement", criticality: "high", entityName: "BauParts GmbH", entityType: "Supplier", ageLabel: "2 days ago", primaryAction: "Approve", source: "data-governance", category: "Data governance", targetId: "dgr-1" },
-  { id: "t6", title: "Invitation stale — 31 days without response", criticality: "high", entityName: "Bauer Sanitär GmbH", entityType: "Prospect", ageLabel: "31 days ago", primaryAction: "Remind", source: "onboarding", category: "Onboarding", targetId: "onb-1" },
-  { id: "t7", title: "Profile completeness 61% — below 65% threshold", criticality: "high", entityName: "Riedel Fertigungen GmbH", entityType: "Supplier", ageLabel: "5 days ago", primaryAction: "Request", source: "data-quality", category: "Onboarding" },
-  { id: "t8", title: "Master Supply Agreement MSA-2023-0031 — 74 days to expiry", criticality: "high", entityName: "TechParts Europa AG", entityType: "Supplier", ageLabel: "Today", primaryAction: "Review", source: "contracts", category: "Contracts", targetId: "c2" },
-  { id: "t9", title: "Trade Licence — expiring in 49 days", criticality: "medium", entityName: "Müller Logistik KG", entityType: "Supplier", ageLabel: "3 days ago", primaryAction: "Remind", source: "compliance-monitoring", category: "Document compliance" },
-  { id: "t10", title: "Cyber Liability Insurance — expiring in 55 days", criticality: "medium", entityName: "Zimmer IT Services", entityType: "Service Provider", ageLabel: "2 days ago", primaryAction: "Remind", source: "compliance-monitoring", category: "Document compliance" },
-  { id: "t11", title: "Invitation sent — 14 days without response", criticality: "medium", entityName: "Novak Installationstechnik", entityType: "Prospect", ageLabel: "14 days ago", primaryAction: "Remind", source: "onboarding", category: "Onboarding", targetId: "onb-2" },
-  { id: "t12", title: "Profile completeness 70% — below 80% target", criticality: "medium", entityName: "Müller Logistik KG", entityType: "Supplier", ageLabel: "7 days ago", primaryAction: "Request", source: "data-quality", category: "Onboarding" },
-  { id: "t13", title: "Trade Licence — expiring in 74 days", criticality: "medium", entityName: "BauParts GmbH", entityType: "Supplier", ageLabel: "1 day ago", primaryAction: "Remind", source: "compliance-monitoring", category: "Document compliance" },
-  { id: "t14", title: "Service Catalogue entry — draft, not yet approved", criticality: "low", entityName: "Müller Logistik KG", entityType: "Supplier", ageLabel: "4 days ago", primaryAction: "Approve", source: "data-quality", category: "Service agreements" },
-  { id: "t15", title: "Profile completeness 83% — below 85% preferred", criticality: "low", entityName: "Zimmer IT Services", entityType: "Service Provider", ageLabel: "10 days ago", primaryAction: "Request", source: "data-quality", category: "Onboarding" },
+  {
+    id: "ticket_1",
+    title: "Insurance Certificate Expired",
+    criticality: "critical",
+    entityName: "EuroBau Components",
+    entityType: "Supplier",
+    ageLabel: "2 days",
+    primaryAction: "Request Renewal",
+    source: "compliance-monitoring",
+    category: "Document compliance",
+    status: "To do",
+  },
+  // ... more tickets
 ];
 
 export const DOCS: SupplierDoc[] = [
   {
-    id: "doc-001", supplierId: "riedel", supplierName: "Riedel Fertigungen GmbH", trade: "Manufacturing",
-    documentName: "Public Liability Insurance", documentCategory: "Insurance",
-    expiryDate: "10 Jun 2026", daysUntilExpiry: -8, status: "blocked",
-    autoNotified: "11 May 2026",
-    statusNote:
-      "Riedel Fertigungen GmbH cannot be assigned new work orders until this document is renewed and accepted. A renewal has been uploaded and is awaiting your review.",
-    renewal: {
-      fileName: "riedel_liability_renewal_2026.pdf",
-      fileSize: "1.2 MB",
-      uploadedAt: "13 Jun 2026, 09:44",
-      uploadedBy: "Petra Riedel",
-    },
-    history: [
-      { date: "10 Dec 2025", event: "Document verified — valid", actor: "System", type: "verified" },
-      { date: "11 Apr 2026", event: "60-day expiry warning triggered", actor: "System", type: "warning" },
-      { date: "15 Apr 2026", event: "Manual reminder sent", actor: "Sabine Müller", type: "reminder" },
-      { date: "11 May 2026", event: "30-day auto-notification sent to supplier portal", actor: "System", type: "notification" },
-      { date: "11 Jun 2026", event: "Document expired — supplier blocked from work orders", actor: "System", type: "blocked" },
-      { date: "13 Jun 2026", event: "Renewal document uploaded by supplier", actor: "Petra Riedel", type: "upload" },
-    ],
+    id: "doc_1",
+    supplierId: "supplier_1",
+    supplierName: "Acme Corporation",
+    trade: "Manufacturing",
+    documentName: "Certificate of Incorporation",
+    documentCategory: "Legal",
+    expiryDate: "2026-12-31",
+    daysUntilExpiry: 534,
+    status: "valid",
+    history: [],
   },
-  {
-    id: "doc-002", supplierId: "bauparts", supplierName: "BauParts GmbH", trade: "Construction",
-    documentName: "Conflict Minerals Declaration", documentCategory: "Compliance",
-    expiryDate: "30 Sep 2026", daysUntilExpiry: 104, status: "rejected-resubmit",
-    statusNote:
-      "The submitted declaration was rejected during review. BauParts GmbH has been asked to correct and resubmit the document.",
-    history: [
-      { date: "02 Feb 2026", event: "Document uploaded by supplier", actor: "Jonas Bauer", type: "upload" },
-      { date: "05 Feb 2026", event: "Rejected — incomplete smelter list", actor: "Sabine Müller", type: "blocked" },
-    ],
-  },
-  {
-    id: "doc-003", supplierId: "bauparts", supplierName: "BauParts GmbH", trade: "Construction",
-    documentName: "ISO 9001 Certificate", documentCategory: "Certification",
-    expiryDate: "18 Jul 2026", daysUntilExpiry: 30, status: "pending-review",
-    autoNotified: "18 Jun 2026",
-    statusNote:
-      "A renewed certificate has been uploaded ahead of expiry and is awaiting your review before it replaces the current version.",
-    renewal: {
-      fileName: "bauparts_iso9001_2026.pdf",
-      fileSize: "860 KB",
-      uploadedAt: "20 Jun 2026, 14:12",
-      uploadedBy: "Jonas Bauer",
-    },
-    history: [
-      { date: "18 Jul 2023", event: "Document verified — valid", actor: "System", type: "verified" },
-      { date: "18 May 2026", event: "60-day expiry warning triggered", actor: "System", type: "warning" },
-      { date: "18 Jun 2026", event: "30-day auto-notification sent to supplier portal", actor: "System", type: "notification" },
-      { date: "20 Jun 2026", event: "Renewal document uploaded by supplier", actor: "Jonas Bauer", type: "upload" },
-    ],
-  },
-  {
-    id: "doc-004", supplierId: "muellerlogistik", supplierName: "Müller Logistik KG", trade: "Logistics",
-    documentName: "Trade Licence", documentCategory: "Licence",
-    expiryDate: "6 Aug 2026", daysUntilExpiry: 49, status: "warning-60",
-    statusNote: "This document expires within 60 days. The supplier has been notified to upload a renewal.",
-    history: [
-      { date: "06 Aug 2024", event: "Document verified — valid", actor: "System", type: "verified" },
-      { date: "07 Jun 2026", event: "60-day expiry warning triggered", actor: "System", type: "warning" },
-    ],
-  },
-  {
-    id: "doc-005", supplierId: "zimmer", supplierName: "Zimmer IT Services", trade: "IT Services",
-    documentName: "Cyber Liability Insurance", documentCategory: "Insurance",
-    expiryDate: "12 Aug 2026", daysUntilExpiry: 55, status: "warning-60",
-    statusNote: "This document expires within 60 days. The supplier has been notified to upload a renewal.",
-    history: [
-      { date: "12 Aug 2025", event: "Document verified — valid", actor: "System", type: "verified" },
-      { date: "13 Jun 2026", event: "60-day expiry warning triggered", actor: "System", type: "warning" },
-    ],
-  },
-  {
-    id: "doc-008", supplierId: "werner", supplierName: "Werner & Co KG", trade: "Construction",
-    documentName: "Environmental Permit", documentCategory: "Compliance",
-    expiryDate: "5 Aug 2026", daysUntilExpiry: 26, status: "warning-30",
-    autoNotified: "6 Jul 2026",
-    statusNote:
-      "This document expires within 30 days. The 30-day auto-notification has been sent to the supplier portal.",
-    history: [
-      { date: "05 Aug 2024", event: "Document verified — valid", actor: "System", type: "verified" },
-      { date: "06 Jun 2026", event: "60-day expiry warning triggered", actor: "System", type: "warning" },
-      { date: "06 Jul 2026", event: "30-day auto-notification sent to supplier portal", actor: "System", type: "notification" },
-    ],
-  },
-  {
-    id: "doc-006", supplierId: "bauparts", supplierName: "BauParts GmbH", trade: "Construction",
-    documentName: "Trade Licence", documentCategory: "Licence",
-    expiryDate: "31 Aug 2026", daysUntilExpiry: 74, status: "warning-60",
-    statusNote: "This document expires within 60 days. The supplier has been notified to upload a renewal.",
-    history: [
-      { date: "31 Aug 2024", event: "Document verified — valid", actor: "System", type: "verified" },
-      { date: "18 Jun 2026", event: "60-day expiry warning triggered", actor: "System", type: "warning" },
-    ],
-  },
-  {
-    id: "doc-007", supplierId: "techparts", supplierName: "TechParts Europa AG", trade: "Electronics",
-    documentName: "ISO 9001 Certificate", documentCategory: "Certification",
-    expiryDate: "14 Dec 2026", daysUntilExpiry: 179, status: "valid",
-    statusNote: "This document is valid and no action is required.",
-    history: [
-      { date: "14 Dec 2025", event: "Document verified — valid", actor: "System", type: "verified" },
-    ],
-  },
+  // ... more docs
 ];
 
-export const CONTRACTS: Contract[] = [
-  { id: "c1", supplierName: "BauParts GmbH", ref: "FWK-2024-0047", type: "Framework", annualValue: 480000, endDate: "30 Jun 2026", renewalBy: "31 Mar 2026", noticePeriod: "90d", timeLeftLabel: "12d left", status: "Renewal Urgent" },
-  { id: "c2", supplierName: "TechParts Europa AG", ref: "MSA-2023-0031", type: "Master Supply", annualValue: 1240000, endDate: "31 Aug 2026", renewalBy: "31 May 2026", noticePeriod: "90d", timeLeftLabel: "74d left", status: "Expiring Soon" },
-  { id: "c3", supplierName: "Heckmann & Söhne GmbH", ref: "SVC-2025-0012", type: "Service Agreement", annualValue: 320000, endDate: "31 Dec 2026", renewalBy: "30 Sep 2026", noticePeriod: "90d", timeLeftLabel: "196d left", status: "Active" },
-  { id: "c4", supplierName: "Schmidt Consulting GmbH", ref: "SVC-2024-0069", type: "Service Agreement", annualValue: 96000, endDate: "31 Mar 2027", renewalBy: "31 Dec 2026", noticePeriod: "90d", timeLeftLabel: "287d left", status: "Active" },
-  { id: "c5", supplierName: "Zimmer IT Services", ref: "SVC-2022-0044", type: "Service Agreement", annualValue: 180000, endDate: "28 Feb 2024", renewalBy: "30 Nov 2023", noticePeriod: "—", timeLeftLabel: "Expired", status: "Renewal in Progress" },
-  { id: "c6", supplierName: "Riedel Fertigungen GmbH", ref: "FWK-2022-0018", type: "Framework", annualValue: 210000, endDate: "31 May 2024", renewalBy: "28 Feb 2024", noticePeriod: "—", timeLeftLabel: "Opted out", status: "Opted Out" },
-];
-
-export const DATA_GOVERNANCE_REQUESTS: DataGovernanceRequest[] = [
-  {
-    id: "dgr-1",
-    supplierName: "BauParts GmbH",
-    category: "Payment Data",
-    risk: "Critical",
-    requestedBy: "Laura Heinz",
-    requestedAt: "18 Jun 2026, 09:14",
-    reason: "Company bank account migrated to DKB following merger with Bau Group Holding.",
-    fields: [
-      { label: "IBAN", before: "•••• •••• •••• •••• 130 00", after: "DE45 1203 0000 1020 3040 50", sensitive: true },
-      { label: "Bank Name", before: "Commerzbank AG", after: "Deutsche Kreditbank AG" },
-      { label: "BIC / SWIFT", before: "COBADEFFXXX", after: "BELADEBEXXX" },
-    ],
-    status: "Awaiting Review",
-    approvalStep: 1,
-  },
-];
-
-export const ONBOARDING_CASES: OnboardingCase[] = [
-  { id: "onb-1", companyName: "Bauer Sanitär GmbH", contactName: "Klaus Bauer", status: "Stale", daysNoResponse: 31, criticality: "high" },
-  { id: "onb-2", companyName: "Novak Installationstechnik", contactName: "Josef Novak", status: "Pending", daysNoResponse: 14, criticality: "medium" },
-  { id: "onb-3", companyName: "Werner & Co KG", contactName: "Annika Werner", status: "Opened", daysNoResponse: 3, criticality: "low" },
-];
-
-export const CATALOGUE_REGIONS = ["Bavaria", "Baden-Württemberg", "NRW", "Hesse", "Berlin", "All Germany"];
-export const CATALOGUE_TRADES = ["Painting", "Roofing", "Piping", "Electrical", "Sanitary"];
-
-// Trades offered when inviting a supplier (the wizard's Details step).
-export const TRADES = [
-  "Carpentry",
-  "Drywall",
-  "Electrical",
-  "Heating & Plumbing",
-  "Landscaping",
-  "Renovation",
-  "Roofing",
-];
-
-// Company typeahead used in the invite wizard. Matching a name here switches the
-// flow: "on-lynk" → connection request (no email), "connected" → already yours.
-// Any other typed name is treated as a brand-new company (email invite).
-export const COMPANY_DIRECTORY: DirectoryCompany[] = [
-  { name: "Arctis Build Systems", trade: "Roofing", city: "Munich", rating: 88, state: "on-lynk" },
-  { name: "Brandt Electrical", trade: "Electrical", city: "Stuttgart", rating: 76, state: "on-lynk" },
-  { name: "DeltaHaus Roofing GmbH", trade: "Roofing", city: "Munich", rating: 62, state: "connected" },
-  { name: "Fixora Heating", trade: "Heating & Plumbing", city: "Berlin", state: "new" },
-  { name: "Gipfelmontage Drywall", trade: "Drywall", city: "Munich", state: "new" },
-];
-
-export const CATALOGUES: Catalogue[] = [
-  {
-    id: "cat-1",
-    name: "Catalog 1 Painting",
-    trade: "Painting",
-    region: "Bavaria",
-    status: "Active",
-    versionLabel: "Version 3 (2026)",
-    currentVersion: "Version 3",
-    awaitingFirstResponse: false,
-    validFrom: "2026-01-01",
-    validTo: "2026-12-31",
-    responseModel: "actively-agree",
-    services: [
-      { id: "svc-1", service: "Interior wall painting", category: "Interior", unit: "m²", rate: 12.5 },
-      { id: "svc-2", service: "Ceiling painting", category: "Interior", unit: "m²", rate: 14.0 },
-      { id: "svc-3", service: "Facade painting", category: "Exterior", unit: "m²", rate: 22.8 },
-      { id: "svc-4", service: "Primer application", category: "Preparation", unit: "m²", rate: 6.4 },
-      { id: "svc-5", service: "Wallpaper removal", category: "Preparation", unit: "m²", rate: 8.9 },
-      { id: "svc-6", service: "Lacquer work, doors", category: "Detail work", unit: "piece", rate: 85.0 },
-      { id: "svc-7", service: "Scaffolding setup", category: "Site setup", unit: "day", rate: 240.0 },
-      { id: "svc-8", service: "Travel surcharge", category: "Surcharges", unit: "flat", rate: 45.0 },
-    ],
-    versions: [
-      { version: "Version 3", publishedAt: "12 May 2026", note: "Rates updated for 2026" },
-      { version: "Version 2", publishedAt: "03 Nov 2025", note: "Added exterior services" },
-      { version: "Version 1", publishedAt: "18 Feb 2025", note: "Initial catalogue" },
-    ],
-    suppliers: [
-      { id: "riedel", name: "Riedel Fertigungen GmbH", region: "Bavaria", confirmed: true },
-      { id: "bauparts", name: "BauParts GmbH", region: "Bavaria", confirmed: true },
-      { id: "mueller", name: "Müller Logistik KG", region: "Bavaria", confirmed: true },
-      { id: "werner", name: "Werner & Co KG", region: "Bavaria", confirmed: true },
-      { id: "bauer", name: "Bauer Sanitär GmbH", region: "Bavaria", confirmed: false },
-      { id: "novak", name: "Novak Installationstechnik", region: "Bavaria", confirmed: false },
-    ],
-  },
-  {
-    id: "cat-2",
-    name: "Catalog 2 Roofing",
-    trade: "Roofing",
-    region: "NRW",
-    status: "Active",
-    versionLabel: "Version 1.1 (2025)",
-    currentVersion: "Version 1.1",
-    awaitingFirstResponse: true,
-    validFrom: "2025-06-01",
-    validTo: "2026-05-31",
-    responseModel: "actively-disagree",
-    services: [
-      { id: "svc-r1", service: "Tile roof installation", category: "Installation", unit: "m²", rate: 68.0 },
-      { id: "svc-r2", service: "Roof insulation", category: "Insulation", unit: "m²", rate: 42.5 },
-      { id: "svc-r3", service: "Gutter replacement", category: "Drainage", unit: "m", rate: 28.0 },
-      { id: "svc-r4", service: "Leak inspection", category: "Maintenance", unit: "visit", rate: 120.0 },
-      { id: "svc-r5", service: "Storm damage repair", category: "Repair", unit: "hour", rate: 74.0 },
-    ],
-    versions: [
-      { version: "Version 1.1", publishedAt: "22 Apr 2025", note: "Corrected gutter rates" },
-      { version: "Version 1", publishedAt: "10 Mar 2025", note: "Initial catalogue" },
-    ],
-    suppliers: [
-      { id: "heckmann", name: "Heckmann & Söhne GmbH", region: "NRW", confirmed: false },
-      { id: "bauparts", name: "BauParts GmbH", region: "NRW", confirmed: false },
-      { id: "schmidt", name: "Schmidt Consulting GmbH", region: "NRW", confirmed: false },
-      { id: "techparts", name: "TechParts Europa AG", region: "NRW", confirmed: false },
-      { id: "werner", name: "Werner & Co KG", region: "NRW", confirmed: false },
-      { id: "zimmer", name: "Zimmer IT Services", region: "NRW", confirmed: false },
-    ],
-  },
-  {
-    id: "cat-3",
-    name: "Catalog 3 Piping",
-    trade: "Piping",
-    region: "Hesse",
-    status: "Upcoming",
-    versionLabel: "Version 2.0 (2026)",
-    currentVersion: "Version 2.0",
-    awaitingFirstResponse: false,
-    validFrom: "2026-09-01",
-    validTo: "2027-08-31",
-    responseModel: "actively-agree",
-    services: [
-      { id: "svc-p1", service: "Copper pipe installation", category: "Installation", unit: "m", rate: 34.0 },
-      { id: "svc-p2", service: "Pipe insulation", category: "Insulation", unit: "m", rate: 12.0 },
-      { id: "svc-p3", service: "Pressure testing", category: "Testing", unit: "test", rate: 180.0 },
-      { id: "svc-p4", service: "Emergency call-out", category: "Repair", unit: "visit", rate: 150.0 },
-    ],
-    versions: [
-      { version: "Version 2.0", publishedAt: "01 Jun 2026", note: "2026/27 season rates" },
-      { version: "Version 1", publishedAt: "15 Aug 2025", note: "Initial catalogue" },
-    ],
-    suppliers: [
-      { id: "bauer", name: "Bauer Sanitär GmbH", region: "Hesse", confirmed: true },
-      { id: "novak", name: "Novak Installationstechnik", region: "Hesse", confirmed: true },
-      { id: "heckmann", name: "Heckmann & Söhne GmbH", region: "Hesse", confirmed: true },
-      { id: "mueller", name: "Müller Logistik KG", region: "Hesse", confirmed: false },
-      { id: "riedel", name: "Riedel Fertigungen GmbH", region: "Hesse", confirmed: false },
-    ],
-  },
-  {
-    id: "cat-4",
-    name: "Catalog 4 Electrical",
-    trade: "Electrical",
-    region: "Berlin",
-    status: "Draft",
-    versionLabel: "Version 1 (draft)",
-    currentVersion: "Version 1",
-    awaitingFirstResponse: true,
-    validFrom: "2026-10-01",
-    validTo: "2027-09-30",
-    responseModel: "actively-agree",
-    services: [
-      { id: "svc-e1", service: "Socket installation", category: "Installation", unit: "piece", rate: 48.0 },
-      { id: "svc-e2", service: "Distribution board upgrade", category: "Installation", unit: "piece", rate: 620.0 },
-      { id: "svc-e3", service: "Safety inspection (E-Check)", category: "Testing", unit: "visit", rate: 210.0 },
-    ],
-    versions: [{ version: "Version 1", publishedAt: "—", note: "Draft, not yet shared" }],
-    suppliers: [
-      { id: "novak", name: "Novak Installationstechnik", region: "Berlin", confirmed: false },
-      { id: "techparts", name: "TechParts Europa AG", region: "Berlin", confirmed: false },
-      { id: "zimmer", name: "Zimmer IT Services", region: "Berlin", confirmed: false },
-    ],
-  },
-];
-
-// Mock parse result shown in the wizard preview step (create flow).
-export const PARSED_LINES: CatalogueLineDiff[] = [
-  { id: "np-1", service: "Interior wall painting", category: "Interior", unit: "m²", rate: 13.2, change: "unchanged" },
-  { id: "np-2", service: "Ceiling painting", category: "Interior", unit: "m²", rate: 14.8, change: "unchanged" },
-  { id: "np-3", service: "Facade painting", category: "Exterior", unit: "m²", rate: 24.5, change: "unchanged" },
-  { id: "np-4", service: "Primer application", category: "Preparation", unit: "m²", rate: 6.9, change: "unchanged" },
-  { id: "np-5", service: "Wallpaper removal", category: "Preparation", unit: "m²", rate: 9.4, change: "unchanged" },
-  { id: "np-6", service: "Lacquer work, doors", category: "Detail work", unit: "piece", rate: 89.0, change: "unchanged" },
-  { id: "np-7", service: "Scaffolding setup", category: "Site setup", unit: "day", rate: 250.0, change: "unchanged" },
-  { id: "np-8", service: "Travel surcharge", category: "Surcharges", unit: "flat", rate: 48.0, change: "unchanged" },
-  { id: "np-9", service: "Mold treatment", category: "Preparation", unit: "m²", rate: 18.5, change: "unchanged" },
-  { id: "np-10", service: "Spray painting, radiators", category: "Detail work", unit: "piece", rate: 65.0, change: "unchanged" },
-];
-
-// Mock diff against the current active version (update flow preview).
-export const DIFF_LINES: CatalogueLineDiff[] = [
-  { id: "df-1", service: "Interior wall painting", category: "Interior", unit: "m²", rate: 13.2, change: "changed", previousRate: 12.5 },
-  { id: "df-2", service: "Ceiling painting", category: "Interior", unit: "m²", rate: 14.0, change: "unchanged" },
-  { id: "df-3", service: "Facade painting", category: "Exterior", unit: "m²", rate: 24.5, change: "changed", previousRate: 22.8 },
-  { id: "df-4", service: "Primer application", category: "Preparation", unit: "m²", rate: 6.4, change: "unchanged" },
-  { id: "df-5", service: "Wallpaper removal", category: "Preparation", unit: "m²", rate: 8.9, change: "unchanged" },
-  { id: "df-6", service: "Lacquer work, doors", category: "Detail work", unit: "piece", rate: 89.0, change: "changed", previousRate: 85.0 },
-  { id: "df-7", service: "Scaffolding setup", category: "Site setup", unit: "day", rate: 240.0, change: "removed" },
-  { id: "df-8", service: "Travel surcharge", category: "Surcharges", unit: "flat", rate: 45.0, change: "unchanged" },
-  { id: "df-9", service: "Mold treatment", category: "Preparation", unit: "m²", rate: 18.5, change: "added" },
-  { id: "df-10", service: "Spray painting, radiators", category: "Detail work", unit: "piece", rate: 65.0, change: "added" },
-];
+export const CONTRACTS: Contract[] = [];
+export const DATA_GOVERNANCE_REQUESTS: DataGovernanceRequest[] = [];
+export const ONBOARDING_CASES: OnboardingCase[] = [];
+export const CATALOGUES: Catalogue[] = [];

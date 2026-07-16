@@ -229,3 +229,24 @@ export interface Catalogue {
   versions: CatalogueVersionEntry[];
   suppliers: CatalogueSupplier[];
 }
+
+/* Portal types */
+export interface Principal {
+  id: string;
+  name: string;
+  associatesCount?: number;
+}
+
+export type RelationshipStatus = "prospect" | "supplier" | "provider" | "inactive";
+
+export interface SupplierPrincipalRelationship {
+  id: string;
+  supplierProfileId: string;
+  principalId: string;
+  principalName: string;
+  status: RelationshipStatus;
+  unreadCount: number;
+  pendingCount: number;
+  rejectedCount: number;
+  lastMessage?: { from: string; text: string; at: string };
+}
