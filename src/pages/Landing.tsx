@@ -1,4 +1,7 @@
-import { useState } from "react";
+import { ArrowRight } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 export type LandingRole = "pm" | "supplier" | "prospect";
 
@@ -6,117 +9,120 @@ export interface LandingProps {
   onSelectRole: (role: LandingRole) => void;
 }
 
+interface RoleCard {
+  id: LandingRole;
+  name: string;
+  pill: string;
+  description: string;
+  cta: string;
+  icon: string;
+  dark?: boolean;
+}
+
+const ROLES: RoleCard[] = [
+  {
+    id: "pm",
+    name: "Sabine Müller",
+    pill: "Procurement Manager",
+    description:
+      "Dashboard, compliance monitoring, contract management, data governance, qualification, reporting.",
+    cta: "Open Procurement Dashboard",
+    icon: "👩‍💼",
+    dark: true,
+  },
+  {
+    id: "supplier",
+    name: "Martin Weber",
+    pill: "Supplier · EuroBau Components",
+    description:
+      "Manage compliance documents, request sensitive data changes, view performance ratings and score history.",
+    cta: "Open Supplier Account",
+    icon: "🏭",
+  },
+  {
+    id: "prospect",
+    name: "Mehmet Yilmaz",
+    pill: "Prospect · Yilmaz Elektrotechnik",
+    description:
+      "New supplier invited to the platform. Complete profile, upload compliance documents, go through onboarding.",
+    cta: "Open Onboarding Portal",
+    icon: "🔧",
+  },
+];
+
 export function Landing({ onSelectRole }: LandingProps) {
-  const [hoveredRole, setHoveredRole] = useState<LandingRole | null>(null);
-
-  const roles = [
-    {
-      id: "pm" as const,
-      name: "Sabine Müller",
-      title: "Procurement Manager",
-      company: "Lynk PM",
-      description:
-        "Dashboard, compliance monitoring, contract management, data governance, qualification, reporting.",
-      buttonText: "Open Procurement Dashboard",
-      icon: "👤",
-      bgClass: "bg-slate-900 text-white",
-    },
-    {
-      id: "supplier" as const,
-      name: "Martin Weber",
-      title: "Active Supplier",
-      company: "EuroBau Components",
-      description:
-        "Manage compliance documents, request sensitive data changes, view performance ratings and score history.",
-      buttonText: "Open Supplier Account",
-      icon: "👥",
-      bgClass: "bg-white border border-border",
-    },
-    {
-      id: "prospect" as const,
-      name: "Mehmet Yilmaz",
-      title: "Prospect",
-      company: "Yilmaz Elektrotechnik",
-      description:
-        "New supplier invited to the platform. Complete profile, upload compliance documents, go through onboarding.",
-      buttonText: "Open Onboarding Portal",
-      icon: "📋",
-      bgClass: "bg-white border border-border",
-    },
-  ];
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 flex flex-col items-center justify-center p-6">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
       {/* Header */}
-      <div className="text-center mb-12 max-w-2xl">
-        <div className="flex items-center justify-center gap-2 mb-4">
-          <div className="w-8 h-8 rounded bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm">
+      <div className="text-center mb-10">
+        <div className="flex items-center justify-center gap-2.5 mb-6">
+          <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold">
             L
           </div>
-          <span className="text-lg font-semibold">Lynk</span>
+          <span className="text-2xl font-semibold">Lynk</span>
         </div>
-        <h1 className="text-4xl font-bold mb-2">Supplier Management Platform</h1>
-        <p className="text-muted-foreground mb-2">Three distinct user experiences within the same workflow.</p>
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Supplier Management Platform</h1>
+        <p className="text-muted-foreground mt-3">Three distinct user experiences within the same workflow.</p>
         <p className="text-muted-foreground">Choose a role to explore.</p>
       </div>
 
-      {/* Role Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl w-full mb-8">
-        {roles.map((role) => (
-          <div
+      {/* Role cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-5xl w-full">
+        {ROLES.map((role) => (
+          <Card
             key={role.id}
-            onMouseEnter={() => setHoveredRole(role.id)}
-            onMouseLeave={() => setHoveredRole(null)}
-            className={`p-6 rounded-2xl transition-all duration-300 ${
-              role.bgClass
-            } ${
-              hoveredRole === role.id
-                ? "shadow-lg scale-105 cursor-pointer"
-                : "shadow-md"
-            }`}
+            role="button"
+            tabIndex={0}
+            onClick={() => onSelectRole(role.id)}
+            className={cn(
+              "p-6 rounded-2xl [--card-spacing:0px] gap-0 cursor-pointer transition-all",
+              role.dark
+                ? "bg-brand-navy text-white border-transparent ring-0 hover:shadow-lg"
+                : "bg-card border border-border ring-0 shadow-none hover:border-foreground/20 hover:shadow-md"
+            )}
           >
             {/* Icon */}
-            <div className="text-3xl mb-4">{role.icon}</div>
+            <div
+              className={cn(
+                "w-11 h-11 rounded-xl flex items-center justify-center text-xl mb-4",
+                role.dark ? "bg-emerald-500/15" : "bg-success-soft"
+              )}
+            >
+              {role.icon}
+            </div>
 
-            {/* Name & Title */}
-            <h2 className={`text-lg font-semibold mb-1 ${
-              role.bgClass.includes("white") ? "text-foreground" : ""
-            }`}>
-              {role.name}
-            </h2>
-            <p className={`text-sm mb-3 ${
-              role.bgClass.includes("white") ? "text-muted-foreground" : "text-gray-300"
-            }`}>
-              {role.title} · {role.company}
-            </p>
+            {/* Name */}
+            <h2 className="text-lg font-semibold">{role.name}</h2>
+
+            {/* Role pill */}
+            <Badge
+              variant={role.dark ? "secondary" : "success"}
+              className={cn("mt-2", role.dark && "bg-emerald-500/15 text-emerald-300 border-transparent")}
+            >
+              {role.pill}
+            </Badge>
 
             {/* Description */}
-            <p className={`text-sm mb-6 leading-relaxed ${
-              role.bgClass.includes("white") ? "text-foreground" : ""
-            }`}>
+            <p className={cn("text-sm leading-relaxed mt-4", role.dark ? "text-white/70" : "text-muted-foreground")}>
               {role.description}
             </p>
 
-            {/* Button */}
-            <button
-              onClick={() => onSelectRole(role.id)}
-              className={`inline-flex items-center gap-2 text-sm font-medium transition-colors ${
-                role.bgClass.includes("white")
-                  ? "text-primary hover:text-primary/80"
-                  : "text-blue-400 hover:text-blue-300"
-              }`}
+            {/* CTA */}
+            <span
+              className={cn(
+                "inline-flex items-center gap-1.5 text-sm font-medium mt-6",
+                role.dark ? "text-emerald-400" : "text-primary"
+              )}
             >
-              {role.buttonText}
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
+              {role.cta}
+              <ArrowRight className="w-4 h-4" />
+            </span>
+          </Card>
         ))}
       </div>
 
-      {/* Footer Note */}
-      <p className="text-xs text-muted-foreground text-center max-w-2xl">
+      {/* Footer note */}
+      <p className="text-xs text-muted-foreground text-center mt-8 max-w-2xl">
         In production these would be separate authenticated sessions. This demo simulates all three.
       </p>
     </div>

@@ -1,9 +1,10 @@
-import { X, ArrowUpRight, AlertTriangle } from "lucide-react";
+import { ArrowUpRight, AlertTriangle } from "lucide-react";
 import type { Ticket, SupplierDoc, TicketStatus } from "@/types";
 import { useLynkData } from "@/lib/LynkDataContext";
 import { ACTION_ICON } from "@/lib/action-icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DetailDrawer } from "@/components/yarowa/detail-drawer";
 import { RenewalReviewCard } from "@/components/yarowa/renewal-review-card";
 import { TicketStatusMenu } from "@/components/yarowa/ticket-status-menu";
 import { CriticalityIcon } from "@/components/yarowa/criticality-icon";
@@ -58,8 +59,9 @@ export function TicketDrawer({
   const targetView = sourceToView[ticket.source];
 
   return (
-    <div className="w-[380px] shrink-0 border-l border-border bg-card h-full overflow-y-auto animate-in slide-in-from-right-6 fade-in duration-200">
-      <div className="p-4 flex items-start justify-between border-b border-border">
+    <DetailDrawer
+      onClose={onClose}
+      header={
         <div className="flex flex-col gap-2">
           <div className="flex gap-2">
             <Badge variant={ticket.criticality}>
@@ -70,13 +72,9 @@ export function TicketDrawer({
           </div>
           <TicketStatusMenu status={status} onChange={(s) => setTicketStatus(ticket, s)} />
         </div>
-        <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
-          <X size={18} />
-        </button>
-      </div>
-
-      <div className="p-4">
-        <h3 className="font-semibold text-base mb-3">{ticket.title}</h3>
+      }
+    >
+      <h3 className="font-semibold text-base mb-3">{ticket.title}</h3>
 
         <div className="grid grid-cols-2 gap-3 text-xs mb-4">
           <div>
@@ -193,7 +191,6 @@ export function TicketDrawer({
             <ArrowUpRight size={14} />
           </button>
         )}
-      </div>
-    </div>
+    </DetailDrawer>
   );
 }

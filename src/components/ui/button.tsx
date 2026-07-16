@@ -22,6 +22,8 @@ const buttonVariants = cva(
         // Lynk solid semantic buttons (preset's destructive is soft; danger is solid)
         danger: "bg-destructive text-white hover:bg-destructive/90",
         success: "bg-success text-success-foreground hover:bg-success/90",
+        // Brand navy CTA (portal primary actions, "Update My Details", etc.)
+        dark: "bg-brand-navy text-white hover:bg-brand-navy/90",
       },
       size: {
         default:

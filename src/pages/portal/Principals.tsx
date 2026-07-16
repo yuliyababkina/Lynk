@@ -32,7 +32,7 @@ export function PortalPrincipals({ supplierId }: PortalPrincipalsProps) {
 
       <div className="space-y-3">
         {relationships.map((relationship) => (
-          <Card key={relationship.id} className="p-4 hover:bg-accent/50 transition-colors cursor-pointer">
+          <Card key={relationship.id} className="p-4 hover:bg-secondary/50 transition-colors cursor-pointer">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">

@@ -19,4 +19,281 @@ import { Onboarding } from "./pages/Onboarding";
 import { ServiceCatalogue } from "./pages/ServiceCatalogue";
 import { Reporting } from "./pages/Reporting";
 import type { Ticket, SupplierDoc, Contract } from "./types";
-import type { LandingRole } from "./pages/Landing";\n\nexport type View =\n  | \"dashboard\"\n  | \"suppliers\"\n  | \"supplier-profile\"\n  | \"data-governance\"\n  | \"onboarding\"\n  | \"compliance\"\n  | \"contracts\"\n  | \"reporting\"\n  | \"service-catalogue\";\n\nconst VIEW_LABEL: Record<View, string> = {\n  dashboard: \"Dashboard\",\n  suppliers: \"Suppliers Overview\",\n  \"supplier-profile\": \"Supplier Profile\",\n  \"data-governance\": \"Data Governance\",\n  onboarding: \"Onboarding\",\n  compliance: \"Compliance Monitoring\",\n  contracts: \"Contract Management\",\n  reporting: \"Reporting\",\n  \"service-catalogue\": \"Service Catalogue\",\n};\n\nexport default function App() {\n  // Role/persona switcher\n  const [role, setRole] = useState<LandingRole | null>(null);\n  \n  const {\n    tickets: TICKETS,\n    docs: DOCS,\n    suppliers: SUPPLIERS,\n    resolvedTicketIds,\n    resolveTicket: persistResolveTicket,\n    unresolveTicket,\n    decideRenewal: persistDecideRenewal,\n    addOnboardingCase,\n  } = useLynkData();\n\n  const [view, setView] = useState<View>(\"dashboard\");\n  const [activeTicket, setActiveTicket] = useState<Ticket | null>(null);\n  const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(null);\n  const [pendingSelected, setPendingSelected] = useState<string | null>(null);\n  const [activeDoc, setActiveDoc] = useState<SupplierDoc | null>(null);\n  const [reviewDoc, setReviewDoc] = useState<SupplierDoc | null>(null);\n  const [inviteOpen, setInviteOpen] = useState(false);\n\n  // Handle role selection from landing page\n  function handleSelectRole(selectedRole: LandingRole) {\n    setRole(selectedRole);\n  }\n\n  // Switch back to landing (role switcher)\n  function handleSwitchAccount() {\n    setRole(null);\n  }\n\n  function navigate(v: View, selectedId?: string) {\n    setActiveTicket(null);\n    // Opening a ticket in Compliance Monitoring should surface the linked\n    // document's drawer, not merely highlight its row.\n    const doc = v === \"compliance\" && selectedId ? DOCS.find((d) => d.id === selectedId) : undefined;\n    setActiveDoc(doc ?? null);\n    setPendingSelected(selectedId ?? null);\n    setView(v);\n  }\n\n  // resolvedIds keeps the same name/shape the pages already expect; it's now\n  // backed by the DB (via LynkDataContext) instead of local-only state, so a\n  // resolved ticket stays resolved across reloads and browser sessions.\n  const resolvedIds = resolvedTicketIds;\n\n  function resolveTicket(ticket: Ticket, action: string) {\n    persistResolveTicket(ticket, action);\n    setActiveTicket((cur) => (cur?.id === ticket.id ? null : cur));\n    const result = actionResult(action);\n    toast({\n      title: result.title,\n      description: `${ticket.entityName} · ${ticket.title}`,\n      tone: result.tone,\n      action: {\n        label: \"Undo\",\n        onClick: () => unresolveTicket(ticket.id),\n      },\n    });\n  }\n\n  // A renewal decision is the same act no matter where it was triggered from, so\n  // it clears the lightbox, closes the compliance drawer, and resolves the linked\n  // dashboard ticket — keeping the ticket consistent across every space. The\n  // actual document status change and ticket resolution are persisted via\n  // LynkDataContext (decideRenewal / resolveTicket), so they survive a reload.\n  function decideRenewal(doc: SupplierDoc, decision: \"accept\" | \"reject\") {\n    persistDecideRenewal(doc, decision);\n    if (decision === \"accept\") {\n      toast({\n        title: \"Renewal accepted\",\n        description:\n          doc.status === \"blocked\"\n            ? `${doc.supplierName} reactivated for work orders.`\n            : `New version of ${doc.documentName} is now active.`,\n        tone: \"success\",\n      });\n    } else {\n      toast({\n        title: \"Renewal rejected\",\n        description: `${doc.supplierName} asked to re-upload ${doc.documentName}.`,\n        tone: \"warning\",\n      });\n    }\n    setReviewDoc(null);\n    setActiveDoc(null);\n    const linked = TICKETS.find((t) => t.source === \"compliance-monitoring\" && t.targetId === doc.id);\n    if (linked) {\n      persistResolveTicket(linked, decision === \"accept\" ? \"Review\" : \"Escalate\");\n      setActiveTicket((cur) => (cur?.id === linked.id ? null : cur));\n    }\n  }\n\n  function openProfile(id: string) {\n    setActiveTicket(null);\n    setActiveDoc(null);\n    setSelectedSupplierId(id);\n    setView(\"supplier-profile\");\n  }\n\n  // Tickets reference a supplier by display name; resolve it to the profile.\n  function openSupplierByName(name: string) {\n    const match = SUPPLIERS.find((s) => s.name === name);\n    if (match) openProfile(match.id);\n    else navigate(\"suppliers\");\n  }\n\n  function selectTicket(t: Ticket) {\n    setActiveDoc(null);\n    setActiveTicket(t);\n  }\n\n  // Show landing page if no role selected\n  if (!role) {\n    return <Landing onSelectRole={handleSelectRole} />;\n  }\n\n  // Render Supplier Portal for supplier/prospect roles\n  if (role === \"supplier\") {\n    return (\n      <SupplierPortal\n        supplierName=\"Martin Weber\"\n        supplierId=\"supplier_martin_weber\"\n      />\n    );\n  }\n\n  if (role === \"prospect\") {\n    return (\n      <SupplierPortal\n        supplierName=\"Mehmet Yilmaz\"\n        supplierId=\"supplier_mehmet_yilmaz\"\n      />\n    );\n  }\n\n  // Render PM app for PM role\n  return (\n    <div className=\"flex h-screen w-screen overflow-hidden bg-background text-foreground\">\n      <Sidebar view={view} onNavigate={(v) => navigate(v)} onInvite={() => setInviteOpen(true)} />\n\n      <div className=\"flex-1 flex flex-col min-w-0\">\n        <header className=\"h-14 border-b border-border flex items-center px-6 shrink-0 bg-card\">\n          <span className=\"text-sm font-medium text-muted-foreground\">\n            Lynk / Procurement Platform / <span className=\"text-foreground\">{VIEW_LABEL[view]}</span>\n          </span>\n          <div className=\"flex-1\" />\n          <button\n            onClick={handleSwitchAccount}\n            className=\"mr-3 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors\"\n            title=\"Switch account\"\n          >\n            Switch\n          </button>\n          <div className=\"w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs font-semibold flex items-center justify-center cursor-pointer hover:opacity-80\"\n            onClick={handleSwitchAccount}\n            title=\"Switch account\">\n            SM\n          </div>\n        </header>\n\n        <div className=\"flex-1 flex min-w-0 overflow-hidden\">\n          <main className=\"flex-1 overflow-y-auto min-w-0\">\n            {view === \"dashboard\" && (\n              <Dashboard\n                onSelectTicket={selectTicket}\n                onOpenSupplier={openSupplierByName}\n                resolvedIds={resolvedIds}\n                onResolve={resolveTicket}\n              />\n            )}\n            {view === \"suppliers\" && (\n              <SuppliersOverview onOpenProfile={openProfile} initialSelectedId={pendingSelected} />\n            )}\n            {view === \"supplier-profile\" && selectedSupplierId && (\n              <SupplierProfile\n                supplierId={selectedSupplierId}\n                onBack={() => setView(\"suppliers\")}\n                onSelectTicket={selectTicket}\n              />\n            )}\n            {view === \"data-governance\" && <DataGovernance initialSelectedId={pendingSelected} />}\n            {view === \"onboarding\" && <Onboarding initialSelectedId={pendingSelected} />}\n            {view === \"compliance\" && (\n              <ComplianceMonitoring\n                onSelectDoc={(doc: SupplierDoc) => {\n                  setActiveTicket(null);\n                  setActiveDoc(doc);\n                }}\n                selectedDocId={activeDoc?.id ?? pendingSelected}\n                initialSelectedId={pendingSelected}\n              />\n            )}\n            {view === \"contracts\" && (\n              <ContractManagement\n                onSelectContract={(c: Contract) =>\n                  selectTicket({\n                    id: `contract-${c.id}`,\n                    title: `${c.ref} — ${c.supplierName}`,\n                    criticality: c.status === \"Renewal Urgent\" ? \"critical\" : \"medium\",\n                    entityName: c.supplierName,\n                    entityType: \"Supplier\",\n                    ageLabel: c.timeLeftLabel,\n                    primaryAction: \"Renew\",\n                    source: \"contracts\",\n                    category: \"Contracts\",\n                    targetId: c.id,\n                  })\n                }\n                initialSelectedId={pendingSelected}\n              />\n            )}\n            {view === \"reporting\" && <Reporting />}\n            {view === \"service-catalogue\" && <ServiceCatalogue initialSelectedId={pendingSelected} />}\n          </main>\n\n          {activeDoc ? (\n            <ComplianceDrawer doc={activeDoc} onClose={() => setActiveDoc(null)} onReview={setReviewDoc} />\n          ) : activeTicket ? (\n            <TicketDrawer\n              ticket={activeTicket}\n              onClose={() => setActiveTicket(null)}\n              onNavigate={navigate}\n              onOpenSupplier={openSupplierByName}\n              onResolve={resolveTicket}\n              onReview={setReviewDoc}\n            />\n          ) : null}\n        </div>\n      </div>\n\n      {reviewDoc && (\n        <DocumentLightbox\n          doc={reviewDoc}\n          onClose={() => setReviewDoc(null)}\n          onDecision={(decision) => decideRenewal(reviewDoc, decision)}\n        />\n      )}\n\n      <InviteSupplierModal\n        open={inviteOpen}\n        onClose={() => setInviteOpen(false)}\n        onCreateProspect={(c) => addOnboardingCase(c)}\n      />\n\n      <Toaster />\n    </div>\n  );\n}\n
+import type { LandingRole } from "./pages/Landing";
+
+export type View =
+  | "dashboard"
+  | "suppliers"
+  | "supplier-profile"
+  | "data-governance"
+  | "onboarding"
+  | "compliance"
+  | "contracts"
+  | "reporting"
+  | "service-catalogue";
+
+const VIEW_LABEL: Record<View, string> = {
+  dashboard: "Dashboard",
+  suppliers: "Suppliers Overview",
+  "supplier-profile": "Supplier Profile",
+  "data-governance": "Data Governance",
+  onboarding: "Onboarding",
+  compliance: "Compliance Monitoring",
+  contracts: "Contract Management",
+  reporting: "Reporting",
+  "service-catalogue": "Service Catalogue",
+};
+
+export default function App() {
+  // Role/persona switcher
+  const [role, setRole] = useState<LandingRole | null>(null);
+  
+  const {
+    tickets: TICKETS,
+    docs: DOCS,
+    suppliers: SUPPLIERS,
+    resolvedTicketIds,
+    resolveTicket: persistResolveTicket,
+    unresolveTicket,
+    decideRenewal: persistDecideRenewal,
+    addOnboardingCase,
+  } = useLynkData();
+
+  const [view, setView] = useState<View>("dashboard");
+  const [activeTicket, setActiveTicket] = useState<Ticket | null>(null);
+  const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(null);
+  const [pendingSelected, setPendingSelected] = useState<string | null>(null);
+  const [activeDoc, setActiveDoc] = useState<SupplierDoc | null>(null);
+  const [reviewDoc, setReviewDoc] = useState<SupplierDoc | null>(null);
+  const [inviteOpen, setInviteOpen] = useState(false);
+
+  // Handle role selection from landing page
+  function handleSelectRole(selectedRole: LandingRole) {
+    setRole(selectedRole);
+  }
+
+  // Switch back to landing (role switcher)
+  function handleSwitchAccount() {
+    setRole(null);
+  }
+
+  function navigate(v: View, selectedId?: string) {
+    setActiveTicket(null);
+    // Opening a ticket in Compliance Monitoring should surface the linked
+    // document's drawer, not merely highlight its row.
+    const doc = v === "compliance" && selectedId ? DOCS.find((d) => d.id === selectedId) : undefined;
+    setActiveDoc(doc ?? null);
+    setPendingSelected(selectedId ?? null);
+    setView(v);
+  }
+
+  // resolvedIds keeps the same name/shape the pages already expect; it's now
+  // backed by the DB (via LynkDataContext) instead of local-only state, so a
+  // resolved ticket stays resolved across reloads and browser sessions.
+  const resolvedIds = resolvedTicketIds;
+
+  function resolveTicket(ticket: Ticket, action: string) {
+    persistResolveTicket(ticket, action);
+    setActiveTicket((cur) => (cur?.id === ticket.id ? null : cur));
+    const result = actionResult(action);
+    toast({
+      title: result.title,
+      description: `${ticket.entityName} · ${ticket.title}`,
+      tone: result.tone,
+      action: {
+        label: "Undo",
+        onClick: () => unresolveTicket(ticket.id),
+      },
+    });
+  }
+
+  // A renewal decision is the same act no matter where it was triggered from, so
+  // it clears the lightbox, closes the compliance drawer, and resolves the linked
+  // dashboard ticket — keeping the ticket consistent across every space. The
+  // actual document status change and ticket resolution are persisted via
+  // LynkDataContext (decideRenewal / resolveTicket), so they survive a reload.
+  function decideRenewal(doc: SupplierDoc, decision: "accept" | "reject") {
+    persistDecideRenewal(doc, decision);
+    if (decision === "accept") {
+      toast({
+        title: "Renewal accepted",
+        description:
+          doc.status === "blocked"
+            ? `${doc.supplierName} reactivated for work orders.`
+            : `New version of ${doc.documentName} is now active.`,
+        tone: "success",
+      });
+    } else {
+      toast({
+        title: "Renewal rejected",
+        description: `${doc.supplierName} asked to re-upload ${doc.documentName}.`,
+        tone: "warning",
+      });
+    }
+    setReviewDoc(null);
+    setActiveDoc(null);
+    const linked = TICKETS.find((t) => t.source === "compliance-monitoring" && t.targetId === doc.id);
+    if (linked) {
+      persistResolveTicket(linked, decision === "accept" ? "Review" : "Escalate");
+      setActiveTicket((cur) => (cur?.id === linked.id ? null : cur));
+    }
+  }
+
+  function openProfile(id: string) {
+    setActiveTicket(null);
+    setActiveDoc(null);
+    setSelectedSupplierId(id);
+    setView("supplier-profile");
+  }
+
+  // Tickets reference a supplier by display name; resolve it to the profile.
+  function openSupplierByName(name: string) {
+    const match = SUPPLIERS.find((s) => s.name === name);
+    if (match) openProfile(match.id);
+    else navigate("suppliers");
+  }
+
+  function selectTicket(t: Ticket) {
+    setActiveDoc(null);
+    setActiveTicket(t);
+  }
+
+  // Show landing page if no role selected
+  if (!role) {
+    return <Landing onSelectRole={handleSelectRole} />;
+  }
+
+  // Render Supplier Portal for supplier/prospect roles
+  if (role === "supplier") {
+    return (
+      <SupplierPortal
+        supplierName="Martin Weber"
+        supplierId="supplier_martin_weber"
+        onSwitchAccount={handleSwitchAccount}
+      />
+    );
+  }
+
+  if (role === "prospect") {
+    return (
+      <SupplierPortal
+        supplierName="Mehmet Yilmaz"
+        supplierId="supplier_mehmet_yilmaz"
+        onSwitchAccount={handleSwitchAccount}
+      />
+    );
+  }
+
+  // Render PM app for PM role
+  return (
+    <div className="flex h-screen w-screen overflow-hidden bg-background text-foreground">
+      <Sidebar view={view} onNavigate={(v) => navigate(v)} onInvite={() => setInviteOpen(true)} />
+
+      <div className="flex-1 flex flex-col min-w-0">
+        <header className="h-14 border-b border-border flex items-center px-6 shrink-0 bg-card">
+          <span className="text-sm font-medium text-muted-foreground">
+            Lynk / Procurement Platform / <span className="text-foreground">{VIEW_LABEL[view]}</span>
+          </span>
+          <div className="flex-1" />
+          <button
+            onClick={handleSwitchAccount}
+            className="mr-3 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+            title="Switch account"
+          >
+            Switch
+          </button>
+          <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs font-semibold flex items-center justify-center cursor-pointer hover:opacity-80"
+            onClick={handleSwitchAccount}
+            title="Switch account">
+            SM
+          </div>
+        </header>
+
+        <div className="flex-1 flex min-w-0 overflow-hidden">
+          <main className="flex-1 overflow-y-auto min-w-0">
+            {view === "dashboard" && (
+              <Dashboard
+                onSelectTicket={selectTicket}
+                onOpenSupplier={openSupplierByName}
+                resolvedIds={resolvedIds}
+                onResolve={resolveTicket}
+              />
+            )}
+            {view === "suppliers" && (
+              <SuppliersOverview onOpenProfile={openProfile} initialSelectedId={pendingSelected} />
+            )}
+            {view === "supplier-profile" && selectedSupplierId && (
+              <SupplierProfile
+                supplierId={selectedSupplierId}
+                onBack={() => setView("suppliers")}
+                onSelectTicket={selectTicket}
+              />
+            )}
+            {view === "data-governance" && <DataGovernance initialSelectedId={pendingSelected} />}
+            {view === "onboarding" && <Onboarding initialSelectedId={pendingSelected} />}
+            {view === "compliance" && (
+              <ComplianceMonitoring
+                onSelectDoc={(doc: SupplierDoc) => {
+                  setActiveTicket(null);
+                  setActiveDoc(doc);
+                }}
+                selectedDocId={activeDoc?.id ?? pendingSelected}
+                initialSelectedId={pendingSelected}
+              />
+            )}
+            {view === "contracts" && (
+              <ContractManagement
+                onSelectContract={(c: Contract) =>
+                  selectTicket({
+                    id: `contract-${c.id}`,
+                    title: `${c.ref} — ${c.supplierName}`,
+                    criticality: c.status === "Renewal Urgent" ? "critical" : "medium",
+                    entityName: c.supplierName,
+                    entityType: "Supplier",
+                    ageLabel: c.timeLeftLabel,
+                    primaryAction: "Renew",
+                    source: "contracts",
+                    category: "Contracts",
+                    targetId: c.id,
+                  })
+                }
+                initialSelectedId={pendingSelected}
+              />
+            )}
+            {view === "reporting" && <Reporting />}
+            {view === "service-catalogue" && <ServiceCatalogue initialSelectedId={pendingSelected} />}
+          </main>
+
+          {activeDoc ? (
+            <ComplianceDrawer doc={activeDoc} onClose={() => setActiveDoc(null)} onReview={setReviewDoc} />
+          ) : activeTicket ? (
+            <TicketDrawer
+              ticket={activeTicket}
+              onClose={() => setActiveTicket(null)}
+              onNavigate={navigate}
+              onOpenSupplier={openSupplierByName}
+              onResolve={resolveTicket}
+              onReview={setReviewDoc}
+            />
+          ) : null}
+        </div>
+      </div>
+
+      {reviewDoc && (
+        <DocumentLightbox
+          doc={reviewDoc}
+          onClose={() => setReviewDoc(null)}
+          onDecision={(decision) => decideRenewal(reviewDoc, decision)}
+        />
+      )}
+
+      <InviteSupplierModal
+        open={inviteOpen}
+        onClose={() => setInviteOpen(false)}
+        onCreateProspect={(c) => addOnboardingCase(c)}
+      />
+
+      <Toaster />
+    </div>
+  );
+}

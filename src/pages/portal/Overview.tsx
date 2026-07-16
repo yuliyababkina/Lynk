@@ -1,113 +1,219 @@
+import {
+  ArrowRight,
+  Shield,
+  FileText,
+  PencilLine,
+  Upload,
+  Send,
+  CircleCheck,
+  CircleAlert,
+  Clock,
+  Hourglass,
+  TriangleAlert,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
-import { AlertBanner } from "@/components/yarowa/alert-banner";
-import type { SupplierPrincipalRelationship } from "@/types";
-import { SUPPLIER_RELATIONSHIPS_MARTIN } from "@/data";
+import { Button } from "@/components/ui/button";
+import { TaskGroupCard, TaskRow } from "@/components/yarowa/task-group-card";
+import type { PortalView } from "@/pages/SupplierPortal";
+import type { PortalActivitySelection } from "@/components/yarowa/portal-activity-drawer";
+import {
+  getPortalProfile,
+  type ActivityItem,
+  type OverviewGroup,
+  type PortalStat,
+  type PrincipalChip,
+  type Tone,
+} from "./portal-data";
 
 export interface PortalOverviewProps {
   supplierId: string;
+  onNavigate?: (view: PortalView) => void;
+  onOpenActivity?: (selection: PortalActivitySelection) => void;
 }
 
-export function PortalOverview({ supplierId }: PortalOverviewProps) {
-  // Mock data - in reality, would query based on supplierId
-  const relationships = SUPPLIER_RELATIONSHIPS_MARTIN;
-  const totalPending = relationships.reduce((sum, r) => sum + r.pendingCount, 0);
-  const totalRejected = relationships.reduce((sum, r) => sum + r.rejectedCount, 0);
+// Supplier-portal section iconography — its own set, distinct from the PM
+// dashboard's criticality icons. Colour follows the group's tone.
+const SECTION_ICON: Record<string, typeof CircleCheck> = {
+  "action-required": CircleAlert,
+  "expiring-soon": Clock,
+  "pending-approval": Hourglass,
+  resolved: CircleCheck,
+};
 
+const ICON_INK: Record<Tone, string> = {
+  critical: "text-critical",
+  orange: "text-chart-orange",
+  medium: "text-medium",
+  success: "text-success",
+  warning: "text-warning",
+  neutral: "text-muted-foreground",
+};
+
+const ACTION_ICON: Record<string, typeof PencilLine> = {
+  Update: PencilLine,
+  Complete: PencilLine,
+  Upload: Upload,
+  Chat: Send,
+  Remind: Send,
+  Review: CircleCheck,
+};
+
+function actionVariant(label: string): "dark" | "secondary" | "outline" {
+  if (label === "Update" || label === "Upload" || label === "Complete") return "dark";
+  if (label === "Chat") return "secondary";
+  return "outline";
+}
+
+function ActionButton({ label }: { label: string }) {
+  const Icon = ACTION_ICON[label];
   return (
-    <div className="p-6 space-y-6">
-      {/* Welcome */}
-      <div>
-        <h1 className="text-3xl font-bold">Good morning, Martin</h1>
-        <p className="text-muted-foreground mt-1">Welcome back to your supplier account</p>
-      </div>
+    <Button variant={actionVariant(label)} size="xs">
+      {Icon && <Icon className="w-3.5 h-3.5" />}
+      {label}
+    </Button>
+  );
+}
 
-      {/* Alert if pending */}
-      {totalPending > 0 && (
-        <AlertBanner
-          title="Action Required"
-          description={`You have ${totalPending} document(s) or request(s) pending review from your principals.`}
-          tone="warning"
-        />
+function GroupCard({
+  group,
+  onOpenActivity,
+}: {
+  group: OverviewGroup;
+  onOpenActivity?: (selection: PortalActivitySelection) => void;
+}) {
+  const SectionIcon = SECTION_ICON[group.key] ?? CircleAlert;
+  return (
+    <TaskGroupCard
+      icon={<SectionIcon className={cn("w-[17px] h-[17px]", ICON_INK[group.tone])} />}
+      label={group.label}
+      count={group.count}
+    >
+      {group.items.length > 0 ? (
+        group.items.map((item: ActivityItem) => {
+          const Icon = item.icon === "shield" ? Shield : FileText;
+          return (
+            <TaskRow
+              key={item.id}
+              onClick={() => onOpenActivity?.({ item, sectionLabel: group.label, tone: group.tone })}
+              icon={<Icon className={cn("w-4 h-4", ICON_INK[group.tone])} />}
+              title={
+                <>
+                  {item.title} <span className="font-normal text-muted-foreground">— {item.detail}</span>
+                </>
+              }
+              subline={
+                <>
+                  {item.principal} · {item.ageLabel}
+                </>
+              }
+              action={
+                <div className="flex items-center gap-1.5">
+                  {item.actions.map((a) => (
+                    <ActionButton key={a} label={a} />
+                  ))}
+                </div>
+              }
+            />
+          );
+        })
+      ) : (
+        <p className="py-6 px-4 text-sm text-muted-foreground text-center">Nothing here right now.</p>
       )}
+    </TaskGroupCard>
+  );
+}
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="p-4">
-          <p className="text-sm text-muted-foreground mb-1">Principals</p>
-          <p className="text-2xl font-semibold">{relationships.length}</p>
-          <p className="text-xs text-muted-foreground mt-2">Active relationships</p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-sm text-muted-foreground mb-1">Pending</p>
-          <p className="text-2xl font-semibold text-orange-500">{totalPending}</p>
-          <p className="text-xs text-muted-foreground mt-2">Documents / requests</p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-sm text-muted-foreground mb-1">Changes Requested</p>
-          <p className="text-2xl font-semibold text-red-500">{totalRejected}</p>
-          <p className="text-xs text-muted-foreground mt-2">Resubmit required</p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-sm text-muted-foreground mb-1">Compliance</p>
-          <p className="text-2xl font-semibold text-green-500">92%</p>
-          <p className="text-xs text-muted-foreground mt-2">Across principals</p>
-        </Card>
+const CHIP_ICON: Record<PrincipalChip["tone"], { Icon: typeof CircleCheck; ink: string } | null> = {
+  warning: { Icon: TriangleAlert, ink: "text-warning" },
+  success: { Icon: CircleCheck, ink: "text-success" },
+  neutral: null,
+};
+
+function StatTile({ stat, onNavigate }: { stat: PortalStat; onNavigate?: (view: PortalView) => void }) {
+  return (
+    <Card
+      role="button"
+      tabIndex={0}
+      onClick={() => onNavigate?.(stat.key as PortalView)}
+      className="rounded-2xl border border-border ring-0 shadow-none [--card-spacing:0px] p-5 gap-0 cursor-pointer hover:bg-secondary/50 transition-colors"
+    >
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">{stat.label}</p>
+        <ArrowRight className="w-4 h-4 text-muted-foreground" />
       </div>
-
-      {/* Action required section */}
-      <div>
-        <h2 className="text-lg font-semibold mb-4">Action Required</h2>
-        <div className="space-y-3">
-          {relationships
-            .filter((r) => r.pendingCount > 0)
-            .map((relationship) => (
-              <Card key={relationship.id} className="p-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="font-medium">{relationship.principalName}</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {relationship.pendingCount} document(s) or request(s) need your attention
-                    </p>
-                    {relationship.lastMessage && (
-                      <p className="text-xs text-muted-foreground mt-2">
-                        {relationship.lastMessage.from}: "{relationship.lastMessage.text}"
-                      </p>
-                    )}
-                  </div>
-                  <button className="px-3 py-1.5 bg-primary text-primary-foreground rounded text-sm font-medium hover:bg-primary/90">
-                    Review
-                  </button>
-                </div>
-              </Card>
-            ))}
-        </div>
-      </div>
-
-      {/* Compliance by principal */}
-      <div>
-        <h2 className="text-lg font-semibold mb-4">Compliance by Principal</h2>
-        <div className="space-y-3">
-          {relationships.map((relationship) => {
-            const valid = Math.max(0, 5 - relationship.rejectedCount);
-            const total = 5;
+      <p className="text-3xl font-bold mt-2">{stat.value}</p>
+      {stat.principals ? (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2">
+          {stat.principals.map((p) => {
+            const meta = CHIP_ICON[p.tone];
             return (
-              <div key={relationship.id}>
-                <div className="flex justify-between items-center mb-2">
-                  <p className="text-sm font-medium">{relationship.principalName}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {valid}/{total}
-                  </p>
-                </div>
-                <div className="w-full bg-muted rounded-full h-2">
-                  <div
-                    className="bg-green-500 h-2 rounded-full transition-all"
-                    style={{ width: `${(valid / total) * 100}%` }}
-                  />
-                </div>
-              </div>
+              <span key={p.name} className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                {meta && <meta.Icon className={cn("w-3.5 h-3.5", meta.ink)} />}
+                {p.name}
+              </span>
             );
           })}
         </div>
+      ) : (
+        <p className="text-xs text-muted-foreground mt-2">{stat.hint}</p>
+      )}
+    </Card>
+  );
+}
+
+const QUICK_ACTIONS = [
+  { icon: Upload, title: "Upload Document", hint: "Renew expiring documents" },
+  { icon: PencilLine, title: "Request Data Change", hint: "IBAN, address updates" },
+];
+
+export function PortalOverview({ supplierId, onNavigate, onOpenActivity }: PortalOverviewProps) {
+  const profile = getPortalProfile(supplierId);
+
+  return (
+    <div className="p-6 space-y-6">
+      {/* Greeting */}
+      <div>
+        <h1 className="text-2xl font-bold">Good morning, {profile.firstName}</h1>
+        <p className="text-muted-foreground mt-1">
+          Here's the current status of your supplier account with Lynk.
+        </p>
+      </div>
+
+      {/* Stat tiles */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {profile.stats.map((stat) => (
+          <StatTile key={stat.key} stat={stat} onNavigate={onNavigate} />
+        ))}
+      </div>
+
+      {/* Activity grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {profile.overviewGroups.map((group) => (
+          <GroupCard key={group.key} group={group} onOpenActivity={onOpenActivity} />
+        ))}
+      </div>
+
+      {/* Quick actions */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {QUICK_ACTIONS.map(({ icon: Icon, title, hint }) => (
+          <Card
+            key={title}
+            role="button"
+            tabIndex={0}
+            className="rounded-2xl border border-border ring-0 shadow-none [--card-spacing:0px] p-4 cursor-pointer hover:bg-secondary/50 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-success-soft text-success-ink flex items-center justify-center shrink-0">
+                <Icon className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold truncate">{title}</p>
+                <p className="text-xs text-muted-foreground truncate">{hint}</p>
+              </div>
+            </div>
+          </Card>
+        ))}
       </div>
     </div>
   );

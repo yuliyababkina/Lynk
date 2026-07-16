@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { useLynkData } from "../lib/LynkDataContext";
 import { Button } from "@/components/ui/button";
+import { TaskGroupCard, TaskRow } from "@/components/yarowa/task-group-card";
 import { TicketStatusMenu } from "@/components/yarowa/ticket-status-menu";
 import { CriticalityIcon } from "@/components/yarowa/criticality-icon";
 import { ACTION_ICON } from "@/lib/action-icons";
@@ -133,67 +134,44 @@ export function Dashboard({
           const hasOverflow = group.tickets.length > COLLAPSED_ROWS;
           const visible = isExpanded ? group.tickets : group.tickets.slice(0, COLLAPSED_ROWS);
           return (
-            <div key={group.criticality} className="bg-card border border-border rounded-2xl">
-              <div className="flex items-center gap-2 bg-secondary/60 border-b border-border px-4 py-2.5 rounded-t-2xl">
-                <CriticalityIcon criticality={group.criticality} size={17} />
-                <span className="text-[11px] font-bold tracking-wide uppercase">
-                  {criticalityLabel[group.criticality]}
-                </span>
-                <span className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-full bg-white border border-border text-xs font-bold text-foreground">
-                  {group.tickets.length}
-                </span>
-              </div>
-              <div>
-                {visible.map((t, i) => {
-                  const ActionIcon = ACTION_ICON[t.primaryAction];
-                  const CategoryIcon = CATEGORY_ICON[t.category];
-                  // A ticket with an uploaded renewal is reviewed (opens the doc), not dismissed.
-                  const reviewable =
-                    t.source === "compliance-monitoring" && !!DOCS.find((d) => d.id === t.targetId)?.renewal;
-                  return (
-                    <div
-                      key={t.id}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => onSelectTicket(t)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          onSelectTicket(t);
-                        }
-                      }}
-                      className={`ticket-row w-full text-left px-4 py-3.5 hover:bg-secondary/40 transition-colors ${
-                        i < visible.length - 1 ? "border-b border-border" : ""
-                      }`}
-                    >
-                      {CategoryIcon && (
-                        <CategoryIcon size={16} className="tr-icon text-muted-foreground mt-0.5" aria-hidden="true" />
-                      )}
-                      <div className="tr-main">
-                        <div className="text-sm font-medium truncate">{t.title}</div>
-                        <div className="text-xs text-muted-foreground mt-0.5">
-                          {t.entityType} ·{" "}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onOpenSupplier(t.entityName);
-                            }}
-                            className="hover:text-accent hover:underline transition-colors"
-                          >
-                            {t.entityName}
-                          </button>{" "}
-                          · {t.ageLabel}
-                        </div>
-                      </div>
-                      <div className="tr-status">
-                        <TicketStatusMenu
-                          status={statusOf(t)}
-                          onChange={(s) => changeStatus(t, s)}
-                          align="start"
-                        />
-                      </div>
+            <TaskGroupCard
+              key={group.criticality}
+              icon={<CriticalityIcon criticality={group.criticality} size={17} />}
+              label={criticalityLabel[group.criticality]}
+              count={group.tickets.length}
+            >
+              {visible.map((t) => {
+                const ActionIcon = ACTION_ICON[t.primaryAction];
+                const CategoryIcon = CATEGORY_ICON[t.category];
+                // A ticket with an uploaded renewal is reviewed (opens the doc), not dismissed.
+                const reviewable =
+                  t.source === "compliance-monitoring" && !!DOCS.find((d) => d.id === t.targetId)?.renewal;
+                return (
+                  <TaskRow
+                    key={t.id}
+                    onClick={() => onSelectTicket(t)}
+                    icon={CategoryIcon && <CategoryIcon size={16} className="text-muted-foreground" aria-hidden="true" />}
+                    title={t.title}
+                    subline={
+                      <>
+                        {t.entityType} ·{" "}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenSupplier(t.entityName);
+                          }}
+                          className="hover:text-accent hover:underline transition-colors"
+                        >
+                          {t.entityName}
+                        </button>{" "}
+                        · {t.ageLabel}
+                      </>
+                    }
+                    status={
+                      <TicketStatusMenu status={statusOf(t)} onChange={(s) => changeStatus(t, s)} align="start" />
+                    }
+                    action={
                       <Button
-                        className="tr-action"
                         variant={t.criticality === "critical" || t.criticality === "high" ? "default" : "outline"}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -204,100 +182,77 @@ export function Dashboard({
                         {ActionIcon && <ActionIcon size={14} />}
                         {t.primaryAction}
                       </Button>
-                    </div>
-                  );
-                })}
-                {hasOverflow && (
-                  <button
-                    onClick={() => toggleExpanded(group.criticality)}
-                    className="w-full flex items-center justify-center gap-1.5 border-t border-border px-4 py-2.5 text-xs font-medium text-muted-foreground hover:bg-secondary/40 transition-colors"
-                  >
-                    <ChevronDown
-                      size={14}
-                      className={`transition-transform ${isExpanded ? "rotate-180" : ""}`}
-                    />
-                    {isExpanded ? "Show less" : `Show ${group.tickets.length - COLLAPSED_ROWS} more`}
-                  </button>
-                )}
-              </div>
-            </div>
+                    }
+                  />
+                );
+              })}
+              {hasOverflow && (
+                <button
+                  onClick={() => toggleExpanded(group.criticality)}
+                  className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-medium text-muted-foreground hover:bg-secondary/40 transition-colors"
+                >
+                  <ChevronDown
+                    size={14}
+                    className={`transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                  />
+                  {isExpanded ? "Show less" : `Show ${group.tickets.length - COLLAPSED_ROWS} more`}
+                </button>
+              )}
+            </TaskGroupCard>
           );
         })}
       </div>
 
       {resolvedFiltered.length > 0 && (
-        <div className="bg-card border border-border rounded-2xl mt-4">
-          <div className="flex items-center gap-2 bg-secondary/60 border-b border-border px-4 py-2.5 rounded-t-2xl">
-            <CircleCheck size={17} strokeWidth={2.25} className="text-success" />
-            <span className="text-[11px] font-bold tracking-wide uppercase">Resolved</span>
-            <span className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-full bg-white border border-border text-xs font-bold text-foreground">
-              {resolvedFiltered.length}
-            </span>
-          </div>
-          <div>
-            {resolvedVisible.map((t, i) => {
-              const CategoryIcon = CATEGORY_ICON[t.category];
-              return (
-                <div
-                  key={t.id}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => onSelectTicket(t)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      onSelectTicket(t);
-                    }
-                  }}
-                  className={`w-full text-left flex items-center justify-between gap-3 px-4 py-3 hover:bg-secondary/40 transition-colors ${
-                    i < resolvedVisible.length - 1 ? "border-b border-border" : ""
-                  }`}
-                >
-                  <div className="flex items-start gap-3 min-w-0">
-                    {CategoryIcon && (
-                      <CategoryIcon size={16} className="text-muted-foreground shrink-0 mt-0.5" aria-hidden="true" />
-                    )}
-                    <div className="min-w-0">
-                      <div className="text-sm font-medium truncate text-muted-foreground">{t.title}</div>
-                      <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
-                        {/* criticality demoted to a secondary tag once resolved */}
-                        <CriticalityIcon criticality={t.criticality} size={14} />
-                        {criticalityLabel[t.criticality]}
-                        <span>·</span>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onOpenSupplier(t.entityName);
-                          }}
-                          className="hover:text-accent hover:underline transition-colors"
-                        >
-                          {t.entityName}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                  <TicketStatusMenu
-                    status={statusOf(t)}
-                    onChange={(s) => changeStatus(t, s)}
-                    align="end"
-                  />
-                </div>
-              );
-            })}
-            {resolvedFiltered.length > COLLAPSED_ROWS && (
-              <button
-                onClick={() => setResolvedExpanded((v) => !v)}
-                className="w-full flex items-center justify-center gap-1.5 border-t border-border px-4 py-2.5 text-xs font-medium text-muted-foreground hover:bg-secondary/40 transition-colors"
-              >
-                <ChevronDown
-                  size={14}
-                  className={`transition-transform ${resolvedExpanded ? "rotate-180" : ""}`}
-                />
-                {resolvedExpanded ? "Show less" : `Show ${resolvedFiltered.length - COLLAPSED_ROWS} more`}
-              </button>
-            )}
-          </div>
-        </div>
+        <TaskGroupCard
+          className="mt-4"
+          icon={<CircleCheck size={17} strokeWidth={2.25} className="text-success" />}
+          label="Resolved"
+          count={resolvedFiltered.length}
+        >
+          {resolvedVisible.map((t) => {
+            const CategoryIcon = CATEGORY_ICON[t.category];
+            return (
+              <TaskRow
+                key={t.id}
+                onClick={() => onSelectTicket(t)}
+                muted
+                icon={CategoryIcon && <CategoryIcon size={16} className="text-muted-foreground" aria-hidden="true" />}
+                title={t.title}
+                subline={
+                  <span className="flex items-center gap-1">
+                    {/* criticality demoted to a secondary tag once resolved */}
+                    <CriticalityIcon criticality={t.criticality} size={14} />
+                    {criticalityLabel[t.criticality]}
+                    <span>·</span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onOpenSupplier(t.entityName);
+                      }}
+                      className="hover:text-accent hover:underline transition-colors"
+                    >
+                      {t.entityName}
+                    </button>
+                  </span>
+                }
+                status={<TicketStatusMenu status={statusOf(t)} onChange={(s) => changeStatus(t, s)} align="end" />}
+              />
+            );
+          })}
+          {resolvedFiltered.length > COLLAPSED_ROWS && (
+            <button
+              onClick={() => setResolvedExpanded((v) => !v)}
+              className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-medium text-muted-foreground hover:bg-secondary/40 transition-colors"
+            >
+              <ChevronDown
+                size={14}
+                className={`transition-transform ${resolvedExpanded ? "rotate-180" : ""}`}
+              />
+              {resolvedExpanded ? "Show less" : `Show ${resolvedFiltered.length - COLLAPSED_ROWS} more`}
+            </button>
+          )}
+        </TaskGroupCard>
       )}
     </div>
   );

@@ -34,6 +34,10 @@
    * and chart series. Its -soft/-ink pair powers the orange status badge.
    */
   --chart-orange: #ea580c;
+
+  /* Brand ink — the dark navy used for the portal top bar, primary CTAs and the
+   * highlighted landing card. Not a status tone; a fixed brand surface. */
+  --brand-navy: #0f1b2e;
 }
 
 @theme inline {
@@ -48,6 +52,7 @@
   --color-low: var(--low);
   --color-purple: var(--purple);
   --color-chart-orange: var(--chart-orange);
+  --color-brand-navy: var(--brand-navy);
 
   /*
    * Accessible pairs derived from each base colour (WCAG 2.2 AA):

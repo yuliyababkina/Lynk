@@ -33,6 +33,12 @@ const badgeVariants = cva(
         purple: "bg-purple-soft text-purple-ink",
         neutral: "bg-secondary text-secondary-foreground",
         dark: "bg-primary text-primary-foreground",
+        // Outline status pills — faint tint + colored border/text (Figma document
+        // + sensitive/action-required pills). Pairs with the soft variants above.
+        "success-outline": "border-success/30 bg-success-soft/50 text-success-ink",
+        "warning-outline": "border-warning/30 bg-warning-soft/50 text-warning-ink",
+        "orange-outline": "border-chart-orange/30 bg-chart-orange-soft/50 text-chart-orange-ink",
+        "critical-outline": "border-critical/30 bg-critical-soft text-critical-ink",
       },
     },
     defaultVariants: {
