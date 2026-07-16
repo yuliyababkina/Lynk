@@ -33,6 +33,7 @@ function mapSupplier(row: any): Supplier {
     id: row.id,
     name: row.name,
     stage: row.stage,
+    relationshipId: row.relationship_id ?? row.id,
     trade: row.trade,
     region: row.region,
     compliance: row.compliance,

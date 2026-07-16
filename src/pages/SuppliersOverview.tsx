@@ -6,6 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Pill } from "@/components/yarowa/pill";
 import type { Supplier } from "../types";
 
+type StageFilter = "all" | "prospect" | "supplier" | "provider";
+
+const stageLabels: Record<StageFilter, string> = {
+  all: "All",
+  prospect: "Prospect",
+  supplier: "Supplier",
+  provider: "Provider",
+};
+
 const complianceTone: Record<string, "success" | "warning" | "danger" | "neutral" | "purple"> = {
   "Fully Compliant": "success",
   "Pending Review": "warning",
@@ -13,6 +22,10 @@ const complianceTone: Record<string, "success" | "warning" | "danger" | "neutral
   "Action Required": "danger",
   "—": "neutral",
 };
+
+function formatStageLabel(stage: Supplier["stage"]) {
+  return stage.charAt(0).toUpperCase() + stage.slice(1);
+}
 
 export function SuppliersOverview({
   onOpenProfile,
@@ -22,22 +35,22 @@ export function SuppliersOverview({
   initialSelectedId?: string | null;
 }) {
   const { suppliers: SUPPLIERS } = useLynkData();
-  const [stage, setStage] = useState<"All" | "Prospect" | "Supplier" | "Provider">("All");
+  const [stage, setStage] = useState<StageFilter>("all");
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
     return SUPPLIERS.filter((s) => {
-      if (stage !== "All" && s.stage !== stage) return false;
+      if (stage !== "all" && s.stage !== stage) return false;
       if (query && !s.name.toLowerCase().includes(query.toLowerCase())) return false;
       return true;
     });
   }, [stage, query]);
 
-  const counts = {
-    All: SUPPLIERS.length,
-    Prospect: SUPPLIERS.filter((s) => s.stage === "Prospect").length,
-    Supplier: SUPPLIERS.filter((s) => s.stage === "Supplier").length,
-    Provider: SUPPLIERS.filter((s) => s.stage === "Provider").length,
+  const counts: Record<StageFilter, number> = {
+    all: SUPPLIERS.length,
+    prospect: SUPPLIERS.filter((s) => s.stage === "prospect").length,
+    supplier: SUPPLIERS.filter((s) => s.stage === "supplier").length,
+    provider: SUPPLIERS.filter((s) => s.stage === "provider").length,
   };
 
   return (
@@ -54,9 +67,9 @@ export function SuppliersOverview({
 
       <div className="flex items-center justify-between mb-4">
         <div className="flex gap-1">
-          {(["All", "Prospect", "Supplier", "Provider"] as const).map((s) => (
+          {(["all", "prospect", "supplier", "provider"] as const).map((s) => (
             <Pill key={s} active={stage === s} onClick={() => setStage(s)} count={counts[s]}>
-              {s}
+              {stageLabels[s]}
             </Pill>
           ))}
         </div>
@@ -98,7 +111,7 @@ export function SuppliersOverview({
                   <div className="text-xs text-muted-foreground">{s.contacts[0]?.name}</div>
                 </td>
                 <td className="px-4 py-3">
-                  <Badge variant="neutral">{s.stage}</Badge>
+                  <Badge variant="neutral">{formatStageLabel(s.stage)}</Badge>
                 </td>
                 <td className="px-4 py-3">{s.trade}</td>
                 <td className="px-4 py-3">{s.region}</td>
