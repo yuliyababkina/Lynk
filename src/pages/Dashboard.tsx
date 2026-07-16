@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import {
-  Eye, AlertTriangle, RefreshCw, Bell, Check, Send,
+  Check,
   ShieldCheck, Shield, FileText, ClipboardList, Rocket,
   ChevronDown, CircleCheck,
   type LucideIcon,
@@ -9,6 +9,7 @@ import { useLynkData } from "../lib/LynkDataContext";
 import { Button } from "@/components/ui/button";
 import { TicketStatusMenu } from "@/components/yarowa/ticket-status-menu";
 import { CriticalityIcon } from "@/components/yarowa/criticality-icon";
+import { ACTION_ICON } from "@/lib/action-icons";
 import { criticalityLabel } from "@/lib/theme";
 import type { Ticket, Criticality, TicketCategory, TicketStatus } from "../types";
 
@@ -23,14 +24,6 @@ const CATEGORIES: TicketCategory[] = [
 const CRITICALITY_ORDER: Criticality[] = ["critical", "high", "medium", "low"];
 // Rows shown per group before the "show more" toggle appears.
 const COLLAPSED_ROWS = 5;
-const ACTION_ICON: Record<string, LucideIcon> = {
-  Review: Eye,
-  Escalate: AlertTriangle,
-  Renew: RefreshCw,
-  Remind: Bell,
-  Approve: Check,
-  Request: Send,
-};
 // Icon illustrating each ticket type (mirrors the sidebar module iconography).
 const CATEGORY_ICON: Record<TicketCategory, LucideIcon> = {
   "Document compliance": ShieldCheck,
@@ -42,10 +35,12 @@ const CATEGORY_ICON: Record<TicketCategory, LucideIcon> = {
 
 export function Dashboard({
   onSelectTicket,
+  onOpenSupplier,
   resolvedIds,
   onResolve,
 }: {
   onSelectTicket: (t: Ticket) => void;
+  onOpenSupplier: (entityName: string) => void;
   resolvedIds: Set<string>;
   onResolve: (t: Ticket, action: string) => void;
 }) {
@@ -177,7 +172,17 @@ export function Dashboard({
                       <div className="tr-main">
                         <div className="text-sm font-medium truncate">{t.title}</div>
                         <div className="text-xs text-muted-foreground mt-0.5">
-                          {t.entityType} · {t.entityName} · {t.ageLabel}
+                          {t.entityType} ·{" "}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onOpenSupplier(t.entityName);
+                            }}
+                            className="hover:text-accent hover:underline transition-colors"
+                          >
+                            {t.entityName}
+                          </button>{" "}
+                          · {t.ageLabel}
                         </div>
                       </div>
                       <div className="tr-status">
@@ -259,7 +264,15 @@ export function Dashboard({
                         <CriticalityIcon criticality={t.criticality} size={14} />
                         {criticalityLabel[t.criticality]}
                         <span>·</span>
-                        {t.entityName}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenSupplier(t.entityName);
+                          }}
+                          className="hover:text-accent hover:underline transition-colors"
+                        >
+                          {t.entityName}
+                        </button>
                       </div>
                     </div>
                   </div>

@@ -28,22 +28,33 @@ if (!url || !anonKey) {
 
 const supabase = createClient(url, anonKey);
 const BUCKET = "supplier-documents";
+const MOCK_DIR = new URL("../supabase/mock-documents/", import.meta.url);
 
-// One entry per file: which supplier_docs row it belongs to, where it lives
-// locally, and the path it should land at in the bucket.
+// One entry per file: the supplier folder under mock-documents/, which
+// supplier_docs row it belongs to, and the local file name. The storage path
+// is derived as `<folder>/<kebab-cased file name>`.
 const MANIFEST = [
-  { docId: "doc-020", file: "Certificate_of_Incorporation.pdf", storagePath: "heckmann/certificate-of-incorporation.pdf" },
-  { docId: "doc-021", file: "VAT_Registration_Certificate.pdf", storagePath: "heckmann/vat-registration-certificate.pdf" },
-  { docId: "doc-022", file: "ISO_9001_Certificate.pdf", storagePath: "heckmann/iso-9001-certificate.pdf" },
-  { docId: "doc-023", file: "Public_Liability_Insurance.pdf", storagePath: "heckmann/public-liability-insurance.pdf" },
-  { docId: "doc-024", file: "Trade_Licence.pdf", storagePath: "heckmann/trade-licence.pdf" },
-  { docId: "doc-025", file: "Conflict_Minerals_Declaration.pdf", storagePath: "heckmann/conflict-minerals-declaration.pdf" },
+  // Heckmann & Söhne GmbH — full valid compliance pack
+  { folder: "heckmann", docId: "doc-020", file: "Certificate_of_Incorporation.pdf" },
+  { folder: "heckmann", docId: "doc-021", file: "VAT_Registration_Certificate.pdf" },
+  { folder: "heckmann", docId: "doc-022", file: "ISO_9001_Certificate.pdf" },
+  { folder: "heckmann", docId: "doc-023", file: "Public_Liability_Insurance.pdf" },
+  { folder: "heckmann", docId: "doc-024", file: "Trade_Licence.pdf" },
+  { folder: "heckmann", docId: "doc-025", file: "Conflict_Minerals_Declaration.pdf" },
+  // Steinbach Bau GmbH — 4 valid docs + the blocked/rejected pair (doc-009/010)
+  { folder: "steinbach", docId: "doc-026", file: "Certificate_of_Incorporation.pdf" },
+  { folder: "steinbach", docId: "doc-027", file: "VAT_Registration_Certificate.pdf" },
+  { folder: "steinbach", docId: "doc-028", file: "ISO_9001_Certificate.pdf" },
+  { folder: "steinbach", docId: "doc-029", file: "Trade_Licence.pdf" },
+  { folder: "steinbach", docId: "doc-009", file: "Public_Liability_Insurance.pdf" },
+  { folder: "steinbach", docId: "doc-010", file: "Conflict_Minerals_Declaration.pdf" },
 ];
 
-const LOCAL_DIR = new URL("../supabase/mock-documents/heckmann/", import.meta.url);
+const kebab = (name) => name.replace(/\.pdf$/i, "").replace(/_/g, "-").toLowerCase() + ".pdf";
 
-for (const { docId, file, storagePath } of MANIFEST) {
-  const bytes = await readFile(new URL(file, LOCAL_DIR));
+for (const { folder, docId, file } of MANIFEST) {
+  const storagePath = `${folder}/${kebab(file)}`;
+  const bytes = await readFile(new URL(`${folder}/${file}`, MOCK_DIR));
 
   const { error: uploadError } = await supabase.storage
     .from(BUCKET)

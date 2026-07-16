@@ -206,7 +206,22 @@ insert into supplier_docs (id, supplier_id, supplier_name, trade, document_name,
   '[{"date":"14 Feb 2026","event":"Document verified — valid","actor":"System","type":"verified"}]'),
 ('doc-025','heckmann','Heckmann & Söhne GmbH','Logistics','Conflict Minerals Declaration','Compliance','01 Oct 2026',80,'valid',null,
   'This document is valid and no action is required.', null,
-  '[{"date":"01 Oct 2025","event":"Document verified — valid","actor":"System","type":"verified"}]');
+  '[{"date":"01 Oct 2025","event":"Document verified — valid","actor":"System","type":"verified"}]'),
+
+-- Steinbach Bau GmbH — remaining compliance pack (doc-009/doc-010 above hold
+-- the blocked + rejected docs; these four are the valid documents on file).
+('doc-026','steinbach','Steinbach Bau GmbH','Construction','Certificate of Incorporation','Legal','31 Dec 2030',1629,'valid',null,
+  'This document is valid and no action is required.', null,
+  '[{"date":"08 Feb 2024","event":"Document verified — valid","actor":"System","type":"verified"}]'),
+('doc-027','steinbach','Steinbach Bau GmbH','Construction','VAT Registration Certificate','Tax','31 Dec 2030',1629,'valid',null,
+  'This document is valid and no action is required.', null,
+  '[{"date":"08 Feb 2024","event":"Document verified — valid","actor":"System","type":"verified"}]'),
+('doc-028','steinbach','Steinbach Bau GmbH','Construction','ISO 9001 Certificate','Certification','20 Mar 2027',247,'valid',null,
+  'This document is valid and no action is required.', null,
+  '[{"date":"20 Mar 2024","event":"Document verified — valid","actor":"System","type":"verified"}]'),
+('doc-029','steinbach','Steinbach Bau GmbH','Construction','Trade Licence','Licence','15 May 2027',303,'valid',null,
+  'This document is valid and no action is required.', null,
+  '[{"date":"15 May 2024","event":"Document verified — valid","actor":"System","type":"verified"}]');
 
 -- ─────────────────────────────────────────────────────────────────────────
 -- CONTRACTS

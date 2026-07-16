@@ -1,6 +1,7 @@
-import { X, ArrowUpRight } from "lucide-react";
+import { X, ArrowUpRight, AlertTriangle } from "lucide-react";
 import type { Ticket, SupplierDoc, TicketStatus } from "@/types";
 import { useLynkData } from "@/lib/LynkDataContext";
+import { ACTION_ICON } from "@/lib/action-icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { RenewalReviewCard } from "@/components/yarowa/renewal-review-card";
@@ -28,12 +29,14 @@ export function TicketDrawer({
   ticket,
   onClose,
   onNavigate,
+  onOpenSupplier,
   onResolve,
   onReview,
 }: {
   ticket: Ticket;
   onClose: () => void;
   onNavigate: (view: View, selectedId?: string) => void;
+  onOpenSupplier: (entityName: string) => void;
   onResolve: (ticket: Ticket, action: string) => void;
   onReview: (doc: SupplierDoc) => void;
 }) {
@@ -46,6 +49,7 @@ export function TicketDrawer({
     setTicketStatus,
   } = useLynkData();
   const status: TicketStatus = ticketStatusById.get(ticket.id) ?? "To do";
+  const PrimaryActionIcon = ACTION_ICON[ticket.primaryAction];
   const doc = ticket.source === "compliance-monitoring" ? DOCS.find((d) => d.id === ticket.targetId) : undefined;
   const contract = ticket.source === "contracts" ? CONTRACTS.find((c) => c.id === ticket.targetId) : undefined;
   const dgr = ticket.source === "data-governance" ? DATA_GOVERNANCE_REQUESTS.find((r) => r.id === ticket.targetId) : undefined;
@@ -78,8 +82,8 @@ export function TicketDrawer({
           <div>
             <div className="text-muted-foreground mb-0.5">ENTITY</div>
             <button
-              className="text-accent underline font-medium"
-              onClick={() => onNavigate("suppliers")}
+              className="text-accent underline font-medium text-left"
+              onClick={() => onOpenSupplier(ticket.entityName)}
             >
               {ticket.entityName}
             </button>
@@ -165,12 +169,14 @@ export function TicketDrawer({
               context.
             </div>
 
-            <div className="flex gap-2 mb-4">
-              <Button variant="default" className="flex-1" onClick={() => onResolve(ticket, ticket.primaryAction)}>
+            <div className="flex flex-col gap-2 mb-4">
+              <Button variant="default" className="w-full" onClick={() => onResolve(ticket, ticket.primaryAction)}>
+                {PrimaryActionIcon && <PrimaryActionIcon size={14} />}
                 {ticket.primaryAction}
               </Button>
               {ticket.primaryAction !== "Escalate" && (
-                <Button variant="outline" onClick={() => onResolve(ticket, "Escalate")}>
+                <Button variant="outline" className="w-full" onClick={() => onResolve(ticket, "Escalate")}>
+                  <AlertTriangle size={14} />
                   Escalate
                 </Button>
               )}

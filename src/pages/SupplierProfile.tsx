@@ -1,10 +1,12 @@
+import { useState } from "react";
 import { ArrowLeft, Building2, Edit, Mail, MoreHorizontal, FileText } from "lucide-react";
 import { useLynkData } from "../lib/LynkDataContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertBanner } from "@/components/yarowa/alert-banner";
 import { CriticalityIcon } from "@/components/yarowa/criticality-icon";
-import type { Ticket } from "../types";
+import { DocumentViewer } from "@/components/yarowa/document-viewer";
+import type { Ticket, SupplierDoc } from "../types";
 
 const ACTIVITY: Record<string, { label: string; who: string; date: string; tone: "warning" | "success" | "danger" | "neutral" }[]> = {
   bauparts: [
@@ -29,6 +31,7 @@ export function SupplierProfile({
   onSelectTicket: (t: Ticket) => void;
 }) {
   const { suppliers: SUPPLIERS, tickets: TICKETS, contracts: CONTRACTS, docs: DOCS } = useLynkData();
+  const [previewDoc, setPreviewDoc] = useState<SupplierDoc | null>(null);
   const supplier = SUPPLIERS.find((s) => s.id === supplierId);
   if (!supplier) return null;
 
@@ -165,34 +168,41 @@ export function SupplierProfile({
 
         <div className="bg-card border border-border rounded-lg p-4">
           <div className="flex items-center justify-between mb-3">
-            <div className="text-xs font-semibold uppercase text-muted-foreground">Compliance Snapshot</div>
-            <span className="text-xs text-accent">View all</span>
+            <div className="text-xs font-semibold uppercase text-muted-foreground">Documents</div>
+            <span className="text-xs text-muted-foreground">{docs.length} on file</span>
           </div>
-          <div className="space-y-2 text-sm">
-            {(docs.length ? docs : []).map((d) => (
-              <div key={d.id} className="flex items-center justify-between gap-2">
-                <span className="flex items-center gap-1.5 min-w-0">
-                  {d.fileUrl ? (
-                    <a
-                      href={d.fileUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-center gap-1.5 truncate hover:underline hover:text-accent"
-                      title="View attached document"
-                    >
-                      <FileText size={13} className="text-muted-foreground shrink-0" />
-                      {d.documentName}
-                    </a>
-                  ) : (
-                    <span className="truncate">{d.documentName}</span>
-                  )}
-                </span>
-                <Badge variant={d.status === "valid" ? "success" : d.status === "blocked" ? "danger" : "warning"}>
-                  {d.status}
-                </Badge>
-              </div>
-            ))}
-            {docs.length === 0 && <div className="text-muted-foreground">No documents on file.</div>}
+          <div className="divide-y divide-border">
+            {docs.map((d) => {
+              const badgeVariant =
+                d.status === "valid" ? "success" : d.status === "blocked" ? "danger" : "warning";
+              return (
+                <div key={d.id} className="flex items-center justify-between gap-3 py-2 first:pt-0 last:pb-0">
+                  <div className="min-w-0">
+                    {d.fileUrl ? (
+                      <button
+                        onClick={() => setPreviewDoc(d)}
+                        className="flex items-center gap-1.5 text-sm font-medium truncate hover:underline hover:text-accent"
+                        title="Preview attached document"
+                      >
+                        <FileText size={14} className="text-muted-foreground shrink-0" />
+                        {d.documentName}
+                      </button>
+                    ) : (
+                      <span className="flex items-center gap-1.5 text-sm font-medium truncate">
+                        <FileText size={14} className="text-muted-foreground shrink-0" />
+                        {d.documentName}
+                      </span>
+                    )}
+                    <div className="text-xs text-muted-foreground mt-0.5 truncate">
+                      {d.documentCategory}
+                      {d.expiryDate ? ` · Expires ${d.expiryDate}` : ""}
+                    </div>
+                  </div>
+                  <Badge variant={badgeVariant} className="shrink-0">{d.status}</Badge>
+                </div>
+              );
+            })}
+            {docs.length === 0 && <div className="text-sm text-muted-foreground">No documents on file.</div>}
           </div>
         </div>
 
@@ -269,6 +279,8 @@ export function SupplierProfile({
           </div>
         )}
       </div>
+
+      {previewDoc && <DocumentViewer doc={previewDoc} onClose={() => setPreviewDoc(null)} />}
     </div>
   );
 }

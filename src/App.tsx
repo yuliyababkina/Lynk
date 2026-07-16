@@ -44,6 +44,8 @@ const VIEW_LABEL: Record<View, string> = {
 export default function App() {
   const {
     tickets: TICKETS,
+    docs: DOCS,
+    suppliers: SUPPLIERS,
     resolvedTicketIds,
     resolveTicket: persistResolveTicket,
     unresolveTicket,
@@ -61,7 +63,10 @@ export default function App() {
 
   function navigate(v: View, selectedId?: string) {
     setActiveTicket(null);
-    setActiveDoc(null);
+    // Opening a ticket in Compliance Monitoring should surface the linked
+    // document's drawer, not merely highlight its row.
+    const doc = v === "compliance" && selectedId ? DOCS.find((d) => d.id === selectedId) : undefined;
+    setActiveDoc(doc ?? null);
     setPendingSelected(selectedId ?? null);
     setView(v);
   }
@@ -119,8 +124,17 @@ export default function App() {
   }
 
   function openProfile(id: string) {
+    setActiveTicket(null);
+    setActiveDoc(null);
     setSelectedSupplierId(id);
     setView("supplier-profile");
+  }
+
+  // Tickets reference a supplier by display name; resolve it to the profile.
+  function openSupplierByName(name: string) {
+    const match = SUPPLIERS.find((s) => s.name === name);
+    if (match) openProfile(match.id);
+    else navigate("suppliers");
   }
 
   function selectTicket(t: Ticket) {
@@ -148,6 +162,7 @@ export default function App() {
             {view === "dashboard" && (
               <Dashboard
                 onSelectTicket={selectTicket}
+                onOpenSupplier={openSupplierByName}
                 resolvedIds={resolvedIds}
                 onResolve={resolveTicket}
               />
@@ -204,6 +219,7 @@ export default function App() {
               ticket={activeTicket}
               onClose={() => setActiveTicket(null)}
               onNavigate={navigate}
+              onOpenSupplier={openSupplierByName}
               onResolve={resolveTicket}
               onReview={setReviewDoc}
             />
