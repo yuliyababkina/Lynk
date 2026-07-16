@@ -1,6 +1,5 @@
 import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 export type LandingRole = "pm" | "supplier" | "prospect";
@@ -69,16 +68,16 @@ export function Landing({ onSelectRole }: LandingProps) {
       {/* Role cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-5xl w-full">
         {ROLES.map((role) => (
-          <Card
+          <div
             key={role.id}
             role="button"
             tabIndex={0}
             onClick={() => onSelectRole(role.id)}
             className={cn(
-              "p-6 rounded-2xl [--card-spacing:0px] gap-0 cursor-pointer transition-all",
+              "p-6 rounded-2xl cursor-pointer transition-all",
               role.dark
-                ? "bg-brand-navy text-white border-transparent ring-0 hover:shadow-lg"
-                : "bg-card border border-border ring-0 shadow-none hover:border-foreground/20 hover:shadow-md"
+                ? "bg-brand-navy text-white border-transparent hover:shadow-lg"
+                : "bg-card border border-border shadow-none hover:border-foreground/20 hover:shadow-md"
             )}
           >
             {/* Icon */}
@@ -117,7 +116,7 @@ export function Landing({ onSelectRole }: LandingProps) {
               {role.cta}
               <ArrowRight className="w-4 h-4" />
             </span>
-          </Card>
+          </div>
         ))}
       </div>
 
