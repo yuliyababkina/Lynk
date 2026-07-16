@@ -23,6 +23,18 @@ export interface LynkDataset {
   catalogues: Catalogue[];
 }
 
+function getStaticDataset(): LynkDataset {
+  return {
+    suppliers: staticData.SUPPLIERS,
+    tickets: staticData.TICKETS,
+    docs: staticData.DOCS,
+    contracts: staticData.CONTRACTS,
+    dataGovernanceRequests: staticData.DATA_GOVERNANCE_REQUESTS,
+    onboardingCases: staticData.ONBOARDING_CASES,
+    catalogues: staticData.CATALOGUES,
+  };
+}
+
 /* ---------------------------------------------------------------------- */
 /* Row → app-shape mappers (snake_case DB columns → camelCase TS types)   */
 /* ---------------------------------------------------------------------- */
@@ -175,15 +187,7 @@ export async function fetchAllData(): Promise<LynkDataset> {
     console.info(
       "[Lynk] Supabase env vars not set — using static mock data from src/data.ts (no persistence)."
     );
-    return {
-      suppliers: staticData.SUPPLIERS,
-      tickets: staticData.TICKETS,
-      docs: staticData.DOCS,
-      contracts: staticData.CONTRACTS,
-      dataGovernanceRequests: staticData.DATA_GOVERNANCE_REQUESTS,
-      onboardingCases: staticData.ONBOARDING_CASES,
-      catalogues: staticData.CATALOGUES,
-    };
+    return getStaticDataset();
   }
 
   const [suppliersRes, ticketsRes, docsRes, contractsRes, dgrRes, onbRes, catRes, catSuppliersRes] =
@@ -206,17 +210,41 @@ export async function fetchAllData(): Promise<LynkDataset> {
   }
 
   const catSuppliers = catSuppliersRes.data ?? [];
+  const suppliers = (suppliersRes.data ?? []).map(mapSupplier);
+  const tickets = (ticketsRes.data ?? []).map(mapTicket);
+  const docs = (docsRes.data ?? []).map(mapDoc);
+  const contracts = (contractsRes.data ?? []).map(mapContract);
+  const dataGovernanceRequests = (dgrRes.data ?? []).map(mapDgr);
+  const onboardingCases = (onbRes.data ?? []).map(mapOnboarding);
+  const catalogues = (catRes.data ?? []).map((c) =>
+    mapCatalogue(c, catSuppliers.filter((cs) => cs.catalogue_id === c.id))
+  );
+
+  // Common early setup state: Supabase env vars are set, but tables are still
+  // empty / blocked by RLS for anon reads. Keep the prototype usable.
+  const allTablesEmpty =
+    suppliers.length === 0 &&
+    tickets.length === 0 &&
+    docs.length === 0 &&
+    contracts.length === 0 &&
+    dataGovernanceRequests.length === 0 &&
+    onboardingCases.length === 0 &&
+    catalogues.length === 0;
+  if (allTablesEmpty) {
+    console.warn(
+      "[Lynk] Supabase returned no rows for all datasets — using static mock data from src/data.ts."
+    );
+    return getStaticDataset();
+  }
 
   return {
-    suppliers: (suppliersRes.data ?? []).map(mapSupplier),
-    tickets: (ticketsRes.data ?? []).map(mapTicket),
-    docs: (docsRes.data ?? []).map(mapDoc),
-    contracts: (contractsRes.data ?? []).map(mapContract),
-    dataGovernanceRequests: (dgrRes.data ?? []).map(mapDgr),
-    onboardingCases: (onbRes.data ?? []).map(mapOnboarding),
-    catalogues: (catRes.data ?? []).map((c) =>
-      mapCatalogue(c, catSuppliers.filter((cs) => cs.catalogue_id === c.id))
-    ),
+    suppliers,
+    tickets,
+    docs,
+    contracts,
+    dataGovernanceRequests,
+    onboardingCases,
+    catalogues,
   };
 }
 
