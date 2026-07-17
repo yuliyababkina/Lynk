@@ -17,19 +17,20 @@ export function PortalRequestedUpdates({ supplierId }: PortalRequestedUpdatesPro
   const selected = updates.find((u) => u.id === selectedId) ?? updates[0];
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center gap-2">
-        <h1 className="text-2xl font-bold">Requested Updates</h1>
-        {updates.length > 0 && <Badge variant="critical">{updates.length}</Badge>}
-      </div>
+    <div className="flex flex-col lg:flex-row min-h-full">
+      <section className="flex-1 min-w-0 p-6 space-y-6 bg-sidebar">
+        <div>
+          <h1 className="text-2xl font-bold">Requested Updates</h1>
+          <p className="text-muted-foreground mt-1">
+            Review principal requests, update company data, and confirm changes.
+          </p>
+        </div>
 
-      {updates.length === 0 || !selected ? (
-        <AlertBanner type="success" title="No pending updates">
-          All information your principals need is up to date.
-        </AlertBanner>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6">
-          {/* List */}
+        {updates.length === 0 || !selected ? (
+          <AlertBanner type="success" title="No pending updates">
+            All information your principals need is up to date.
+          </AlertBanner>
+        ) : (
           <div className="space-y-3">
             {updates.map((u) => {
               const active = u.id === selected.id;
@@ -40,7 +41,7 @@ export function PortalRequestedUpdates({ supplierId }: PortalRequestedUpdatesPro
                   tabIndex={0}
                   onClick={() => setSelectedId(u.id)}
                   className={cn(
-                    "p-4 rounded-2xl ring-0 shadow-none [--card-spacing:0px] gap-0 cursor-pointer transition-colors",
+                    "rounded-2xl ring-0 shadow-none [--card-spacing:1rem] px-(--card-spacing) gap-0 cursor-pointer transition-colors",
                     active ? "border border-primary bg-secondary/60" : "border border-border hover:bg-secondary/50"
                   )}
                 >
@@ -56,12 +57,13 @@ export function PortalRequestedUpdates({ supplierId }: PortalRequestedUpdatesPro
               );
             })}
           </div>
+        )}
+      </section>
 
-          {/* Detail */}
-          <div className="max-w-xl">
-            <RequestedUpdatePanel update={selected} />
-          </div>
-        </div>
+      {updates.length > 0 && selected && (
+        <aside className="lg:w-[440px] shrink-0 p-6 border-t lg:border-t-0 lg:border-l border-border bg-white">
+          <RequestedUpdatePanel update={selected} />
+        </aside>
       )}
     </div>
   );

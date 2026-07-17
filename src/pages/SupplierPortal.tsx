@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { PanelLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { PortalSidebar } from "@/components/yarowa/portal-sidebar";
+import { TopHeader } from "@/components/yarowa/top-header";
 import { PortalOverview } from "./portal/Overview";
 import { PortalPrincipals } from "./portal/Principals";
 import { PortalDocuments } from "./portal/Documents";
@@ -39,9 +38,10 @@ const VIEW_LABEL: Record<PortalView, string> = {
   onboarding: "Onboarding",
 };
 
-export function SupplierPortal({ supplierId, onSwitchAccount }: PortalProps) {
+export function SupplierPortal({ supplierName, supplierId, onSwitchAccount }: PortalProps) {
   const [view, setView] = useState<PortalView>("overview");
   const [activity, setActivity] = useState<PortalActivitySelection | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Switching views closes any open detail drawer.
   const navigate = (v: PortalView) => {
@@ -49,44 +49,42 @@ export function SupplierPortal({ supplierId, onSwitchAccount }: PortalProps) {
     setView(v);
   };
 
-  return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-background text-foreground">
-      {/* Dark top bar */}
-      <header className="h-12 shrink-0 bg-brand-navy text-white flex items-center px-4 gap-3">
-        <PanelLeft className="w-4 h-4 text-white/50" />
-        <div className="w-6 h-6 rounded-md bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs">
-          L
-        </div>
-        <span className="text-sm font-semibold">Lynk</span>
-        <span className="text-sm text-white/40">/ Procurement Platform</span>
-        <span className="text-sm text-white/40">/</span>
-        <span className="text-sm text-white/90">{VIEW_LABEL[view]}</span>
-        <div className="flex-1" />
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onSwitchAccount}
-          className="text-white/70 hover:text-white hover:bg-white/10"
-        >
-          Switch account
-        </Button>
-      </header>
+  const supplierInitials = supplierName
+    .split(" ")
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("")
+    .slice(0, 2);
 
-      {/* Sidebar + content */}
-      <div className="flex flex-1 min-h-0">
-        <PortalSidebar view={view} onNavigate={navigate} supplierId={supplierId} />
-        <main className="flex-1 overflow-y-auto min-w-0">
-          {view === "overview" && (
-            <PortalOverview supplierId={supplierId} onNavigate={navigate} onOpenActivity={setActivity} />
-          )}
-          {view === "principals" && <PortalPrincipals supplierId={supplierId} />}
-          {view === "documents" && <PortalDocuments supplierId={supplierId} />}
-          {view === "requested-updates" && <PortalRequestedUpdates supplierId={supplierId} />}
-          {view === "price-agreements" && <PortalPriceAgreements supplierId={supplierId} />}
-          {view === "company-details" && <PortalCompanyDetails supplierId={supplierId} />}
-          {view === "onboarding" && <PortalOnboarding supplierId={supplierId} />}
-        </main>
-        {activity && <PortalActivityDrawer selection={activity} onClose={() => setActivity(null)} />}
+  return (
+    <div className="flex h-screen w-screen overflow-hidden bg-background text-foreground">
+      <PortalSidebar
+        view={view}
+        onNavigate={navigate}
+        supplierId={supplierId}
+        collapsed={!sidebarOpen}
+        onToggleCollapse={() => setSidebarOpen((open) => !open)}
+      />
+
+      <div className="flex-1 flex flex-col min-w-0 bg-sidebar">
+        <TopHeader
+          currentLabel={VIEW_LABEL[view]}
+          onSwitchAccount={onSwitchAccount}
+          accountInitials={supplierInitials || "SP"}
+        />
+        <div className="flex flex-1 min-h-0">
+          <main className="flex-1 overflow-y-auto min-w-0 bg-sidebar">
+            {view === "overview" && (
+              <PortalOverview supplierId={supplierId} onNavigate={navigate} onOpenActivity={setActivity} />
+            )}
+            {view === "principals" && <PortalPrincipals supplierId={supplierId} />}
+            {view === "documents" && <PortalDocuments supplierId={supplierId} />}
+            {view === "requested-updates" && <PortalRequestedUpdates supplierId={supplierId} />}
+            {view === "price-agreements" && <PortalPriceAgreements supplierId={supplierId} />}
+            {view === "company-details" && <PortalCompanyDetails supplierId={supplierId} />}
+            {view === "onboarding" && <PortalOnboarding supplierId={supplierId} />}
+          </main>
+          {activity && <PortalActivityDrawer selection={activity} onClose={() => setActivity(null)} />}
+        </div>
       </div>
     </div>
   );

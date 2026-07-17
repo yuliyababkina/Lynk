@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Sidebar } from "@/components/yarowa/sidebar";
+import { TopHeader } from "@/components/yarowa/top-header";
 import { TicketDrawer } from "@/components/yarowa/ticket-drawer";
 import { ComplianceDrawer } from "@/components/yarowa/compliance-drawer";
 import { DocumentLightbox } from "@/components/yarowa/document-lightbox";
@@ -66,6 +67,22 @@ export default function App() {
   const [activeDoc, setActiveDoc] = useState<SupplierDoc | null>(null);
   const [reviewDoc, setReviewDoc] = useState<SupplierDoc | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  const unresolvedTickets = TICKETS.filter(
+    (ticket) => !resolvedTicketIds.has(ticket.id) && ticket.status !== "Resolved" && !ticket.resolved
+  );
+
+  const sidebarBadgeCounts: Partial<Record<View, number>> = {
+    "data-governance": unresolvedTickets.filter(
+      (ticket) => ticket.source === "data-governance" || ticket.source === "data-quality"
+    ).length,
+    onboarding: unresolvedTickets.filter(
+      (ticket) => ticket.source === "onboarding" || ticket.source === "prospect"
+    ).length,
+    compliance: unresolvedTickets.filter((ticket) => ticket.source === "compliance-monitoring").length,
+    contracts: unresolvedTickets.filter((ticket) => ticket.source === "contracts").length,
+  };
 
   // Handle role selection from landing page
   function handleSelectRole(selectedRole: LandingRole) {
@@ -187,27 +204,17 @@ export default function App() {
   // Render PM app for PM role
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-background text-foreground">
-      <Sidebar view={view} onNavigate={(v) => navigate(v)} onInvite={() => setInviteOpen(true)} />
+      <Sidebar
+        view={view}
+        onNavigate={(v) => navigate(v)}
+        onInvite={() => setInviteOpen(true)}
+        badgeCounts={sidebarBadgeCounts}
+        collapsed={!sidebarOpen}
+        onToggleCollapse={() => setSidebarOpen((open) => !open)}
+      />
 
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-14 border-b border-border flex items-center px-6 shrink-0 bg-card">
-          <span className="text-sm font-medium text-muted-foreground">
-            Lynk / Procurement Platform / <span className="text-foreground">{VIEW_LABEL[view]}</span>
-          </span>
-          <div className="flex-1" />
-          <button
-            onClick={handleSwitchAccount}
-            className="mr-3 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-            title="Switch account"
-          >
-            Switch
-          </button>
-          <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs font-semibold flex items-center justify-center cursor-pointer hover:opacity-80"
-            onClick={handleSwitchAccount}
-            title="Switch account">
-            SM
-          </div>
-        </header>
+      <div className="flex-1 flex flex-col min-w-0 bg-sidebar">
+        <TopHeader currentLabel={VIEW_LABEL[view]} onSwitchAccount={handleSwitchAccount} accountInitials="SM" />
 
         <div className="flex-1 flex min-w-0 overflow-hidden">
           <main className="flex-1 overflow-y-auto min-w-0">

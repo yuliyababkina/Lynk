@@ -31,7 +31,7 @@ export interface ActivityItem {
 export interface OverviewGroup {
   key: string;
   label: string;
-  /** Total in this state — may exceed the items previewed below it. */
+  /** Total items in this state. */
   count: number;
   tone: Tone;
   items: ActivityItem[];
@@ -85,7 +85,6 @@ export interface PortalProfile {
   fullName: string;
   firstName: string;
   role: string;
-  navCounts: NavCounts;
   stats: PortalStat[];
   overviewGroups: OverviewGroup[];
   documents: PortalDoc[];
@@ -97,7 +96,6 @@ const MARTIN: PortalProfile = {
   fullName: "Martin Weber",
   firstName: "Martin",
   role: "Supplier Manager",
-  navCounts: { overview: 1, "requested-updates": 1, documents: 1, "company-details": 1 },
   stats: [
     { key: "documents", label: "Documents", value: "2/6", hint: "1 expiring soon" },
     { key: "requested-updates", label: "Open Requests", value: "4", hint: "data change requests" },
@@ -271,7 +269,6 @@ const MEHMET: PortalProfile = {
   fullName: "Mehmet Yilmaz",
   firstName: "Mehmet",
   role: "Supplier Manager",
-  navCounts: { overview: 1, "requested-updates": 1, documents: 1 },
   stats: [
     { key: "documents", label: "Documents", value: "2/3", hint: "1 pending review" },
     { key: "requested-updates", label: "Open Requests", value: "1", hint: "onboarding task" },
@@ -381,6 +378,42 @@ const PROFILES: Record<string, PortalProfile> = {
 /** Resolve the portal profile for a supplier, defaulting to Martin's demo data. */
 export function getPortalProfile(supplierId: string): PortalProfile {
   return PROFILES[supplierId] ?? MARTIN;
+}
+
+const PRICE_AGREEMENT_KEYWORDS = /\b(contract|agreement|pricing|price)\b/i;
+const COMPANY_DETAILS_KEYWORDS = /\b(bank|iban|address|company|contact|profile|details|vat|registration)\b/i;
+const OVERVIEW_ALERT_GROUP_KEYS = new Set(["action-required", "expiring-soon"]);
+
+function countPriceAgreementAlerts(profile: PortalProfile): number {
+  return profile.overviewGroups
+    .filter((group) => group.key !== "resolved")
+    .flatMap((group) => group.items)
+    .filter((item) => PRICE_AGREEMENT_KEYWORDS.test(`${item.title} ${item.detail}`)).length;
+}
+
+function countCompanyDetailAlerts(profile: PortalProfile): number {
+  return profile.requestedUpdates.filter((request) =>
+    COMPANY_DETAILS_KEYWORDS.test(`${request.subject} ${request.body.join(" ")}`)
+  ).length;
+}
+
+export function getPortalNavCounts(profile: PortalProfile): NavCounts {
+  const overviewAlerts = profile.overviewGroups
+    .filter((group) => OVERVIEW_ALERT_GROUP_KEYS.has(group.key))
+    .reduce((sum, group) => sum + group.items.length, 0);
+
+  const documentAlerts = profile.documents.filter((doc) => doc.status !== "valid").length;
+  const requestedUpdatesAlerts = profile.requestedUpdates.length;
+  const priceAgreementAlerts = countPriceAgreementAlerts(profile);
+  const companyDetailAlerts = countCompanyDetailAlerts(profile);
+
+  return {
+    overview: overviewAlerts || undefined,
+    "requested-updates": requestedUpdatesAlerts || undefined,
+    documents: documentAlerts || undefined,
+    "price-agreements": priceAgreementAlerts || undefined,
+    "company-details": companyDetailAlerts || undefined,
+  };
 }
 
 export function initialsOf(name: string): string {

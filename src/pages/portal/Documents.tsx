@@ -22,7 +22,13 @@ export function PortalDocuments({ supplierId }: PortalDocumentsProps) {
   return (
     <div className="flex flex-col lg:flex-row min-h-full">
       {/* All documents */}
-      <section className="flex-1 min-w-0 p-6 space-y-3">
+      <section className="flex-1 min-w-0 p-6 space-y-3 bg-sidebar">
+        <div>
+          <h1 className="text-2xl font-bold">Documents</h1>
+          <p className="text-muted-foreground mt-1">
+            Compliance files shared with your principals, with expiry status and actions.
+          </p>
+        </div>
         <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">All Documents</h2>
         <div className="space-y-3">
           {docs.map((doc) => {
@@ -30,7 +36,7 @@ export function PortalDocuments({ supplierId }: PortalDocumentsProps) {
             return (
               <Card
                 key={doc.id}
-                className="rounded-xl border border-border ring-0 shadow-none [--card-spacing:0px] p-4 hover:bg-secondary/50 transition-colors cursor-pointer"
+                className="rounded-xl border border-border ring-0 shadow-none [--card-spacing:1rem] px-(--card-spacing) hover:bg-secondary/50 transition-colors cursor-pointer"
               >
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-start gap-3 min-w-0">
@@ -52,7 +58,7 @@ export function PortalDocuments({ supplierId }: PortalDocumentsProps) {
 
       {/* Requested updates rail */}
       {activeUpdate && (
-        <aside className="lg:w-[440px] shrink-0 p-6 border-t lg:border-t-0 lg:border-l border-border">
+        <aside className="lg:w-[440px] shrink-0 p-6 border-t lg:border-t-0 lg:border-l border-border bg-white">
           <RequestedUpdatePanel update={activeUpdate} />
         </aside>
       )}
