@@ -126,6 +126,14 @@ export interface SupplierDoc {
   /** Storage object path + public URL for the CURRENT valid file, if one has been attached. */
   filePath?: string;
   fileUrl?: string;
+  /** Kind of document — Certificate / Licence / Insurance Policy / … */
+  documentType?: string;
+  /** Authority or company that issued it (TÜV, Chamber of Commerce, insurer…). */
+  issuingInstitution?: string;
+  /** True for documents with no expiry (e.g. VAT registration). */
+  doesNotExpire?: boolean;
+  /** True once the uploader reviewed the pre-filled metadata instead of accepting it blindly. */
+  metadataConfirmed?: boolean;
 }
 
 export type ContractStatus = "Active" | "Expiring Soon" | "Renewal Urgent" | "Renewal in Progress" | "Opted Out";
@@ -156,7 +164,14 @@ export interface DataGovernanceRequest {
   approvalStep: 1 | 2;
 }
 
-export type OnboardingStatus = "Stale" | "Pending" | "Opened";
+export type OnboardingStatus =
+  | "Stale"
+  | "Pending"
+  | "Opened"
+  | "In Review"
+  | "Changes Requested"
+  | "Accepted"
+  | "Rejected";
 
 export interface OnboardingCase {
   id: string;
@@ -165,6 +180,9 @@ export interface OnboardingCase {
   status: OnboardingStatus;
   daysNoResponse: number;
   criticality: Criticality;
+  /** PM feedback attached on a "Changes Requested" or "Rejected" decision.
+   * Shown to the prospect so they know what to fix. */
+  reviewNote?: string;
 }
 
 /**

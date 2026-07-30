@@ -36,7 +36,7 @@ export function WizardStepper({
                 className={cn(
                   "w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold border",
                   done
-                    ? "bg-success border-success text-white"
+                    ? "bg-success border-success text-success-foreground"
                     : active
                       ? "bg-primary border-primary text-primary-foreground"
                       : "bg-card border-border text-muted-foreground"

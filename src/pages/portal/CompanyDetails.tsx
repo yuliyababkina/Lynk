@@ -128,7 +128,7 @@ export function PortalCompanyDetails({ supplierId }: PortalCompanyDetailsProps) 
 
       {/* Requested updates rail */}
       {activeUpdate && (
-        <aside className="lg:w-[440px] shrink-0 p-6 border-t lg:border-t-0 lg:border-l border-border bg-white">
+        <aside className="lg:w-[440px] shrink-0 p-6 border-t lg:border-t-0 lg:border-l border-border bg-card">
           <RequestedUpdatePanel update={activeUpdate} />
         </aside>
       )}

@@ -98,6 +98,10 @@ function mapDoc(row: any): SupplierDoc {
     history: row.history ?? [],
     filePath: row.file_path ?? undefined,
     fileUrl: row.file_url ?? undefined,
+    documentType: row.document_type ?? undefined,
+    issuingInstitution: row.issuing_institution ?? undefined,
+    doesNotExpire: row.does_not_expire ?? false,
+    metadataConfirmed: row.metadata_confirmed ?? false,
   };
 }
 
@@ -331,6 +335,218 @@ export async function upsertCatalogueDb(c: Catalogue) {
     );
     if (supErr) console.error("[Lynk] upsertCatalogueDb (suppliers) failed:", supErr.message);
   }
+}
+
+const DOCUMENTS_BUCKET = "supplier-documents";
+
+/**
+ * Supplier-portal upload: pushes a PDF to Storage and inserts a matching
+ * supplier_docs row as `pending-review` (a supplier-submitted compliance doc is
+ * NOT self-certified — the Procurement Manager reviews it). Returns the new
+ * SupplierDoc so the caller can show it immediately; the same row is read back
+ * by the PM app from the shared table.
+ */
+const docSlug = (s: string) =>
+  s.replace(/[^a-z0-9]+/gi, "-").replace(/^-+|-+$/g, "").toLowerCase();
+
+export async function uploadSupplierDocument(params: {
+  file: File;
+  supplierId: string;
+  supplierName: string;
+  trade?: string;
+  documentName?: string;
+  /** Metadata the uploader reviewed and confirmed (type, issuer, validity). */
+  metadata?: {
+    documentType?: string;
+    issuingInstitution?: string;
+    expiryDate?: string;
+    doesNotExpire?: boolean;
+  };
+}): Promise<SupplierDoc> {
+  const { file, supplierId, supplierName, trade = "", documentName, metadata } = params;
+  const name = documentName || file.name.replace(/\.pdf$/i, "");
+  const slug = docSlug(name);
+  // Deterministic per (supplier, document type): a new upload of the same type
+  // REPLACES the previous version rather than piling up duplicates.
+  const id = `doc-${supplierId}-${slug}`;
+  const uploadedAt = new Date().toISOString();
+
+  const doc: SupplierDoc = {
+    id,
+    supplierId,
+    supplierName,
+    trade,
+    documentName: name,
+    documentCategory: metadata?.documentType || "Uploaded",
+    expiryDate: metadata?.doesNotExpire ? "" : metadata?.expiryDate ?? "",
+    daysUntilExpiry: 0,
+    status: "pending-review",
+    statusNote: "Uploaded by supplier — awaiting review.",
+    history: [{ date: uploadedAt, event: `${name} uploaded`, actor: supplierName, type: "upload" }],
+    documentType: metadata?.documentType,
+    issuingInstitution: metadata?.issuingInstitution,
+    doesNotExpire: metadata?.doesNotExpire ?? false,
+    // The uploader reviewed the pre-filled values before submitting.
+    metadataConfirmed: Boolean(metadata),
+  };
+
+  // No Supabase → return the in-memory doc so the prototype still demos.
+  if (!isSupabaseConfigured) return doc;
+
+  // Unique object path per upload: the bucket policy grants INSERT only, so
+  // overwriting an existing object (upsert → UPDATE) is rejected by RLS. The
+  // supplier_docs row below is the authority on which file is current; older
+  // objects are simply no longer referenced.
+  const storagePath = `${supplierId}/${slug}-${Date.now()}.pdf`;
+  const { error: uploadError } = await supabase.storage
+    .from(DOCUMENTS_BUCKET)
+    .upload(storagePath, file, { contentType: "application/pdf" });
+  if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
+
+  const { data: pub } = supabase.storage.from(DOCUMENTS_BUCKET).getPublicUrl(storagePath);
+  doc.filePath = storagePath;
+  doc.fileUrl = pub.publicUrl;
+
+  // Supersede ANY existing document of this type for this supplier (older
+  // timestamped rows, seeded rows, etc.), then write the single current version.
+  await supabase.from("supplier_docs").delete().eq("supplier_id", supplierId).eq("document_name", name);
+
+  const base = {
+    id: doc.id,
+    supplier_id: supplierId,
+    supplier_name: supplierName,
+    trade,
+    document_name: name,
+    document_category: doc.documentCategory,
+    expiry_date: doc.expiryDate || null,
+    days_until_expiry: 0,
+    status: doc.status,
+    status_note: doc.statusNote,
+    history: doc.history,
+    file_path: doc.filePath,
+    file_url: doc.fileUrl,
+  };
+
+  const { error: insertError } = await supabase.from("supplier_docs").insert({
+    ...base,
+    document_type: doc.documentType ?? null,
+    issuing_institution: doc.issuingInstitution ?? null,
+    does_not_expire: doc.doesNotExpire ?? false,
+    metadata_confirmed: doc.metadataConfirmed ?? false,
+  });
+  if (!insertError) return doc;
+
+  // Metadata columns may not exist yet (migration pending) — fall back to the
+  // base row so uploads still work. See supabase/migrations/…_add_document_metadata.sql
+  console.warn("[Lynk] document metadata columns unavailable, saving without them:", insertError.message);
+  const { error: fallbackError } = await supabase.from("supplier_docs").insert(base);
+  if (fallbackError) throw new Error(`Saving document failed: ${fallbackError.message}`);
+
+  return doc;
+}
+
+/** Per-document review decision (PM approves or declines one uploaded doc).
+ *   approve → status "valid"
+ *   decline → status "rejected-resubmit" + note (feedback shown to supplier) */
+export async function setDocReviewDb(docId: string, status: DocStatus, note: string | null) {
+  if (!isSupabaseConfigured) return;
+  const { error } = await supabase
+    .from("supplier_docs")
+    .update({ status, status_note: note })
+    .eq("id", docId);
+  if (error) console.error("[Lynk] setDocReviewDb failed:", error.message);
+}
+
+/** Onboarding: persist the prospect's edited company profile to the suppliers
+ * row. Only columns that exist in the schema are written (legalName→name,
+ * vatId→vat_id, composed address→address). */
+export async function updateSupplierProfileDb(
+  supplierId: string,
+  patch: { name?: string; vatId?: string; address?: string }
+) {
+  if (!isSupabaseConfigured) return;
+  const row: Record<string, string> = {};
+  if (patch.name !== undefined) row.name = patch.name;
+  if (patch.vatId !== undefined) row.vat_id = patch.vatId;
+  if (patch.address !== undefined) row.address = patch.address;
+  if (Object.keys(row).length === 0) return;
+  const { error } = await supabase.from("suppliers").update(row).eq("id", supplierId);
+  if (error) console.error("[Lynk] updateSupplierProfileDb failed:", error.message);
+}
+
+/** Deterministic onboarding-case id for a prospect, so submitting is idempotent
+ * (re-submitting updates the same row instead of creating duplicates). */
+export const onboardingCaseId = (supplierId: string) => `onb-${supplierId}`;
+
+/** Onboarding: mark a prospect's submission as received. Flags the supplier as
+ * `Pending Review`, adds/updates the prospect's row in the Procurement Manager's
+ * Onboarding list, and records the submission in the activity log — the company
+ * data + documents are already persisted by this point, so the whole application
+ * is now in the database. */
+export async function submitProspectForReviewDb(
+  supplierId: string,
+  supplierName: string,
+  contactName: string
+) {
+  if (!isSupabaseConfigured) return;
+  const { error } = await supabase
+    .from("suppliers")
+    .update({ compliance: "Pending Review" })
+    .eq("id", supplierId);
+  if (error) console.error("[Lynk] submitProspectForReviewDb failed:", error.message);
+
+  const { error: onbError } = await supabase.from("onboarding_cases").upsert({
+    id: onboardingCaseId(supplierId),
+    company_name: supplierName,
+    contact_name: contactName,
+    status: "In Review",
+    days_no_response: 0,
+    criticality: "medium",
+  });
+  if (onbError) console.error("[Lynk] submitProspectForReviewDb (onboarding_case) failed:", onbError.message);
+
+  await logActivity(supplierName, "Onboarding submitted for review");
+}
+
+export type ProspectDecision = "accept" | "changes" | "reject";
+
+/** PM review outcome for a prospect's onboarding submission (see the onboarding
+ * flow diagram). Persists the state transition:
+ *   • accept  → supplier goes live (stage Prospect→Supplier), case "Accepted"
+ *   • changes → case "Changes Requested" (prospect loops back to edit/resubmit)
+ *   • reject  → case "Rejected" (terminal)
+ * `note` is the PM's feedback/reason and is recorded in the activity log. */
+export async function reviewProspectDb(
+  supplierId: string,
+  supplierName: string,
+  decision: ProspectDecision,
+  note?: string
+) {
+  if (!isSupabaseConfigured) return;
+
+  if (decision === "accept") {
+    const { error } = await supabase
+      .from("suppliers")
+      .update({ stage: "Supplier", compliance: "Fully Compliant" })
+      .eq("id", supplierId);
+    if (error) console.error("[Lynk] reviewProspectDb (accept) failed:", error.message);
+  }
+
+  const status =
+    decision === "accept" ? "Accepted" : decision === "changes" ? "Changes Requested" : "Rejected";
+  const { error: onbError } = await supabase
+    .from("onboarding_cases")
+    .update({ status })
+    .eq("id", onboardingCaseId(supplierId));
+  if (onbError) console.error("[Lynk] reviewProspectDb (case) failed:", onbError.message);
+
+  const action =
+    decision === "accept"
+      ? "Onboarding accepted — supplier activated"
+      : decision === "changes"
+        ? "Changes requested"
+        : "Application rejected";
+  await logActivity(supplierName, action, note);
 }
 
 export async function logActivity(entityName: string | null, action: string, detail?: string) {

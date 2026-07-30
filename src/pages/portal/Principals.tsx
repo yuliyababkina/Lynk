@@ -48,7 +48,7 @@ export function PortalPrincipals({ supplierId }: PortalPrincipalsProps) {
                   </div>
                   <div>
                     <p className="text-muted-foreground">Changes Requested</p>
-                    <p className="text-lg font-semibold text-red-500">{relationship.rejectedCount}</p>
+                    <p className="text-lg font-semibold text-destructive">{relationship.rejectedCount}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Unread Messages</p>

@@ -76,7 +76,7 @@ export function Landing({ onSelectRole }: LandingProps) {
             className={cn(
               "p-6 rounded-2xl cursor-pointer transition-all",
               role.dark
-                ? "bg-brand-navy text-white border-transparent hover:shadow-lg"
+                ? "bg-brand-navy text-brand-navy-foreground border-transparent hover:shadow-lg"
                 : "bg-card border border-border shadow-none hover:border-foreground/20 hover:shadow-md"
             )}
           >
@@ -102,7 +102,7 @@ export function Landing({ onSelectRole }: LandingProps) {
             </Badge>
 
             {/* Description */}
-            <p className={cn("text-sm leading-relaxed mt-4", role.dark ? "text-white/70" : "text-muted-foreground")}>
+            <p className={cn("text-sm leading-relaxed mt-4", role.dark ? "text-brand-navy-foreground/70" : "text-muted-foreground")}>
               {role.description}
             </p>
 

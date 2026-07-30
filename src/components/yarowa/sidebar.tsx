@@ -44,13 +44,14 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "bg-white text-sidebar-foreground flex flex-col shrink-0 transition-[width]",
+        // White surface with a divider separating it from the content area.
+        "bg-card text-sidebar-foreground border-r border-border flex flex-col shrink-0 transition-[width]",
         collapsed ? "w-16" : "w-60"
       )}
     >
       <div
         className={cn(
-          "h-12 border-b border-white/10 bg-brand-navy text-white",
+          "h-12 border-b border-brand-navy-foreground/10 bg-brand-navy text-brand-navy-foreground",
           collapsed ? "flex items-center justify-center px-2" : "flex items-center gap-2 px-4"
         )}
       >
@@ -59,8 +60,8 @@ export function Sidebar({
         </div>
         {!collapsed ? (
           <div>
-            <div className="text-sm font-semibold text-white leading-none">Lynk</div>
-            <div className="text-[10px] text-white/60 leading-none mt-0.5">Procurement Platform</div>
+            <div className="text-sm font-semibold text-brand-navy-foreground leading-none">Lynk</div>
+            <div className="text-[10px] text-brand-navy-foreground/60 leading-none mt-0.5">Procurement Platform</div>
           </div>
         ) : null}
         {onToggleCollapse ? (
@@ -68,7 +69,7 @@ export function Sidebar({
             type="button"
             onClick={onToggleCollapse}
             className={cn(
-              "shrink-0 rounded p-1 text-white/70 hover:text-white hover:bg-white/10 transition-colors",
+              "shrink-0 rounded p-1 text-brand-navy-foreground/70 hover:text-brand-navy-foreground hover:bg-brand-navy-foreground/10 transition-colors",
               collapsed ? "" : "ml-auto"
             )}
             aria-label={collapsed ? "Expand menu" : "Collapse menu"}
@@ -78,7 +79,7 @@ export function Sidebar({
           </button>
         ) : null}
       </div>
-      <nav className="flex-1 p-3 space-y-0.5 border-l border-border">
+      <nav className="flex-1 p-3 space-y-0.5">
         {NAV.map((item) => {
           const Icon = item.icon;
           const isActive = view === item.id;
@@ -120,7 +121,7 @@ export function Sidebar({
       </nav>
 
       <div className={cn("p-3 border-t border-border flex items-center h-16", collapsed ? "justify-center" : "gap-3")}>
-        <div className="w-7 h-7 rounded-full bg-sidebar-primary flex items-center justify-center text-xs font-semibold text-white">
+        <div className="w-7 h-7 rounded-full bg-sidebar-primary flex items-center justify-center text-xs font-semibold text-sidebar-primary-foreground">
           SM
         </div>
         {!collapsed ? (

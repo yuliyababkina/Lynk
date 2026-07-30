@@ -1,26 +1,39 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { Sidebar } from "@/components/yarowa/sidebar";
 import { TopHeader } from "@/components/yarowa/top-header";
 import { TicketDrawer } from "@/components/yarowa/ticket-drawer";
 import { ComplianceDrawer } from "@/components/yarowa/compliance-drawer";
 import { DocumentLightbox } from "@/components/yarowa/document-lightbox";
-import { InviteSupplierModal } from "@/components/yarowa/invite-supplier-modal";
 import { Toaster, toast } from "@/components/yarowa/toast";
 import { actionResult } from "@/lib/ticket-actions";
 import { useLynkData } from "./lib/LynkDataContext";
 import { Landing } from "./pages/Landing";
-import { SupplierPortal } from "./pages/SupplierPortal";
-import { Dashboard } from "./pages/Dashboard";
-import { SuppliersOverview } from "./pages/SuppliersOverview";
-import { SupplierProfile } from "./pages/SupplierProfile";
-import { ComplianceMonitoring } from "./pages/ComplianceMonitoring";
-import { ContractManagement } from "./pages/ContractManagement";
-import { DataGovernance } from "./pages/DataGovernance";
-import { Onboarding } from "./pages/Onboarding";
-import { ServiceCatalogue } from "./pages/ServiceCatalogue";
-import { Reporting } from "./pages/Reporting";
 import type { Ticket, SupplierDoc, Contract } from "./types";
 import type { LandingRole } from "./pages/Landing";
+
+// Route-level code splitting: each view/portal loads its own chunk on demand,
+// keeping the initial bundle to the landing page + shell. Landing stays eager
+// (it's the entry screen). Named exports are mapped to `default` for lazy().
+const SupplierPortal = lazy(() => import("./pages/SupplierPortal").then((m) => ({ default: m.SupplierPortal })));
+const ProspectOnboarding = lazy(() => import("./pages/ProspectOnboarding").then((m) => ({ default: m.ProspectOnboarding })));
+const Dashboard = lazy(() => import("./pages/Dashboard").then((m) => ({ default: m.Dashboard })));
+const SuppliersOverview = lazy(() => import("./pages/SuppliersOverview").then((m) => ({ default: m.SuppliersOverview })));
+const SupplierProfile = lazy(() => import("./pages/SupplierProfile").then((m) => ({ default: m.SupplierProfile })));
+const ComplianceMonitoring = lazy(() => import("./pages/ComplianceMonitoring").then((m) => ({ default: m.ComplianceMonitoring })));
+const ContractManagement = lazy(() => import("./pages/ContractManagement").then((m) => ({ default: m.ContractManagement })));
+const DataGovernance = lazy(() => import("./pages/DataGovernance").then((m) => ({ default: m.DataGovernance })));
+const Onboarding = lazy(() => import("./pages/Onboarding").then((m) => ({ default: m.Onboarding })));
+const ServiceCatalogue = lazy(() => import("./pages/ServiceCatalogue").then((m) => ({ default: m.ServiceCatalogue })));
+const Reporting = lazy(() => import("./pages/Reporting").then((m) => ({ default: m.Reporting })));
+// Large (~558 lines) and only opened behind a button — split it out too.
+const InviteSupplierModal = lazy(() =>
+  import("@/components/yarowa/invite-supplier-modal").then((m) => ({ default: m.InviteSupplierModal }))
+);
+
+// Lightweight fallback shown while a view chunk is fetched.
+function ViewFallback() {
+  return <div className="flex-1" aria-busy="true" />;
+}
 
 export type View =
   | "dashboard"
@@ -183,21 +196,27 @@ export default function App() {
   // Render Supplier Portal for supplier/prospect roles
   if (role === "supplier") {
     return (
-      <SupplierPortal
-        supplierName="Martin Weber"
-        supplierId="supplier_martin_weber"
-        onSwitchAccount={handleSwitchAccount}
-      />
+      <Suspense fallback={<ViewFallback />}>
+        <SupplierPortal
+          supplierName="Martin Weber"
+          supplierId="supplier_martin_weber"
+          onSwitchAccount={handleSwitchAccount}
+        />
+      </Suspense>
     );
   }
 
+  // Prospects go through the onboarding wizard (fill profile + upload docs +
+  // submit for review) rather than the full supplier portal.
   if (role === "prospect") {
     return (
-      <SupplierPortal
-        supplierName="Mehmet Yilmaz"
-        supplierId="supplier_mehmet_yilmaz"
-        onSwitchAccount={handleSwitchAccount}
-      />
+      <Suspense fallback={<ViewFallback />}>
+        <ProspectOnboarding
+          supplierName="Yilmaz Elektrotechnik GmbH"
+          supplierId="supplier_mehmet_yilmaz"
+          onSwitchAccount={handleSwitchAccount}
+        />
+      </Suspense>
     );
   }
 
@@ -218,6 +237,7 @@ export default function App() {
 
         <div className="flex-1 flex min-w-0 overflow-hidden">
           <main className="flex-1 overflow-y-auto min-w-0">
+            <Suspense fallback={<ViewFallback />}>
             {view === "dashboard" && (
               <Dashboard
                 onSelectTicket={selectTicket}
@@ -269,6 +289,7 @@ export default function App() {
             )}
             {view === "reporting" && <Reporting />}
             {view === "service-catalogue" && <ServiceCatalogue initialSelectedId={pendingSelected} />}
+            </Suspense>
           </main>
 
           {activeDoc ? (
@@ -294,11 +315,15 @@ export default function App() {
         />
       )}
 
-      <InviteSupplierModal
-        open={inviteOpen}
-        onClose={() => setInviteOpen(false)}
-        onCreateProspect={(c) => addOnboardingCase(c)}
-      />
+      {inviteOpen && (
+        <Suspense fallback={null}>
+          <InviteSupplierModal
+            open={inviteOpen}
+            onClose={() => setInviteOpen(false)}
+            onCreateProspect={(c) => addOnboardingCase(c)}
+          />
+        </Suspense>
+      )}
 
       <Toaster />
     </div>

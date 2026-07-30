@@ -13,11 +13,18 @@ import {
   setDocStatusDb,
   insertOnboardingCaseDb,
   upsertCatalogueDb,
+  uploadSupplierDocument,
+  updateSupplierProfileDb,
+  submitProspectForReviewDb,
+  reviewProspectDb,
+  setDocReviewDb,
+  onboardingCaseId,
   logActivity,
   type LynkDataset,
+  type ProspectDecision,
 } from "./db";
 import { isSupabaseConfigured } from "./supabase";
-import type { Ticket, SupplierDoc, Catalogue, OnboardingCase, TicketStatus } from "../types";
+import type { Ticket, SupplierDoc, Catalogue, OnboardingCase, TicketStatus, DocStatus } from "../types";
 
 interface LynkDataValue extends LynkDataset {
   loading: boolean;
@@ -35,6 +42,36 @@ interface LynkDataValue extends LynkDataset {
   addOnboardingCase: (c: OnboardingCase) => void;
   setCatalogues: (updater: (prev: Catalogue[]) => Catalogue[]) => void;
   persistCatalogue: (c: Catalogue) => void;
+  /** Supplier-portal upload: stores the PDF + inserts a pending-review doc,
+   * visible immediately in both the portal and the Procurement Manager app. */
+  addSupplierDoc: (
+    file: File,
+    supplierId: string,
+    supplierName: string,
+    trade?: string,
+    documentName?: string,
+    metadata?: { documentType?: string; issuingInstitution?: string; expiryDate?: string; doesNotExpire?: boolean }
+  ) => Promise<void>;
+  /** Onboarding: save the prospect's edited company profile to the DB. */
+  updateSupplierProfile: (
+    supplierId: string,
+    patch: { name?: string; vatId?: string; address?: string; region?: string }
+  ) => Promise<void>;
+  /** Onboarding: submit the prospect for Procurement review. */
+  submitProspectForReview: (
+    supplierId: string,
+    supplierName: string,
+    contactName: string
+  ) => Promise<void>;
+  /** PM review decision on a prospect: accept (activate), request changes, or reject. */
+  reviewProspect: (
+    supplierId: string,
+    supplierName: string,
+    decision: ProspectDecision,
+    note?: string
+  ) => Promise<void>;
+  /** Per-document review: approve (→ valid) or decline (→ rejected-resubmit) with a comment. */
+  reviewDocument: (docId: string, decision: "approve" | "decline", comment?: string) => void;
 }
 
 const LynkDataCtx = createContext<LynkDataValue | null>(null);
@@ -120,6 +157,139 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
     setData((prev) => (prev ? { ...prev, catalogues: updater(prev.catalogues) } : prev));
   }, []);
 
+  const addSupplierDoc = useCallback(
+    async (
+      file: File,
+      supplierId: string,
+      supplierName: string,
+      trade?: string,
+      documentName?: string,
+      metadata?: { documentType?: string; issuingInstitution?: string; expiryDate?: string; doesNotExpire?: boolean }
+    ) => {
+      const doc = await uploadSupplierDocument({ file, supplierId, supplierName, trade, documentName, metadata });
+      // Replace any existing document of the same type for this supplier (a new
+      // upload supersedes the previous version), then surface it at the top.
+      setData((prev) =>
+        prev
+          ? {
+              ...prev,
+              docs: [
+                doc,
+                ...prev.docs.filter(
+                  (d) => !(d.supplierId === supplierId && d.documentName === doc.documentName)
+                ),
+              ],
+            }
+          : prev
+      );
+      logActivity(supplierName, `Document uploaded — ${doc.documentName}`).catch(console.error);
+    },
+    []
+  );
+
+  const reviewDocument = useCallback(
+    (docId: string, decision: "approve" | "decline", comment?: string) => {
+      const status: DocStatus = decision === "approve" ? "valid" : "rejected-resubmit";
+      const note = decision === "approve" ? undefined : comment;
+      setData((prev) =>
+        prev
+          ? {
+              ...prev,
+              docs: prev.docs.map((d) =>
+                d.id === docId ? { ...d, status, statusNote: note } : d
+              ),
+            }
+          : prev
+      );
+      setDocReviewDb(docId, status, note ?? null).catch(console.error);
+    },
+    []
+  );
+
+  const updateSupplierProfile = useCallback(
+    async (
+      supplierId: string,
+      patch: { name?: string; vatId?: string; address?: string; region?: string }
+    ) => {
+      // Optimistically reflect the edit everywhere the supplier is shown.
+      setData((prev) =>
+        prev
+          ? {
+              ...prev,
+              suppliers: prev.suppliers.map((s) =>
+                s.id === supplierId
+                  ? {
+                      ...s,
+                      name: patch.name ?? s.name,
+                      vatId: patch.vatId ?? s.vatId,
+                      address: patch.address ?? s.address,
+                      region: patch.region ?? s.region,
+                    }
+                  : s
+              ),
+            }
+          : prev
+      );
+      await updateSupplierProfileDb(supplierId, patch);
+    },
+    []
+  );
+
+  const submitProspectForReview = useCallback(
+    async (supplierId: string, supplierName: string, contactName: string) => {
+      const caseId = onboardingCaseId(supplierId);
+      const onbCase: OnboardingCase = {
+        id: caseId,
+        companyName: supplierName,
+        contactName,
+        status: "In Review",
+        daysNoResponse: 0,
+        criticality: "medium",
+      };
+      setData((prev) => {
+        if (!prev) return prev;
+        const exists = prev.onboardingCases.some((c) => c.id === caseId);
+        return {
+          ...prev,
+          suppliers: prev.suppliers.map((s) =>
+            s.id === supplierId ? { ...s, compliance: "Pending Review" } : s
+          ),
+          onboardingCases: exists
+            ? prev.onboardingCases.map((c) => (c.id === caseId ? onbCase : c))
+            : [onbCase, ...prev.onboardingCases],
+        };
+      });
+      await submitProspectForReviewDb(supplierId, supplierName, contactName);
+    },
+    []
+  );
+
+  const reviewProspect = useCallback(
+    async (supplierId: string, supplierName: string, decision: ProspectDecision, note?: string) => {
+      const caseId = onboardingCaseId(supplierId);
+      const status =
+        decision === "accept" ? "Accepted" : decision === "changes" ? "Changes Requested" : "Rejected";
+      setData((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          suppliers: prev.suppliers.map((s) =>
+            s.id === supplierId && decision === "accept"
+              ? // DB stores capitalised stage values ("Supplier"); the SupplierStage
+                // type is loosely lowercase, so cast to match runtime data.
+                ({ ...s, stage: "Supplier", compliance: "Fully Compliant" } as unknown as typeof s)
+              : s
+          ),
+          onboardingCases: prev.onboardingCases.map((c) =>
+            c.id === caseId ? { ...c, status, reviewNote: note } : c
+          ),
+        };
+      });
+      await reviewProspectDb(supplierId, supplierName, decision, note);
+    },
+    []
+  );
+
   const persistCatalogue = useCallback((c: Catalogue) => {
     upsertCatalogueDb(c).catch(console.error);
   }, []);
@@ -140,6 +310,11 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
       addOnboardingCase,
       setCatalogues,
       persistCatalogue,
+      addSupplierDoc,
+      updateSupplierProfile,
+      submitProspectForReview,
+      reviewProspect,
+      reviewDocument,
     };
   }, [
     data,
@@ -154,6 +329,11 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
     addOnboardingCase,
     setCatalogues,
     persistCatalogue,
+    addSupplierDoc,
+    updateSupplierProfile,
+    submitProspectForReview,
+    reviewProspect,
+    reviewDocument,
   ]);
 
   if (!value) {
