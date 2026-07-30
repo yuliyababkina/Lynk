@@ -39,10 +39,15 @@ export function PdfCanvas({ fileUrl, className }: { fileUrl?: string; className?
           if (cancelled) return;
           const viewport = page.getViewport({ scale: SCALE_100 });
           const canvas = document.createElement("canvas");
-          canvas.className = "bg-white shadow-md mx-auto max-w-full h-auto";
+          // No max-width: the page must stay at true 100% scale. The wrapper
+          // scrolls if the pane is narrower than the document.
+          canvas.className = "bg-white shadow-md mx-auto";
           canvas.width = Math.floor(viewport.width * dpr);
           canvas.height = Math.floor(viewport.height * dpr);
+          // Both dimensions in CSS pixels: the backing store is dpr-scaled for
+          // sharpness, the displayed size is the document's true 100% size.
           canvas.style.width = `${Math.floor(viewport.width)}px`;
+          canvas.style.height = `${Math.floor(viewport.height)}px`;
           const ctx = canvas.getContext("2d");
           if (!ctx) continue;
           container.appendChild(canvas);

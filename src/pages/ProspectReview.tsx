@@ -236,7 +236,7 @@ function DocumentsReviewStep({
         {/* Right: preview at document width, centered in the remaining space */}
         <div className="flex-1 min-w-0 flex justify-center">
           {selected ? (
-            <div className="w-full max-w-[840px] flex flex-col border border-border rounded-xl overflow-hidden bg-card">
+            <div className="w-full flex flex-col border border-border rounded-xl overflow-hidden bg-card">
               <div className="px-4 py-2.5 border-b border-border">
                 <p className="text-sm font-semibold truncate">{selected.name}</p>
                 <p className="text-xs text-muted-foreground">{selected.category}</p>

@@ -216,7 +216,13 @@ export function ProspectOnboarding({ supplierId, supplierName, onSwitchAccount }
 
       {/* Body */}
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-2xl mx-auto px-6 py-10">
+        {/* The documents step needs the full width so the preview can show the
+            page at 100% scale; the form/summary steps read better in a column. */}
+        <div
+          className={`mx-auto px-6 py-10 ${
+            step === "documents" && !pending ? "max-w-[1600px]" : "max-w-2xl"
+          }`}
+        >
           {step === "welcome" && (
             <WelcomeStep
               firstName={firstName}
