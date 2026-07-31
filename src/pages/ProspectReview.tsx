@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -26,13 +26,15 @@ import { WizardStepper } from "@/components/yarowa/wizard-stepper";
 import { PdfCanvas } from "@/components/yarowa/pdf-canvas";
 import { STANDARD_DOCUMENT_TYPES } from "@/lib/onboarding-documents";
 import { DOC_STATUS_META, docStatusMeta } from "@/lib/document-status";
+import { parseDocumentInfo, type ParsedDocumentInfo } from "@/lib/pdf-metadata";
+import { FromFileHint } from "@/components/yarowa/document-browser";
 import type { Supplier, SupplierDoc, Contact, OnboardingCase } from "../types";
 import type { ProspectDecision } from "../lib/db";
 
 // Status presentation comes from the shared definition so the PM, the supplier,
 // and the prospect all see the same label/icon for a given document.
 
-const STEPS = ["Company info", "Documents", "Decision"] as const;
+const STEPS = ["Company info", "Documents", "Summary"] as const;
 type Step = (typeof STEPS)[number];
 
 type ReviewStatus = "pending" | "confirmed" | "fix";
@@ -150,11 +152,11 @@ export function ProspectReview({
           onSelect={setSelectedKey}
           onReviewDocument={onReviewDocument}
           onBack={() => setStep("Company info")}
-          onNext={() => setStep("Decision")}
+          onNext={() => setStep("Summary")}
         />
       )}
 
-      {step === "Decision" && (
+      {step === "Summary" && (
         <div className="max-w-2xl mx-auto">
           <DecisionStep
             supplier={supplier}
@@ -197,6 +199,40 @@ function DocumentsReviewStep({
   const goPrev = () => idx > 0 && onSelect(rows[idx - 1].key);
   const goNext = () => idx >= 0 && idx < rows.length - 1 && onSelect(rows[idx + 1].key);
 
+  // Every uploaded document needs a decision before the summary makes sense.
+  const pendingCount = rows.filter((r) => r.doc?.status === "pending-review").length;
+
+  const [pageInfo, setPageInfo] = useState<{ current: number; total: number } | null>(null);
+  useEffect(() => setPageInfo(null), [selected?.key]);
+
+  // Read type / issuer / validity out of the PDF; stored (confirmed) values win.
+  const [parsed, setParsed] = useState<ParsedDocumentInfo | null>(null);
+  useEffect(() => {
+    setParsed(null);
+    const url = selected?.doc?.fileUrl;
+    if (!url) return;
+    let cancelled = false;
+    parseDocumentInfo(url).then((i) => !cancelled && setParsed(i));
+    return () => {
+      cancelled = true;
+    };
+  }, [selected?.doc?.fileUrl]);
+
+  const d = selected?.doc;
+  const info = d
+    ? {
+        documentType: d.documentType || parsed?.documentType,
+        issuingInstitution: d.issuingInstitution || parsed?.issuingInstitution,
+        expiryDate: d.expiryDate || parsed?.validity,
+        doesNotExpire: d.doesNotExpire || parsed?.doesNotExpire,
+        fromFile: {
+          type: !d.documentType && Boolean(parsed?.documentType),
+          issuer: !d.issuingInstitution && Boolean(parsed?.issuingInstitution),
+          validity: !d.expiryDate && !d.doesNotExpire && Boolean(parsed?.validity || parsed?.doesNotExpire),
+        },
+      }
+    : null;
+
   return (
     <div>
       <div className="mb-4">
@@ -237,53 +273,98 @@ function DocumentsReviewStep({
         <div className="flex-1 min-w-0 flex justify-center">
           {selected ? (
             <div className="w-full flex flex-col border border-border rounded-xl overflow-hidden bg-card">
-              <div className="px-4 py-2.5 border-b border-border">
+              <div className="px-4 py-2.5 border-b border-border flex items-start justify-between gap-3">
+                <div className="min-w-0">
                 <p className="text-sm font-semibold truncate">{selected.name}</p>
                 <p className="text-xs text-muted-foreground">{selected.category}</p>
-                {selected.doc && (
+                {selected.doc && info && (
                   <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 mt-2 text-xs">
                     <dt className="text-muted-foreground">Document type</dt>
-                    <dd>{selected.doc.documentType || "—"}</dd>
+                    <dd>
+                      {info.documentType || "—"}
+                      {info.fromFile.type && <FromFileHint />}
+                    </dd>
                     <dt className="text-muted-foreground">Issued by</dt>
-                    <dd>{selected.doc.issuingInstitution || "—"}</dd>
+                    <dd>
+                      {info.issuingInstitution || "—"}
+                      {info.fromFile.issuer && <FromFileHint />}
+                    </dd>
                     <dt className="text-muted-foreground">Validity</dt>
                     <dd>
-                      {selected.doc.doesNotExpire ? (
-                        <span className="flex items-center gap-1.5 text-success-ink">
+                      {info.doesNotExpire ? (
+                        <span className="inline-flex items-center gap-1.5 text-success-ink">
                           <ShieldCheck className="w-3 h-3" /> This certificate does not expire
                         </span>
-                      ) : selected.doc.expiryDate ? (
-                        `Expires ${selected.doc.expiryDate}`
+                      ) : info.expiryDate ? (
+                        `Expires ${info.expiryDate}`
                       ) : (
                         "—"
                       )}
+                      {info.fromFile.validity && <FromFileHint />}
                     </dd>
                   </dl>
                 )}
-              </div>
-
-              <PdfCanvas fileUrl={selected.doc?.fileUrl} className="flex-1 min-h-0" />
-
-              {/* Navigation — bottom of the card, not the header */}
-              <div className="flex items-center justify-center gap-3 py-2 border-t border-border">
-                <Button variant="outline" size="icon" disabled={idx <= 0} onClick={goPrev} aria-label="Previous document" title="Previous document">
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                <span className="text-xs text-muted-foreground tabular-nums w-14 text-center">
-                  {idx + 1} / {rows.length}
-                </span>
-                <Button variant="outline" size="icon" disabled={idx >= rows.length - 1} onClick={goNext} aria-label="Next document" title="Next document">
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-
-              {selected.doc ? (
-                <DocActionBar key={selected.doc.id} doc={selected.doc} disabled={disabled} onReviewDocument={onReviewDocument} />
-              ) : (
-                <div className="border-t border-border p-3 flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <FileX className="w-3.5 h-3.5" /> Not yet uploaded by the supplier.
                 </div>
-              )}
+                {/* Status, same badge style as the list on the left */}
+                {(() => {
+                  const m = docStatusMeta(selected.doc?.status);
+                  return (
+                    <Badge variant={m.variant as any} className="shrink-0">
+                      <m.Icon className="w-3 h-3" />
+                      {m.label}
+                    </Badge>
+                  );
+                })()}
+              </div>
+
+              <PdfCanvas
+                key={selected.key}
+                fileUrl={selected.doc?.fileUrl}
+                className="flex-1 min-h-0"
+                onPageInfo={setPageInfo}
+              />
+
+              {/* Pages within the open document */}
+              <div className="flex items-center justify-center py-2 border-t border-border text-xs text-muted-foreground tabular-nums">
+                {selected.doc?.fileUrl && pageInfo
+                  ? `${pageInfo.current} of ${pageInfo.total} page${pageInfo.total === 1 ? "" : "s"}`
+                  : "—"}
+              </div>
+
+              {/* Document navigation sits on the same level as the review actions */}
+              <div className="border-t border-border p-3 flex items-center justify-between gap-3">
+                {/* Boundary buttons are hidden, not disabled — works for any
+                    number of documents, including a single one. */}
+                {idx > 0 ? (
+                  <Button variant="outline" size="sm" className="shrink-0" title="Previous document" onClick={goPrev}>
+                    <ChevronLeft className="w-4 h-4" /> Previous
+                  </Button>
+                ) : (
+                  <span />
+                )}
+                {/* Review actions, with "Next document" always furthest right. */}
+                <div className="flex items-center gap-2 min-w-0">
+                  {selected.doc ? (
+                    <DocActionBar key={selected.doc.id} doc={selected.doc} disabled={disabled} onReviewDocument={onReviewDocument} />
+                  ) : (
+                    <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <FileX className="w-3.5 h-3.5" /> Not yet uploaded by the supplier.
+                    </span>
+                  )}
+                  {idx < rows.length - 1 && (
+                    /* Once a document is approved, moving on is the primary action. */
+                    <Button
+                      variant={selected.doc?.status === "valid" ? "default" : "outline"}
+                      size="sm"
+                      className="shrink-0"
+                      title="Next document"
+                      onClick={goNext}
+                    >
+                      Next <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
             </div>
           ) : (
             <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">
@@ -293,7 +374,13 @@ function DocumentsReviewStep({
         </div>
       </div>
 
-      <StepNav onBack={onBack} onNext={onNext} nextLabel="Next: Decision" />
+      <StepNav
+        onBack={onBack}
+        onNext={onNext}
+        nextLabel="Next: Summary"
+        nextDisabled={pendingCount > 0}
+        nextHint={`${pendingCount} document${pendingCount === 1 ? "" : "s"} still awaiting your review`}
+      />
     </div>
   );
 }
@@ -309,56 +396,67 @@ function DocActionBar({
 }) {
   const [declining, setDeclining] = useState(false);
   const [comment, setComment] = useState("");
+  const approved = doc.status === "valid";
 
+  // Rendered inside the footer row, so no wrapper of its own.
   if (declining) {
     return (
-      <div className="border-t border-border p-3 space-y-2">
-        <textarea
+      <div className="flex-1 flex items-center gap-2 min-w-0">
+        <input
           autoFocus
           value={comment}
           onChange={(e) => setComment(e.target.value)}
-          rows={2}
-          placeholder="Why is this document being declined? (shared with the supplier)"
-          className="w-full rounded-lg border border-border bg-background p-2 text-sm resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          placeholder={
+            approved
+              ? "What should the supplier update? (shared with the supplier)"
+              : "Why is this document being declined? (shared with the supplier)"
+          }
+          className="flex-1 min-w-0 h-9 rounded-lg border border-border bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
-        <div className="flex gap-2 justify-end">
-          <Button variant="outline" size="sm" onClick={() => setDeclining(false)}>
-            Cancel
-          </Button>
-          <Button
-            variant="danger"
-            size="sm"
-            disabled={!comment.trim()}
-            onClick={() => {
-              onReviewDocument(doc.id, "decline", comment.trim());
-              setDeclining(false);
-              setComment("");
-            }}
-          >
-            Confirm decline
-          </Button>
-        </div>
+        <Button variant="outline" size="sm" className="shrink-0" onClick={() => setDeclining(false)}>
+          Cancel
+        </Button>
+        <Button
+          variant="danger"
+          size="sm"
+          className="shrink-0"
+          disabled={!comment.trim()}
+          onClick={() => {
+            // Same outcome either way: the supplier has to resubmit this document.
+            onReviewDocument(doc.id, "decline", comment.trim());
+            setDeclining(false);
+            setComment("");
+          }}
+        >
+          {approved ? "Send request" : "Confirm decline"}
+        </Button>
       </div>
     );
   }
 
-  const meta = DOC_STATUS_META[doc.status];
   return (
-    <div className="border-t border-border p-3 flex items-center justify-between gap-3">
-      <div className="text-xs min-w-0">
-        <span className={`flex items-center gap-1.5 truncate ${meta.iconClass}`}>
-          <meta.Icon className="w-3.5 h-3.5 shrink-0" />
-          {doc.status === "rejected-resubmit" && doc.statusNote ? `Declined — “${doc.statusNote}”` : meta.label}
-        </span>
-      </div>
+    <div className="flex items-center gap-3 min-w-0">
+      {/* Status lives in the header badge; only the feedback needs repeating here. */}
+      {doc.status === "rejected-resubmit" && doc.statusNote && (
+        <span className="text-xs text-destructive truncate">“{doc.statusNote}”</span>
+      )}
       {!disabled && (
         <div className="flex gap-2 shrink-0">
-          <Button variant="outline" size="sm" onClick={() => setDeclining(true)}>
-            <XCircle className="w-4 h-4" /> Decline
-          </Button>
-          <Button variant="success" size="sm" onClick={() => onReviewDocument(doc.id, "approve")}>
-            <CheckCircle2 className="w-4 h-4" /> Approve
-          </Button>
+          {approved ? (
+            /* Already approved — the remaining action is to ask for an update. */
+            <Button variant="outline" size="sm" onClick={() => setDeclining(true)}>
+              <AlertTriangle className="w-4 h-4" /> Request an update
+            </Button>
+          ) : (
+            <>
+              <Button variant="outline" size="sm" onClick={() => setDeclining(true)}>
+                <XCircle className="w-4 h-4" /> Decline
+              </Button>
+              <Button variant="success" size="sm" onClick={() => onReviewDocument(doc.id, "approve")}>
+                <CheckCircle2 className="w-4 h-4" /> Approve
+              </Button>
+            </>
+          )}
         </div>
       )}
     </div>
@@ -476,9 +574,22 @@ function SectionReviewControl({
   );
 }
 
-function StepNav({ onBack, onNext, nextLabel }: { onBack?: () => void; onNext: () => void; nextLabel: string }) {
+function StepNav({
+  onBack,
+  onNext,
+  nextLabel,
+  nextDisabled,
+  nextHint,
+}: {
+  onBack?: () => void;
+  onNext: () => void;
+  nextLabel: string;
+  nextDisabled?: boolean;
+  /** Explains why the step can't be left yet. */
+  nextHint?: string;
+}) {
   return (
-    <div className="flex items-center justify-between mt-6">
+    <div className="flex items-center justify-between mt-6 gap-4">
       {onBack ? (
         <Button variant="ghost" onClick={onBack}>
           <ArrowLeft className="w-4 h-4" /> Back
@@ -486,9 +597,12 @@ function StepNav({ onBack, onNext, nextLabel }: { onBack?: () => void; onNext: (
       ) : (
         <span />
       )}
-      <Button variant="default" onClick={onNext}>
-        {nextLabel} <ArrowRight className="w-4 h-4" />
-      </Button>
+      <div className="flex items-center gap-3">
+        {nextDisabled && nextHint && <span className="text-xs text-muted-foreground">{nextHint}</span>}
+        <Button variant="default" disabled={nextDisabled} onClick={onNext}>
+          {nextLabel} <ArrowRight className="w-4 h-4" />
+        </Button>
+      </div>
     </div>
   );
 }
@@ -557,7 +671,7 @@ function DecisionStep({
         : { variant: "neutral", Icon: Circle, iconClass: "text-muted-foreground", label: "Not reviewed", note: "" };
 
   return (
-    <StepShell title="Decision" subtitle="Summary of your review. Approved items are ready; items needing an update are editable.">
+    <StepShell title="Summary" subtitle="Summary of your review. Approved items are ready; items needing an update are editable.">
       {decided && (
         <div className="mb-4 rounded-lg border border-border bg-secondary/40 px-3 py-2 text-sm">
           This application is already <span className="font-semibold">{caseStatus}</span>.

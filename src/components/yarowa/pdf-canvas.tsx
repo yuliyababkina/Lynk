@@ -14,10 +14,35 @@ const SCALE_100 = 96 / 72;
  * environment — including embedded/headless browser panes that lack a native
  * PDF plugin. Fills its container; scrolls when the document is taller.
  */
-export function PdfCanvas({ fileUrl, className }: { fileUrl?: string; className?: string }) {
+export function PdfCanvas({
+  fileUrl,
+  className,
+  onPageInfo,
+}: {
+  fileUrl?: string;
+  className?: string;
+  /** Reports the page the viewer is looking at and the document's page count,
+   * so the surrounding chrome can show "1 of 7 pages". */
+  onPageInfo?: (info: { current: number; total: number }) => void;
+}) {
   const pagesRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Which rendered page is closest to the top of the viewport → "current page".
+  function reportCurrentPage() {
+    const scroller = scrollRef.current;
+    const pages = pagesRef.current?.children;
+    if (!scroller || !pages?.length || !onPageInfo) return;
+    const top = scroller.getBoundingClientRect().top;
+    let current = 1;
+    for (let i = 0; i < pages.length; i++) {
+      // A page counts as current once its top edge has passed the viewport top.
+      if ((pages[i] as HTMLElement).getBoundingClientRect().top - top <= 8) current = i + 1;
+    }
+    onPageInfo({ current, total: pages.length });
+  }
 
   useEffect(() => {
     if (!fileUrl) return;
@@ -32,6 +57,8 @@ export function PdfCanvas({ fileUrl, className }: { fileUrl?: string; className?
         const container = pagesRef.current;
         if (cancelled || !container) return;
         container.replaceChildren();
+        // Publish the page count as soon as it's known, before rendering.
+        onPageInfo?.({ current: 1, total: pdf.numPages });
         const dpr = window.devicePixelRatio || 1;
 
         for (let n = 1; n <= pdf.numPages; n++) {
@@ -82,7 +109,11 @@ export function PdfCanvas({ fileUrl, className }: { fileUrl?: string; className?
   }
 
   return (
-    <div className={cn("relative overflow-auto bg-secondary/40 p-4", className)}>
+    <div
+      ref={scrollRef}
+      onScroll={reportCurrentPage}
+      className={cn("relative overflow-auto bg-secondary/40 p-4", className)}
+    >
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground gap-2">
           <Loader2 size={16} className="animate-spin" />

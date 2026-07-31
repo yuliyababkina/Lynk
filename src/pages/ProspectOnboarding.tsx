@@ -281,7 +281,7 @@ export function ProspectOnboarding({ supplierId, supplierName, onSwitchAccount }
                 renderActions={(r) => {
                   const def = STANDARD_DOCS.find((d) => d.name === r.name);
                   return (
-                    <div className="border-t border-border p-3 flex items-center justify-between gap-3">
+                    <div className="flex items-center justify-end gap-3 min-w-0">
                       <p className="text-xs text-muted-foreground min-w-0 truncate">
                         {r.status === "rejected-resubmit" && r.statusNote
                           ? `Declined — “${r.statusNote}”`
