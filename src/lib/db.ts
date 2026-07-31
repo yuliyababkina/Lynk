@@ -146,6 +146,8 @@ function mapOnboarding(row: any): OnboardingCase {
     status: row.status,
     daysNoResponse: row.days_no_response ?? 0,
     criticality: row.criticality,
+    email: row.email ?? undefined,
+    inviteToken: row.invite_token ?? undefined,
   };
 }
 
@@ -295,8 +297,28 @@ export async function insertOnboardingCaseDb(c: OnboardingCase) {
     status: c.status,
     days_no_response: c.daysNoResponse,
     criticality: c.criticality,
+    email: c.email ?? null,
+    invite_token: c.inviteToken ?? null,
   });
   if (error) console.error("[Lynk] insertOnboardingCaseDb failed:", error.message);
+}
+
+// Resolves a magic-link click (?invite=<token>) back to its onboarding case.
+// Used on app load — see App.tsx. Only works when Supabase is configured;
+// on the static-mock fallback there's nothing to look up (mock cases have no
+// real tokens), so callers should treat a null result as "not found."
+export async function getOnboardingCaseByToken(token: string): Promise<OnboardingCase | null> {
+  if (!isSupabaseConfigured || !token) return null;
+  const { data, error } = await supabase
+    .from("onboarding_cases")
+    .select("*")
+    .eq("invite_token", token)
+    .maybeSingle();
+  if (error) {
+    console.error("[Lynk] getOnboardingCaseByToken failed:", error.message);
+    return null;
+  }
+  return data ? mapOnboarding(data) : null;
 }
 
 export async function upsertCatalogueDb(c: Catalogue) {

@@ -183,6 +183,11 @@ export interface OnboardingCase {
   /** PM feedback attached on a "Changes Requested" or "Rejected" decision.
    * Shown to the prospect so they know what to fix. */
   reviewNote?: string;
+  /** Prospect's contact email — where the invitation / magic link was sent. */
+  email?: string;
+  /** Unique token embedded in the invite's magic link (?invite=<inviteToken>)
+   * so a click can be resolved back to this case without a login. */
+  inviteToken?: string;
 }
 
 /**

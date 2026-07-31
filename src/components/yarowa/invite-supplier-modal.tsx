@@ -97,32 +97,72 @@ export function InviteSupplierModal({
         ? trades.length > 0
         : true;
 
-  function send() {
+  async function send() {
     setSending(true);
-    window.setTimeout(() => {
+    try {
       if (match === "on-lynk") {
+        // Connection requests aren't email invites — nothing to actually
+        // send, this notifies an existing account inside the platform.
+        await new Promise((r) => window.setTimeout(r, 900));
         toast({
           title: "Connection request sent",
           description: `${company}'s account manager was notified.`,
           tone: "success",
         });
       } else {
+        const caseId = `onb-${company.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+        const inviteToken =
+          typeof crypto !== "undefined" && "randomUUID" in crypto
+            ? crypto.randomUUID()
+            : Math.random().toString(36).slice(2);
+        const magicLink = `${window.location.origin}/?invite=${inviteToken}`;
+
+        if (sendWelcome) {
+          const res = await fetch("/api/send-invite", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              to: email.trim(),
+              companyName: company,
+              contactName: contact.trim() || undefined,
+              link: magicLink,
+              note: note.trim() || undefined,
+            }),
+          });
+          if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            throw new Error(body.error || "Failed to send invitation email");
+          }
+        }
+
         onCreateProspect({
-          id: `onb-${company.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+          id: caseId,
           companyName: company,
           contactName: contact.trim() || "—",
           status: "Pending",
           daysNoResponse: 0,
           criticality: "low",
+          email: email.trim(),
+          inviteToken,
         });
         toast({
-          title: "Invitation sent",
-          description: `${company} added as a Prospect — awaiting onboarding.`,
+          title: sendWelcome ? "Invitation sent" : "Prospect added",
+          description: sendWelcome
+            ? `${company} added as a Prospect — invite emailed to ${email.trim()}.`
+            : `${company} added as a Prospect — awaiting onboarding.`,
           tone: "success",
         });
       }
       onClose();
-    }, 1200);
+    } catch (err) {
+      toast({
+        title: "Couldn't send invitation",
+        description: err instanceof Error ? err.message : "Please try again.",
+        tone: "critical",
+      });
+    } finally {
+      setSending(false);
+    }
   }
 
   function primary() {

@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { Sidebar } from "@/components/yarowa/sidebar";
 import { TopHeader } from "@/components/yarowa/top-header";
 import { TicketDrawer } from "@/components/yarowa/ticket-drawer";
@@ -61,17 +61,45 @@ const VIEW_LABEL: Record<View, string> = {
 export default function App() {
   // Role/persona switcher
   const [role, setRole] = useState<LandingRole | null>(null);
-  
+
+  // Real magic-link invitations land here as ?invite=<token>. Once the
+  // onboarding cases are loaded we resolve the token to a specific prospect
+  // (see the effect below) instead of falling back to the fixed demo persona.
+  // `undefined` = no token in the URL, `null` = token present but not found
+  // (invalid/expired link), object = resolved successfully.
+  const [inviteProspect, setInviteProspect] = useState<{ id: string; companyName: string } | null | undefined>(
+    undefined
+  );
+
   const {
     tickets: TICKETS,
     docs: DOCS,
     suppliers: SUPPLIERS,
+    onboardingCases: ONBOARDING_CASES,
     resolvedTicketIds,
     resolveTicket: persistResolveTicket,
     unresolveTicket,
     decideRenewal: persistDecideRenewal,
     addOnboardingCase,
   } = useLynkData();
+
+  useEffect(() => {
+    const token = new URLSearchParams(window.location.search).get("invite");
+    if (!token) {
+      setInviteProspect(undefined);
+      return;
+    }
+    const match = ONBOARDING_CASES.find((c) => c.inviteToken === token);
+    if (match) {
+      // Case id is always `onb-<supplierId>` (see invite-supplier-modal.tsx),
+      // so the prospect's onboarding-wizard id is the id with that prefix
+      // stripped.
+      setInviteProspect({ id: match.id.replace(/^onb-/, ""), companyName: match.companyName });
+      setRole("prospect");
+    } else {
+      setInviteProspect(null);
+    }
+  }, [ONBOARDING_CASES]);
 
   const [view, setView] = useState<View>("dashboard");
   const [activeTicket, setActiveTicket] = useState<Ticket | null>(null);
@@ -188,6 +216,22 @@ export default function App() {
     setActiveTicket(t);
   }
 
+  // A magic-link click carried a token that doesn't match any prospect
+  // (expired, already used, or mistyped) — say so instead of silently
+  // dropping them on the generic landing/role picker.
+  if (inviteProspect === null) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-background text-foreground">
+        <div className="text-center max-w-sm">
+          <div className="font-semibold mb-1">This invitation link isn't valid</div>
+          <div className="text-sm text-muted-foreground">
+            It may have expired or already been used. Contact the company that invited you for a new link.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Show landing page if no role selected
   if (!role) {
     return <Landing onSelectRole={handleSelectRole} />;
@@ -212,8 +256,8 @@ export default function App() {
     return (
       <Suspense fallback={<ViewFallback />}>
         <ProspectOnboarding
-          supplierName="Yilmaz Elektrotechnik GmbH"
-          supplierId="supplier_mehmet_yilmaz"
+          supplierName={inviteProspect?.companyName ?? "Yilmaz Elektrotechnik GmbH"}
+          supplierId={inviteProspect?.id ?? "supplier_mehmet_yilmaz"}
           onSwitchAccount={handleSwitchAccount}
         />
       </Suspense>
