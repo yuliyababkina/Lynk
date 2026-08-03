@@ -11,6 +11,7 @@ import type {
   CatalogueSupplier,
   DocStatus,
   TicketStatus,
+  ComplianceEvent,
 } from "../types";
 
 export interface LynkDataset {
@@ -343,6 +344,53 @@ export async function insertOnboardingCaseDb(c: OnboardingCase) {
   if (error) console.error("[Lynk] insertOnboardingCaseDb failed:", error.message);
 }
 
+/**
+ * Removes an onboarding case for good — the record-keeping counterpart to
+ * rejecting one (a rejection is a decision the supplier is told about and stays
+ * on file; a deletion is the case never having been part of the pipeline).
+ *
+ * A case invited through Lynk owns a `suppliers` row that exists only to carry
+ * its uploads, so deleting the case takes that prospect and its documents with
+ * it — otherwise a nameless Prospect lingers in the supplier list. A prospect
+ * that was already **accepted** is a real supplier: only the case is removed.
+ *
+ * Storage objects are left behind on purpose: the bucket policy grants no
+ * DELETE, and the rows are the authority on what exists.
+ */
+export async function deleteOnboardingCaseDb(
+  caseId: string
+): Promise<{ removedProspect: boolean; removedDocs: number }> {
+  const supplierId = onboardingSupplierId(caseId);
+  if (!isSupabaseConfigured) return { removedProspect: false, removedDocs: 0 };
+
+  const { data: supplier } = await supabase
+    .from("suppliers")
+    .select("id, stage")
+    .eq("id", supplierId)
+    .maybeSingle();
+  const isUnactivatedProspect = supplier?.stage === "Prospect";
+
+  let removedDocs = 0;
+  if (isUnactivatedProspect) {
+    // Documents first: supplier_docs.supplier_id is a foreign key onto suppliers.
+    const { data: docs, error: docsError } = await supabase
+      .from("supplier_docs")
+      .delete()
+      .eq("supplier_id", supplierId)
+      .select("id");
+    if (docsError) throw new Error(`Deleting the prospect's documents failed: ${docsError.message}`);
+    removedDocs = docs?.length ?? 0;
+
+    const { error: supError } = await supabase.from("suppliers").delete().eq("id", supplierId);
+    if (supError) throw new Error(`Deleting the prospect failed: ${supError.message}`);
+  }
+
+  const { error } = await supabase.from("onboarding_cases").delete().eq("id", caseId);
+  if (error) throw new Error(`Deleting the onboarding case failed: ${error.message}`);
+
+  return { removedProspect: isUnactivatedProspect, removedDocs };
+}
+
 // Resolves a magic-link click (?invite=<token>) back to its onboarding case.
 // Used on app load — see App.tsx. Only works when Supabase is configured;
 // on the static-mock fallback there's nothing to look up (mock cases have no
@@ -411,6 +459,24 @@ const DOCUMENTS_BUCKET = "supplier-documents";
 const docSlug = (s: string) =>
   s.replace(/[^a-z0-9]+/gi, "-").replace(/^-+|-+$/g, "").toLowerCase();
 
+/**
+ * `supplier_docs.expiry_date` holds free text as printed on the document
+ * ("31 Jan 2027", "Ongoing"), and every view shows it verbatim. A date input
+ * gives ISO, so it is written in the same shape as everything else rather than
+ * reading `2028-01-31` next to `31 Jan 2027`.
+ */
+export const displayExpiry = (v?: string) => {
+  if (!v) return "";
+  const iso = v.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!iso) return v;
+  const [, y, m, d] = iso;
+  const month = new Date(`${y}-${m}-01T00:00:00Z`).toLocaleString("en-GB", {
+    month: "short",
+    timeZone: "UTC",
+  });
+  return `${Number(d)} ${month} ${y}`;
+};
+
 export async function uploadSupplierDocument(params: {
   file: File;
   supplierId: string;
@@ -440,7 +506,7 @@ export async function uploadSupplierDocument(params: {
     trade,
     documentName: name,
     documentCategory: metadata?.documentType || "Uploaded",
-    expiryDate: metadata?.doesNotExpire ? "" : metadata?.expiryDate ?? "",
+    expiryDate: metadata?.doesNotExpire ? "" : displayExpiry(metadata?.expiryDate),
     daysUntilExpiry: 0,
     status: "pending-review",
     statusNote: "Uploaded by supplier — awaiting review.",
@@ -517,6 +583,73 @@ export async function setDocReviewDb(docId: string, status: DocStatus, note: str
     .update({ status, status_note: note })
     .eq("id", docId);
   if (error) console.error("[Lynk] setDocReviewDb failed:", error.message);
+}
+
+/**
+ * Supplier-side correction of what a document *says* — type, issuer, validity —
+ * without touching the file itself. Values entered here are human-confirmed, so
+ * they outrank anything `pdf-metadata` read out of the text layer.
+ *
+ * Editing the details of an already-approved document invalidates that approval,
+ * so the caller passes the reset status/note; the file stays as it is.
+ */
+export async function updateSupplierDocMetadataDb(
+  docId: string,
+  patch: {
+    documentType?: string;
+    issuingInstitution?: string;
+    expiryDate?: string;
+    doesNotExpire?: boolean;
+    documentCategory?: string;
+    status?: DocStatus;
+    statusNote?: string | null;
+    history?: ComplianceEvent[];
+  }
+) {
+  if (!isSupabaseConfigured) return;
+  const base: Record<string, unknown> = {
+    expiry_date: patch.doesNotExpire ? null : displayExpiry(patch.expiryDate) || null,
+  };
+  if (patch.documentCategory !== undefined) base.document_category = patch.documentCategory;
+  if (patch.status !== undefined) base.status = patch.status;
+  if (patch.statusNote !== undefined) base.status_note = patch.statusNote;
+  if (patch.history !== undefined) base.history = patch.history;
+
+  const { error } = await supabase
+    .from("supplier_docs")
+    .update({
+      ...base,
+      document_type: patch.documentType ?? null,
+      issuing_institution: patch.issuingInstitution ?? null,
+      does_not_expire: patch.doesNotExpire ?? false,
+      metadata_confirmed: true,
+    })
+    .eq("id", docId);
+  if (!error) return;
+
+  // Same fallback as the upload path: the metadata columns may not exist yet, in
+  // which case category + expiry are all the schema can hold. See
+  // supabase/migrations/…_add_document_metadata.sql — until it is applied, the
+  // type/issuer the supplier confirms here cannot be stored.
+  console.warn("[Lynk] document metadata columns unavailable, saving without them:", error.message);
+  const { error: fallbackError } = await supabase.from("supplier_docs").update(base).eq("id", docId);
+  if (fallbackError) throw new Error(`Saving the document details failed: ${fallbackError.message}`);
+}
+
+/**
+ * Removes an uploaded document. The `supplier_docs` row is the authority on what
+ * exists, so deleting it is what makes the document gone; the Storage object is
+ * removed on a best-effort basis only — the bucket policy grants SELECT/INSERT
+ * but no DELETE, so an orphaned object is expected and harmless.
+ */
+export async function deleteSupplierDocumentDb(docId: string, filePath?: string) {
+  if (!isSupabaseConfigured) return;
+  const { error } = await supabase.from("supplier_docs").delete().eq("id", docId);
+  if (error) throw new Error(`Deleting the document failed: ${error.message}`);
+  if (filePath) {
+    const { error: rmError } = await supabase.storage.from(DOCUMENTS_BUCKET).remove([filePath]);
+    if (rmError) console.warn("[Lynk] storage object kept (no delete policy):", rmError.message);
+  }
 }
 
 /** Onboarding: persist the prospect's edited company profile to the suppliers

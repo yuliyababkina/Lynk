@@ -78,6 +78,21 @@ silently updated nothing.
 Welcome (terms gate) → Company info → Documents → Principal Docs → Complete.
 Documents step uses the shared `DocumentBrowser` (list + 100 %-scale preview).
 
+On a document already on file the prospect can:
+
+- **Replace the file** — a new upload supersedes the stored one (same
+  `doc-<supplierId>-<slug>` row) and goes back to `pending-review`.
+- **Edit details** — corrects type / issuer / validity without touching the file.
+  The form starts from what the preview shows, including values `pdf-metadata`
+  read from the PDF. Editing an *approved* document resets it to
+  `pending-review`: the PM approved the previous values.
+- **Delete** — confirmed by name, then the document reads as `missing` again.
+  Only the `supplier_docs` row is removed; the Storage object stays, because the
+  bucket policy grants no DELETE (the row is the authority on what exists).
+
+All three write an `activity_log` entry with the supplier as actor, and all
+three are blocked by the terms gate like every other supplier-side write.
+
 ### Terms & Conditions gate
 Terms live in `src/lib/terms.ts`, versioned (`TERMS_VERSION`). Acceptance is
 stored **on `suppliers`** (`terms_accepted_at` / `terms_version` /
@@ -96,6 +111,15 @@ comment; leaving the Documents step is blocked while anything is still
 `pending-review`. Decision: accept (activates the supplier), request changes
 (loops back to the prospect with feedback), or reject.
 
+Separate from those three: the quiet bin icon at the top of the case panel
+**deletes** the case. A rejection is a decision the supplier is told about and
+stays on file; a deletion is the case never having been in the pipeline. It
+requires a reason, which is written to `activity_log` *before* the rows go —
+that entry is the only record left. An un-activated prospect is removed with its
+documents (the `suppliers` row exists only to carry them); an already-accepted
+supplier keeps its profile and loses only the case. Storage objects stay, as
+with document deletion.
+
 ### Document status vocabulary
 `src/lib/document-status.ts` is the one definition of label + icon + colour,
 used by PM, supplier and prospect views so a document never reads differently
@@ -108,15 +132,22 @@ layer; values shown with a "(from file)" marker. Human-confirmed values (entered
 in `document-metadata-form`) always win. Requires the `supplier_docs` metadata
 migration — see below.
 
-## 5. Migrations — all applied to the live database
+## 5. Migrations
 
 `supabase/migrations/`
 
-| File | Adds |
-|---|---|
-| `2026-07-15_add_ticket_status.sql` | ticket workflow status |
-| `2026-07-30_add_document_metadata.sql` | `supplier_docs`: document_type, issuing_institution, does_not_expire, metadata_confirmed |
-| `2026-07-31_add_terms_acceptance.sql` | `suppliers`: terms_accepted_at/version/by + backfill of non-prospects |
+| File | Adds | Applied to live DB |
+|---|---|---|
+| `2026-07-15_add_ticket_status.sql` | ticket workflow status | yes |
+| `2026-07-30_add_document_metadata.sql` | `supplier_docs`: document_type, issuing_institution, does_not_expire, metadata_confirmed | **no** — verified 3 Aug 2026 |
+| `2026-07-31_add_terms_acceptance.sql` | `suppliers`: terms_accepted_at/version/by + backfill of non-prospects | yes |
+
+**The document-metadata migration is still outstanding.** Both the upload and the
+edit path fall back to writing only the columns that exist, so nothing breaks —
+but the type and issuer a supplier confirms cannot be stored, which is why those
+values still read "(from file)" after a reload. Paste
+`2026-07-30_add_document_metadata.sql` into the SQL Editor (it is safe to
+re-run) to close the gap.
 
 `onboarding_cases.email` / `invite_token` were added via `supabase/schema.sql`.
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, FileText, FileX, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -41,14 +41,25 @@ export function DocumentBrowser({
   selectedKey,
   onSelect,
   renderActions,
+  renderHeaderActions,
+  onParsed,
   height = "h-[70vh] min-h-[440px]",
 }: {
   rows: DocumentBrowserRow[];
   selectedKey: string | null;
   onSelect: (key: string) => void;
   renderActions?: (row: DocumentBrowserRow) => React.ReactNode;
+  /** Actions on the document itself (editing its details, removing it), shown
+   * beside the status in the header rather than with the workflow actions. */
+  renderHeaderActions?: (row: DocumentBrowserRow) => React.ReactNode;
+  /** What was read out of the open document, so a caller can offer to correct
+   * exactly the values shown here. `null` while nothing has been parsed. */
+  onParsed?: (key: string, parsed: ParsedDocumentInfo | null) => void;
   height?: string;
 }) {
+  // Held in a ref so a caller passing an inline callback can't restart parsing.
+  const onParsedRef = useRef(onParsed);
+  onParsedRef.current = onParsed;
   const selected = rows.find((r) => r.key === selectedKey) ?? rows[0];
   const idx = selected ? rows.findIndex((r) => r.key === selected.key) : -1;
   const goPrev = () => idx > 0 && onSelect(rows[idx - 1].key);
@@ -63,14 +74,20 @@ export function DocumentBrowser({
   const [parsed, setParsed] = useState<ParsedDocumentInfo | null>(null);
   useEffect(() => {
     setParsed(null);
+    const key = selected?.key ?? "";
+    onParsedRef.current?.(key, null);
     const url = selected?.fileUrl;
     if (!url) return;
     let cancelled = false;
-    parseDocumentInfo(url).then((info) => !cancelled && setParsed(info));
+    parseDocumentInfo(url).then((info) => {
+      if (cancelled) return;
+      setParsed(info);
+      onParsedRef.current?.(key, info);
+    });
     return () => {
       cancelled = true;
     };
-  }, [selected?.fileUrl]);
+  }, [selected?.fileUrl, selected?.key]);
 
   const info = selected
     ? {
@@ -100,15 +117,17 @@ export function DocumentBrowser({
             <button
               key={r.key}
               onClick={() => onSelect(r.key)}
-              className={`w-full flex items-center justify-between gap-2 rounded-lg border px-3 py-2.5 text-left transition-colors ${
+              className={`w-full flex flex-col items-start gap-1.5 rounded-lg border px-3 py-2.5 text-left transition-colors ${
                 active ? "border-primary bg-secondary/60" : "border-border hover:bg-secondary/40"
               }`}
             >
-              <span className="flex items-center gap-2 min-w-0">
-                <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
-                <span className="text-sm font-medium truncate">{r.name}</span>
+              {/* The document name wraps in full — a truncated name is not
+                  something you can identify a compliance document by. */}
+              <span className="flex items-start gap-2 w-full">
+                <FileText className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
+                <span className="text-sm font-medium break-words">{r.name}</span>
               </span>
-              <Badge variant={meta.variant as any} className="shrink-0">
+              <Badge variant={meta.variant as any} className="shrink-0 ml-6">
                 <meta.Icon className="w-3 h-3" />
                 {meta.label}
               </Badge>
@@ -153,16 +172,19 @@ export function DocumentBrowser({
                 </dl>
               )}
               </div>
-              {/* Status, same badge style as the list on the left */}
-              {(() => {
-                const m = docStatusMeta(selected.status);
-                return (
-                  <Badge variant={m.variant as any} className="shrink-0">
-                    <m.Icon className="w-3 h-3" />
-                    {m.label}
-                  </Badge>
-                );
-              })()}
+              <div className="flex items-center gap-2 shrink-0">
+                {renderHeaderActions?.(selected)}
+                {/* Status, same badge style as the list on the left */}
+                {(() => {
+                  const m = docStatusMeta(selected.status);
+                  return (
+                    <Badge variant={m.variant as any} className="shrink-0">
+                      <m.Icon className="w-3 h-3" />
+                      {m.label}
+                    </Badge>
+                  );
+                })()}
+              </div>
             </div>
 
             <PdfCanvas

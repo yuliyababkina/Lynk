@@ -11,22 +11,33 @@ import { DOCUMENT_TYPE_OPTIONS, type DocumentMetadata } from "@/lib/onboarding-d
  * the document, and the uploader must review/correct the values before the file
  * is saved. Nothing is stored until "Confirm & upload" — so every document
  * carries human-verified metadata.
+ *
+ * The same form, in `mode="edit"`, corrects the details of a document that is
+ * already on file. The file itself is never touched there — replacing the file
+ * is a separate upload.
  */
 export function DocumentMetadataForm({
   fileName,
   documentName,
   initial,
   busy,
+  mode = "upload",
+  expiryHint,
   onCancel,
   onConfirm,
 }: {
-  fileName: string;
+  /** The picked file; omitted when editing a document already on file. */
+  fileName?: string;
   documentName: string;
   initial: DocumentMetadata;
   busy?: boolean;
+  mode?: "upload" | "edit";
+  /** Validity text as printed in the document, when it names no exact day. */
+  expiryHint?: string;
   onCancel: () => void;
   onConfirm: (metadata: DocumentMetadata) => void;
 }) {
+  const editing = mode === "edit";
   const [meta, setMeta] = useState<DocumentMetadata>(initial);
   const set = <K extends keyof DocumentMetadata>(k: K, v: DocumentMetadata[K]) =>
     setMeta((m) => ({ ...m, [k]: v }));
@@ -42,17 +53,25 @@ export function DocumentMetadataForm({
       <div className="flex items-start gap-2 rounded-lg border border-accent/30 bg-accent/5 p-3">
         <Sparkles className="w-4 h-4 text-accent shrink-0 mt-0.5" />
         <div className="text-xs">
-          <p className="font-medium text-foreground">We pre-filled these details from your document</p>
+          <p className="font-medium text-foreground">
+            {editing
+              ? "These details were read from your document"
+              : "We pre-filled these details from your document"}
+          </p>
           <p className="text-muted-foreground mt-0.5">
-            Please check each field and correct anything that's wrong before confirming.
+            {editing
+              ? "Correct anything that's wrong. Your file stays as it is."
+              : "Please check each field and correct anything that's wrong before confirming."}
           </p>
         </div>
       </div>
 
       <div className="space-y-1">
-        <Label className="text-xs text-muted-foreground">File</Label>
-        <p className="text-sm font-medium truncate">{fileName}</p>
-        <p className="text-xs text-muted-foreground">Uploading as: {documentName}</p>
+        <Label className="text-xs text-muted-foreground">{editing ? "Document" : "File"}</Label>
+        {fileName && <p className="text-sm font-medium truncate">{fileName}</p>}
+        <p className={editing ? "text-sm font-medium" : "text-xs text-muted-foreground"}>
+          {editing ? documentName : `Uploading as: ${documentName}`}
+        </p>
       </div>
 
       <div className="space-y-1">
@@ -99,6 +118,11 @@ export function DocumentMetadataForm({
           onChange={(e) => set("expiryDate", e.target.value)}
           className="h-10 rounded-lg border-border bg-background disabled:opacity-50"
         />
+        {expiryHint && !meta.expiryDate && !meta.doesNotExpire && (
+          <p className="text-xs text-muted-foreground">
+            Your document says “{expiryHint}” — please give the exact date.
+          </p>
+        )}
         <label className="flex items-center gap-2 text-sm cursor-pointer">
           <Checkbox
             checked={meta.doesNotExpire}
@@ -118,7 +142,7 @@ export function DocumentMetadataForm({
         </Button>
         <Button variant="dark" className="flex-1" disabled={busy || !valid} onClick={() => onConfirm(meta)}>
           {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-          Confirm &amp; upload
+          {editing ? "Save details" : "Confirm & upload"}
         </Button>
       </div>
       {!valid && (

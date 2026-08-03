@@ -12,14 +12,19 @@ import {
   setTicketStatusDb,
   setDocStatusDb,
   insertOnboardingCaseDb,
+  deleteOnboardingCaseDb,
+  onboardingSupplierId,
   upsertCatalogueDb,
   uploadSupplierDocument,
   updateSupplierProfileDb,
   submitProspectForReviewDb,
   reviewProspectDb,
   setDocReviewDb,
+  updateSupplierDocMetadataDb,
+  deleteSupplierDocumentDb,
   acceptTermsDb,
   onboardingCaseId,
+  displayExpiry,
   logActivity,
   type LynkDataset,
   type ProspectDecision,
@@ -41,6 +46,11 @@ interface LynkDataValue extends LynkDataset {
   unresolveTicket: (ticketId: string) => void;
   decideRenewal: (doc: SupplierDoc, decision: "accept" | "reject") => void;
   addOnboardingCase: (c: OnboardingCase) => void;
+  /** Removes an onboarding case for good. A reason is required and is written to
+   * the activity log, which is the only place it survives the deletion. An
+   * un-activated prospect is removed with its documents; an accepted supplier
+   * stays and only loses the case. */
+  deleteOnboardingCase: (caseId: string, reason: string) => Promise<void>;
   setCatalogues: (updater: (prev: Catalogue[]) => Catalogue[]) => void;
   persistCatalogue: (c: Catalogue) => void;
   /** Supplier-portal upload: stores the PDF + inserts a pending-review doc,
@@ -73,6 +83,15 @@ interface LynkDataValue extends LynkDataset {
   ) => Promise<void>;
   /** Per-document review: approve (→ valid) or decline (→ rejected-resubmit) with a comment. */
   reviewDocument: (docId: string, decision: "approve" | "decline", comment?: string) => void;
+  /** Supplier-side correction of a document's details (type / issuer / validity).
+   * The file is untouched; an already-approved document goes back to review. */
+  updateDocMetadata: (
+    docId: string,
+    metadata: { documentType?: string; issuingInstitution?: string; expiryDate?: string; doesNotExpire?: boolean },
+    actor?: string
+  ) => Promise<void>;
+  /** Supplier-side removal of an uploaded document, so it can be uploaded again. */
+  removeSupplierDoc: (docId: string, actor?: string) => Promise<void>;
   /** Records a prospect's acceptance of the Terms & Conditions (who/version/when). */
   acceptTerms: (supplierId: string, version: string, acceptedBy: string) => Promise<void>;
   /** True when this supplier still owes a terms acceptance — no data may be
@@ -158,6 +177,35 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
     insertOnboardingCaseDb(c).catch(console.error);
     logActivity(c.companyName, "Invitation sent").catch(console.error);
   }, []);
+
+  const deleteOnboardingCase = useCallback(
+    async (caseId: string, reason: string) => {
+      const trimmed = reason.trim();
+      if (!trimmed) throw new Error("A reason is required before an onboarding case can be deleted.");
+      const onbCase = data?.onboardingCases.find((c) => c.id === caseId);
+      const supplierId = onboardingSupplierId(caseId);
+      // Log before the rows go: the reason is the only record left afterwards.
+      await logActivity(
+        onbCase?.companyName ?? caseId,
+        "Onboarding case deleted",
+        trimmed
+      );
+      const { removedProspect } = await deleteOnboardingCaseDb(caseId);
+      setData((prev) =>
+        prev
+          ? {
+              ...prev,
+              onboardingCases: prev.onboardingCases.filter((c) => c.id !== caseId),
+              suppliers: removedProspect
+                ? prev.suppliers.filter((s) => s.id !== supplierId)
+                : prev.suppliers,
+              docs: removedProspect ? prev.docs.filter((d) => d.supplierId !== supplierId) : prev.docs,
+            }
+          : prev
+      );
+    },
+    [data?.onboardingCases]
+  );
 
   const setCatalogues = useCallback((updater: (prev: Catalogue[]) => Catalogue[]) => {
     setData((prev) => (prev ? { ...prev, catalogues: updater(prev.catalogues) } : prev));
@@ -265,6 +313,91 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
     []
   );
 
+  const updateDocMetadata = useCallback(
+    async (
+      docId: string,
+      metadata: { documentType?: string; issuingInstitution?: string; expiryDate?: string; doesNotExpire?: boolean },
+      actor?: string
+    ) => {
+      const doc = data?.docs.find((d) => d.id === docId);
+      if (!doc) throw new Error("That document is no longer available.");
+      assertTermsAccepted(doc.supplierId);
+
+      // Editing the details of an approved document invalidates the approval —
+      // the PM approved the previous values, so it goes back to review.
+      const wasApproved = doc.status === "valid";
+      const status: DocStatus = wasApproved ? "pending-review" : doc.status;
+      const statusNote = wasApproved
+        ? "Details edited by supplier — awaiting review."
+        : doc.statusNote;
+      const history = [
+        ...doc.history,
+        {
+          date: new Date().toISOString(),
+          event: `Document details edited — ${doc.documentName}`,
+          actor: actor ?? doc.supplierName,
+          type: "upload" as const,
+        },
+      ];
+
+      await updateSupplierDocMetadataDb(docId, {
+        ...metadata,
+        documentCategory: metadata.documentType || doc.documentCategory,
+        status,
+        statusNote: statusNote ?? null,
+        history,
+      });
+
+      setData((prev) =>
+        prev
+          ? {
+              ...prev,
+              docs: prev.docs.map((d) =>
+                d.id === docId
+                  ? {
+                      ...d,
+                      documentType: metadata.documentType,
+                      issuingInstitution: metadata.issuingInstitution,
+                      doesNotExpire: metadata.doesNotExpire ?? false,
+                      expiryDate: metadata.doesNotExpire ? "" : displayExpiry(metadata.expiryDate),
+                      documentCategory: metadata.documentType || d.documentCategory,
+                      metadataConfirmed: true,
+                      status,
+                      statusNote,
+                      history,
+                    }
+                  : d
+              ),
+            }
+          : prev
+      );
+      logActivity(
+        doc.supplierName,
+        `Document details edited — ${doc.documentName}`,
+        undefined,
+        actor ?? doc.supplierName
+      ).catch(console.error);
+    },
+    [assertTermsAccepted, data?.docs]
+  );
+
+  const removeSupplierDoc = useCallback(
+    async (docId: string, actor?: string) => {
+      const doc = data?.docs.find((d) => d.id === docId);
+      if (!doc) return;
+      assertTermsAccepted(doc.supplierId);
+      await deleteSupplierDocumentDb(docId, doc.filePath);
+      setData((prev) => (prev ? { ...prev, docs: prev.docs.filter((d) => d.id !== docId) } : prev));
+      logActivity(
+        doc.supplierName,
+        `Document deleted — ${doc.documentName}`,
+        undefined,
+        actor ?? doc.supplierName
+      ).catch(console.error);
+    },
+    [assertTermsAccepted, data?.docs]
+  );
+
   const updateSupplierProfile = useCallback(
     async (
       supplierId: string,
@@ -368,6 +501,7 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
       unresolveTicket,
       decideRenewal,
       addOnboardingCase,
+      deleteOnboardingCase,
       setCatalogues,
       persistCatalogue,
       addSupplierDoc,
@@ -375,6 +509,8 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
       submitProspectForReview,
       reviewProspect,
       reviewDocument,
+      updateDocMetadata,
+      removeSupplierDoc,
       acceptTerms,
       termsPending,
     };
@@ -389,6 +525,7 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
     unresolveTicket,
     decideRenewal,
     addOnboardingCase,
+    deleteOnboardingCase,
     setCatalogues,
     persistCatalogue,
     addSupplierDoc,
@@ -396,6 +533,8 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
     submitProspectForReview,
     reviewProspect,
     reviewDocument,
+    updateDocMetadata,
+    removeSupplierDoc,
     acceptTerms,
     termsPending,
   ]);

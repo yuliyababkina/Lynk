@@ -43,6 +43,48 @@ const EXPIRY_PATTERNS = [
 
 const NO_EXPIRY = /(does not expire|no expiry|not expire|unlimited|indefinite|ongoing|perpetual)/i;
 
+const MONTHS = [
+  "january", "february", "march", "april", "may", "june",
+  "july", "august", "september", "october", "november", "december",
+];
+
+/**
+ * Turns validity text as printed in a document into the `yyyy-mm-dd` a date
+ * input needs. Only unambiguous *full* dates are converted — "January 2028"
+ * names no day, and guessing one would invent precision the document doesn't
+ * have, so it stays empty for the uploader to fill in.
+ */
+export function validityToISODate(raw?: string): string {
+  if (!raw) return "";
+  const v = raw.trim();
+  const iso = v.match(/\b(\d{4})-(\d{2})-(\d{2})\b/);
+  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+
+  // 15.01.2028 / 15/01/2028 — day-first, as written in Europe.
+  const dmy = v.match(/\b(\d{1,2})[./](\d{1,2})[./](\d{4})\b/);
+  if (dmy) {
+    const [, d, m, y] = dmy;
+    if (+m >= 1 && +m <= 12 && +d >= 1 && +d <= 31) {
+      return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+    }
+  }
+
+  // "15 January 2028" / "January 15, 2028"
+  const named =
+    v.match(/\b(\d{1,2})\s+([A-Za-z]{3,9})\.?\s+(\d{4})\b/) ??
+    v.match(/\b([A-Za-z]{3,9})\.?\s+(\d{1,2}),?\s+(\d{4})\b/);
+  if (named) {
+    const dayFirst = /^\d/.test(named[1]);
+    const day = dayFirst ? named[1] : named[2];
+    const monthName = (dayFirst ? named[2] : named[1]).toLowerCase();
+    const month = MONTHS.findIndex((m) => m.startsWith(monthName.slice(0, 3))) + 1;
+    if (month > 0) {
+      return `${named[3]}-${String(month).padStart(2, "0")}-${day.padStart(2, "0")}`;
+    }
+  }
+  return "";
+}
+
 function clean(v: string): string {
   // Trim trailing punctuation/boilerplate that follows a labelled value.
   return v.replace(/\s+/g, " ").replace(/[.;,]\s*$/, "").trim().slice(0, 120);

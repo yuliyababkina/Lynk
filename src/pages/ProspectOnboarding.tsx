@@ -11,6 +11,8 @@ import {
   ArrowRight,
   AlertTriangle,
   XCircle,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,15 +20,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { WizardStepper } from "@/components/yarowa/wizard-stepper";
 import { DocumentMetadataForm } from "@/components/yarowa/document-metadata-form";
 import { DocumentBrowser, type DocumentBrowserRow } from "@/components/yarowa/document-browser";
 import { useLynkData } from "@/lib/LynkDataContext";
 import { recogniseDocumentMetadata, type DocumentMetadata } from "@/lib/onboarding-documents";
 import { docStatusMeta } from "@/lib/document-status";
+import { validityToISODate, type ParsedDocumentInfo } from "@/lib/pdf-metadata";
 import { PRINCIPAL_COMPANY } from "@/lib/principal";
 import { TERMS_SECTIONS, TERMS_VERSION, TERMS_EFFECTIVE_DATE } from "@/lib/terms";
-import type { DocStatus } from "@/types";
+import type { DocStatus, SupplierDoc } from "@/types";
 import { getPortalProfile } from "./portal/portal-data";
 
 export interface ProspectOnboardingProps {
@@ -86,6 +90,8 @@ export function ProspectOnboarding({
     docs,
     onboardingCases,
     addSupplierDoc,
+    updateDocMetadata,
+    removeSupplierDoc,
     updateSupplierProfile,
     submitProspectForReview,
     acceptTerms,
@@ -209,6 +215,87 @@ export function ProspectOnboarding({
     }
   }
 
+  // Whoever is filling this in — used as the actor on their own audit entries.
+  const actingAs = invitedName || profile.fullName;
+
+  /* ── Correcting the details of a document already on file ───────────────
+     What the preview shows may have been read from the PDF rather than typed
+     by anyone, so the edit form starts from exactly those values. */
+  const [parsedByKey, setParsedByKey] = useState<Record<string, ParsedDocumentInfo | null>>({});
+  const notedParsed = (key: string, info: ParsedDocumentInfo | null) =>
+    setParsedByKey((prev) => (prev[key] === info ? prev : { ...prev, [key]: info }));
+
+  const [editing, setEditing] = useState<
+    { doc: SupplierDoc; prefill: DocumentMetadata; expiryHint?: string } | null
+  >(null);
+  const [savingMetadata, setSavingMetadata] = useState(false);
+
+  function startEdit(key: string) {
+    const def = STANDARD_DOCS.find((d) => d.key === key);
+    const doc = def && statusByName.get(def.name);
+    if (!def || !doc) return;
+    const parsed = parsedByKey[key] ?? null;
+    const guess = recogniseDocumentMetadata(def.name);
+    // A date input needs yyyy-mm-dd; validity printed as a month and year names
+    // no day, so it becomes a hint to confirm rather than a pre-filled value.
+    const parsedExpiry = validityToISODate(parsed?.validity);
+    // A stored date is free text ("31 Jan 2028") — back to ISO for the input.
+    const storedExpiry = validityToISODate(doc.expiryDate);
+    setError(null);
+    setEditing({
+      doc,
+      prefill: {
+        documentType: doc.documentType || parsed?.documentType || guess.documentType,
+        issuingInstitution: doc.issuingInstitution || parsed?.issuingInstitution || guess.issuingInstitution,
+        expiryDate: storedExpiry || parsedExpiry,
+        doesNotExpire: doc.doesNotExpire || parsed?.doesNotExpire || false,
+      },
+      expiryHint: storedExpiry || parsedExpiry ? undefined : parsed?.validity,
+    });
+  }
+
+  async function saveMetadata(metadata: DocumentMetadata) {
+    if (!editing) return;
+    setSavingMetadata(true);
+    try {
+      await updateDocMetadata(editing.doc.id, metadata, actingAs);
+      setEditing(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not save the document details.");
+    } finally {
+      setSavingMetadata(false);
+    }
+  }
+
+  /* ── Deleting a document so it can be uploaded again ────────────────── */
+  const [confirmDelete, setConfirmDelete] = useState<SupplierDoc | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  async function deleteDoc() {
+    if (!confirmDelete) return;
+    setDeleting(true);
+    try {
+      const removed = confirmDelete;
+      await removeSupplierDoc(removed.id, actingAs);
+      // The gate below reads the shared data again, so the optimistic key for
+      // this document has to go too — otherwise a deleted required document
+      // would still count as uploaded.
+      const def = STANDARD_DOCS.find((d) => d.name === removed.documentName);
+      if (def) {
+        setUploadedKeys((prev) => {
+          const next = new Set(prev);
+          next.delete(def.key);
+          return next;
+        });
+      }
+      setConfirmDelete(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not delete the document.");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   // Required documents must be on file and not declined — judged from the shared
   // data, so a document the PM declined blocks the step again.
   const requiredStandardDone = STANDARD_DOCS.filter((d) => d.required).every((d) => {
@@ -263,7 +350,7 @@ export function ProspectOnboarding({
             page at 100% scale; the form/summary steps read better in a column. */}
         <div
           className={`mx-auto px-6 py-10 ${
-            step === "documents" && !pending ? "max-w-[1600px]" : "max-w-2xl"
+            step === "documents" && !pending && !editing ? "max-w-[1600px]" : "max-w-2xl"
           }`}
         >
           {step === "welcome" && (
@@ -311,7 +398,33 @@ export function ProspectOnboarding({
             </section>
           )}
 
-          {step === "documents" && !pending && (
+          {step === "documents" && !pending && editing && (
+            <section className="space-y-5">
+              <div>
+                <h1 className="text-xl font-bold">Edit document details</h1>
+                <p className="text-muted-foreground mt-1 text-sm">
+                  Correct what this document says. The uploaded file itself isn't changed
+                  {editing.doc.status === "valid"
+                    ? " — because procurement already approved these details, the document goes back for review."
+                    : "."}
+                </p>
+              </div>
+              {error && <p className="text-sm text-destructive">{error}</p>}
+              <Card className="rounded-2xl border border-border ring-0 shadow-none [--card-spacing:1.25rem] px-(--card-spacing)">
+                <DocumentMetadataForm
+                  mode="edit"
+                  documentName={editing.doc.documentName}
+                  initial={editing.prefill}
+                  expiryHint={editing.expiryHint}
+                  busy={savingMetadata}
+                  onCancel={() => setEditing(null)}
+                  onConfirm={saveMetadata}
+                />
+              </Card>
+            </section>
+          )}
+
+          {step === "documents" && !pending && !editing && (
             <section className="space-y-5">
               <div>
                 <h1 className="text-xl font-bold">Standard Compliance Documents</h1>
@@ -326,31 +439,63 @@ export function ProspectOnboarding({
                 rows={docRows}
                 selectedKey={selectedDocKey}
                 onSelect={setSelectedDocKey}
+                onParsed={notedParsed}
+                /* Editing the details and removing the document act on the
+                   document itself, so they sit with it — not among the
+                   workflow actions at the bottom. */
+                renderHeaderActions={(r) => {
+                  const def = STANDARD_DOCS.find((d) => d.name === r.name);
+                  const live = statusByName.get(r.name);
+                  if (!def || !r.status || !live) return null;
+                  return (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="icon-sm"
+                        title="Edit details"
+                        aria-label={`Edit the details of ${r.name}`}
+                        onClick={() => startEdit(def.key)}
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="icon-sm"
+                        title="Delete document"
+                        aria-label={`Delete ${r.name}`}
+                        onClick={() => setConfirmDelete(live)}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </>
+                  );
+                }}
                 renderActions={(r) => {
                   const def = STANDARD_DOCS.find((d) => d.name === r.name);
+                  const declined = r.status === "rejected-resubmit";
+                  const uploading = Boolean(def && uploadingKey === def.key);
+                  if (!def) return null;
                   return (
-                    <div className="flex items-center justify-end gap-3 min-w-0">
-                      <p className="text-xs text-muted-foreground min-w-0 truncate">
-                        {r.status === "rejected-resubmit" && r.statusNote
-                          ? `Declined — “${r.statusNote}”`
-                          : def?.hint ?? ""}
+                    <div className="flex items-center justify-end gap-2 min-w-0">
+                      <p className="text-xs text-muted-foreground min-w-0 truncate mr-1">
+                        {declined && r.statusNote ? `Declined — “${r.statusNote}”` : def.hint}
                       </p>
-                      {(!r.status || r.status === "rejected-resubmit") && def && (
-                        <Button
-                          variant="dark"
-                          size="sm"
-                          className="shrink-0"
-                          disabled={uploadingKey === def.key}
-                          onClick={() => docInputRef.current?.click()}
-                        >
-                          {uploadingKey === def.key ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <Upload className="w-4 h-4" />
-                          )}
-                          {r.status === "rejected-resubmit" ? "Replace document" : "Upload document"}
-                        </Button>
-                      )}
+                      {/* Uploading a file again supersedes the stored one and sends
+                          the new version back for review. */}
+                      <Button
+                        variant={!r.status || declined ? "dark" : "outline"}
+                        size="sm"
+                        className="shrink-0"
+                        disabled={uploading}
+                        onClick={() => docInputRef.current?.click()}
+                      >
+                        {uploading ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Upload className="w-4 h-4" />
+                        )}
+                        {!r.status ? "Upload document" : declined ? "Replace document" : "Replace file"}
+                      </Button>
                     </div>
                   );
                 }}
@@ -381,6 +526,33 @@ export function ProspectOnboarding({
                   Upload the required documents (Public Liability Insurance, Trade Licence) to continue.
                 </p>
               )}
+
+              {/* Deleting is not undoable, so it's confirmed by name. */}
+              <Dialog open={Boolean(confirmDelete)} onOpenChange={(o) => !o && !deleting && setConfirmDelete(null)}>
+                <DialogContent showCloseButton={false} className="sm:max-w-[440px] rounded-2xl">
+                  <DialogTitle className="text-base font-semibold">
+                    Delete {confirmDelete?.documentName}?
+                  </DialogTitle>
+                  <DialogDescription className="text-sm text-muted-foreground">
+                    The file and its details are removed from your submission. You can upload a new
+                    version afterwards. This can't be undone.
+                  </DialogDescription>
+                  <div className="flex gap-2 pt-2">
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      disabled={deleting}
+                      onClick={() => setConfirmDelete(null)}
+                    >
+                      Keep document
+                    </Button>
+                    <Button variant="danger" className="flex-1" disabled={deleting} onClick={deleteDoc}>
+                      {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                      Delete
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </section>
           )}
 

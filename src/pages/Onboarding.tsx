@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
-import { FileText, ExternalLink, Building2, MapPin, Mail, Phone, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
+import { FileText, ExternalLink, Building2, MapPin, Mail, Phone, CheckCircle2, AlertTriangle, XCircle, Trash2, Loader2 } from "lucide-react";
 import { useLynkData } from "../lib/LynkDataContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Pill } from "@/components/yarowa/pill";
 import { ProspectReview } from "./ProspectReview";
 import type { DocStatus, OnboardingStatus, OnboardingCase } from "../types";
@@ -53,11 +54,18 @@ export function Onboarding({
 }: {
   initialSelectedId?: string | null;
 }) {
-  const { onboardingCases: ONBOARDING_CASES, suppliers: SUPPLIERS, docs: DOCS, reviewProspect, reviewDocument } =
-    useLynkData();
+  const {
+    onboardingCases: ONBOARDING_CASES,
+    suppliers: SUPPLIERS,
+    docs: DOCS,
+    reviewProspect,
+    reviewDocument,
+    deleteOnboardingCase,
+  } = useLynkData();
   const [tab, setTab] = useState<"All" | "Stale">("All");
   const [selected, setSelected] = useState<string | null>(initialSelectedId ?? null);
   const [reviewing, setReviewing] = useState(false);
+  const [deletingCase, setDeletingCase] = useState<OnboardingCase | null>(null);
 
   const linkedFor = (c: OnboardingCase) =>
     SUPPLIERS.find((s) => s.id === c.id.replace(/^onb-/, "")) ??
@@ -184,8 +192,25 @@ export function Onboarding({
 
       {selectedCase && (
         <div className="w-[380px] shrink-0 bg-card border border-border rounded-lg p-4 h-fit max-h-[calc(100vh-8rem)] overflow-y-auto">
-          <div className="font-semibold">{selectedCase.companyName}</div>
-          <div className="text-xs text-muted-foreground mb-4">{selectedCase.contactName} · Prospect</div>
+          <div className="flex items-start justify-between gap-2 mb-4">
+            <div className="min-w-0">
+              <div className="font-semibold">{selectedCase.companyName}</div>
+              <div className="text-xs text-muted-foreground">{selectedCase.contactName} · Prospect</div>
+            </div>
+            {/* Removing the case from the pipeline altogether — distinct from
+                rejecting it, which is a decision the supplier is told about.
+                Quiet by default: it is housekeeping, not part of the review. */}
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="shrink-0 text-muted-foreground hover:text-destructive"
+              title="Delete onboarding case"
+              aria-label={`Delete the onboarding case for ${selectedCase.companyName}`}
+              onClick={() => setDeletingCase(selectedCase)}
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </Button>
+          </div>
 
           {linkedSupplier ? (
             <>
@@ -280,7 +305,119 @@ export function Onboarding({
           )}
         </div>
       )}
+
+      {deletingCase && (
+        <DeleteCaseDialog
+          caseItem={deletingCase}
+          /* An accepted prospect is a live supplier and stays; anything else
+             exists only for this case, so it goes with it. */
+          removesProspect={Boolean(linkedFor(deletingCase)) && deletingCase.status !== "Accepted"}
+          docCount={
+            linkedFor(deletingCase)
+              ? DOCS.filter((d) => d.supplierId === linkedFor(deletingCase)!.id).length
+              : 0
+          }
+          onClose={() => setDeletingCase(null)}
+          onConfirm={async (reason) => {
+            await deleteOnboardingCase(deletingCase.id, reason);
+            setDeletingCase(null);
+            setSelected(null);
+            setReviewing(false);
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+/*
+ * Deleting a case is not undoable and leaves no row behind, so the reason the PM
+ * gives here is the only surviving record of it — hence required, and written to
+ * the activity log before anything is removed.
+ */
+function DeleteCaseDialog({
+  caseItem,
+  removesProspect,
+  docCount,
+  onClose,
+  onConfirm,
+}: {
+  caseItem: OnboardingCase;
+  removesProspect: boolean;
+  docCount: number;
+  onClose: () => void;
+  onConfirm: (reason: string) => Promise<void>;
+}) {
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function confirm() {
+    setBusy(true);
+    setError(null);
+    try {
+      await onConfirm(reason);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not delete the case.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && !busy && onClose()}>
+      <DialogContent showCloseButton={false} className="sm:max-w-[460px] rounded-2xl">
+        <DialogTitle className="text-base font-semibold">Delete {caseItem.companyName}?</DialogTitle>
+        <DialogDescription className="text-sm text-muted-foreground">
+          {removesProspect ? (
+            <>
+              The case, the prospect's profile
+              {docCount > 0 && <> and {docCount} uploaded document{docCount === 1 ? "" : "s"}</>} are
+              removed. This can't be undone — reject the application instead if the supplier should be
+              told the outcome.
+            </>
+          ) : (
+            <>
+              The onboarding case is removed. The supplier profile stays, because it is already active in
+              Lynk. This can't be undone.
+            </>
+          )}
+        </DialogDescription>
+
+        <div className="space-y-1.5">
+          <label htmlFor="delete-reason" className="text-xs text-muted-foreground">
+            Reason for deleting <span className="text-destructive">*</span>
+          </label>
+          <textarea
+            id="delete-reason"
+            autoFocus
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            rows={3}
+            placeholder="e.g. duplicate invitation, company no longer trading, invited in error"
+            className="w-full rounded-lg border border-border bg-background p-2 text-sm resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          />
+          <p className="text-xs text-muted-foreground">
+            Kept in the activity log — the only record left once the case is gone.
+          </p>
+        </div>
+
+        {error && <p className="text-sm text-destructive">{error}</p>}
+
+        <div className="flex gap-2 pt-1">
+          <Button variant="outline" className="flex-1" disabled={busy} onClick={onClose}>
+            Keep case
+          </Button>
+          <Button variant="danger" className="flex-1" disabled={busy || !reason.trim()} onClick={confirm}>
+            {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+            Delete case
+          </Button>
+        </div>
+        {!reason.trim() && (
+          <p className="text-xs text-muted-foreground text-center">Give a reason to enable deletion.</p>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
 
