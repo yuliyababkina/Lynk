@@ -151,7 +151,31 @@ does not serve them.
 - Principal Docs (wizard step 4) are decorative — no real uploads behind them.
 - `Principals.tsx` in the portal hardcodes Martin's relationships.
 
-## 8. Agent-session constraints
+## 8. Owner's next steps (outside the codebase)
+
+These need access an agent session doesn't have:
+
+1. **Verify a sending domain in Resend.** Until then `RESEND_FROM` stays unset,
+   the function falls back to `onboarding@resend.dev`, and invitations only
+   reach the Resend account owner's own address. `urbanhabitat-management.de` is
+   fictional — use a domain whose DNS you control (a `leverx.com` subdomain via
+   corporate IT, or a cheap domain bought for the prototype). Then set
+   `RESEND_FROM` in Vercel and redeploy. Steps in `SETUP.md` §7.2.
+2. **Decide the Principal's real register/VAT numbers** if the invented ones
+   shouldn't stand (`src/lib/principal.ts`).
+3. **Decide whether a Privacy Policy page is needed**, or whether the link stays
+   a placeholder for the prototype.
+
+## 9. Audit trail
+
+`activity_log` records each action. Its `actor` column defaults to the
+Procurement Manager in the schema, which is correct for everything the PM does
+and wrong for anything the supplier does — it was crediting Sabine with consent
+the supplier had given. `logActivity(entity, action, detail, actor)` therefore
+takes an optional actor, and supplier-side actions (terms acceptance) pass it.
+Anything new that a *supplier* triggers should pass it too.
+
+## 10. Agent-session constraints
 
 - **Cannot push.** No SSH key, no `gh`, and the osxkeychain has no github.com
   credential. The repo is public, so *reads* (`git ls-remote`) work but writes
