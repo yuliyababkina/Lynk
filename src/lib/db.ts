@@ -288,8 +288,45 @@ export async function setDocStatusDb(docId: string, status: DocStatus) {
   if (error) console.error("[Lynk] setDocStatusDb failed:", error.message);
 }
 
+/**
+ * An onboarding case always needs a matching `suppliers` row. Two things depend
+ * on it: `supplier_docs.supplier_id` is a foreign key onto suppliers(id), and
+ * the prospect's own wizard writes its company profile onto that row. Inviting
+ * a prospect used to create only the case, so the prospect's first document
+ * upload failed the foreign key and the company-info save silently updated no
+ * rows. Created as `Prospect`; the wizard fills in the real details.
+ */
+async function ensureProspectSupplier(c: OnboardingCase) {
+  const supplierId = onboardingSupplierId(c.id);
+  const contacts =
+    c.contactName && c.contactName !== "—"
+      ? [{ name: c.contactName, role: "Contact", email: c.email ?? "", phone: "", primary: true }]
+      : [];
+  const { error } = await supabase.from("suppliers").upsert(
+    {
+      id: supplierId,
+      name: c.companyName,
+      stage: "Prospect",
+      // Not asked for at invite time; the prospect supplies them in the wizard.
+      trade: "—",
+      region: "—",
+      compliance: "Pending Review",
+      open_tickets: 0,
+      contacts,
+      regions_served: [],
+      capabilities: [],
+      last_active: "Invited",
+    },
+    // Never clobber an existing supplier — a re-invite must not reset their data.
+    { onConflict: "id", ignoreDuplicates: true }
+  );
+  if (error) console.error("[Lynk] ensureProspectSupplier failed:", error.message);
+}
+
 export async function insertOnboardingCaseDb(c: OnboardingCase) {
   if (!isSupabaseConfigured) return;
+  // Must exist before the case: the prospect's uploads reference it.
+  await ensureProspectSupplier(c);
   const { error } = await supabase.from("onboarding_cases").insert({
     id: c.id,
     company_name: c.companyName,
@@ -499,6 +536,8 @@ export async function updateSupplierProfileDb(
 /** Deterministic onboarding-case id for a prospect, so submitting is idempotent
  * (re-submitting updates the same row instead of creating duplicates). */
 export const onboardingCaseId = (supplierId: string) => `onb-${supplierId}`;
+/** Inverse of onboardingCaseId — the supplier a case belongs to. */
+export const onboardingSupplierId = (caseId: string) => caseId.replace(/^onb-/, "");
 
 /** Onboarding: mark a prospect's submission as received. Flags the supplier as
  * `Pending Review`, adds/updates the prospect's row in the Procurement Manager's

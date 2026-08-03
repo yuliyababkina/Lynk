@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/components/yarowa/toast";
 import { cn } from "@/lib/utils";
+import { PRINCIPAL_COMPANY, PROCUREMENT_MANAGER, PROCUREMENT_MANAGER_ROLE } from "@/lib/principal";
 
 type StepName = "Contact" | "Details" | "Settings" | "Review";
 
@@ -127,6 +128,10 @@ export function InviteSupplierModal({
               contactName: contact.trim() || undefined,
               link: magicLink,
               note: note.trim() || undefined,
+              // Same names the onboarding screen shows, so email and app agree.
+              principal: PRINCIPAL_COMPANY,
+              sender: PROCUREMENT_MANAGER,
+              senderRole: PROCUREMENT_MANAGER_ROLE,
             }),
           });
           if (!res.ok) {

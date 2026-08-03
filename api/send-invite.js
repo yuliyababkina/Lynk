@@ -30,14 +30,22 @@ export default async function handler(req, res) {
     return;
   }
 
-  const { to, companyName, contactName, link, note } = req.body ?? {};
+  const { to, companyName, contactName, link, note, principal, sender, senderRole } = req.body ?? {};
 
   if (!to || !companyName || !link) {
     res.status(400).json({ error: "Missing required fields: to, companyName, link" });
     return;
   }
 
-  const greeting = contactName ? `Hi ${contactName},` : "Hi,";
+  // The inviting Principal and the person signing it. Defaults keep older
+  // callers working; src/lib/principal.ts is the single source on the client.
+  const principalName = principal || "Urban Habitat Management GmbH";
+  const senderName = sender || "Sabine Müller";
+  const senderTitle = senderRole || "Procurement Manager";
+
+  // Greet by first name, matching the onboarding screen.
+  const firstName = contactName ? String(contactName).trim().split(/\s+/)[0] : "";
+  const greeting = firstName ? `Hi ${escapeHtml(firstName)},` : "Hi,";
   const noteBlock = note
     ? `<p style="margin:16px 0;padding:12px 16px;background:#f4f4f5;border-radius:8px;font-size:14px;color:#3f3f46;">${escapeHtml(note)}</p>`
     : "";
@@ -45,7 +53,14 @@ export default async function handler(req, res) {
   const html = `
     <div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:480px;margin:0 auto;">
       <p>${greeting}</p>
-      <p>You've been invited to join <strong>${escapeHtml(companyName)}</strong>'s supplier network on Lynk.</p>
+      <p>
+        You've been invited to join <strong>${escapeHtml(principalName)}</strong>'s supplier network on Lynk.
+      </p>
+      <p>
+        We'd like to extend our supplier relationship with
+        <strong>${escapeHtml(companyName)}</strong>. Your existing profile has been pre-filled — please
+        confirm your details and upload any new requirements.
+      </p>
       ${noteBlock}
       <p style="margin:24px 0;">
         <a href="${link}" style="background:#111827;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;">
@@ -55,6 +70,11 @@ export default async function handler(req, res) {
       <p style="color:#71717a;font-size:13px;">
         Or paste this link into your browser:<br />
         <a href="${link}" style="color:#71717a;">${link}</a>
+      </p>
+      <p style="margin-top:24px;font-size:14px;color:#3f3f46;">
+        Best regards,<br />
+        ${escapeHtml(senderName)}<br />
+        <span style="color:#71717a;">${escapeHtml(senderTitle)} at ${escapeHtml(principalName)}</span>
       </p>
     </div>
   `;
@@ -69,7 +89,9 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         from: process.env.RESEND_FROM || DEFAULT_FROM,
         to: [to],
-        subject: `You're invited to join ${companyName} on Lynk`,
+        // The invitee joins the Principal's network — companyName is their own
+        // company, so naming it here would read backwards.
+        subject: `You're invited to join ${principalName}'s supplier network on Lynk`,
         html,
       }),
     });

@@ -17,18 +17,24 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { WizardStepper } from "@/components/yarowa/wizard-stepper";
 import { DocumentMetadataForm } from "@/components/yarowa/document-metadata-form";
 import { DocumentBrowser, type DocumentBrowserRow } from "@/components/yarowa/document-browser";
 import { useLynkData } from "@/lib/LynkDataContext";
 import { recogniseDocumentMetadata, type DocumentMetadata } from "@/lib/onboarding-documents";
 import { docStatusMeta } from "@/lib/document-status";
+import { PRINCIPAL_COMPANY } from "@/lib/principal";
+import { TERMS_SECTIONS, TERMS_VERSION, TERMS_EFFECTIVE_DATE } from "@/lib/terms";
 import type { DocStatus } from "@/types";
 import { getPortalProfile } from "./portal/portal-data";
 
 export interface ProspectOnboardingProps {
   supplierId: string;
   supplierName: string;
+  /** Person the invitation was addressed to; greets them by name instead of
+   * falling back to the demo persona. */
+  contactName?: string;
   onSwitchAccount?: () => void;
 }
 
@@ -42,7 +48,7 @@ const STEP_LABEL: Partial<Record<Step, string>> = {
   done: "Complete",
 };
 
-const PRINCIPAL = "Yarowa AG";
+const PRINCIPAL = PRINCIPAL_COMPANY;
 
 /* ── Compliance-document checklist rows ──────────────────────────────────── */
 interface DocRowDef {
@@ -63,13 +69,18 @@ const STANDARD_DOCS: DocRowDef[] = [
 
 // Step 4 — principal-specific docs already satisfied for this relationship.
 const PRINCIPAL_DOCS: { name: string; hint: string; state: "uploaded" | "verified"; optional?: boolean }[] = [
-  { name: "ISO 9001 Certificate", hint: "Required for Yarowa AG — quality management certification", state: "uploaded" },
+  { name: "ISO 9001 Certificate", hint: `Required for ${PRINCIPAL_COMPANY} — quality management certification`, state: "uploaded" },
   { name: "Conflict Minerals Declaration", hint: "On file — OECD compliant", state: "verified" },
   { name: "Signed Code of Conduct", hint: "Please sign and upload the Principal's code of conduct", state: "uploaded" },
   { name: "ESG Self-Assessment", hint: "Completed — score 75/100", state: "verified", optional: true },
 ];
 
-export function ProspectOnboarding({ supplierId, supplierName, onSwitchAccount }: ProspectOnboardingProps) {
+export function ProspectOnboarding({
+  supplierId,
+  supplierName,
+  contactName,
+  onSwitchAccount,
+}: ProspectOnboardingProps) {
   const { suppliers, docs, onboardingCases, addSupplierDoc, updateSupplierProfile, submitProspectForReview } =
     useLynkData();
   // Live status per document type — the same values the Procurement Manager sees.
@@ -78,7 +89,12 @@ export function ProspectOnboarding({ supplierId, supplierName, onSwitchAccount }
   );
   const dbSupplier = suppliers.find((s) => s.id === supplierId);
   const profile = getPortalProfile(supplierId);
-  const firstName = profile.firstName;
+  // Greet whoever the invitation was addressed to. Falls back to the demo
+  // persona only for the built-in personas, which carry no invitation.
+  const invitedName = contactName?.trim() && contactName.trim() !== "—" ? contactName.trim() : "";
+  const firstName = invitedName ? invitedName.split(/\s+/)[0] : profile.firstName;
+  // The invited supplier's own company, as entered on the invitation.
+  const prospectCompany = dbSupplier?.name ?? supplierName ?? profile.company.legalName;
 
   // PM review outcome (drives the loop-back / approved states from the flow).
   const myCase = onboardingCases.find((c) => c.id === `onb-${supplierId}`);
@@ -86,6 +102,9 @@ export function ProspectOnboarding({ supplierId, supplierName, onSwitchAccount }
   const reviewNote = myCase?.reviewNote;
 
   const [step, setStep] = useState<Step>("welcome");
+  // Unticked by default — consent has to be an affirmative action (GDPR), and it
+  // gates the whole wizard, so no data is entered before it is given.
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   // ── Company form ──────────────────────────────────────────────────────
   const [form, setForm] = useState(() => ({
@@ -226,6 +245,9 @@ export function ProspectOnboarding({ supplierId, supplierName, onSwitchAccount }
           {step === "welcome" && (
             <WelcomeStep
               firstName={firstName}
+              prospectCompany={prospectCompany}
+              termsAccepted={termsAccepted}
+              onTermsChange={setTermsAccepted}
               onNext={() => setStep("company")}
               reviewStatus={reviewStatus}
               reviewNote={reviewNote}
@@ -367,11 +389,18 @@ export function ProspectOnboarding({ supplierId, supplierName, onSwitchAccount }
 /* ── Step 1: Welcome ──────────────────────────────────────────────────── */
 function WelcomeStep({
   firstName,
+  prospectCompany,
+  termsAccepted,
+  onTermsChange,
   onNext,
   reviewStatus,
   reviewNote,
 }: {
   firstName: string;
+  /** The invited supplier's own company — from the invitation, not hard-coded. */
+  prospectCompany: string;
+  termsAccepted: boolean;
+  onTermsChange: (accepted: boolean) => void;
   onNext: () => void;
   reviewStatus?: string;
   reviewNote?: string;
@@ -385,7 +414,7 @@ function WelcomeStep({
         </div>
         <h1 className="text-2xl font-bold mt-4">You're approved 🎉</h1>
         <p className="text-muted-foreground mt-2 text-sm max-w-md mx-auto">
-          Your application was accepted. Yilmaz Elektrotechnik GmbH is now an active supplier for {PRINCIPAL}.
+          Your application was accepted. {prospectCompany} is now an active supplier for {PRINCIPAL}.
         </p>
       </section>
     );
@@ -428,36 +457,76 @@ function WelcomeStep({
         </div>
       )}
 
+      {/* Consent gate: nothing is entered until the terms are accepted. */}
       <Card className="rounded-2xl border border-border ring-0 shadow-none text-left mt-6 [--card-spacing:1.25rem] px-(--card-spacing)">
-        <div className="flex items-center gap-2">
-          <span className="text-lg">👤</span>
-          <div>
-            <p className="text-sm font-semibold">Invitation from Sabine Müller</p>
-            <p className="text-xs text-muted-foreground">Procurement Manager · Lynk Platform</p>
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <FileText className="w-4 h-4 text-primary" />
+            <h2 className="text-base font-semibold">Terms &amp; Conditions</h2>
           </div>
+          <span className="text-xs text-muted-foreground shrink-0">
+            Version {TERMS_VERSION} · {TERMS_EFFECTIVE_DATE}
+          </span>
         </div>
-        <div className="mt-3 rounded-lg border border-border bg-secondary/40 p-3">
-          <p className="text-sm italic text-muted-foreground">
-            "Hi {firstName}, we'd like to extend our supplier relationship with Yilmaz Elektrotechnik GmbH
-            to cover a new Principal account with {PRINCIPAL}. Your existing profile has been pre-filled —
-            please confirm your details and upload any new requirements. — Sabine"
-          </p>
+        <p className="text-xs text-muted-foreground mt-1">
+          Please read these before entering your company data.
+        </p>
+
+        {/* The terms themselves, readable without leaving the page. */}
+        <div
+          className="mt-3 max-h-64 overflow-y-auto rounded-lg border border-border bg-secondary/30 p-3 space-y-3"
+          tabIndex={0}
+          aria-label="Terms and Conditions"
+        >
+          {TERMS_SECTIONS.map((sec) => (
+            <div key={sec.heading}>
+              <p className="text-xs font-semibold">{sec.heading}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{sec.body}</p>
+            </div>
+          ))}
         </div>
+
+        <label className="mt-3 flex items-start gap-2.5 cursor-pointer">
+          <Checkbox
+            checked={termsAccepted}
+            onCheckedChange={(c) => onTermsChange(c === true)}
+            className="mt-0.5"
+            aria-describedby="terms-hint"
+          />
+          <span className="text-sm">
+            I have read and agree to the Terms &amp; Conditions and the{" "}
+            <a
+              href="#"
+              onClick={(e) => e.preventDefault()}
+              className="text-accent underline underline-offset-2"
+            >
+              Privacy Policy
+            </a>
+            , and I am authorised to accept them for {prospectCompany}.
+          </span>
+        </label>
       </Card>
 
       <div className="mt-4 flex items-start gap-2 rounded-lg border border-border bg-accent/5 p-3 text-left">
         <Lock className="w-4 h-4 text-accent shrink-0 mt-0.5" />
         <p className="text-xs text-muted-foreground">
           This link is private and expires in 72 hours. Your data is protected under GDPR. Only authorised
-          Lynk procurement staff can access your profile.
+          procurement staff at {PRINCIPAL} can access your profile.
         </p>
       </div>
 
       {!rejected && (
-        <Button variant="dark" className="w-full mt-6" onClick={onNext}>
-          {changesRequested ? "Update & Resubmit My Details" : "Review & Confirm My Details"}{" "}
-          <ArrowRight className="w-4 h-4" />
-        </Button>
+        <>
+          <Button variant="dark" className="w-full mt-6" disabled={!termsAccepted} onClick={onNext}>
+            {changesRequested ? "Update & Resubmit My Details" : "Review & Confirm My Details"}{" "}
+            <ArrowRight className="w-4 h-4" />
+          </Button>
+          {!termsAccepted && (
+            <p id="terms-hint" className="text-xs text-muted-foreground mt-2">
+              Accept the Terms &amp; Conditions to continue.
+            </p>
+          )}
+        </>
       )}
     </section>
   );

@@ -6,6 +6,7 @@ import { ComplianceDrawer } from "@/components/yarowa/compliance-drawer";
 import { DocumentLightbox } from "@/components/yarowa/document-lightbox";
 import { Toaster, toast } from "@/components/yarowa/toast";
 import { actionResult } from "@/lib/ticket-actions";
+import { onboardingSupplierId } from "@/lib/db";
 import { useLynkData } from "./lib/LynkDataContext";
 import { Landing } from "./pages/Landing";
 import type { Ticket, SupplierDoc, Contract } from "./types";
@@ -67,7 +68,9 @@ export default function App() {
   // (see the effect below) instead of falling back to the fixed demo persona.
   // `undefined` = no token in the URL, `null` = token present but not found
   // (invalid/expired link), object = resolved successfully.
-  const [inviteProspect, setInviteProspect] = useState<{ id: string; companyName: string } | null | undefined>(
+  const [inviteProspect, setInviteProspect] = useState<
+    { id: string; companyName: string; contactName?: string } | null | undefined
+  >(
     undefined
   );
 
@@ -91,10 +94,11 @@ export default function App() {
     }
     const match = ONBOARDING_CASES.find((c) => c.inviteToken === token);
     if (match) {
-      // Case id is always `onb-<supplierId>` (see invite-supplier-modal.tsx),
-      // so the prospect's onboarding-wizard id is the id with that prefix
-      // stripped.
-      setInviteProspect({ id: match.id.replace(/^onb-/, ""), companyName: match.companyName });
+      setInviteProspect({
+        id: onboardingSupplierId(match.id),
+        companyName: match.companyName,
+        contactName: match.contactName,
+      });
       setRole("prospect");
     } else {
       setInviteProspect(null);
@@ -258,6 +262,7 @@ export default function App() {
         <ProspectOnboarding
           supplierName={inviteProspect?.companyName ?? "Yilmaz Elektrotechnik GmbH"}
           supplierId={inviteProspect?.id ?? "supplier_mehmet_yilmaz"}
+          contactName={inviteProspect?.contactName}
           onSwitchAccount={handleSwitchAccount}
         />
       </Suspense>
