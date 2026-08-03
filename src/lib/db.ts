@@ -58,6 +58,9 @@ function mapSupplier(row: any): Supplier {
     iban: row.iban ?? undefined,
     address: row.address ?? undefined,
     lastActive: row.last_active ?? "",
+    termsAcceptedAt: row.terms_accepted_at ?? undefined,
+    termsVersion: row.terms_version ?? undefined,
+    termsAcceptedBy: row.terms_accepted_by ?? undefined,
   };
 }
 
@@ -539,6 +542,30 @@ export const onboardingCaseId = (supplierId: string) => `onb-${supplierId}`;
 /** Inverse of onboardingCaseId — the supplier a case belongs to. */
 export const onboardingSupplierId = (caseId: string) => caseId.replace(/^onb-/, "");
 
+/**
+ * Records the prospect's acceptance of the Terms & Conditions: who, which
+ * version, and when. Nothing may be saved for them until this succeeds, so a
+ * failure is thrown rather than logged — the caller must surface it instead of
+ * letting the prospect proceed on an acceptance that was never stored.
+ */
+export async function acceptTermsDb(supplierId: string, version: string, acceptedBy: string) {
+  if (!isSupabaseConfigured) return;
+  const { error } = await supabase
+    .from("suppliers")
+    .update({
+      terms_accepted_at: new Date().toISOString(),
+      terms_version: version,
+      terms_accepted_by: acceptedBy,
+    })
+    .eq("id", supplierId);
+  if (error) {
+    throw new Error(
+      `Could not record your acceptance: ${error.message}. ` +
+        "If this mentions a missing column, run supabase/migrations/2026-07-31_add_terms_acceptance.sql."
+    );
+  }
+}
+
 /** Onboarding: mark a prospect's submission as received. Flags the supplier as
  * `Pending Review`, adds/updates the prospect's row in the Procurement Manager's
  * Onboarding list, and records the submission in the activity log — the company
@@ -610,12 +637,24 @@ export async function reviewProspectDb(
   await logActivity(supplierName, action, note);
 }
 
-export async function logActivity(entityName: string | null, action: string, detail?: string) {
+/**
+ * `actor` defaults to the Procurement Manager in the schema, which is right for
+ * everything the PM does — but wrong for actions the supplier takes (accepting
+ * terms, uploading). Pass it explicitly in those cases so the audit trail names
+ * the person who actually acted.
+ */
+export async function logActivity(
+  entityName: string | null,
+  action: string,
+  detail?: string,
+  actor?: string
+) {
   if (!isSupabaseConfigured) return;
   const { error } = await supabase.from("activity_log").insert({
     entity_name: entityName,
     action,
     detail: detail ?? null,
+    ...(actor ? { actor } : {}),
   });
   if (error) console.error("[Lynk] logActivity failed:", error.message);
 }

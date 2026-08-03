@@ -18,6 +18,7 @@ import {
   submitProspectForReviewDb,
   reviewProspectDb,
   setDocReviewDb,
+  acceptTermsDb,
   onboardingCaseId,
   logActivity,
   type LynkDataset,
@@ -72,6 +73,11 @@ interface LynkDataValue extends LynkDataset {
   ) => Promise<void>;
   /** Per-document review: approve (→ valid) or decline (→ rejected-resubmit) with a comment. */
   reviewDocument: (docId: string, decision: "approve" | "decline", comment?: string) => void;
+  /** Records a prospect's acceptance of the Terms & Conditions (who/version/when). */
+  acceptTerms: (supplierId: string, version: string, acceptedBy: string) => Promise<void>;
+  /** True when this supplier still owes a terms acceptance — no data may be
+   * saved for them until then. Established suppliers have no case and are free. */
+  termsPending: (supplierId: string) => boolean;
 }
 
 const LynkDataCtx = createContext<LynkDataValue | null>(null);
@@ -157,6 +163,58 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
     setData((prev) => (prev ? { ...prev, catalogues: updater(prev.catalogues) } : prev));
   }, []);
 
+  /**
+   * Nothing may be stored for a supplier until they have accepted the terms.
+   * Established suppliers accepted during their own onboarding and are
+   * backfilled by the migration, so only new prospects are actually pending.
+   * Skipped entirely on the static mock dataset, which has no acceptance data.
+   */
+  const termsPending = useCallback(
+    (supplierId: string) => {
+      if (!isSupabaseConfigured) return false;
+      const supplier = data?.suppliers.find((s) => s.id === supplierId);
+      return Boolean(supplier) && !supplier?.termsAcceptedAt;
+    },
+    [data?.suppliers]
+  );
+
+  /** Throws rather than silently dropping the write — the caller shows the error. */
+  const assertTermsAccepted = useCallback(
+    (supplierId: string) => {
+      if (termsPending(supplierId)) {
+        throw new Error("The Terms & Conditions must be accepted before any data can be saved.");
+      }
+    },
+    [termsPending]
+  );
+
+  const acceptTerms = useCallback(
+    async (supplierId: string, version: string, acceptedBy: string) => {
+      // Persist first: if it fails, the prospect must not appear to be through.
+      await acceptTermsDb(supplierId, version, acceptedBy);
+      const acceptedAt = new Date().toISOString();
+      setData((prev) =>
+        prev
+          ? {
+              ...prev,
+              suppliers: prev.suppliers.map((s) =>
+                s.id === supplierId
+                  ? { ...s, termsAcceptedAt: acceptedAt, termsVersion: version, termsAcceptedBy: acceptedBy }
+                  : s
+              ),
+            }
+          : prev
+      );
+      logActivity(
+        data?.suppliers.find((x) => x.id === supplierId)?.name ?? supplierId,
+        `Terms & Conditions accepted (v${version})`,
+        undefined,
+        acceptedBy
+      ).catch(console.error);
+    },
+    [data?.suppliers]
+  );
+
   const addSupplierDoc = useCallback(
     async (
       file: File,
@@ -166,6 +224,7 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
       documentName?: string,
       metadata?: { documentType?: string; issuingInstitution?: string; expiryDate?: string; doesNotExpire?: boolean }
     ) => {
+      assertTermsAccepted(supplierId);
       const doc = await uploadSupplierDocument({ file, supplierId, supplierName, trade, documentName, metadata });
       // Replace any existing document of the same type for this supplier (a new
       // upload supersedes the previous version), then surface it at the top.
@@ -184,7 +243,7 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
       );
       logActivity(supplierName, `Document uploaded — ${doc.documentName}`).catch(console.error);
     },
-    []
+    [assertTermsAccepted]
   );
 
   const reviewDocument = useCallback(
@@ -211,6 +270,7 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
       supplierId: string,
       patch: { name?: string; vatId?: string; address?: string; region?: string }
     ) => {
+      assertTermsAccepted(supplierId);
       // Optimistically reflect the edit everywhere the supplier is shown.
       setData((prev) =>
         prev
@@ -232,7 +292,7 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
       );
       await updateSupplierProfileDb(supplierId, patch);
     },
-    []
+    [assertTermsAccepted]
   );
 
   const submitProspectForReview = useCallback(
@@ -315,6 +375,8 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
       submitProspectForReview,
       reviewProspect,
       reviewDocument,
+      acceptTerms,
+      termsPending,
     };
   }, [
     data,
@@ -334,6 +396,8 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
     submitProspectForReview,
     reviewProspect,
     reviewDocument,
+    acceptTerms,
+    termsPending,
   ]);
 
   if (!value) {

@@ -74,6 +74,15 @@ export interface Supplier {
   iban?: string;
   address?: string;
   lastActive: string;
+  /** When this supplier accepted the Terms & Conditions. Unset = not accepted,
+   * and nothing may be saved for them until it is. Lives here rather than on
+   * the onboarding case because acceptance outlives onboarding, and established
+   * suppliers have no case at all. */
+  termsAcceptedAt?: string;
+  /** Which version was accepted (the terms change over time). */
+  termsVersion?: string;
+  /** Who accepted, for the audit trail. */
+  termsAcceptedBy?: string;
 }
 
 export type DocStatus =

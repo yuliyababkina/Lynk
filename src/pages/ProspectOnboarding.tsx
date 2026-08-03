@@ -81,8 +81,15 @@ export function ProspectOnboarding({
   contactName,
   onSwitchAccount,
 }: ProspectOnboardingProps) {
-  const { suppliers, docs, onboardingCases, addSupplierDoc, updateSupplierProfile, submitProspectForReview } =
-    useLynkData();
+  const {
+    suppliers,
+    docs,
+    onboardingCases,
+    addSupplierDoc,
+    updateSupplierProfile,
+    submitProspectForReview,
+    acceptTerms,
+  } = useLynkData();
   // Live status per document type — the same values the Procurement Manager sees.
   const statusByName = new Map(
     docs.filter((d) => d.supplierId === supplierId).map((d) => [d.documentName, d])
@@ -102,9 +109,26 @@ export function ProspectOnboarding({
   const reviewNote = myCase?.reviewNote;
 
   const [step, setStep] = useState<Step>("welcome");
-  // Unticked by default — consent has to be an affirmative action (GDPR), and it
-  // gates the whole wizard, so no data is entered before it is given.
-  const [termsAccepted, setTermsAccepted] = useState(false);
+  // Acceptance is read from the stored onboarding case, not local state: a
+  // reload must not let an un-accepted prospect through, and an accepted one
+  // must not be asked twice.
+  const termsAccepted = Boolean(dbSupplier?.termsAcceptedAt);
+  const [savingTerms, setSavingTerms] = useState(false);
+  const [termsError, setTermsError] = useState<string | null>(null);
+
+  async function handleAcceptTerms(accepted: boolean) {
+    // Consent is only ever given, never silently revoked from the UI.
+    if (!accepted || termsAccepted || savingTerms) return;
+    setSavingTerms(true);
+    setTermsError(null);
+    try {
+      await acceptTerms(supplierId, TERMS_VERSION, invitedName || profile.fullName);
+    } catch (e) {
+      setTermsError(e instanceof Error ? e.message : "Could not record your acceptance.");
+    } finally {
+      setSavingTerms(false);
+    }
+  }
 
   // ── Company form ──────────────────────────────────────────────────────
   const [form, setForm] = useState(() => ({
@@ -247,7 +271,9 @@ export function ProspectOnboarding({
               firstName={firstName}
               prospectCompany={prospectCompany}
               termsAccepted={termsAccepted}
-              onTermsChange={setTermsAccepted}
+              onTermsChange={handleAcceptTerms}
+              savingTerms={savingTerms}
+              termsError={termsError}
               onNext={() => setStep("company")}
               reviewStatus={reviewStatus}
               reviewNote={reviewNote}
@@ -392,6 +418,8 @@ function WelcomeStep({
   prospectCompany,
   termsAccepted,
   onTermsChange,
+  savingTerms,
+  termsError,
   onNext,
   reviewStatus,
   reviewNote,
@@ -401,6 +429,8 @@ function WelcomeStep({
   prospectCompany: string;
   termsAccepted: boolean;
   onTermsChange: (accepted: boolean) => void;
+  savingTerms?: boolean;
+  termsError?: string | null;
   onNext: () => void;
   reviewStatus?: string;
   reviewNote?: string;
@@ -489,6 +519,7 @@ function WelcomeStep({
         <label className="mt-3 flex items-start gap-2.5 cursor-pointer">
           <Checkbox
             checked={termsAccepted}
+            disabled={termsAccepted || savingTerms}
             onCheckedChange={(c) => onTermsChange(c === true)}
             className="mt-0.5"
             aria-describedby="terms-hint"
@@ -505,6 +536,18 @@ function WelcomeStep({
             , and I am authorised to accept them for {prospectCompany}.
           </span>
         </label>
+
+        {savingTerms && (
+          <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1.5">
+            <Loader2 className="w-3 h-3 animate-spin" /> Recording your acceptance…
+          </p>
+        )}
+        {termsError && <p className="text-xs text-destructive mt-2">{termsError}</p>}
+        {termsAccepted && (
+          <p className="text-xs text-success-ink mt-2 flex items-center gap-1.5">
+            <CheckCircle2 className="w-3 h-3" /> Accepted — version {TERMS_VERSION}
+          </p>
+        )}
       </Card>
 
       <div className="mt-4 flex items-start gap-2 rounded-lg border border-border bg-accent/5 p-3 text-left">
