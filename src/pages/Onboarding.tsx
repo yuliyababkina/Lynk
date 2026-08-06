@@ -60,6 +60,30 @@ function onbMetric(c: OnboardingCase, tr: Translate): string {
  * the PM come first, then ones that need chasing, then those waiting on the
  * supplier, and finally the settled ones.
  */
+/*
+ * Tabs split the pipeline by lifecycle phase: everything up to and including the
+ * review decision is the Application; once the contract goes out the case is in
+ * its Contract phase. Stale stays as a cross-cutting shortcut to the cases that
+ * have gone quiet.
+ */
+const ONB_TABS = ["All", "Application", "Contract", "Stale"] as const;
+type OnbTab = (typeof ONB_TABS)[number];
+
+const CONTRACT_PHASE: OnboardingStatus[] = ["Contract Sent (Pending Signature)", "Accepted"];
+
+function inTab(c: OnboardingCase, tab: OnbTab): boolean {
+  switch (tab) {
+    case "Application":
+      return !CONTRACT_PHASE.includes(c.status);
+    case "Contract":
+      return CONTRACT_PHASE.includes(c.status);
+    case "Stale":
+      return c.status === "Stale";
+    default:
+      return true;
+  }
+}
+
 const URGENCY_RANK: Record<OnboardingStatus, number> = {
   "In Review": 0,
   Stale: 1,
@@ -87,7 +111,7 @@ export function Onboarding({
     reviewDocument,
     deleteOnboardingCase,
   } = useLynkData();
-  const [tab, setTab] = useState<"All" | "Stale">("All");
+  const [tab, setTab] = useState<OnbTab>("All");
   const { t: tr } = useI18n();
   const [selected, setSelected] = useState<string | null>(initialSelectedId ?? null);
   const [reviewing, setReviewing] = useState(false);
@@ -109,7 +133,7 @@ export function Onboarding({
   const cases = useMemo(() => ONBOARDING_CASES, [ONBOARDING_CASES]);
 
   const filtered = useMemo(() => {
-    const list = tab === "Stale" ? cases.filter((c) => c.status === "Stale") : cases;
+    const list = cases.filter((c) => inTab(c, tab));
     // Most urgent first; within the same status the longest-waiting case leads.
     return [...list].sort(
       (a, b) =>
@@ -176,12 +200,16 @@ export function Onboarding({
         </div>
 
         <div className="flex gap-1 mb-4">
-          <Pill active={tab === "All"} onClick={() => setTab("All")} count={cases.length}>
-            {tr("All")}
-          </Pill>
-          <Pill active={tab === "Stale"} onClick={() => setTab("Stale")} count={stale}>
-            {tr("Stale")}
-          </Pill>
+          {ONB_TABS.map((t) => (
+            <Pill
+              key={t}
+              active={tab === t}
+              onClick={() => setTab(t)}
+              count={cases.filter((c) => inTab(c, t)).length}
+            >
+              {tr(t)}
+            </Pill>
+          ))}
         </div>
 
         <div className="bg-card border border-border rounded-lg overflow-hidden">

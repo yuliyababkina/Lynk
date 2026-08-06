@@ -265,6 +265,7 @@ const DE: Record<string, string> = {
   "Prospect invitations that are stale or incomplete. Follow up to keep your pipeline moving.":
     "Einladungen an Interessenten, die veraltet oder unvollständig sind. Bleiben Sie dran, um Ihre Pipeline in Bewegung zu halten.",
   "Open Invitations": "Offene Einladungen",
+  Application: "Bewerbung",
   "High Priority": "Hohe Priorität",
   Stale: "Veraltet",
   Pending: "Ausstehend",
