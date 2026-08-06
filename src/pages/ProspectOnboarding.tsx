@@ -13,10 +13,14 @@ import {
   XCircle,
   Pencil,
   Trash2,
+  FileSignature,
+  ClipboardList,
+  PenLine,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { WizardFooter } from "@/components/yarowa/wizard-footer";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -28,7 +32,13 @@ import { useLynkData } from "@/lib/LynkDataContext";
 import { recogniseDocumentMetadata, type DocumentMetadata } from "@/lib/onboarding-documents";
 import { docStatusMeta } from "@/lib/document-status";
 import { validityToISODate, type ParsedDocumentInfo } from "@/lib/pdf-metadata";
-import { PRINCIPAL_COMPANY } from "@/lib/principal";
+import { PRINCIPAL_COMPANY, PRINCIPAL_CONTRACTS, type PrincipalContract } from "@/lib/principal";
+import { toast } from "@/components/yarowa/toast";
+import { LanguageToggle } from "@/components/yarowa/language-toggle";
+import { MachineTranslatedTag } from "@/components/yarowa/machine-translated-tag";
+import { useI18n } from "@/lib/i18n";
+import { translateContent } from "@/lib/content-i18n";
+import { cn } from "@/lib/utils";
 import { TERMS_SECTIONS, TERMS_VERSION, TERMS_EFFECTIVE_DATE } from "@/lib/terms";
 import type { DocStatus, SupplierDoc } from "@/types";
 import { getPortalProfile } from "./portal/portal-data";
@@ -42,13 +52,12 @@ export interface ProspectOnboardingProps {
   onSwitchAccount?: () => void;
 }
 
-type Step = "welcome" | "company" | "documents" | "principal" | "done";
+type Step = "welcome" | "company" | "documents" | "done";
 
-const STEPPER = ["Company info", "Documents", "Principal Docs", "Complete"] as const;
+const STEPPER = ["Company info", "Documents", "Contracts", "Complete"] as const;
 const STEP_LABEL: Partial<Record<Step, string>> = {
   company: "Company info",
   documents: "Documents",
-  principal: "Principal Docs",
   done: "Complete",
 };
 
@@ -72,13 +81,6 @@ const STANDARD_DOCS: DocRowDef[] = [
 ];
 
 // Step 4 — principal-specific docs already satisfied for this relationship.
-const PRINCIPAL_DOCS: { name: string; hint: string; state: "uploaded" | "verified"; optional?: boolean }[] = [
-  { name: "ISO 9001 Certificate", hint: `Required for ${PRINCIPAL_COMPANY} — quality management certification`, state: "uploaded" },
-  { name: "Conflict Minerals Declaration", hint: "On file — OECD compliant", state: "verified" },
-  { name: "Signed Code of Conduct", hint: "Please sign and upload the Principal's code of conduct", state: "uploaded" },
-  { name: "ESG Self-Assessment", hint: "Completed — score 75/100", state: "verified", optional: true },
-];
-
 export function ProspectOnboarding({
   supplierId,
   supplierName,
@@ -95,6 +97,7 @@ export function ProspectOnboarding({
     updateSupplierProfile,
     submitProspectForReview,
     acceptTerms,
+    companyApprovedIds,
   } = useLynkData();
   // Live status per document type — the same values the Procurement Manager sees.
   const statusByName = new Map(
@@ -113,6 +116,13 @@ export function ProspectOnboarding({
   const myCase = onboardingCases.find((c) => c.id === `onb-${supplierId}`);
   const reviewStatus = myCase?.status;
   const reviewNote = myCase?.reviewNote;
+
+  // Once procurement approves everything, the prospect signs the Principal's
+  // contracts (main agreement + pricing catalogues) to activate as a supplier.
+  const approved = reviewStatus === "Accepted";
+  const [signedContracts, setSignedContracts] = useState<Set<string>>(new Set());
+  const [activated, setActivated] = useState(false);
+  const allContractsSigned = PRINCIPAL_CONTRACTS.every((c) => signedContracts.has(c.id));
 
   const [step, setStep] = useState<Step>("welcome");
   // Acceptance is read from the stored onboarding case, not local state: a
@@ -315,7 +325,25 @@ export function ProspectOnboarding({
     }
   }
 
-  const showStepper = step !== "welcome";
+  function signContract(c: PrincipalContract) {
+    setSignedContracts((prev) => new Set(prev).add(c.id));
+    toast({ title: `${c.name} signed`, tone: "success" });
+  }
+
+  function activateSupplier() {
+    setActivated(true);
+    toast({
+      title: "You're now a supplier",
+      description: `${prospectCompany} is active for ${PRINCIPAL}.`,
+      tone: "success",
+    });
+  }
+
+  const { t } = useI18n();
+
+  // The approved (contracts) state has no `step`; drive the stepper from it.
+  const showStepper = step !== "welcome" || approved;
+  const stepperCurrent = approved ? (activated ? "Complete" : "Contracts") : STEP_LABEL[step];
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-sidebar text-foreground">
@@ -325,14 +353,15 @@ export function ProspectOnboarding({
           L
         </div>
         <span className="ml-2 text-sm font-semibold">Lynk</span>
-        <span className="ml-1.5 text-sm text-muted-foreground">· Supplier Portal</span>
+        <span className="ml-1.5 text-sm text-muted-foreground">· {t("Supplier Portal")}</span>
         <div className="flex-1" />
+        <LanguageToggle />
         {onSwitchAccount && (
           <button
             onClick={onSwitchAccount}
-            className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+            className="ml-3 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
           >
-            Roles board
+            {t("Roles board")}
           </button>
         )}
       </header>
@@ -340,7 +369,7 @@ export function ProspectOnboarding({
       {/* Stepper */}
       {showStepper && (
         <div className="shrink-0 bg-background border-b border-border py-3">
-          <WizardStepper steps={STEPPER} current={STEP_LABEL[step]!} />
+          <WizardStepper steps={STEPPER} current={stepperCurrent!} />
         </div>
       )}
 
@@ -350,9 +379,25 @@ export function ProspectOnboarding({
             page at 100% scale; the form/summary steps read better in a column. */}
         <div
           className={`mx-auto px-6 py-10 ${
-            step === "documents" && !pending && !editing ? "max-w-[1600px]" : "max-w-2xl"
+            (step === "documents" && !pending && !editing) || (approved && !activated)
+              ? "max-w-[1600px]"
+              : "max-w-2xl"
           }`}
         >
+          {approved ? (
+            activated ? (
+              <SupplierActivatedStep company={prospectCompany} />
+            ) : (
+              <ContractsStep
+                signed={signedContracts}
+                onSign={signContract}
+                allSigned={allContractsSigned}
+                onActivate={activateSupplier}
+                signerName={invitedName || profile.fullName}
+              />
+            )
+          ) : (
+          <>
           {step === "welcome" && (
             <WelcomeStep
               firstName={firstName}
@@ -373,6 +418,8 @@ export function ProspectOnboarding({
               setField={setField}
               saving={savingCompany}
               onSubmit={submitCompany}
+              onBack={() => setStep("welcome")}
+              approved={companyApprovedIds.has(supplierId)}
             />
           )}
 
@@ -513,19 +560,17 @@ export function ProspectOnboarding({
                   if (f && def) pickDoc(def, f);
                 }}
               />
-              <Button
-                variant="dark"
-                className="w-full"
-                disabled={!requiredStandardDone}
-                onClick={() => setStep("principal")}
-              >
-                Continue to Principal Documents <ArrowRight className="w-4 h-4" />
-              </Button>
               {!requiredStandardDone && (
-                <p className="text-xs text-muted-foreground text-center">
+                <p className="text-xs text-muted-foreground text-right">
                   Upload the required documents (Public Liability Insurance, Trade Licence) to continue.
                 </p>
               )}
+              <WizardFooter onBack={() => setStep("company")}>
+                <Button variant="dark" disabled={!requiredStandardDone || submitting} onClick={submitForReview}>
+                  {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                  Submit for Review <ArrowRight className="w-4 h-4" />
+                </Button>
+              </WizardFooter>
 
               {/* Deleting is not undoable, so it's confirmed by name. */}
               <Dialog open={Boolean(confirmDelete)} onOpenChange={(o) => !o && !deleting && setConfirmDelete(null)}>
@@ -556,28 +601,9 @@ export function ProspectOnboarding({
             </section>
           )}
 
-          {step === "principal" && (
-            <section className="space-y-5">
-              <div>
-                <h1 className="text-xl font-bold">Additional Documents for {PRINCIPAL}</h1>
-                <p className="text-muted-foreground mt-1 text-sm">
-                  These additional documents are specifically required for your new relationship with{" "}
-                  {PRINCIPAL} as Principal.
-                </p>
-              </div>
-              <div className="space-y-3">
-                {PRINCIPAL_DOCS.map((d) => (
-                  <StatusRow key={d.name} name={d.name} hint={d.hint} state={d.state} optional={d.optional} />
-                ))}
-              </div>
-              <Button variant="dark" className="w-full" disabled={submitting} onClick={submitForReview}>
-                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                Submit Documents <ArrowRight className="w-4 h-4" />
-              </Button>
-            </section>
-          )}
-
           {step === "done" && <DoneStep />}
+          </>
+          )}
         </div>
       </div>
     </div>
@@ -607,21 +633,7 @@ function WelcomeStep({
   reviewStatus?: string;
   reviewNote?: string;
 }) {
-  // Accepted is a terminal, celebratory state — no need to re-run the wizard.
-  if (reviewStatus === "Accepted") {
-    return (
-      <section className="text-center pt-6">
-        <div className="w-12 h-12 rounded-full bg-success-soft mx-auto flex items-center justify-center">
-          <CheckCircle2 className="w-6 h-6 text-success" />
-        </div>
-        <h1 className="text-2xl font-bold mt-4">You're approved 🎉</h1>
-        <p className="text-muted-foreground mt-2 text-sm max-w-md mx-auto">
-          Your application was accepted. {prospectCompany} is now an active supplier for {PRINCIPAL}.
-        </p>
-      </section>
-    );
-  }
-
+  const { t, lang } = useI18n();
   const changesRequested = reviewStatus === "Changes Requested";
   const rejected = reviewStatus === "Rejected";
 
@@ -662,16 +674,17 @@ function WelcomeStep({
       {/* Consent gate: nothing is entered until the terms are accepted. */}
       <Card className="rounded-2xl border border-border ring-0 shadow-none text-left mt-6 [--card-spacing:1.25rem] px-(--card-spacing)">
         <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <FileText className="w-4 h-4 text-primary" />
-            <h2 className="text-base font-semibold">Terms &amp; Conditions</h2>
+            <h2 className="text-base font-semibold">{t("Terms & Conditions")}</h2>
+            {lang !== "en" && <MachineTranslatedTag />}
           </div>
           <span className="text-xs text-muted-foreground shrink-0">
             Version {TERMS_VERSION} · {TERMS_EFFECTIVE_DATE}
           </span>
         </div>
         <p className="text-xs text-muted-foreground mt-1">
-          Please read these before entering your company data.
+          {t("Please read these before entering your company data.")}
         </p>
 
         {/* The terms themselves, readable without leaving the page. */}
@@ -682,8 +695,8 @@ function WelcomeStep({
         >
           {TERMS_SECTIONS.map((sec) => (
             <div key={sec.heading}>
-              <p className="text-xs font-semibold">{sec.heading}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{sec.body}</p>
+              <p className="text-xs font-semibold">{translateContent(sec.heading, "en", lang).text}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{translateContent(sec.body, "en", lang).text}</p>
             </div>
           ))}
         </div>
@@ -763,25 +776,47 @@ function CompanyStep({
   setField,
   saving,
   onSubmit,
+  onBack,
+  approved = false,
 }: {
   form: Form;
   setField: (k: keyof Form) => (e: React.ChangeEvent<HTMLInputElement>) => void;
   saving: boolean;
   onSubmit: () => void;
+  onBack: () => void;
+  /** PM has approved this section — shown as a marker; fields become read-only. */
+  approved?: boolean;
 }) {
   return (
     <section className="space-y-6">
+      {approved && (
+        <div className="flex items-start gap-2.5 rounded-lg bg-success-soft p-3">
+          <CheckCircle2 className="w-4 h-4 text-success-ink shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-success-ink">Approved by procurement</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {PRINCIPAL} has verified your company details — no changes needed here.
+            </p>
+          </div>
+        </div>
+      )}
       <div className="flex items-center gap-2">
         <Building2 className="w-4 h-4 text-primary" />
         <h1 className="text-base font-semibold">Company Details</h1>
+        {approved && (
+          <Badge variant="success-outline" className="ml-auto">
+            <CheckCircle2 className="w-3 h-3" />
+            Approved
+          </Badge>
+        )}
       </div>
       <div className="space-y-4">
-        <FormField label="Legal Name" value={form.legalName} onChange={setField("legalName")} />
+        <FormField label="Legal Name" value={form.legalName} onChange={setField("legalName")} readOnly={approved} />
         <div className="grid grid-cols-2 gap-4">
-          <FormField label="VAT ID" value={form.vatId} onChange={setField("vatId")} />
-          <FormField label="Registration No." value={form.registrationNo} onChange={setField("registrationNo")} />
+          <FormField label="VAT ID" value={form.vatId} onChange={setField("vatId")} readOnly={approved} />
+          <FormField label="Registration No." value={form.registrationNo} onChange={setField("registrationNo")} readOnly={approved} />
         </div>
-        <FormField label="Website" value={form.website} onChange={setField("website")} />
+        <FormField label="Website" value={form.website} onChange={setField("website")} readOnly={approved} />
       </div>
 
       <div className="flex items-center gap-2 pt-2">
@@ -789,18 +824,20 @@ function CompanyStep({
         <h2 className="text-base font-semibold">Registered Address</h2>
       </div>
       <div className="space-y-4">
-        <FormField label="Street" value={form.street} onChange={setField("street")} />
+        <FormField label="Street" value={form.street} onChange={setField("street")} readOnly={approved} />
         <div className="grid grid-cols-2 gap-4">
-          <FormField label="City" value={form.city} onChange={setField("city")} />
-          <FormField label="Postcode" value={form.postcode} onChange={setField("postcode")} />
+          <FormField label="City" value={form.city} onChange={setField("city")} readOnly={approved} />
+          <FormField label="Postcode" value={form.postcode} onChange={setField("postcode")} readOnly={approved} />
         </div>
-        <FormField label="Country" value={form.country} onChange={setField("country")} />
+        <FormField label="Country" value={form.country} onChange={setField("country")} readOnly={approved} />
       </div>
 
-      <Button variant="dark" className="w-full" disabled={saving} onClick={onSubmit}>
-        {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-        Submit My Details <ArrowRight className="w-4 h-4" />
-      </Button>
+      <WizardFooter onBack={onBack}>
+        <Button variant="dark" disabled={saving} onClick={onSubmit}>
+          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+          {approved ? "Continue" : "Submit My Details"} <ArrowRight className="w-4 h-4" />
+        </Button>
+      </WizardFooter>
     </section>
   );
 }
@@ -809,15 +846,25 @@ function FormField({
   label,
   value,
   onChange,
+  readOnly = false,
 }: {
   label: string;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  readOnly?: boolean;
 }) {
   return (
     <div className="space-y-1">
       <Label className="text-xs text-muted-foreground">{label}</Label>
-      <Input value={value} onChange={onChange} className="h-10 rounded-lg border-border bg-background" />
+      <Input
+        value={value}
+        onChange={onChange}
+        readOnly={readOnly}
+        className={cn(
+          "h-10 rounded-lg border-border bg-background",
+          readOnly && "bg-muted/40 text-muted-foreground cursor-default focus-visible:ring-0"
+        )}
+      />
     </div>
   );
 }
@@ -886,43 +933,6 @@ function UploadRow({
   );
 }
 
-function StatusRow({
-  name,
-  hint,
-  state,
-  optional,
-}: {
-  name: string;
-  hint: string;
-  state: "uploaded" | "verified";
-  optional?: boolean;
-}) {
-  return (
-    <Card
-      className={`rounded-xl border ring-0 shadow-none [--card-spacing:1rem] px-(--card-spacing) ${
-        state === "verified" ? "border-success/30 bg-success-soft/40" : "border-accent/30 bg-accent/5"
-      }`}
-    >
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-start gap-3 min-w-0">
-          <FileText className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
-          <div className="min-w-0">
-            <p className="text-sm font-semibold truncate">
-              {name}
-              {optional && <span className="ml-2 text-xs font-normal text-muted-foreground">Optional</span>}
-            </p>
-            <p className="text-xs text-muted-foreground mt-0.5">{hint}</p>
-          </div>
-        </div>
-        <Badge variant={state === "verified" ? "success-outline" : "warning-outline"} className="shrink-0">
-          <CheckCircle2 className="w-3 h-3" />
-          {state === "verified" ? "Verified" : "Uploaded"}
-        </Badge>
-      </div>
-    </Card>
-  );
-}
-
 /* ── Step 5: Done ─────────────────────────────────────────────────────── */
 function DoneStep() {
   return (
@@ -944,7 +954,8 @@ function DoneStep() {
           {[
             "Procurement team reviews your qualification score",
             "You'll be notified by email of the outcome",
-            `If approved, Yilmaz Elektrotechnik GmbH will be activated as a supplier for ${PRINCIPAL}`,
+            `If approved, ${PRINCIPAL} will send you the main contract and pricing catalogues to review and sign`,
+            "Signing the contracts activates your supplier account",
           ].map((t, i) => (
             <li key={i} className="flex gap-2 text-sm">
               <span className="text-primary font-semibold">{i + 1}</span>
@@ -961,5 +972,229 @@ function DoneStep() {
         </p>
       </div>
     </section>
+  );
+}
+
+/* ── Post-approval: review & sign the Principal's contracts ──────────────── */
+function ContractsStep({
+  signed,
+  onSign,
+  allSigned,
+  onActivate,
+  signerName,
+}: {
+  signed: Set<string>;
+  onSign: (c: PrincipalContract) => void;
+  allSigned: boolean;
+  onActivate: () => void;
+  signerName: string;
+}) {
+  const [selectedId, setSelectedId] = useState<string>(PRINCIPAL_CONTRACTS[0].id);
+  const [agreed, setAgreed] = useState(false);
+  const selected = PRINCIPAL_CONTRACTS.find((c) => c.id === selectedId) ?? PRINCIPAL_CONTRACTS[0];
+  const isSelectedSigned = signed.has(selected.id);
+  const signedCount = PRINCIPAL_CONTRACTS.filter((c) => signed.has(c.id)).length;
+  const SelectedIcon = selected.kind === "catalogue" ? ClipboardList : FileSignature;
+
+  function select(id: string) {
+    setSelectedId(id);
+    setAgreed(false);
+  }
+  function sign() {
+    onSign(selected);
+    setAgreed(false);
+    // Advance to the next still-unsigned contract to keep the flow moving.
+    const next = PRINCIPAL_CONTRACTS.find((c) => c.id !== selected.id && !signed.has(c.id));
+    if (next) setSelectedId(next.id);
+  }
+  return (
+    <section className="space-y-5">
+      <div className="flex items-start gap-2.5 rounded-lg bg-success-soft p-3">
+        <CheckCircle2 className="w-4 h-4 text-success-ink shrink-0 mt-0.5" />
+        <div>
+          <p className="text-sm font-semibold text-success-ink">Approved by procurement</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {PRINCIPAL} has verified your details and documents.
+          </p>
+        </div>
+      </div>
+
+      <div>
+        <h1 className="text-xl font-bold">Review &amp; sign your contracts</h1>
+        <p className="text-muted-foreground mt-1 text-sm">
+          {PRINCIPAL} has sent the documents below — the main agreement and the price catalogues that apply to
+          your work orders. Review each carefully and sign all of them to activate your supplier account.
+        </p>
+      </div>
+
+      {/* Two-pane: documents to sign on the left, the selected one previewed big on the right. */}
+      <div className="flex gap-4 items-stretch min-h-[62vh]">
+        {/* Left — list of documents to sign */}
+        <div className="w-[300px] shrink-0 flex flex-col">
+          <div className="space-y-2">
+            {PRINCIPAL_CONTRACTS.map((c) => {
+              const RowIcon = c.kind === "catalogue" ? ClipboardList : FileSignature;
+              const rowSigned = signed.has(c.id);
+              const active = c.id === selected.id;
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => select(c.id)}
+                  className={cn(
+                    "w-full text-left flex items-start gap-3 rounded-xl border p-3 transition-colors",
+                    active ? "border-primary bg-secondary/50" : "border-border hover:bg-secondary/40"
+                  )}
+                >
+                  <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-secondary">
+                    <RowIcon className="w-4 h-4 text-foreground" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-semibold truncate">{c.name}</span>
+                    <span className="block text-xs text-muted-foreground">
+                      {c.kind === "catalogue" ? "Pricing catalogue" : "Contract"}
+                    </span>
+                  </span>
+                  {rowSigned ? (
+                    <CheckCircle2 className="w-4 h-4 text-success-ink shrink-0 mt-0.5" aria-label="Signed" />
+                  ) : (
+                    <span className="mt-1.5 w-2 h-2 rounded-full bg-warning shrink-0" aria-label="Awaiting signature" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-xs text-muted-foreground text-center mt-3">
+            {signedCount} of {PRINCIPAL_CONTRACTS.length} signed
+          </p>
+        </div>
+
+        {/* Right — big preview + inline sign */}
+        <div className="flex-1 min-w-0 border border-border rounded-2xl overflow-hidden flex flex-col bg-card">
+          <div className="flex items-center gap-3 border-b border-border px-4 py-3 shrink-0">
+            <SelectedIcon className="w-4 h-4 text-medium-ink shrink-0" />
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-semibold truncate">{selected.name}</div>
+              <div className="text-xs text-muted-foreground truncate">{selected.meta}</div>
+            </div>
+            {isSelectedSigned && (
+              <Badge variant="success-outline" className="shrink-0">
+                <CheckCircle2 className="w-3 h-3" />
+                Signed
+              </Badge>
+            )}
+          </div>
+
+          <div className="flex-1 overflow-y-auto bg-secondary/40 p-6">
+            <ContractPreview contract={selected} />
+          </div>
+
+          <div className="border-t border-border px-4 py-4 shrink-0">
+            {isSelectedSigned ? (
+              <div className="flex items-center gap-2 text-sm font-medium text-success-ink">
+                <CheckCircle2 className="w-4 h-4" />
+                Signed by {signerName}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <label className="flex items-start gap-2.5 cursor-pointer">
+                  <Checkbox checked={agreed} onCheckedChange={(v) => setAgreed(v === true)} className="mt-0.5" />
+                  <span className="text-sm">
+                    I have read and agree to this {selected.kind === "catalogue" ? "pricing catalogue" : "agreement"},
+                    and I am authorised to sign on behalf of my company.
+                  </span>
+                </label>
+                <div className="flex justify-end">
+                  <Button variant="dark" disabled={!agreed} onClick={sign}>
+                    <PenLine className="w-4 h-4" />
+                    Sign as {signerName}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <WizardFooter>
+        <Button variant="dark" disabled={!allSigned} onClick={onActivate}>
+          Activate supplier account <ArrowRight className="w-4 h-4" />
+        </Button>
+      </WizardFooter>
+    </section>
+  );
+}
+
+function SupplierActivatedStep({ company }: { company: string }) {
+  return (
+    <section className="text-center pt-6">
+      <div className="w-12 h-12 rounded-full bg-success-soft mx-auto flex items-center justify-center">
+        <CheckCircle2 className="w-6 h-6 text-success" />
+      </div>
+      <h1 className="text-2xl font-bold mt-4">You're now a supplier 🎉</h1>
+      <p className="text-muted-foreground mt-2 text-sm max-w-md mx-auto">
+        Contracts signed. {company} is active for {PRINCIPAL} and can now receive work orders. Manage your
+        documents, contracts and details anytime from your supplier portal.
+      </p>
+    </section>
+  );
+}
+
+// Faux paper document shown big in the Contracts pane — a stand-in for the real
+// PDF the Principal would send.
+function ContractPreview({ contract }: { contract: PrincipalContract }) {
+  const isCatalogue = contract.kind === "catalogue";
+  return (
+    <div className="mx-auto w-full max-w-[620px] bg-white text-slate-900 shadow-md rounded-sm p-10">
+      <div className="flex items-start justify-between border-b border-slate-200 pb-4">
+        <div>
+          <div className="text-lg font-bold tracking-tight">{PRINCIPAL}</div>
+          <div className="text-[11px] text-slate-500">Procurement</div>
+        </div>
+        <div className="text-right text-[10px] uppercase tracking-wide text-slate-500 font-semibold">
+          {isCatalogue ? "Price List" : "Agreement"}
+        </div>
+      </div>
+
+      <div className="mt-7 text-xl font-bold leading-tight">{contract.name}</div>
+      <div className="text-xs text-slate-500 mt-1">{contract.meta}</div>
+      <p className="text-sm text-slate-600 mt-4 leading-relaxed">{contract.summary}</p>
+
+      <div className="mt-6 space-y-2.5">
+        {[100, 94, 97, 88, 72, 96, 80].map((w, i) => (
+          <div key={i} className="h-2.5 rounded bg-slate-100" style={{ width: `${w}%` }} />
+        ))}
+      </div>
+
+      {isCatalogue && (
+        <div className="mt-6 border border-slate-200 rounded overflow-hidden text-xs">
+          <div className="grid grid-cols-[1fr_auto] gap-4 bg-slate-50 font-semibold text-slate-600 px-3 py-2">
+            <span>Service</span>
+            <span>Rate (applied to work orders)</span>
+          </div>
+          {[
+            ["Standard call-out", "€ 85 / h"],
+            ["Materials handling", "€ 40 / h"],
+            ["Emergency response", "€ 120 / h"],
+            ["Weekend surcharge", "+ 25 %"],
+          ].map(([service, rate]) => (
+            <div key={service} className="grid grid-cols-[1fr_auto] gap-4 px-3 py-2 border-t border-slate-100">
+              <span className="text-slate-700">{service}</span>
+              <span className="text-slate-700 font-medium">{rate}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="mt-8 border-t border-dashed border-slate-200 pt-5 flex items-end justify-between">
+        <div>
+          <div className="h-px w-36 bg-slate-300" />
+          <div className="text-[11px] text-slate-500 mt-1">Supplier signature</div>
+        </div>
+        <div className="text-[10px] text-slate-400 max-w-[45%] text-right">
+          Mock document — for UI/UX prototype only
+        </div>
+      </div>
+    </div>
   );
 }

@@ -19,6 +19,7 @@ import {
   updateSupplierProfileDb,
   submitProspectForReviewDb,
   reviewProspectDb,
+  resetProspectDb,
   setDocReviewDb,
   updateSupplierDocMetadataDb,
   deleteSupplierDocumentDb,
@@ -44,6 +45,9 @@ interface LynkDataValue extends LynkDataset {
   resolvedTicketIds: Set<string>;
   resolveTicket: (ticket: Ticket, action: string) => void;
   unresolveTicket: (ticketId: string) => void;
+  /** Suppliers whose Company-info section the PM approved during review. */
+  companyApprovedIds: Set<string>;
+  setCompanyApproved: (supplierId: string, approved: boolean) => void;
   decideRenewal: (doc: SupplierDoc, decision: "accept" | "reject") => void;
   addOnboardingCase: (c: OnboardingCase) => void;
   /** Removes an onboarding case for good. A reason is required and is written to
@@ -81,6 +85,12 @@ interface LynkDataValue extends LynkDataset {
     decision: ProspectDecision,
     note?: string
   ) => Promise<void>;
+  /**
+   * Reset a dead-end case (e.g. Rejected) back to the invited/awaiting state so
+   * the prospect can restart from a clean application. The existing invite token
+   * (magic link) is reused, not reissued.
+   */
+  resetProspect: (supplierId: string) => Promise<void>;
   /** Per-document review: approve (→ valid) or decline (→ rejected-resubmit) with a comment. */
   reviewDocument: (docId: string, decision: "approve" | "decline", comment?: string) => void;
   /** Supplier-side correction of a document's details (type / issuer / validity).
@@ -153,6 +163,19 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
       ),
     [ticketStatusById]
   );
+
+  // Suppliers whose Company-info section the PM has approved during review. Shown
+  // back to the prospect as an "Approved by procurement" marker. Session-local
+  // (like reviewNote) until per-section review is persisted.
+  const [companyApprovedIds, setCompanyApprovedIds] = useState<Set<string>>(new Set());
+  const setCompanyApproved = useCallback((supplierId: string, approved: boolean) => {
+    setCompanyApprovedIds((prev) => {
+      const next = new Set(prev);
+      if (approved) next.add(supplierId);
+      else next.delete(supplierId);
+      return next;
+    });
+  }, []);
 
   const decideRenewal = useCallback((doc: SupplierDoc, decision: "accept" | "reject") => {
     const nextStatus = decision === "accept" ? "valid" : "rejected-resubmit";
@@ -323,13 +346,18 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
       if (!doc) throw new Error("That document is no longer available.");
       assertTermsAccepted(doc.supplierId);
 
-      // Editing the details of an approved document invalidates the approval —
-      // the PM approved the previous values, so it goes back to review.
+      // Editing a document's details sends it (back) to review. An approved
+      // doc's prior approval no longer applies to the new values; a declined
+      // doc has now been corrected — either way it should await the PM again
+      // rather than stay Approved or Declined.
       const wasApproved = doc.status === "valid";
-      const status: DocStatus = wasApproved ? "pending-review" : doc.status;
+      const wasDeclined = doc.status === "rejected-resubmit";
+      const status: DocStatus = wasApproved || wasDeclined ? "pending-review" : doc.status;
       const statusNote = wasApproved
         ? "Details edited by supplier — awaiting review."
-        : doc.statusNote;
+        : wasDeclined
+          ? "Corrected by supplier — awaiting re-review."
+          : doc.statusNote;
       const history = [
         ...doc.history,
         {
@@ -483,6 +511,28 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
     []
   );
 
+  const resetProspect = useCallback(
+    async (supplierId: string) => {
+      const caseId = onboardingCaseId(supplierId);
+      let name = supplierId;
+      setData((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          onboardingCases: prev.onboardingCases.map((c) => {
+            if (c.id !== caseId) return c;
+            name = c.companyName;
+            // Back to invited/awaiting; clear the review outcome. Invite token is
+            // left untouched so the same magic link keeps working.
+            return { ...c, status: "Pending", reviewNote: undefined };
+          }),
+        };
+      });
+      await resetProspectDb(supplierId, name);
+    },
+    []
+  );
+
   const persistCatalogue = useCallback((c: Catalogue) => {
     upsertCatalogueDb(c).catch(console.error);
   }, []);
@@ -499,6 +549,8 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
       resolvedTicketIds,
       resolveTicket,
       unresolveTicket,
+      companyApprovedIds,
+      setCompanyApproved,
       decideRenewal,
       addOnboardingCase,
       deleteOnboardingCase,
@@ -508,6 +560,7 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
       updateSupplierProfile,
       submitProspectForReview,
       reviewProspect,
+      resetProspect,
       reviewDocument,
       updateDocMetadata,
       removeSupplierDoc,
@@ -523,6 +576,8 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
     resolvedTicketIds,
     resolveTicket,
     unresolveTicket,
+    companyApprovedIds,
+    setCompanyApproved,
     decideRenewal,
     addOnboardingCase,
     deleteOnboardingCase,
@@ -532,6 +587,7 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
     updateSupplierProfile,
     submitProspectForReview,
     reviewProspect,
+    resetProspect,
     reviewDocument,
     updateDocMetadata,
     removeSupplierDoc,

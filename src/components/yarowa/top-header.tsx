@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { useI18n } from "@/lib/i18n";
+import { LanguageToggle } from "@/components/yarowa/language-toggle";
 
 export interface TopHeaderProps {
   currentLabel: string;
@@ -13,21 +15,24 @@ export function TopHeader({
   accountInitials = "SM",
   leading,
 }: TopHeaderProps) {
+  const { t } = useI18n();
   return (
     <header className="h-12 flex items-center px-6 shrink-0 bg-brand-navy text-brand-navy-foreground">
       {leading ? <div className="mr-3">{leading}</div> : null}
       <span className="text-sm font-medium text-brand-navy-foreground/70">
-        Lynk / Procurement Platform / <span className="text-brand-navy-foreground/95">{currentLabel}</span>
+        Lynk / {t("Procurement Platform")} /{" "}
+        <span className="text-brand-navy-foreground/95">{t(currentLabel)}</span>
       </span>
       <div className="flex-1" />
+      <LanguageToggle tone="dark" />
       {onSwitchAccount ? (
         <>
           <button
             onClick={onSwitchAccount}
-            className="mr-3 text-xs font-medium text-brand-navy-foreground/70 hover:text-brand-navy-foreground transition-colors"
+            className="mx-3 text-xs font-medium text-brand-navy-foreground/70 hover:text-brand-navy-foreground transition-colors"
             title="Switch account"
           >
-            Switch
+            {t("Switch")}
           </button>
           <button
             onClick={onSwitchAccount}

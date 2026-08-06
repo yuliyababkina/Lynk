@@ -1,6 +1,8 @@
 import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { useI18n } from "@/lib/i18n";
+import { LanguageToggle } from "@/components/yarowa/language-toggle";
 
 export type LandingRole = "pm" | "supplier" | "prospect";
 
@@ -50,8 +52,12 @@ const ROLES: RoleCard[] = [
 ];
 
 export function Landing({ onSelectRole }: LandingProps) {
+  const { t } = useI18n();
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
+    <div className="relative min-h-screen bg-background flex flex-col items-center justify-center p-6">
+      <div className="absolute top-5 right-5">
+        <LanguageToggle />
+      </div>
       {/* Header */}
       <div className="text-center mb-10">
         <div className="flex items-center justify-center gap-2.5 mb-6">
@@ -60,9 +66,9 @@ export function Landing({ onSelectRole }: LandingProps) {
           </div>
           <span className="text-2xl font-semibold">Lynk</span>
         </div>
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Supplier Management Platform</h1>
-        <p className="text-muted-foreground mt-3">Three distinct user experiences within the same workflow.</p>
-        <p className="text-muted-foreground">Choose a role to explore.</p>
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight">{t("Supplier Management Platform")}</h1>
+        <p className="text-muted-foreground mt-3">{t("Three distinct user experiences within the same workflow.")}</p>
+        <p className="text-muted-foreground">{t("Choose a role to explore.")}</p>
       </div>
 
       {/* Role cards */}
@@ -98,7 +104,7 @@ export function Landing({ onSelectRole }: LandingProps) {
               variant={role.dark ? "secondary" : "success"}
               className={cn("mt-2", role.dark && "bg-emerald-500/15 text-emerald-300 border-transparent")}
             >
-              {role.pill}
+              {t(role.pill)}
             </Badge>
 
             {/* Description */}
@@ -113,7 +119,7 @@ export function Landing({ onSelectRole }: LandingProps) {
                 role.dark ? "text-emerald-400" : "text-primary"
               )}
             >
-              {role.cta}
+              {t(role.cta)}
               <ArrowRight className="w-4 h-4" />
             </span>
           </div>
@@ -122,7 +128,7 @@ export function Landing({ onSelectRole }: LandingProps) {
 
       {/* Footer note */}
       <p className="text-xs text-muted-foreground text-center mt-8 max-w-2xl">
-        In production these would be separate authenticated sessions. This demo simulates all three.
+        {t("In production these would be separate authenticated sessions. This demo simulates all three.")}
       </p>
     </div>
   );

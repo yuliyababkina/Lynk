@@ -4,6 +4,7 @@ import { useLynkData } from "../lib/LynkDataContext";
 import { Badge } from "@/components/ui/badge";
 import { Pill } from "@/components/yarowa/pill";
 import { AlertBanner } from "@/components/yarowa/alert-banner";
+import { useI18n } from "@/lib/i18n";
 import type { SupplierDoc, DocStatus } from "../types";
 
 const STATUS_META: Record<DocStatus, { label: string; tone: "success" | "warning" | "orange" | "danger" | "info" | "neutral" }> = {
@@ -37,6 +38,7 @@ export function ComplianceMonitoring({
   initialSelectedId?: string | null;
 }) {
   const { docs: DOCS } = useLynkData();
+  const { t: tr } = useI18n();
   const [tab, setTab] = useState<(typeof TABS)[number]>("All");
 
   const filtered = useMemo(() => {
@@ -66,7 +68,7 @@ export function ComplianceMonitoring({
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-1">Compliance Monitoring</h1>
+      <h1 className="text-2xl font-bold mb-1">{tr("Compliance Monitoring")}</h1>
       <p className="text-sm text-muted-foreground mb-4">
         Continuous document expiry monitoring. Warnings at 60 days, auto-notification at 30 days, auto-block on expiry.
       </p>
@@ -109,7 +111,7 @@ export function ComplianceMonitoring({
       <div className="flex gap-1 mb-4 border-b border-border pb-2">
         {TABS.map((t) => (
           <Pill key={t} active={tab === t} onClick={() => setTab(t)}>
-            {t}
+            {tr(t)}
           </Pill>
         ))}
       </div>
@@ -157,7 +159,7 @@ export function ComplianceMonitoring({
                   </div>
                 </td>
                 <td className="px-4 py-3">
-                  <Badge variant={STATUS_META[d.status].tone}>{STATUS_META[d.status].label}</Badge>
+                  <Badge variant={STATUS_META[d.status].tone}>{tr(STATUS_META[d.status].label)}</Badge>
                   {d.renewal && (
                     <div className="flex items-center gap-1 text-xs text-accent mt-1">
                       <Upload size={11} />

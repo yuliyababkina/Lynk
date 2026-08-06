@@ -59,6 +59,7 @@ export function Onboarding({
     suppliers: SUPPLIERS,
     docs: DOCS,
     reviewProspect,
+    resetProspect,
     reviewDocument,
     deleteOnboardingCase,
   } = useLynkData();
@@ -117,6 +118,7 @@ export function Onboarding({
         caseItem={selectedCase}
         onClose={() => setReviewing(false)}
         onReview={reviewProspect}
+        onReset={resetProspect}
         onReviewDocument={reviewDocument}
       />
     );

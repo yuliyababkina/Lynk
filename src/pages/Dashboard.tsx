@@ -12,6 +12,7 @@ import { TicketStatusMenu } from "@/components/yarowa/ticket-status-menu";
 import { CriticalityIcon } from "@/components/yarowa/criticality-icon";
 import { ACTION_ICON } from "@/lib/action-icons";
 import { criticalityLabel } from "@/lib/theme";
+import { useI18n } from "@/lib/i18n";
 import type { Ticket, Criticality, TicketCategory, TicketStatus } from "../types";
 
 const CATEGORIES: TicketCategory[] = [
@@ -46,6 +47,7 @@ export function Dashboard({
   onResolve: (t: Ticket, action: string) => void;
 }) {
   const { tickets: TICKETS, docs: DOCS, ticketStatusById, setTicketStatus } = useLynkData();
+  const { t: tr } = useI18n();
   const [filter, setFilter] = useState<"All tickets" | TicketCategory>("All tickets");
   const [expanded, setExpanded] = useState<Set<Criticality>>(new Set());
   const [resolvedExpanded, setResolvedExpanded] = useState(false);
@@ -92,8 +94,8 @@ export function Dashboard({
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-1">Task Queue</h1>
-      <p className="text-sm text-muted-foreground mb-4">Sorted by criticality. Click a ticket to open it.</p>
+      <h1 className="text-2xl font-bold mb-1">{tr("Task Queue")}</h1>
+      <p className="text-sm text-muted-foreground mb-4">{tr("Sorted by criticality. Click a ticket to open it.")}</p>
 
       <div className="flex flex-wrap gap-2 mb-6">
         {(["All tickets", ...CATEGORIES] as const).map((f) => (
@@ -106,7 +108,7 @@ export function Dashboard({
                 : "bg-card text-foreground border-border hover:bg-secondary/50"
             }`}
           >
-            {f}
+            {tr(f)}
             <span
               className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-xs font-bold ${
                 filter === f ? "bg-primary-foreground/20 text-primary-foreground" : "bg-secondary text-secondary-foreground"
@@ -137,7 +139,7 @@ export function Dashboard({
             <TaskGroupCard
               key={group.criticality}
               icon={<CriticalityIcon criticality={group.criticality} size={17} />}
-              label={criticalityLabel[group.criticality]}
+              label={tr(criticalityLabel[group.criticality])}
               count={group.tickets.length}
             >
               {visible.map((t) => {
@@ -223,7 +225,7 @@ export function Dashboard({
                   <span className="flex items-center gap-1">
                     {/* criticality demoted to a secondary tag once resolved */}
                     <CriticalityIcon criticality={t.criticality} size={14} />
-                    {criticalityLabel[t.criticality]}
+                    {tr(criticalityLabel[t.criticality])}
                     <span>·</span>
                     <button
                       onClick={(e) => {

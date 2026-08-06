@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RequestedUpdatePanel } from "@/components/yarowa/requested-update-panel";
+import { WizardFooter } from "@/components/yarowa/wizard-footer";
 import { getPortalProfile } from "./portal-data";
 
 export interface PortalCompanyDetailsProps {
@@ -121,9 +122,9 @@ export function PortalCompanyDetails({ supplierId }: PortalCompanyDetailsProps) 
           </div>
         </SectionCard>
 
-        <Button variant="dark" className="w-full">
-          Update My Details →
-        </Button>
+        <WizardFooter>
+          <Button variant="dark">Update My Details →</Button>
+        </WizardFooter>
       </section>
 
       {/* Requested updates rail */}

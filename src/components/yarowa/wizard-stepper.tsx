@@ -1,5 +1,6 @@
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 /*
  * Horizontal numbered stepper for multi-step wizards (Create / Update Catalogue).
@@ -15,6 +16,7 @@ export function WizardStepper({
   current: string;
   onStepClick?: (step: string) => void;
 }) {
+  const { t } = useI18n();
   const currentIdx = steps.indexOf(current);
   return (
     <div className="flex items-center justify-center gap-2">
@@ -45,7 +47,7 @@ export function WizardStepper({
                 {done ? <Check size={14} /> : i + 1}
               </span>
               <span className={cn("text-sm", active ? "font-semibold" : "text-muted-foreground")}>
-                {s}
+                {t(s)}
               </span>
             </button>
             {i < steps.length - 1 && <div className="w-8 h-px bg-border" />}

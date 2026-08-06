@@ -17,6 +17,7 @@ import {
   ShieldCheck,
   Pencil,
   Loader2,
+  RotateCcw,
   type LucideIcon,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -28,6 +29,7 @@ import { STANDARD_DOCUMENT_TYPES } from "@/lib/onboarding-documents";
 import { DOC_STATUS_META, docStatusMeta } from "@/lib/document-status";
 import { parseDocumentInfo, type ParsedDocumentInfo } from "@/lib/pdf-metadata";
 import { FromFileHint } from "@/components/yarowa/document-browser";
+import { useLynkData } from "../lib/LynkDataContext";
 import type { Supplier, SupplierDoc, Contact, OnboardingCase } from "../types";
 import type { ProspectDecision } from "../lib/db";
 
@@ -75,6 +77,7 @@ export interface ProspectReviewProps {
   caseItem: OnboardingCase;
   onClose: () => void;
   onReview: (id: string, name: string, decision: ProspectDecision, note?: string) => Promise<void>;
+  onReset: (supplierId: string) => Promise<void>;
   onReviewDocument: (docId: string, decision: "approve" | "decline", comment?: string) => void;
 }
 
@@ -85,9 +88,15 @@ export function ProspectReview({
   caseItem,
   onClose,
   onReview,
+  onReset,
   onReviewDocument,
 }: ProspectReviewProps) {
-  const [step, setStep] = useState<Step>("Company info");
+  // An already-decided case (Accepted/Rejected) opens on the Summary, where the
+  // outcome — and the Reset action for a rejected case — is shown, so the PM
+  // isn't forced to click through the review steps again.
+  const [step, setStep] = useState<Step>(
+    caseItem.status === "Accepted" || caseItem.status === "Rejected" ? "Summary" : "Company info"
+  );
   const [company, setCompany] = useState<SectionReview>({ status: "pending", comment: "" });
   const rows = useMemo(() => buildChecklist(docs), [docs]);
   const [selectedKey, setSelectedKey] = useState<string | null>(rows[0]?.key ?? null);
@@ -168,6 +177,7 @@ export function ProspectReview({
             onEditDocument={editDocument}
             onBack={() => setStep("Documents")}
             onReview={onReview}
+            onReset={onReset}
             onClose={onClose}
           />
         </div>
@@ -618,6 +628,7 @@ function DecisionStep({
   onEditDocument,
   onBack,
   onReview,
+  onReset,
   onClose,
 }: {
   supplier: Supplier;
@@ -629,10 +640,12 @@ function DecisionStep({
   onEditDocument: (key: string) => void;
   onBack: () => void;
   onReview: (id: string, name: string, decision: ProspectDecision, note?: string) => Promise<void>;
+  onReset: (supplierId: string) => Promise<void>;
   onClose: () => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [rejecting, setRejecting] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const [reason, setReason] = useState("");
 
   const declinedRows = rows.filter((r) => r.doc?.status === "rejected-resubmit");
@@ -653,10 +666,26 @@ function DecisionStep({
   missingRows.forEach((r) => feedbackParts.push(`${r.name}: please upload this document`));
   const combinedFeedback = feedbackParts.join("\n");
 
+  const isRejected = caseStatus === "Rejected";
+  const { setCompanyApproved } = useLynkData();
+
   async function decide(decision: ProspectDecision, note?: string) {
     setBusy(true);
     try {
+      // Record whether the PM approved the Company-info section, so the prospect
+      // sees it marked "Approved by procurement" on their side.
+      setCompanyApproved(supplier.id, company.status === "confirmed");
       await onReview(supplier.id, supplier.name, decision, note);
+      onClose();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function reset() {
+    setBusy(true);
+    try {
+      await onReset(supplier.id);
       onClose();
     } finally {
       setBusy(false);
@@ -695,7 +724,31 @@ function DecisionStep({
         })}
       </div>
 
-      {rejecting ? (
+      {isRejected ? (
+        resetting ? (
+          <div className="space-y-2">
+            <div className="rounded-lg border border-border bg-secondary/40 p-3 text-xs text-muted-foreground">
+              This clears the submitted application and returns the case to{" "}
+              <span className="font-medium text-foreground">Invited</span>. The existing magic link keeps working,
+              so the prospect can start over.
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" disabled={busy} onClick={() => setResetting(false)}>
+                Cancel
+              </Button>
+              <Button variant="dark" className="flex-1" disabled={busy} onClick={reset}>
+                {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
+                Reset onboarding
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <Button variant="outline" className="w-full" disabled={busy} onClick={() => setResetting(true)}>
+            <RotateCcw className="w-4 h-4" />
+            Reset the onboarding process
+          </Button>
+        )
+      ) : rejecting ? (
         <div className="space-y-2">
           <textarea
             autoFocus

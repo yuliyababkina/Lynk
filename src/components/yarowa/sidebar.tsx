@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { useI18n } from "@/lib/i18n";
 import type { View } from "@/App";
 
 const NAV: { id: View; label: string; icon: LucideIcon }[] = [
@@ -41,6 +42,7 @@ export function Sidebar({
   collapsed?: boolean;
   onToggleCollapse?: () => void;
 }) {
+  const { t } = useI18n();
   return (
     <aside
       className={cn(
@@ -61,7 +63,7 @@ export function Sidebar({
         {!collapsed ? (
           <div>
             <div className="text-sm font-semibold text-brand-navy-foreground leading-none">Lynk</div>
-            <div className="text-[10px] text-brand-navy-foreground/60 leading-none mt-0.5">Procurement Platform</div>
+            <div className="text-[10px] text-brand-navy-foreground/60 leading-none mt-0.5">{t("Procurement Platform")}</div>
           </div>
         ) : null}
         {onToggleCollapse ? (
@@ -88,7 +90,7 @@ export function Sidebar({
             <button
               key={item.id}
               onClick={() => onNavigate(item.id)}
-              title={item.label}
+              title={t(item.label)}
               className={cn(
                 "w-full rounded-md text-sm transition-colors h-9",
                 collapsed ? "flex items-center justify-center px-3 py-2" : "flex items-center gap-3 px-3 py-2",
@@ -98,7 +100,7 @@ export function Sidebar({
               )}
             >
               <Icon className={cn("w-4 h-4", isActive ? "text-success" : "text-muted-foreground")} />
-              {!collapsed ? <span className="flex-1 text-left">{item.label}</span> : null}
+              {!collapsed ? <span className="flex-1 text-left">{t(item.label)}</span> : null}
               {!collapsed && !!badge && (
                 <Badge variant="success" className="rounded-full px-1.5">
                   {badge}
@@ -109,14 +111,14 @@ export function Sidebar({
         })}
         <button
           onClick={onInvite}
-          title="Invite Supplier"
+          title={t("Invite Supplier")}
           className={cn(
             "w-full rounded-md text-sm text-muted-foreground hover:bg-muted/60 mt-2 h-9",
             collapsed ? "flex items-center justify-center px-3 py-2" : "flex items-center gap-3 px-3 py-2"
           )}
         >
           <Plus className="w-4 h-4" />
-          {!collapsed ? <span>Invite Supplier</span> : null}
+          {!collapsed ? <span>{t("Invite Supplier")}</span> : null}
         </button>
       </nav>
 
@@ -127,7 +129,7 @@ export function Sidebar({
         {!collapsed ? (
           <div>
             <div className="text-xs font-medium text-sidebar-foreground leading-none">Sabine Müller</div>
-            <div className="text-[10px] text-muted-foreground leading-none mt-0.5">Procurement Manager</div>
+            <div className="text-[10px] text-muted-foreground leading-none mt-0.5">{t("Procurement Manager")}</div>
           </div>
         ) : null}
       </div>

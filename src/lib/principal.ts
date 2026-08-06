@@ -13,6 +13,44 @@ export const PROCUREMENT_MANAGER = "Sabine Müller";
 export const PROCUREMENT_MANAGER_ROLE = "Procurement Manager";
 export const PROCUREMENT_EMAIL = "procurement@urbanhabitat-management.de";
 
+/**
+ * Contracts the Principal sends a prospect once procurement has approved all of
+ * their data and documents. The prospect reviews and signs the main agreement
+ * plus the pricing catalogues; signing them all activates them as a supplier.
+ */
+export interface PrincipalContract {
+  id: string;
+  name: string;
+  kind: "contract" | "catalogue";
+  summary: string;
+  /** Version / validity line shown under the name. */
+  meta: string;
+}
+
+export const PRINCIPAL_CONTRACTS: PrincipalContract[] = [
+  {
+    id: "msa",
+    name: "Master Supply Agreement",
+    kind: "contract",
+    summary: `The framework governing your supply relationship with ${PRINCIPAL_COMPANY} — scope, liability, payment terms and SLAs.`,
+    meta: "v3.2 · Effective on signature",
+  },
+  {
+    id: "cat-painting",
+    name: "Painting Services — Price List 2027",
+    kind: "catalogue",
+    summary: "Agreed rates for painting works across all contracted regions for the 2027 period.",
+    meta: "2027 · 42 line items",
+  },
+  {
+    id: "cat-renovation",
+    name: "Renovation Services — Price List 2027",
+    kind: "catalogue",
+    summary: "Agreed rates for renovation and drywall works, including call-out and materials handling.",
+    meta: "2027 · 28 line items",
+  },
+];
+
 /** Full company profile, for screens that show the Principal's own details. */
 export const PRINCIPAL_PROFILE = {
   name: PRINCIPAL_COMPANY,

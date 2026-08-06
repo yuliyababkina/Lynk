@@ -771,6 +771,23 @@ export async function reviewProspectDb(
 }
 
 /**
+ * Reset the onboarding process — sends a dead-end case (e.g. Rejected) back to
+ * the invited/awaiting state so it can restart from a clean application. The
+ * existing invite record (and its magic link/token) is reused, not reissued.
+ * NOTE: clearing previously submitted documents/answers is a further backend
+ * step; this restores the *status* so the flow can be re-run.
+ */
+export async function resetProspectDb(supplierId: string, supplierName: string) {
+  if (!isSupabaseConfigured) return;
+  const { error } = await supabase
+    .from("onboarding_cases")
+    .update({ status: "Pending" })
+    .eq("id", onboardingCaseId(supplierId));
+  if (error) console.error("[Lynk] resetProspectDb failed:", error.message);
+  await logActivity(supplierName, "Onboarding reset — returned to invited state");
+}
+
+/**
  * `actor` defaults to the Procurement Manager in the schema, which is right for
  * everything the PM does — but wrong for actions the supplier takes (accepting
  * terms, uploading). Pass it explicitly in those cases so the audit trail names
