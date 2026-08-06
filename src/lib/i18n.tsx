@@ -99,14 +99,115 @@ const DE: Record<string, string> = {
   "Open Onboarding Portal": "Onboarding-Portal öffnen",
   "In production these would be separate authenticated sessions. This demo simulates all three.":
     "In der Produktion wären dies getrennte authentifizierte Sitzungen. Diese Demo simuliert alle drei.",
+  "Supplier · EuroBau Components": "Lieferant · EuroBau Components",
+  "Prospect · Yilmaz Elektrotechnik": "Interessent · Yilmaz Elektrotechnik",
+  "Dashboard, compliance monitoring, contract management, data governance, qualification, reporting.":
+    "Dashboard, Compliance-Überwachung, Vertragsverwaltung, Datenverwaltung, Qualifizierung, Berichte.",
+  "Manage compliance documents, request sensitive data changes, view performance ratings and score history.":
+    "Compliance-Dokumente verwalten, Änderungen sensibler Daten beantragen, Leistungsbewertungen und Score-Verlauf einsehen.",
+  "New supplier invited to the platform. Complete profile, upload compliance documents, go through onboarding.":
+    "Neuer Lieferant zur Plattform eingeladen. Profil vervollständigen, Compliance-Dokumente hochladen, Onboarding durchlaufen.",
+
+  // ── Prospect onboarding — welcome / consent ─────────────────────────────
+  "Welcome, {name}": "Willkommen, {name}",
+  "You've been invited to extend your existing supplier relationship to a new Principal — {principal}. Your existing data has been pre-filled. Please review, confirm, and upload any missing documents.":
+    "Sie wurden eingeladen, Ihre bestehende Lieferantenbeziehung auf einen neuen Auftraggeber auszuweiten — {principal}. Ihre vorhandenen Daten wurden vorausgefüllt. Bitte prüfen, bestätigen und fehlende Dokumente hochladen.",
+  "I have read and agree to the Terms & Conditions and the {privacy}, and I am authorised to accept them for {company}.":
+    "Ich habe die Allgemeinen Geschäftsbedingungen und die {privacy} gelesen und stimme ihnen zu, und ich bin berechtigt, diese für {company} zu akzeptieren.",
+  "Privacy Policy": "Datenschutzerklärung",
+  "Recording your acceptance…": "Ihre Zustimmung wird gespeichert…",
+  "Accepted — version {version}": "Akzeptiert — Version {version}",
+  "Accept the Terms & Conditions to continue.":
+    "Akzeptieren Sie die Allgemeinen Geschäftsbedingungen, um fortzufahren.",
+  "This link is private and expires in 72 hours. Your data is protected under GDPR. Only authorised procurement staff at {principal} can access your profile.":
+    "Dieser Link ist privat und läuft in 72 Stunden ab. Ihre Daten sind gemäß DSGVO geschützt. Nur autorisierte Einkaufsmitarbeiter von {principal} können auf Ihr Profil zugreifen.",
+  "Review & Confirm My Details": "Meine Daten prüfen & bestätigen",
+  "Update & Resubmit My Details": "Meine Daten aktualisieren & erneut einreichen",
+  "Changes requested by procurement": "Änderungen vom Einkauf angefordert",
+  "Please update your details/documents and resubmit.":
+    "Bitte aktualisieren Sie Ihre Daten/Dokumente und reichen Sie sie erneut ein.",
+  "Application not approved": "Bewerbung nicht genehmigt",
+
+  // ── Prospect onboarding — company details ───────────────────────────────
+  // ("Company Details" is already defined above under the portal view labels.)
+  "Registered Address": "Eingetragene Adresse",
+  "Legal Name": "Firmenname",
+  "VAT ID": "USt-IdNr.",
+  "Registration No.": "Handelsregister-Nr.",
+  Website: "Webseite",
+  Street: "Straße",
+  City: "Stadt",
+  Postcode: "Postleitzahl",
+  Country: "Land",
+  "Submit My Details": "Meine Daten einreichen",
+  Continue: "Weiter",
+  Back: "Zurück",
+  Approved: "Genehmigt",
+  "Approved by procurement": "Vom Einkauf genehmigt",
+  "{principal} has verified your company details — no changes needed here.":
+    "{principal} hat Ihre Firmendaten geprüft — hier sind keine Änderungen erforderlich.",
+
+  // ── Prospect onboarding — documents ─────────────────────────────────────
+  // Document review statuses + browser chrome
+  Declined: "Abgelehnt",
+  "Pending review": "Prüfung ausstehend",
+  Missing: "Fehlt",
+  "Document type": "Dokumententyp",
+  "Issued by": "Ausgestellt von",
+  Validity: "Gültigkeit",
+  // Standard compliance document names (finite, backend-owned reference set)
+  "Certificate of Incorporation": "Handelsregisterauszug",
+  "VAT Registration Certificate": "USt-Registrierungsbescheinigung",
+  "Public Liability Insurance": "Betriebshaftpflichtversicherung",
+  "Bank Confirmation Letter": "Bankbestätigungsschreiben",
+  "Trade Licence": "Gewerbeschein",
+  "ISO 9001 Certificate": "ISO-9001-Zertifikat",
+  "Conflict Minerals Declaration": "Konfliktmineralien-Erklärung",
+  "Standard Compliance Documents": "Standard-Compliance-Dokumente",
+  "These documents are required for all suppliers on the Lynk platform.":
+    "Diese Dokumente sind für alle Lieferanten auf der Lynk-Plattform erforderlich.",
+  "Documents already on file are shown as verified — only upload what's missing.":
+    "Bereits hinterlegte Dokumente werden als verifiziert angezeigt — laden Sie nur Fehlendes hoch.",
+  "Submit for Review": "Zur Prüfung einreichen",
+  "Upload the required documents (Public Liability Insurance, Trade Licence) to continue.":
+    "Laden Sie die erforderlichen Dokumente (Betriebshaftpflichtversicherung, Gewerbeschein) hoch, um fortzufahren.",
+
+  // ── Prospect onboarding — contracts ─────────────────────────────────────
+  "{principal} has verified your details and documents.":
+    "{principal} hat Ihre Daten und Dokumente geprüft.",
+  "Review & sign your contracts": "Ihre Verträge prüfen & unterzeichnen",
+  "{principal} has sent the documents below — the main agreement and the price catalogues that apply to your work orders. Review each carefully and sign all of them to activate your supplier account.":
+    "{principal} hat die untenstehenden Dokumente gesendet — den Hauptvertrag und die Preiskataloge, die für Ihre Aufträge gelten. Prüfen Sie jedes sorgfältig und unterzeichnen Sie alle, um Ihr Lieferantenkonto zu aktivieren.",
+  Contract: "Vertrag",
+  "Pricing catalogue": "Preiskatalog",
+  Signed: "Unterzeichnet",
+  "{signed} of {total} signed": "{signed} von {total} unterzeichnet",
+  "I have read and agree to this agreement, and I am authorised to sign on behalf of my company.":
+    "Ich habe diesen Vertrag gelesen und stimme ihm zu, und ich bin berechtigt, im Namen meines Unternehmens zu unterzeichnen.",
+  "I have read and agree to this pricing catalogue, and I am authorised to sign on behalf of my company.":
+    "Ich habe diesen Preiskatalog gelesen und stimme ihm zu, und ich bin berechtigt, im Namen meines Unternehmens zu unterzeichnen.",
+  "Sign as {name}": "Unterzeichnen als {name}",
+  "Signed by {name}": "Unterzeichnet von {name}",
+  "Activate supplier account": "Lieferantenkonto aktivieren",
+  "You're now a supplier 🎉": "Sie sind jetzt Lieferant 🎉",
+  "Contracts signed. {company} is active for {principal} and can now receive work orders. Manage your documents, contracts and details anytime from your supplier portal.":
+    "Verträge unterzeichnet. {company} ist für {principal} aktiv und kann nun Aufträge erhalten. Verwalten Sie Ihre Dokumente, Verträge und Daten jederzeit über Ihr Lieferantenportal.",
 };
 
 const STORAGE_KEY = "lynk-lang";
 
+/** Values substituted into `{placeholder}` slots in a string. */
+export type TVars = Record<string, string | number>;
+
 interface I18nValue {
   lang: Lang;
   setLang: (l: Lang) => void;
-  t: (source: string) => string;
+  /**
+   * Translate a source string. `{name}`-style placeholders let the translation
+   * put interpolated values where that language's grammar needs them, instead of
+   * concatenating fragments.
+   */
+  t: (source: string, vars?: TVars) => string;
 }
 
 const I18nContext = createContext<I18nValue | null>(null);
@@ -133,7 +234,16 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const t = useCallback((source: string) => (lang === "de" ? DE[source] ?? source : source), [lang]);
+  const t = useCallback(
+    (source: string, vars?: TVars) => {
+      const template = lang === "de" ? DE[source] ?? source : source;
+      if (!vars) return template;
+      return template.replace(/\{(\w+)\}/g, (match, key: string) =>
+        key in vars ? String(vars[key]) : match
+      );
+    },
+    [lang]
+  );
 
   return <I18nContext.Provider value={{ lang, setLang, t }}>{children}</I18nContext.Provider>;
 }

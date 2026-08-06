@@ -474,11 +474,11 @@ export function ProspectOnboarding({
           {step === "documents" && !pending && !editing && (
             <section className="space-y-5">
               <div>
-                <h1 className="text-xl font-bold">Standard Compliance Documents</h1>
+                <h1 className="text-xl font-bold">{t("Standard Compliance Documents")}</h1>
                 <p className="text-muted-foreground mt-1 text-sm">
-                  These documents are required for all suppliers on the Lynk platform.
+                  {t("These documents are required for all suppliers on the Lynk platform.")}
                   <br />
-                  Documents already on file are shown as verified — only upload what's missing.
+                  {t("Documents already on file are shown as verified — only upload what's missing.")}
                 </p>
               </div>
               {error && <p className="text-sm text-destructive">{error}</p>}
@@ -562,13 +562,13 @@ export function ProspectOnboarding({
               />
               {!requiredStandardDone && (
                 <p className="text-xs text-muted-foreground text-right">
-                  Upload the required documents (Public Liability Insurance, Trade Licence) to continue.
+                  {t("Upload the required documents (Public Liability Insurance, Trade Licence) to continue.")}
                 </p>
               )}
               <WizardFooter onBack={() => setStep("company")}>
                 <Button variant="dark" disabled={!requiredStandardDone || submitting} onClick={submitForReview}>
                   {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                  Submit for Review <ArrowRight className="w-4 h-4" />
+                  {t("Submit for Review")} <ArrowRight className="w-4 h-4" />
                 </Button>
               </WizardFooter>
 
@@ -642,20 +642,22 @@ function WelcomeStep({
       <div className="w-12 h-12 rounded-xl bg-secondary mx-auto flex items-center justify-center text-2xl">
         🏗️
       </div>
-      <h1 className="text-2xl font-bold mt-4">Welcome, {firstName}</h1>
+      <h1 className="text-2xl font-bold mt-4">{t("Welcome, {name}", { name: firstName })}</h1>
       <p className="text-muted-foreground mt-2 text-sm max-w-md mx-auto">
-        You've been invited to extend your existing supplier relationship to a new Principal — {PRINCIPAL}.
-        Your existing data has been pre-filled. Please review, confirm, and upload any missing documents.
+        {t(
+          "You've been invited to extend your existing supplier relationship to a new Principal — {principal}. Your existing data has been pre-filled. Please review, confirm, and upload any missing documents.",
+          { principal: PRINCIPAL }
+        )}
       </p>
 
       {changesRequested && (
         <div className="mt-6 flex items-start gap-2 rounded-lg border border-warning/40 bg-warning-soft/50 p-3 text-left">
           <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-semibold text-warning-ink">Changes requested by procurement</p>
+            <p className="text-sm font-semibold text-warning-ink">{t("Changes requested by procurement")}</p>
             {reviewNote && <p className="text-xs text-warning-ink/90 mt-0.5">“{reviewNote}”</p>}
             <p className="text-xs text-muted-foreground mt-1">
-              Please update your details/documents and resubmit.
+              {t("Please update your details/documents and resubmit.")}
             </p>
           </div>
         </div>
@@ -665,7 +667,7 @@ function WelcomeStep({
         <div className="mt-6 flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-left">
           <XCircle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-semibold text-destructive">Application not approved</p>
+            <p className="text-sm font-semibold text-destructive">{t("Application not approved")}</p>
             {reviewNote && <p className="text-xs text-destructive/90 mt-0.5">“{reviewNote}”</p>}
           </div>
         </div>
@@ -709,28 +711,43 @@ function WelcomeStep({
             className="mt-0.5"
             aria-describedby="terms-hint"
           />
+          {/* Split on the {privacy} slot so each language can place the link where
+              its own grammar needs it, instead of concatenating fragments. */}
           <span className="text-sm">
-            I have read and agree to the Terms &amp; Conditions and the{" "}
-            <a
-              href="#"
-              onClick={(e) => e.preventDefault()}
-              className="text-accent underline underline-offset-2"
-            >
-              Privacy Policy
-            </a>
-            , and I am authorised to accept them for {prospectCompany}.
+            {(() => {
+              // `privacy` is deliberately left unsubstituted so the literal
+              // {privacy} slot survives to be split on and replaced by the link.
+              const sentence = t(
+                "I have read and agree to the Terms & Conditions and the {privacy}, and I am authorised to accept them for {company}.",
+                { company: prospectCompany }
+              );
+              const [before, after = ""] = sentence.split("{privacy}");
+              return (
+                <>
+                  {before}
+                  <a
+                    href="#"
+                    onClick={(e) => e.preventDefault()}
+                    className="text-accent underline underline-offset-2"
+                  >
+                    {t("Privacy Policy")}
+                  </a>
+                  {after}
+                </>
+              );
+            })()}
           </span>
         </label>
 
         {savingTerms && (
           <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1.5">
-            <Loader2 className="w-3 h-3 animate-spin" /> Recording your acceptance…
+            <Loader2 className="w-3 h-3 animate-spin" /> {t("Recording your acceptance…")}
           </p>
         )}
         {termsError && <p className="text-xs text-destructive mt-2">{termsError}</p>}
         {termsAccepted && (
           <p className="text-xs text-success-ink mt-2 flex items-center gap-1.5">
-            <CheckCircle2 className="w-3 h-3" /> Accepted — version {TERMS_VERSION}
+            <CheckCircle2 className="w-3 h-3" /> {t("Accepted — version {version}", { version: TERMS_VERSION })}
           </p>
         )}
       </Card>
@@ -738,20 +755,22 @@ function WelcomeStep({
       <div className="mt-4 flex items-start gap-2 rounded-lg border border-border bg-accent/5 p-3 text-left">
         <Lock className="w-4 h-4 text-accent shrink-0 mt-0.5" />
         <p className="text-xs text-muted-foreground">
-          This link is private and expires in 72 hours. Your data is protected under GDPR. Only authorised
-          procurement staff at {PRINCIPAL} can access your profile.
+          {t(
+            "This link is private and expires in 72 hours. Your data is protected under GDPR. Only authorised procurement staff at {principal} can access your profile.",
+            { principal: PRINCIPAL }
+          )}
         </p>
       </div>
 
       {!rejected && (
         <>
           <Button variant="dark" className="w-full mt-6" disabled={!termsAccepted} onClick={onNext}>
-            {changesRequested ? "Update & Resubmit My Details" : "Review & Confirm My Details"}{" "}
+            {changesRequested ? t("Update & Resubmit My Details") : t("Review & Confirm My Details")}{" "}
             <ArrowRight className="w-4 h-4" />
           </Button>
           {!termsAccepted && (
             <p id="terms-hint" className="text-xs text-muted-foreground mt-2">
-              Accept the Terms &amp; Conditions to continue.
+              {t("Accept the Terms & Conditions to continue.")}
             </p>
           )}
         </>
@@ -787,55 +806,56 @@ function CompanyStep({
   /** PM has approved this section — shown as a marker; fields become read-only. */
   approved?: boolean;
 }) {
+  const { t } = useI18n();
   return (
     <section className="space-y-6">
       {approved && (
         <div className="flex items-start gap-2.5 rounded-lg bg-success-soft p-3">
           <CheckCircle2 className="w-4 h-4 text-success-ink shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-semibold text-success-ink">Approved by procurement</p>
+            <p className="text-sm font-semibold text-success-ink">{t("Approved by procurement")}</p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {PRINCIPAL} has verified your company details — no changes needed here.
+              {t("{principal} has verified your company details — no changes needed here.", { principal: PRINCIPAL })}
             </p>
           </div>
         </div>
       )}
       <div className="flex items-center gap-2">
         <Building2 className="w-4 h-4 text-primary" />
-        <h1 className="text-base font-semibold">Company Details</h1>
+        <h1 className="text-base font-semibold">{t("Company Details")}</h1>
         {approved && (
           <Badge variant="success-outline" className="ml-auto">
             <CheckCircle2 className="w-3 h-3" />
-            Approved
+            {t("Approved")}
           </Badge>
         )}
       </div>
       <div className="space-y-4">
-        <FormField label="Legal Name" value={form.legalName} onChange={setField("legalName")} readOnly={approved} />
+        <FormField label={t("Legal Name")} value={form.legalName} onChange={setField("legalName")} readOnly={approved} />
         <div className="grid grid-cols-2 gap-4">
-          <FormField label="VAT ID" value={form.vatId} onChange={setField("vatId")} readOnly={approved} />
-          <FormField label="Registration No." value={form.registrationNo} onChange={setField("registrationNo")} readOnly={approved} />
+          <FormField label={t("VAT ID")} value={form.vatId} onChange={setField("vatId")} readOnly={approved} />
+          <FormField label={t("Registration No.")} value={form.registrationNo} onChange={setField("registrationNo")} readOnly={approved} />
         </div>
-        <FormField label="Website" value={form.website} onChange={setField("website")} readOnly={approved} />
+        <FormField label={t("Website")} value={form.website} onChange={setField("website")} readOnly={approved} />
       </div>
 
       <div className="flex items-center gap-2 pt-2">
         <MapPin className="w-4 h-4 text-primary" />
-        <h2 className="text-base font-semibold">Registered Address</h2>
+        <h2 className="text-base font-semibold">{t("Registered Address")}</h2>
       </div>
       <div className="space-y-4">
-        <FormField label="Street" value={form.street} onChange={setField("street")} readOnly={approved} />
+        <FormField label={t("Street")} value={form.street} onChange={setField("street")} readOnly={approved} />
         <div className="grid grid-cols-2 gap-4">
-          <FormField label="City" value={form.city} onChange={setField("city")} readOnly={approved} />
-          <FormField label="Postcode" value={form.postcode} onChange={setField("postcode")} readOnly={approved} />
+          <FormField label={t("City")} value={form.city} onChange={setField("city")} readOnly={approved} />
+          <FormField label={t("Postcode")} value={form.postcode} onChange={setField("postcode")} readOnly={approved} />
         </div>
-        <FormField label="Country" value={form.country} onChange={setField("country")} readOnly={approved} />
+        <FormField label={t("Country")} value={form.country} onChange={setField("country")} readOnly={approved} />
       </div>
 
       <WizardFooter onBack={onBack}>
         <Button variant="dark" disabled={saving} onClick={onSubmit}>
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-          {approved ? "Continue" : "Submit My Details"} <ArrowRight className="w-4 h-4" />
+          {approved ? t("Continue") : t("Submit My Details")} <ArrowRight className="w-4 h-4" />
         </Button>
       </WizardFooter>
     </section>
@@ -989,6 +1009,7 @@ function ContractsStep({
   onActivate: () => void;
   signerName: string;
 }) {
+  const { t } = useI18n();
   const [selectedId, setSelectedId] = useState<string>(PRINCIPAL_CONTRACTS[0].id);
   const [agreed, setAgreed] = useState(false);
   const selected = PRINCIPAL_CONTRACTS.find((c) => c.id === selectedId) ?? PRINCIPAL_CONTRACTS[0];
@@ -1012,18 +1033,20 @@ function ContractsStep({
       <div className="flex items-start gap-2.5 rounded-lg bg-success-soft p-3">
         <CheckCircle2 className="w-4 h-4 text-success-ink shrink-0 mt-0.5" />
         <div>
-          <p className="text-sm font-semibold text-success-ink">Approved by procurement</p>
+          <p className="text-sm font-semibold text-success-ink">{t("Approved by procurement")}</p>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {PRINCIPAL} has verified your details and documents.
+            {t("{principal} has verified your details and documents.", { principal: PRINCIPAL })}
           </p>
         </div>
       </div>
 
       <div>
-        <h1 className="text-xl font-bold">Review &amp; sign your contracts</h1>
+        <h1 className="text-xl font-bold">{t("Review & sign your contracts")}</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          {PRINCIPAL} has sent the documents below — the main agreement and the price catalogues that apply to
-          your work orders. Review each carefully and sign all of them to activate your supplier account.
+          {t(
+            "{principal} has sent the documents below — the main agreement and the price catalogues that apply to your work orders. Review each carefully and sign all of them to activate your supplier account.",
+            { principal: PRINCIPAL }
+          )}
         </p>
       </div>
 
@@ -1052,7 +1075,7 @@ function ContractsStep({
                   <span className="min-w-0 flex-1">
                     <span className="block text-sm font-semibold truncate">{c.name}</span>
                     <span className="block text-xs text-muted-foreground">
-                      {c.kind === "catalogue" ? "Pricing catalogue" : "Contract"}
+                      {c.kind === "catalogue" ? t("Pricing catalogue") : t("Contract")}
                     </span>
                   </span>
                   {rowSigned ? (
@@ -1065,7 +1088,7 @@ function ContractsStep({
             })}
           </div>
           <p className="text-xs text-muted-foreground text-center mt-3">
-            {signedCount} of {PRINCIPAL_CONTRACTS.length} signed
+            {t("{signed} of {total} signed", { signed: signedCount, total: PRINCIPAL_CONTRACTS.length })}
           </p>
         </div>
 
@@ -1080,7 +1103,7 @@ function ContractsStep({
             {isSelectedSigned && (
               <Badge variant="success-outline" className="shrink-0">
                 <CheckCircle2 className="w-3 h-3" />
-                Signed
+                {t("Signed")}
               </Badge>
             )}
           </div>
@@ -1093,21 +1116,22 @@ function ContractsStep({
             {isSelectedSigned ? (
               <div className="flex items-center gap-2 text-sm font-medium text-success-ink">
                 <CheckCircle2 className="w-4 h-4" />
-                Signed by {signerName}
+                {t("Signed by {name}", { name: signerName })}
               </div>
             ) : (
               <div className="space-y-3">
                 <label className="flex items-start gap-2.5 cursor-pointer">
                   <Checkbox checked={agreed} onCheckedChange={(v) => setAgreed(v === true)} className="mt-0.5" />
                   <span className="text-sm">
-                    I have read and agree to this {selected.kind === "catalogue" ? "pricing catalogue" : "agreement"},
-                    and I am authorised to sign on behalf of my company.
+                    {selected.kind === "catalogue"
+                      ? t("I have read and agree to this pricing catalogue, and I am authorised to sign on behalf of my company.")
+                      : t("I have read and agree to this agreement, and I am authorised to sign on behalf of my company.")}
                   </span>
                 </label>
                 <div className="flex justify-end">
                   <Button variant="dark" disabled={!agreed} onClick={sign}>
                     <PenLine className="w-4 h-4" />
-                    Sign as {signerName}
+                    {t("Sign as {name}", { name: signerName })}
                   </Button>
                 </div>
               </div>
@@ -1118,7 +1142,7 @@ function ContractsStep({
 
       <WizardFooter>
         <Button variant="dark" disabled={!allSigned} onClick={onActivate}>
-          Activate supplier account <ArrowRight className="w-4 h-4" />
+          {t("Activate supplier account")} <ArrowRight className="w-4 h-4" />
         </Button>
       </WizardFooter>
     </section>
@@ -1126,15 +1150,18 @@ function ContractsStep({
 }
 
 function SupplierActivatedStep({ company }: { company: string }) {
+  const { t } = useI18n();
   return (
     <section className="text-center pt-6">
       <div className="w-12 h-12 rounded-full bg-success-soft mx-auto flex items-center justify-center">
         <CheckCircle2 className="w-6 h-6 text-success" />
       </div>
-      <h1 className="text-2xl font-bold mt-4">You're now a supplier 🎉</h1>
+      <h1 className="text-2xl font-bold mt-4">{t("You're now a supplier 🎉")}</h1>
       <p className="text-muted-foreground mt-2 text-sm max-w-md mx-auto">
-        Contracts signed. {company} is active for {PRINCIPAL} and can now receive work orders. Manage your
-        documents, contracts and details anytime from your supplier portal.
+        {t(
+          "Contracts signed. {company} is active for {principal} and can now receive work orders. Manage your documents, contracts and details anytime from your supplier portal.",
+          { company, principal: PRINCIPAL }
+        )}
       </p>
     </section>
   );

@@ -109,7 +109,7 @@ export function Landing({ onSelectRole }: LandingProps) {
 
             {/* Description */}
             <p className={cn("text-sm leading-relaxed mt-4", role.dark ? "text-brand-navy-foreground/70" : "text-muted-foreground")}>
-              {role.description}
+              {t(role.description)}
             </p>
 
             {/* CTA */}

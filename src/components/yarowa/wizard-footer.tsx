@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 /*
  * Standard step footer used across the onboarding / portal flows:
@@ -20,12 +21,13 @@ export function WizardFooter({
   children: ReactNode;
   className?: string;
 }) {
+  const { t } = useI18n();
   return (
     <div className={cn("flex items-center gap-3 pt-2", onBack ? "justify-between" : "justify-end", className)}>
       {onBack && (
         <Button variant="outline" onClick={onBack}>
           <ArrowLeft className="w-4 h-4" />
-          {backLabel}
+          {t(backLabel)}
         </Button>
       )}
       {children}

@@ -6,6 +6,7 @@ import { PdfCanvas } from "@/components/yarowa/pdf-canvas";
 import { docStatusMeta } from "@/lib/document-status";
 import { parseDocumentInfo, type ParsedDocumentInfo } from "@/lib/pdf-metadata";
 import type { DocStatus } from "@/types";
+import { useI18n } from "@/lib/i18n";
 
 /** Marks a value that was read from the file, not confirmed by a person. */
 export function FromFileHint() {
@@ -57,6 +58,7 @@ export function DocumentBrowser({
   onParsed?: (key: string, parsed: ParsedDocumentInfo | null) => void;
   height?: string;
 }) {
+  const { t } = useI18n();
   // Held in a ref so a caller passing an inline callback can't restart parsing.
   const onParsedRef = useRef(onParsed);
   onParsedRef.current = onParsed;
@@ -125,11 +127,11 @@ export function DocumentBrowser({
                   something you can identify a compliance document by. */}
               <span className="flex items-start gap-2 w-full">
                 <FileText className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
-                <span className="text-sm font-medium break-words">{r.name}</span>
+                <span className="text-sm font-medium break-words">{t(r.name)}</span>
               </span>
               <Badge variant={meta.variant as any} className="shrink-0 ml-6">
                 <meta.Icon className="w-3 h-3" />
-                {meta.label}
+                {t(meta.label)}
               </Badge>
             </button>
           );
@@ -142,21 +144,21 @@ export function DocumentBrowser({
           <div className="w-full flex flex-col border border-border rounded-xl overflow-hidden bg-card">
             <div className="px-4 py-2.5 border-b border-border flex items-start justify-between gap-3">
               <div className="min-w-0">
-              <p className="text-sm font-semibold truncate">{selected.name}</p>
+              <p className="text-sm font-semibold truncate">{t(selected.name)}</p>
               <p className="text-xs text-muted-foreground">{selected.category || "Document"}</p>
               {selected.status && info && (
                 <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 mt-2 text-xs">
-                  <dt className="text-muted-foreground">Document type</dt>
+                  <dt className="text-muted-foreground">{t("Document type")}</dt>
                   <dd>
                     {info.documentType || "—"}
                     {info.fromFile.type && <FromFileHint />}
                   </dd>
-                  <dt className="text-muted-foreground">Issued by</dt>
+                  <dt className="text-muted-foreground">{t("Issued by")}</dt>
                   <dd>
                     {info.issuingInstitution || "—"}
                     {info.fromFile.issuer && <FromFileHint />}
                   </dd>
-                  <dt className="text-muted-foreground">Validity</dt>
+                  <dt className="text-muted-foreground">{t("Validity")}</dt>
                   <dd>
                     {info.doesNotExpire ? (
                       <span className="inline-flex items-center gap-1.5 text-success-ink">
@@ -180,7 +182,7 @@ export function DocumentBrowser({
                   return (
                     <Badge variant={m.variant as any} className="shrink-0">
                       <m.Icon className="w-3 h-3" />
-                      {m.label}
+                      {t(m.label)}
                     </Badge>
                   );
                 })()}
