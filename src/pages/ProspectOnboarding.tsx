@@ -96,6 +96,7 @@ export function ProspectOnboarding({
     removeSupplierDoc,
     updateSupplierProfile,
     submitProspectForReview,
+    reviewProspect,
     acceptTerms,
     companyApprovedIds,
   } = useLynkData();
@@ -119,9 +120,14 @@ export function ProspectOnboarding({
 
   // Once procurement approves everything, the prospect signs the Principal's
   // contracts (main agreement + pricing catalogues) to activate as a supplier.
-  const approved = reviewStatus === "Accepted";
+  // The PM sending the contract is what opens the signing stage. "Accepted" means
+  // the documents are already signed and the supplier is active.
+  const awaitingSignature = reviewStatus === "Contract Sent (Pending Signature)";
+  const isActiveSupplier = reviewStatus === "Accepted";
+  // Either state replaces the wizard with the contracts / done view.
+  const approved = awaitingSignature || isActiveSupplier;
   const [signedContracts, setSignedContracts] = useState<Set<string>>(new Set());
-  const [activated, setActivated] = useState(false);
+  const [justActivated, setJustActivated] = useState(false);
   const allContractsSigned = PRINCIPAL_CONTRACTS.every((c) => signedContracts.has(c.id));
 
   const [step, setStep] = useState<Step>("welcome");
@@ -330,8 +336,14 @@ export function ProspectOnboarding({
     toast({ title: `${c.name} signed`, tone: "success" });
   }
 
-  function activateSupplier() {
-    setActivated(true);
+  async function activateSupplier() {
+    setJustActivated(true);
+    // Signing every document is what turns the prospect into an active supplier.
+    try {
+      await reviewProspect(supplierId, prospectCompany, "accept");
+    } catch (e) {
+      console.error("[Lynk] activating supplier failed:", e);
+    }
     toast({
       title: "You're now a supplier",
       description: `${prospectCompany} is active for ${PRINCIPAL}.`,
@@ -343,6 +355,7 @@ export function ProspectOnboarding({
 
   // The approved (contracts) state has no `step`; drive the stepper from it.
   const showStepper = step !== "welcome" || approved;
+  const activated = isActiveSupplier || justActivated;
   const stepperCurrent = approved ? (activated ? "Complete" : "Contracts") : STEP_LABEL[step];
 
   return (

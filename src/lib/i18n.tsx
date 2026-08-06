@@ -217,6 +217,7 @@ const DE: Record<string, string> = {
   "Next: Send Contract and Service catalogs": "Weiter: Vertrag und Leistungskataloge senden",
   "Reject application": "Bewerbung ablehnen",
   "Send Contract & Service Catalogs": "Vertrag & Leistungskataloge senden",
+  "Send Contract": "Vertrag senden",
   "Choose what to send {company} for signature. The case moves to awaiting signature once sent.":
     "Wählen Sie, was {company} zur Unterzeichnung gesendet wird. Der Fall wechselt nach dem Senden in den Status „wartet auf Unterschrift“.",
   "Contract template": "Vertragsvorlage",

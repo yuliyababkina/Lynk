@@ -40,11 +40,8 @@ import type { ProspectDecision } from "../lib/db";
 // Status presentation comes from the shared definition so the PM, the supplier,
 // and the prospect all see the same label/icon for a given document.
 
-const STEPS = ["Company info", "Documents", "Summary"] as const;
-/* "Send Contract" is a step in the flow but not a stepper dot — it only exists
-   on the happy path after the review is complete, so the stepper stays at
-   Summary while it is open. */
-type Step = (typeof STEPS)[number] | "Send Contract";
+const STEPS = ["Company info", "Documents", "Summary", "Send Contract"] as const;
+type Step = (typeof STEPS)[number];
 
 type ReviewStatus = "pending" | "confirmed" | "fix";
 interface SectionReview {
@@ -136,11 +133,7 @@ export function ProspectReview({
       </div>
 
       <div className="mb-6">
-        <WizardStepper
-          steps={STEPS}
-          current={step === "Send Contract" ? "Summary" : step}
-          onStepClick={(s) => setStep(s as Step)}
-        />
+        <WizardStepper steps={STEPS} current={step} onStepClick={(s) => setStep(s as Step)} />
       </div>
 
       {step === "Company info" && (
