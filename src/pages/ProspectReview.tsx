@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -113,6 +113,7 @@ export function ProspectReview({
   // outcome — and the Reset action for a rejected case — is shown, so the PM
   // isn't forced to click through the review steps again.
   const { t } = useI18n();
+  const [companyFixing, setCompanyFixing] = useState(false);
   const [step, setStep] = useState<Step>(
     caseItem.status === "Accepted" || caseItem.status === "Rejected" ? "Summary" : "Company info"
   );
@@ -184,8 +185,26 @@ export function ProspectReview({
                 </>
               )}
             </dl>
-            <SectionReviewControl section={company} onChange={setCompany} disabled={decided} />
-            <StepNav onNext={() => setStep("Documents")} nextLabel="Next: Documents" />
+            <SectionReviewControl
+              section={company}
+              onChange={setCompany}
+              disabled={decided}
+              fixing={companyFixing}
+              onFixingChange={setCompanyFixing}
+            />
+            <StepNav
+              onNext={() => setStep("Documents")}
+              nextLabel="Next: Documents"
+              secondary={
+                // Low-emphasis escape hatch beside the primary: flag something in
+                // this section without leaving the step.
+                !decided && company.status !== "fix" && !companyFixing ? (
+                  <Button variant="ghost" onClick={() => setCompanyFixing(true)}>
+                    {t("Request a change")}
+                  </Button>
+                ) : undefined
+              }
+            />
           </StepShell>
         </div>
       )}
@@ -455,6 +474,7 @@ function DocActionBar({
   disabled: boolean;
   onReviewDocument: (docId: string, decision: "approve" | "decline", comment?: string) => void;
 }) {
+  const { t } = useI18n();
   const [declining, setDeclining] = useState(false);
   const [comment, setComment] = useState("");
   const approved = doc.status === "valid";
@@ -489,7 +509,7 @@ function DocActionBar({
             setComment("");
           }}
         >
-          {approved ? "Send request" : "Confirm decline"}
+          {t("Send request")}
         </Button>
       </div>
     );
@@ -503,21 +523,17 @@ function DocActionBar({
       )}
       {!disabled && (
         <div className="flex gap-2 shrink-0">
-          {approved ? (
-            /* Already approved — the remaining action is to ask for an update. */
-            <Button variant="outline" size="sm" onClick={() => setDeclining(true)}>
-              <AlertTriangle className="w-4 h-4" /> Request an update
+          {/* Approve stays the emphasised action; asking for a change is the
+              low-emphasis option and sits closest to "Next document", matching
+              the Company info step. */}
+          {!approved && (
+            <Button variant="success" size="sm" onClick={() => onReviewDocument(doc.id, "approve")}>
+              <CheckCircle2 className="w-4 h-4" /> {t("Approve")}
             </Button>
-          ) : (
-            <>
-              <Button variant="outline" size="sm" onClick={() => setDeclining(true)}>
-                <XCircle className="w-4 h-4" /> Decline
-              </Button>
-              <Button variant="success" size="sm" onClick={() => onReviewDocument(doc.id, "approve")}>
-                <CheckCircle2 className="w-4 h-4" /> Approve
-              </Button>
-            </>
           )}
+          <Button variant="ghost" size="sm" onClick={() => setDeclining(true)}>
+            <AlertTriangle className="w-4 h-4" /> {t("Request a change")}
+          </Button>
         </div>
       )}
     </div>
@@ -553,12 +569,17 @@ function SectionReviewControl({
   section,
   onChange,
   disabled,
+  fixing: controlledFixing,
+  onFixingChange,
 }: {
   section: SectionReview;
   onChange: (s: SectionReview) => void;
   disabled?: boolean;
+  /** Lets the step footer open the "request a change" flow from outside. */
+  fixing?: boolean;
+  onFixingChange?: (v: boolean) => void;
 }) {
-  const [fixing, setFixing] = useState(false);
+  const [localFixing, setLocalFixing] = useState(false);
   const [draft, setDraft] = useState("");
 
   /*
@@ -566,6 +587,9 @@ function SectionReviewControl({
    * Returning null here left an accepted application looking as though its
    * company information had never been checked.
    */
+  const fixing = controlledFixing ?? localFixing;
+  const setFixing = (v: boolean) => (onFixingChange ? onFixingChange(v) : setLocalFixing(v));
+
   if (disabled) {
     if (section.status === "confirmed") {
       return (
@@ -665,6 +689,7 @@ function StepNav({
   nextLabel,
   nextDisabled,
   nextHint,
+  secondary,
 }: {
   onBack?: () => void;
   onNext: () => void;
@@ -672,18 +697,22 @@ function StepNav({
   nextDisabled?: boolean;
   /** Explains why the step can't be left yet. */
   nextHint?: string;
+  /** Low-emphasis action shown immediately left of Next. */
+  secondary?: ReactNode;
 }) {
+  const { t } = useI18n();
   return (
     <div className="flex items-center justify-between mt-6 gap-4">
       {onBack ? (
         <Button variant="ghost" onClick={onBack}>
-          <ArrowLeft className="w-4 h-4" /> Back
+          <ArrowLeft className="w-4 h-4" /> {t("Back")}
         </Button>
       ) : (
         <span />
       )}
       <div className="flex items-center gap-3">
         {nextDisabled && nextHint && <span className="text-xs text-muted-foreground">{nextHint}</span>}
+        {secondary}
         <Button variant="default" disabled={nextDisabled} onClick={onNext}>
           {nextLabel} <ArrowRight className="w-4 h-4" />
         </Button>
@@ -1056,7 +1085,7 @@ function SendContractStep({
         </Button>
         <Button variant="default" onClick={send} disabled={busy || picked.size === 0}>
           {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-          {t("Send")}
+          {t("Send contracts")}
           <ArrowRight className="w-4 h-4" />
         </Button>
       </div>

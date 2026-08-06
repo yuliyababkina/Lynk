@@ -216,6 +216,8 @@ const DE: Record<string, string> = {
   // ── Send contract & service catalogues (prospect review) ────────────────
   "Next: Send Contract and Service catalogs": "Weiter: Vertrag und Leistungskataloge senden",
   "Reject application": "Bewerbung ablehnen",
+  "Request a change": "Änderung anfordern",
+  "Send request": "Anfrage senden",
   "Send Contract & Service Catalogs": "Vertrag & Leistungskataloge senden",
   "Send Contract": "Vertrag senden",
   "Choose what to send {company} for signature. The case moves to awaiting signature once sent.":
@@ -225,7 +227,7 @@ const DE: Record<string, string> = {
   "Select the price lists that apply to this supplier's work orders.":
     "Wählen Sie die Preislisten, die für die Aufträge dieses Lieferanten gelten.",
   "Select at least one service catalogue.": "Wählen Sie mindestens einen Leistungskatalog.",
-  Send: "Senden",
+  "Send contracts": "Verträge senden",
   "Awaiting supplier signature": "Wartet auf Unterschrift des Lieferanten",
   "Contract Sent (Pending Signature)": "Vertrag gesendet (Unterschrift ausstehend)",
 
