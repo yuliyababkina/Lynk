@@ -18,12 +18,14 @@ import {
   Pencil,
   Loader2,
   RotateCcw,
+  FileSignature,
   type LucideIcon,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { WizardStepper } from "@/components/yarowa/wizard-stepper";
+import { WizardFooter } from "@/components/yarowa/wizard-footer";
 import { PdfCanvas } from "@/components/yarowa/pdf-canvas";
 import { STANDARD_DOCUMENT_TYPES } from "@/lib/onboarding-documents";
 import { DOC_STATUS_META, docStatusMeta } from "@/lib/document-status";
@@ -74,6 +76,16 @@ function buildChecklist(docs: SupplierDoc[]): DocRow[] {
   return rows;
 }
 
+/* Outcome shows in the badge's colour and icon, not just its text: a decided
+ * case reads at a glance instead of looking the same as one still in review. */
+const CASE_BADGE: Record<string, { variant: string; Icon?: LucideIcon }> = {
+  Accepted: { variant: "success", Icon: CheckCircle2 },
+  Rejected: { variant: "danger", Icon: XCircle },
+  "Changes Requested": { variant: "warning", Icon: AlertTriangle },
+  "Contract Sent (Pending Signature)": { variant: "info", Icon: FileSignature },
+  "In Review": { variant: "info" },
+};
+
 export interface ProspectReviewProps {
   supplier: Supplier;
   docs: SupplierDoc[];
@@ -100,10 +112,21 @@ export function ProspectReview({
   // An already-decided case (Accepted/Rejected) opens on the Summary, where the
   // outcome — and the Reset action for a rejected case — is shown, so the PM
   // isn't forced to click through the review steps again.
+  const { t } = useI18n();
   const [step, setStep] = useState<Step>(
     caseItem.status === "Accepted" || caseItem.status === "Rejected" ? "Summary" : "Company info"
   );
-  const [company, setCompany] = useState<SectionReview>({ status: "pending", comment: "" });
+  /*
+   * Section review state is per-session, so reopening a decided case used to
+   * show Company info as "Not reviewed" — nonsense once the application has
+   * been accepted. Both of these statuses are only reachable through the send
+   * step, which requires the company section to be confirmed, so seed it.
+   */
+  const [company, setCompany] = useState<SectionReview>(() =>
+    caseItem.status === "Accepted" || caseItem.status === "Contract Sent (Pending Signature)"
+      ? { status: "confirmed", comment: "" }
+      : { status: "pending", comment: "" }
+  );
   const rows = useMemo(() => buildChecklist(docs), [docs]);
   const [selectedKey, setSelectedKey] = useState<string | null>(rows[0]?.key ?? null);
   const decided = caseItem.status === "Accepted" || caseItem.status === "Rejected";
@@ -129,7 +152,15 @@ export function ProspectReview({
             {contact?.name ? `${contact.name} · ` : ""}Prospect · Onboarding review
           </p>
         </div>
-        <Badge variant="info">{caseItem.status}</Badge>
+        {(() => {
+          const meta = CASE_BADGE[caseItem.status] ?? { variant: "info" };
+          return (
+            <Badge variant={meta.variant as never}>
+              {meta.Icon && <meta.Icon className="w-3 h-3" />}
+              {t(caseItem.status)}
+            </Badge>
+          );
+        })()}
       </div>
 
       <div className="mb-6">
@@ -530,7 +561,31 @@ function SectionReviewControl({
   const [fixing, setFixing] = useState(false);
   const [draft, setDraft] = useState("");
 
-  if (disabled) return null;
+  /*
+   * A decided case can't be re-reviewed, but it still has to show the outcome.
+   * Returning null here left an accepted application looking as though its
+   * company information had never been checked.
+   */
+  if (disabled) {
+    if (section.status === "confirmed") {
+      return (
+        <div className="mt-5 flex items-center gap-2 rounded-lg border border-success/30 bg-success-soft/40 px-3 py-2 text-sm text-success-ink">
+          <CheckCircle2 className="w-4 h-4 shrink-0" /> Verified and accepted
+        </div>
+      );
+    }
+    if (section.status === "fix") {
+      return (
+        <div className="mt-5 rounded-lg border border-warning/40 bg-warning-soft/40 px-3 py-2.5 text-sm text-warning-ink">
+          <span className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 shrink-0" /> Fix requested
+          </span>
+          {section.comment && <p className="text-xs text-warning-ink/90 mt-1">“{section.comment}”</p>}
+        </div>
+      );
+    }
+    return null;
+  }
 
   if (section.status === "confirmed") {
     return (
@@ -672,15 +727,33 @@ function DecisionStep({
 
   const declinedRows = rows.filter((r) => r.doc?.status === "rejected-resubmit");
   const missingRows = rows.filter((r) => !r.doc);
-  const pendingRows = rows.filter((r) => r.doc?.status === "pending-review");
-  const approvedCount = rows.filter((r) => r.doc?.status === "valid").length;
 
   const companyOk = company.status === "confirmed";
   // Onboarding can't be fully approved with documents missing, declined, or
   // still pending review — any of those routes back to the supplier as an
   // update request instead of silently blocking Accept.
   const hasIssues = company.status === "fix" || declinedRows.length > 0 || missingRows.length > 0;
-  const canAccept = companyOk && rows.length > 0 && approvedCount === rows.length;
+  /*
+   * Sending is blocked only by something the PM hasn't accepted yet: the company
+   * section, or a document that is missing, still pending review, declined, or
+   * expired. A document that is approved but merely nearing expiry
+   * (warning-60/30) counts as accepted — previously only "valid" counted, so a
+   * single expiring document disabled the primary action for good while the
+   * hint text still claimed nothing was awaiting review.
+   */
+  const unacceptedRows = rows.filter(
+    (r) =>
+      !r.doc ||
+      r.doc.status === "pending-review" ||
+      r.doc.status === "rejected-resubmit" ||
+      r.doc.status === "blocked"
+  );
+  const canAccept = companyOk && unacceptedRows.length === 0;
+  const blocker = !companyOk
+    ? "Confirm the company information to continue."
+    : unacceptedRows.length > 0
+      ? `${unacceptedRows.length} document${unacceptedRows.length === 1 ? "" : "s"} still need your approval.`
+      : null;
 
   const feedbackParts: string[] = [];
   if (company.status === "fix" && company.comment) feedbackParts.push(`Company info: ${company.comment}`);
@@ -725,8 +798,23 @@ function DecisionStep({
   return (
     <StepShell title="Summary" subtitle="Summary of your review. Approved items are ready; items needing an update are editable.">
       {decided && (
-        <div className="mb-4 rounded-lg border border-border bg-secondary/40 px-3 py-2 text-sm">
-          This application is already <span className="font-semibold">{caseStatus}</span>.
+        <div
+          className={`mb-4 flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${
+            caseStatus === "Accepted"
+              ? "bg-success-soft text-success-ink"
+              : caseStatus === "Rejected"
+                ? "bg-critical-soft text-critical-ink"
+                : "border border-border bg-secondary/40"
+          }`}
+        >
+          {caseStatus === "Accepted" ? (
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
+          ) : caseStatus === "Rejected" ? (
+            <XCircle className="w-4 h-4 shrink-0" />
+          ) : null}
+          <span>
+            This application is already <span className="font-semibold">{t(caseStatus)}</span>.
+          </span>
         </div>
       )}
 
@@ -791,43 +879,44 @@ function DecisionStep({
           </div>
         </div>
       ) : (
-        <div className="space-y-2">
-          {hasIssues ? (
-            <Button variant="dark" className="w-full" disabled={busy} onClick={() => decide("changes", combinedFeedback)}>
-              {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-              Request update ({feedbackParts.length})
+        <>
+          {blocker && <p className="text-xs text-muted-foreground text-center mb-3">{blocker}</p>}
+          <WizardFooter onBack={onBack}>
+            {/* Secondary + destructive: consequential, but visually subordinate
+                to the one clear primary path beside it. */}
+            <Button
+              variant="outline"
+              className="text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+              disabled={busy}
+              onClick={() => setRejecting(true)}
+            >
+              {t("Reject application")}
             </Button>
-          ) : (
-            // Approving isn't the finish line — the contract and catalogues still
-            // have to go out for signature, so the primary action names that step.
-            <Button variant="default" className="w-full" disabled={busy || !canAccept} onClick={onNextSendContract}>
-              {t("Next: Send Contract and Service catalogs")}
-              <ArrowRight className="w-4 h-4" />
-            </Button>
-          )}
-          {!canAccept && !hasIssues && (
-            <p className="text-xs text-muted-foreground text-center">
-              {pendingRows.length} document{pendingRows.length === 1 ? "" : "s"} still awaiting your review.
-            </p>
-          )}
-          {/* Secondary + destructive: consequential, but visually subordinate to
-              the one clear primary path. */}
-          <Button
-            variant="outline"
-            className="w-full text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
-            disabled={busy}
-            onClick={() => setRejecting(true)}
-          >
-            {t("Reject application")}
+            {hasIssues ? (
+              <Button variant="dark" disabled={busy} onClick={() => decide("changes", combinedFeedback)}>
+                {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                Request update ({feedbackParts.length})
+              </Button>
+            ) : (
+              // Approving isn't the finish line — the contract and catalogues
+              // still have to go out for signature, so the primary names that step.
+              <Button variant="default" disabled={busy || !canAccept} onClick={onNextSendContract}>
+                {t("Next: Send Contract and Service catalogs")}
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            )}
+          </WizardFooter>
+        </>
+      )}
+
+      {/* The main branch already has Back inside its footer. */}
+      {(isRejected || rejecting) && (
+        <div className="mt-4">
+          <Button variant="ghost" onClick={onBack}>
+            <ArrowLeft className="w-4 h-4" /> {t("Back")}
           </Button>
         </div>
       )}
-
-      <div className="mt-4">
-        <Button variant="ghost" onClick={onBack}>
-          <ArrowLeft className="w-4 h-4" /> Back
-        </Button>
-      </div>
     </StepShell>
   );
 }
