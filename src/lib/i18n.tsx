@@ -253,6 +253,7 @@ const DE: Record<string, string> = {
   METRIC: "KENNZAHL",
   "{days}d no response": "{days} T keine Antwort",
   "Submitted — awaiting review": "Eingereicht — wartet auf Prüfung",
+  "Activated in Lynk": "In Lynk aktiviert",
   "Changes requested — awaiting resubmission": "Änderungen angefordert — wartet auf erneute Einreichung",
   "{count} cases": "{count} Fälle",
   "Send Reminder": "Erinnerung senden",

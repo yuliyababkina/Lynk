@@ -19,10 +19,9 @@ export function TopHeader({
   return (
     <header className="h-12 flex items-center px-6 shrink-0 bg-brand-navy text-brand-navy-foreground">
       {leading ? <div className="mr-3">{leading}</div> : null}
-      <span className="text-sm font-medium text-brand-navy-foreground/70">
-        Lynk / {t("Procurement Platform")} /{" "}
-        <span className="text-brand-navy-foreground/95">{t(currentLabel)}</span>
-      </span>
+      {/* Just the current page — the brand and platform name already sit in the
+          sidebar header, so repeating them here only ate horizontal space. */}
+      <span className="text-sm font-medium text-brand-navy-foreground/95">{t(currentLabel)}</span>
       <div className="flex-1" />
       <LanguageToggle tone="dark" />
       {onSwitchAccount ? (

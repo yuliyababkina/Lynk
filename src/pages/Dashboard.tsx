@@ -47,7 +47,7 @@ export function Dashboard({
   resolvedIds: Set<string>;
   onResolve: (t: Ticket, action: string) => void;
 }) {
-  const { tickets: TICKETS, docs: DOCS, ticketStatusById, setTicketStatus } = useLynkData();
+  const { tickets: TICKETS, ticketStatusById, setTicketStatus } = useLynkData();
   const { t: tr } = useI18n();
   const [filter, setFilter] = useState<"All tickets" | TicketCategory>("All tickets");
   const [expanded, setExpanded] = useState<Set<Criticality>>(new Set());
@@ -146,9 +146,6 @@ export function Dashboard({
               {visible.map((t) => {
                 const ActionIcon = ACTION_ICON[t.primaryAction];
                 const CategoryIcon = CATEGORY_ICON[t.category];
-                // A ticket with an uploaded renewal is reviewed (opens the doc), not dismissed.
-                const reviewable =
-                  t.source === "compliance-monitoring" && !!DOCS.find((d) => d.id === t.targetId)?.renewal;
                 return (
                   <TaskRow
                     key={t.id}
@@ -176,10 +173,12 @@ export function Dashboard({
                     action={
                       <Button
                         variant={t.criticality === "critical" || t.criticality === "high" ? "default" : "outline"}
+                        // The action opens the ticket in the drawer rather than
+                        // resolving straight from the row, so the action is always
+                        // taken with the ticket's full context in view.
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (reviewable) onSelectTicket(t);
-                          else onResolve(t, t.primaryAction);
+                          onSelectTicket(t);
                         }}
                       >
                         {ActionIcon && <ActionIcon size={14} />}

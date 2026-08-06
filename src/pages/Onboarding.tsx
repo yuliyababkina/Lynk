@@ -35,20 +35,38 @@ function onbStatusVariant(s: OnboardingStatus): string {
   }
 }
 
-function onbMetric(c: OnboardingCase): string {
+type Translate = (source: string, vars?: Record<string, string | number>) => string;
+
+function onbMetric(c: OnboardingCase, tr: Translate): string {
   switch (c.status) {
     case "In Review":
-      return "Submitted — awaiting review";
+      return tr("Submitted — awaiting review");
     case "Accepted":
-      return "Activated in Lynk";
+      return tr("Activated in Lynk");
     case "Changes Requested":
-      return "Changes requested — awaiting resubmission";
+      return tr("Changes requested — awaiting resubmission");
     case "Rejected":
-      return "Rejected";
+      return tr("Rejected");
     default:
-      return `${c.daysNoResponse}d no response`;
+      // Built through tr so the day count lands inside the translated phrase.
+      return tr("{days}d no response", { days: c.daysNoResponse });
   }
 }
+
+/*
+ * How urgently each case needs the Procurement Manager to act. Cases waiting on
+ * the PM come first, then ones that need chasing, then those waiting on the
+ * supplier, and finally the settled ones.
+ */
+const URGENCY_RANK: Record<OnboardingStatus, number> = {
+  "In Review": 0,
+  Stale: 1,
+  "Changes Requested": 2,
+  Pending: 3,
+  Opened: 4,
+  Rejected: 5,
+  Accepted: 6,
+};
 
 export function Onboarding({
   initialSelectedId,
@@ -85,10 +103,14 @@ export function Onboarding({
   // front of ONBOARDING_CASES — see LynkDataContext.
   const cases = useMemo(() => ONBOARDING_CASES, [ONBOARDING_CASES]);
 
-  const filtered = useMemo(
-    () => (tab === "Stale" ? cases.filter((c) => c.status === "Stale") : cases),
-    [tab, cases]
-  );
+  const filtered = useMemo(() => {
+    const list = tab === "Stale" ? cases.filter((c) => c.status === "Stale") : cases;
+    // Most urgent first; within the same status the longest-waiting case leads.
+    return [...list].sort(
+      (a, b) =>
+        URGENCY_RANK[a.status] - URGENCY_RANK[b.status] || b.daysNoResponse - a.daysNoResponse
+    );
+  }, [tab, cases]);
 
   const stale = cases.filter((c) => c.status === "Stale").length;
   const highPriority = cases.filter((c) => c.criticality === "high").length;
@@ -185,7 +207,7 @@ export function Onboarding({
                   <td className="px-4 py-3">
                     <Badge variant={onbStatusVariant(c.status) as any}>{tr(c.status)}</Badge>
                   </td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground">{tr(onbMetric(c))}</td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground">{onbMetric(c, tr)}</td>
                 </tr>
               ))}
             </tbody>
