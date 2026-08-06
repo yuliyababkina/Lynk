@@ -146,7 +146,39 @@ server-side-only secrets, read only inside `api/send-invite.js`.
 Redeploy after adding them (env var changes require a new deployment to take
 effect — "Redeploy" in Vercel, or push a commit).
 
-### 7.4 How the magic link works
+### 7.4 DMARC (recommended once the domain is verified)
+
+SPF + DKIM (added during domain verification) prove the mail is authorised.
+DMARC tells receivers what to do when that check fails, and Gmail/Outlook now
+deprioritise bulk mail that has no DMARC policy at all. Add one TXT record
+where the domain's DNS lives (Vercel's DNS panel if the nameservers point at
+Vercel, otherwise the registrar):
+
+    Name:  _dmarc
+    Type:  TXT
+    Value: v=DMARC1; p=none; rua=mailto:dmarc@yourdomain.com;
+
+Start at `p=none` (monitor only, changes no delivery behaviour), then tighten
+to `quarantine` once the aggregate reports look clean.
+
+### 7.5 Sending vs. receiving — these are separate
+
+Everything above only lets the app **send**. It does not create a mailbox, so a
+supplier hitting Reply on an invitation has nowhere to land.
+
+To **receive** mail at the domain (e.g. `procurement@yourdomain.com`) you need a
+mailbox provider (Google Workspace, Fastmail, Migadu, …) and its **MX** records.
+MX is independent of the SPF/DKIM records Resend asked for — adding one does not
+give you the other, and both can coexist on the same domain.
+
+### 7.6 Send invitations from the custom domain
+
+The magic link is built client-side from `window.location.origin`, so the link
+in the email points at whichever URL the PM was using when they clicked "Send
+Invitation". Invite from the production domain rather than a `*.vercel.app`
+preview URL, or the emailed link will point into that preview deployment.
+
+### 7.7 How the magic link works
 
 - Inviting a new prospect generates a random token (`crypto.randomUUID()`)
   and stores it on the `onboarding_cases` row (`invite_token` column).
