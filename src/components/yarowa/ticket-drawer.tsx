@@ -8,6 +8,8 @@ import { DetailDrawer } from "@/components/yarowa/detail-drawer";
 import { RenewalReviewCard } from "@/components/yarowa/renewal-review-card";
 import { TicketStatusMenu } from "@/components/yarowa/ticket-status-menu";
 import { CriticalityIcon } from "@/components/yarowa/criticality-icon";
+import { useI18n } from "@/lib/i18n";
+import { translateTicketTitle, translateAgeLabel } from "@/lib/ticket-i18n";
 import type { View } from "@/App";
 
 const sourceToView: Record<string, View> = {
@@ -49,6 +51,7 @@ export function TicketDrawer({
     ticketStatusById,
     setTicketStatus,
   } = useLynkData();
+  const { t } = useI18n();
   const status: TicketStatus = ticketStatusById.get(ticket.id) ?? "To do";
   const PrimaryActionIcon = ACTION_ICON[ticket.primaryAction];
   const doc = ticket.source === "compliance-monitoring" ? DOCS.find((d) => d.id === ticket.targetId) : undefined;
@@ -66,19 +69,19 @@ export function TicketDrawer({
           <div className="flex gap-2">
             <Badge variant={ticket.criticality}>
               <CriticalityIcon criticality={ticket.criticality} />
-              {ticket.criticality}
+              {t(ticket.criticality)}
             </Badge>
-            <Badge variant="neutral">{sourceLabel[ticket.source]}</Badge>
+            <Badge variant="neutral">{t(sourceLabel[ticket.source])}</Badge>
           </div>
           <TicketStatusMenu status={status} onChange={(s) => setTicketStatus(ticket, s)} />
         </div>
       }
     >
-      <h3 className="font-semibold text-base mb-3">{ticket.title}</h3>
+      <h3 className="font-semibold text-base mb-3">{translateTicketTitle(ticket.title, t)}</h3>
 
         <div className="grid grid-cols-2 gap-3 text-xs mb-4">
           <div>
-            <div className="text-muted-foreground mb-0.5">ENTITY</div>
+            <div className="text-muted-foreground mb-0.5">{t("ENTITY")}</div>
             <button
               className="text-accent underline font-medium text-left"
               onClick={() => onOpenSupplier(ticket.entityName)}
@@ -87,19 +90,21 @@ export function TicketDrawer({
             </button>
           </div>
           <div>
-            <div className="text-muted-foreground mb-0.5">TYPE</div>
-            <div className="font-medium">{ticket.entityType}</div>
+            <div className="text-muted-foreground mb-0.5">{t("TYPE")}</div>
+            <div className="font-medium">{t(ticket.entityType)}</div>
           </div>
           <div>
-            <div className="text-muted-foreground mb-0.5">OPENED</div>
-            <div className="font-medium">{ticket.ageLabel}</div>
+            <div className="text-muted-foreground mb-0.5">{t("OPENED")}</div>
+            <div className="font-medium">{translateAgeLabel(ticket.ageLabel, t)}</div>
           </div>
         </div>
 
         {doc && (
           <div className="border border-border rounded-lg p-3 mb-4 space-y-2 text-xs">
-            <div className="font-semibold text-sm">{doc.documentName}</div>
-            <div className="text-muted-foreground">{doc.documentCategory} · Expires {doc.expiryDate}</div>
+            <div className="font-semibold text-sm">{t(doc.documentName)}</div>
+            <div className="text-muted-foreground">
+              {t(doc.documentCategory)} · {t("Expires {date}", { date: doc.expiryDate })}
+            </div>
             <div className="pt-2 border-t border-border space-y-1">
               {doc.history.map((h, i) => (
                 <div key={i}>
@@ -162,20 +167,19 @@ export function TicketDrawer({
         ) : (
           <>
             <div className="text-xs text-muted-foreground mb-4">
-              <div className="mb-1 font-medium text-foreground">What needs attention</div>
-              Review this item and take the recommended action below, or open the full record for more
-              context.
+              <div className="mb-1 font-medium text-foreground">{t("What needs attention")}</div>
+              {t("Review this item and take the recommended action below, or open the full record for more context.")}
             </div>
 
             <div className="flex flex-col gap-2 mb-4">
               <Button variant="default" className="w-full" onClick={() => onResolve(ticket, ticket.primaryAction)}>
                 {PrimaryActionIcon && <PrimaryActionIcon size={14} />}
-                {ticket.primaryAction}
+                {t(ticket.primaryAction)}
               </Button>
               {ticket.primaryAction !== "Escalate" && (
                 <Button variant="outline" className="w-full" onClick={() => onResolve(ticket, "Escalate")}>
                   <AlertTriangle size={14} />
-                  Escalate
+                  {t("Escalate")}
                 </Button>
               )}
             </div>
@@ -187,7 +191,7 @@ export function TicketDrawer({
             onClick={() => onNavigate(targetView, ticket.targetId)}
             className="w-full flex items-center justify-center gap-1.5 text-sm text-accent font-medium py-2 border-t border-border pt-3"
           >
-            Open in {sourceLabel[ticket.source]}
+            {t("Open in {view}", { view: t(sourceLabel[ticket.source]) })}
             <ArrowUpRight size={14} />
           </button>
         )}

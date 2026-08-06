@@ -13,6 +13,7 @@ import { CriticalityIcon } from "@/components/yarowa/criticality-icon";
 import { ACTION_ICON } from "@/lib/action-icons";
 import { criticalityLabel } from "@/lib/theme";
 import { useI18n } from "@/lib/i18n";
+import { translateTicketTitle, translateAgeLabel } from "@/lib/ticket-i18n";
 import type { Ticket, Criticality, TicketCategory, TicketStatus } from "../types";
 
 const CATEGORIES: TicketCategory[] = [
@@ -123,7 +124,7 @@ export function Dashboard({
       {grouped.length === 0 && (
         <div className="border border-dashed border-border rounded-2xl py-16 text-center">
           <Check className="mx-auto mb-3 text-success-ink" size={28} />
-          <p className="text-sm font-medium">You're all caught up</p>
+          <p className="text-sm font-medium">{tr("You're all caught up")}</p>
           <p className="text-xs text-muted-foreground mt-1">
             No open tickets{filter !== "All tickets" ? ` in ${filter}` : ""}.
           </p>
@@ -153,10 +154,10 @@ export function Dashboard({
                     key={t.id}
                     onClick={() => onSelectTicket(t)}
                     icon={CategoryIcon && <CategoryIcon size={16} className="text-muted-foreground" aria-hidden="true" />}
-                    title={t.title}
+                    title={translateTicketTitle(t.title, tr)}
                     subline={
                       <>
-                        {t.entityType} ·{" "}
+                        {tr(t.entityType)} ·{" "}
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -166,7 +167,7 @@ export function Dashboard({
                         >
                           {t.entityName}
                         </button>{" "}
-                        · {t.ageLabel}
+                        · {translateAgeLabel(t.ageLabel, tr)}
                       </>
                     }
                     status={
@@ -182,7 +183,7 @@ export function Dashboard({
                         }}
                       >
                         {ActionIcon && <ActionIcon size={14} />}
-                        {t.primaryAction}
+                        {tr(t.primaryAction)}
                       </Button>
                     }
                   />
@@ -220,7 +221,7 @@ export function Dashboard({
                 onClick={() => onSelectTicket(t)}
                 muted
                 icon={CategoryIcon && <CategoryIcon size={16} className="text-muted-foreground" aria-hidden="true" />}
-                title={t.title}
+                title={translateTicketTitle(t.title, tr)}
                 subline={
                   <span className="flex items-center gap-1">
                     {/* criticality demoted to a secondary tag once resolved */}

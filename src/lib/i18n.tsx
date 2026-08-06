@@ -59,7 +59,11 @@ const DE: Record<string, string> = {
     "Bitte lesen Sie diese, bevor Sie Ihre Firmendaten eingeben.",
 
   // ── Structured / reference data (backend-owned string set) ──────────────
-  // Ticket criticality
+  // Ticket criticality (badges use the raw lowercase value from the data)
+  critical: "kritisch",
+  high: "hoch",
+  medium: "mittel",
+  low: "niedrig",
   Critical: "Kritisch",
   High: "Hoch",
   Medium: "Mittel",
@@ -88,6 +92,84 @@ const DE: Record<string, string> = {
   Prospect: "Interessent",
   Supplier: "Lieferant",
   "Service Provider": "Dienstleister",
+
+  // ── Ticket titles (templated backend strings — see lib/ticket-i18n) ─────
+  "{subject} — rejected, resubmission pending": "{subject} — abgelehnt, erneute Einreichung ausstehend",
+  "{subject} — {days} days to expiry": "{subject} — {days} Tage bis zum Ablauf",
+  "{subject} — expired {days} days ago": "{subject} — vor {days} Tagen abgelaufen",
+  "{subject} — expiring in {days} days": "{subject} — läuft in {days} Tagen ab",
+  "{subject} — renewal awaiting review": "{subject} — Verlängerung wartet auf Prüfung",
+  "{subject} — renewal in progress": "{subject} — Verlängerung in Bearbeitung",
+  "Invitation stale — {days} days without response": "Einladung veraltet — {days} Tage ohne Antwort",
+  "Invitation sent — 1 day without response": "Einladung gesendet — 1 Tag ohne Antwort",
+  "Invitation sent — {days} days without response": "Einladung gesendet — {days} Tage ohne Antwort",
+  "Profile completeness {pct}% — below {target}% target":
+    "Profilvollständigkeit {pct}% — unter Zielwert {target}%",
+  "Profile completeness {pct}% — below {target}% preferred":
+    "Profilvollständigkeit {pct}% — unter empfohlenen {target}%",
+  "IBAN change request — awaiting second-eye approval": "IBAN-Änderungsantrag — wartet auf Zweitprüfung",
+  "IBAN change request — awaiting first-eye endorsement": "IBAN-Änderungsantrag — wartet auf Erstprüfung",
+  "Service Catalogue entry — draft, not yet approved":
+    "Leistungskatalog-Eintrag — Entwurf, noch nicht genehmigt",
+
+  // Relative age labels
+  "{days} days ago": "vor {days} Tagen",
+  "1 day ago": "vor 1 Tag",
+  Today: "Heute",
+
+  // Ticket actions
+  Review: "Prüfen",
+  Escalate: "Eskalieren",
+  Renew: "Verlängern",
+  Remind: "Erinnern",
+  Approve: "Genehmigen",
+  Request: "Anfordern",
+
+  // Ticket workflow statuses
+  "To do": "Offen",
+  "In progress": "In Bearbeitung",
+  Resolved: "Erledigt",
+
+  // Ticket drawer
+  ENTITY: "ENTITÄT",
+  TYPE: "TYP",
+  OPENED: "GEÖFFNET",
+  "What needs attention": "Was Aufmerksamkeit erfordert",
+  "Review this item and take the recommended action below, or open the full record for more context.":
+    "Prüfen Sie diesen Eintrag und führen Sie die empfohlene Aktion unten aus, oder öffnen Sie den vollständigen Datensatz für mehr Kontext.",
+  "Open in {view}": "In {view} öffnen",
+  "Expires {date}": "Läuft ab am {date}",
+
+  // ── Compliance Monitoring page ──────────────────────────────────────────
+  "Continuous document expiry monitoring. Warnings at 60 days, auto-notification at 30 days, auto-block on expiry.":
+    "Kontinuierliche Überwachung des Dokumentenablaufs. Warnungen bei 60 Tagen, automatische Benachrichtigung bei 30 Tagen, automatische Sperrung bei Ablauf.",
+  "{count} supplier blocked from work orders": "{count} Lieferant von Aufträgen gesperrt",
+  "Document expiry passed without renewal. Review any uploaded renewals to reactivate.":
+    "Dokument ist ohne Verlängerung abgelaufen. Prüfen Sie hochgeladene Verlängerungen zur Reaktivierung.",
+  // ("Action Required" is already defined above with the compliance tab filters.)
+  "60-Day Warnings": "60-Tage-Warnungen",
+  "Blocked Suppliers": "Gesperrte Lieferanten",
+  "Fully Compliant": "Vollständig konform",
+  "DOCUMENT / SUPPLIER": "DOKUMENT / LIEFERANT",
+  CATEGORY: "KATEGORIE",
+  EXPIRY: "ABLAUF",
+  STATUS: "STATUS",
+  "{days}d remaining": "{days} T verbleibend",
+  "Expired {days}d ago": "Vor {days} T abgelaufen",
+  "Upload awaiting review": "Upload wartet auf Prüfung",
+  // Document categories + supplier trades (reference data)
+  Insurance: "Versicherung",
+  Certification: "Zertifizierung",
+  Licence: "Lizenz",
+  Manufacturing: "Fertigung",
+  Construction: "Bau",
+  Logistics: "Logistik",
+  "IT Services": "IT-Dienstleistungen",
+  Electronics: "Elektronik",
+  // Lifecycle legend
+  "Expired → Blocked": "Abgelaufen → Gesperrt",
+  "Upload → Review": "Upload → Prüfung",
+  "Accept → Reactivated": "Annahme → Reaktiviert",
 
   // Landing / roles board
   "Supplier Management Platform": "Lieferantenmanagement-Plattform",
@@ -162,6 +244,8 @@ const DE: Record<string, string> = {
   "Bank Confirmation Letter": "Bankbestätigungsschreiben",
   "Trade Licence": "Gewerbeschein",
   "ISO 9001 Certificate": "ISO-9001-Zertifikat",
+  "Cyber Liability Insurance": "Cyber-Haftpflichtversicherung",
+  "Environmental Permit": "Umweltgenehmigung",
   "Conflict Minerals Declaration": "Konfliktmineralien-Erklärung",
   "Standard Compliance Documents": "Standard-Compliance-Dokumente",
   "These documents are required for all suppliers on the Lynk platform.":
