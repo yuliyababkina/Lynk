@@ -482,7 +482,12 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
             s.id === supplierId ? { ...s, compliance: "Pending Review" } : s
           ),
           onboardingCases: exists
-            ? prev.onboardingCases.map((c) => (c.id === caseId ? onbCase : c))
+            ? // Merge, never replace: swapping in a fresh object dropped
+              // inviteToken and email, which instantly invalidated the
+              // prospect's magic link the moment they submitted.
+              prev.onboardingCases.map((c) =>
+                c.id === caseId ? { ...c, status: "In Review" as const, daysNoResponse: 0 } : c
+              )
             : [onbCase, ...prev.onboardingCases],
         };
       });

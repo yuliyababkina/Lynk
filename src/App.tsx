@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { Sidebar } from "@/components/yarowa/sidebar";
 import { TopHeader } from "@/components/yarowa/top-header";
 import { TicketDrawer } from "@/components/yarowa/ticket-drawer";
@@ -86,6 +86,9 @@ export default function App() {
     addOnboardingCase,
   } = useLynkData();
 
+  // Remembers a token we already accepted, so a data refresh can't revoke it.
+  const resolvedInviteRef = useRef<string | null>(null);
+
   useEffect(() => {
     const token = new URLSearchParams(window.location.search).get("invite");
     if (!token) {
@@ -94,13 +97,18 @@ export default function App() {
     }
     const match = ONBOARDING_CASES.find((c) => c.inviteToken === token);
     if (match) {
+      resolvedInviteRef.current = token;
       setInviteProspect({
         id: onboardingSupplierId(match.id),
         companyName: match.companyName,
         contactName: match.contactName,
       });
       setRole("prospect");
-    } else {
+    } else if (resolvedInviteRef.current !== token) {
+      // Only reject a token we never resolved. This effect re-runs on every
+      // change to the onboarding cases, so without this guard any later update
+      // that touched the prospect's case would eject them from their own
+      // onboarding with "this invitation link isn't valid".
       setInviteProspect(null);
     }
   }, [ONBOARDING_CASES]);
