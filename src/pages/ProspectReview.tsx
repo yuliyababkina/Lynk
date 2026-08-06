@@ -225,6 +225,7 @@ export function ProspectReview({
         <div className="max-w-2xl mx-auto">
           <SendContractStep
             supplier={supplier}
+            recipientEmail={caseItem.email}
             onBack={() => setStep("Summary")}
             onSend={async (contractName: string, catalogueNames: string[]) => {
               await onSendContract(supplier.id, contractName, catalogueNames);
@@ -993,10 +994,13 @@ function SummaryItem({
  */
 function SendContractStep({
   supplier,
+  recipientEmail,
   onBack,
   onSend,
 }: {
   supplier: Supplier;
+  /** Where the "ready to sign" email goes — shown so the PM can see it. */
+  recipientEmail?: string;
   onBack: () => void;
   onSend: (contractName: string, catalogueNames: string[]) => Promise<void>;
 }) {
@@ -1078,6 +1082,12 @@ function SendContractStep({
           )}
         </div>
       </div>
+
+      {recipientEmail && (
+        <p className="text-xs text-muted-foreground pt-4">
+          {t("An email with a signing link goes to {email}.", { email: recipientEmail })}
+        </p>
+      )}
 
       <div className="flex items-center justify-between gap-3 pt-5">
         <Button variant="outline" onClick={onBack} disabled={busy}>

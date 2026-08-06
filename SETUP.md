@@ -178,7 +178,20 @@ in the email points at whichever URL the PM was using when they clicked "Send
 Invitation". Invite from the production domain rather than a `*.vercel.app`
 preview URL, or the emailed link will point into that preview deployment.
 
-### 7.7 How the magic link works
+### 7.7 The second email: contract ready to sign
+
+Sending the contract from the review's Send step also emails the prospect
+(`api/send-contract.js`), listing the contract template and catalogues and
+linking back into the signing step via the same invite token — so no login is
+needed and the prospect lands exactly where they must sign.
+
+It uses the same `RESEND_API_KEY` / `RESEND_FROM` as the invitation, so nothing
+extra to configure. Sending is best-effort: the status change to
+`Contract Sent (Pending Signature)` is persisted first, so a mail failure is
+logged to the console and never rolls the case back. Cases with no stored email
+(the seeded demo prospects) simply skip the email.
+
+### 7.8 How the magic link works
 
 - Inviting a new prospect generates a random token (`crypto.randomUUID()`)
   and stores it on the `onboarding_cases` row (`invite_token` column).

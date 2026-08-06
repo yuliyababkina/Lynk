@@ -32,6 +32,7 @@ import {
   type ProspectDecision,
 } from "./db";
 import { isSupabaseConfigured } from "./supabase";
+import { PRINCIPAL_COMPANY, PROCUREMENT_MANAGER, PROCUREMENT_MANAGER_ROLE } from "./principal";
 import type { Ticket, SupplierDoc, Catalogue, OnboardingCase, TicketStatus, DocStatus } from "../types";
 
 interface LynkDataValue extends LynkDataset {
@@ -547,21 +548,53 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
   const sendContract = useCallback(
     async (supplierId: string, contractName: string, catalogueNames: string[]) => {
       const caseId = onboardingCaseId(supplierId);
-      let name = supplierId;
+      const target = data?.onboardingCases.find((c) => c.id === caseId);
+      const name = target?.companyName ?? supplierId;
+
       setData((prev) => {
         if (!prev) return prev;
         return {
           ...prev,
-          onboardingCases: prev.onboardingCases.map((c) => {
-            if (c.id !== caseId) return c;
-            name = c.companyName;
-            return { ...c, status: "Contract Sent (Pending Signature)" as const };
-          }),
+          onboardingCases: prev.onboardingCases.map((c) =>
+            c.id === caseId ? { ...c, status: "Contract Sent (Pending Signature)" as const } : c
+          ),
         };
       });
       await sendContractDb(supplierId, name, contractName, catalogueNames);
+
+      /*
+       * Tell the prospect their contract is waiting. Reuses the invite token so
+       * the link drops them straight into the signing step — no login. Sending
+       * is best-effort: the status change is already persisted, so a mail
+       * failure must not roll the case back or throw at the caller.
+       */
+      if (target?.email && target.inviteToken) {
+        try {
+          const res = await fetch("/api/send-contract", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              to: target.email,
+              companyName: name,
+              contactName: target.contactName,
+              link: `${window.location.origin}/?invite=${target.inviteToken}`,
+              contractName,
+              catalogues: catalogueNames,
+              principal: PRINCIPAL_COMPANY,
+              sender: PROCUREMENT_MANAGER,
+              senderRole: PROCUREMENT_MANAGER_ROLE,
+            }),
+          });
+          if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            console.error("[Lynk] contract email failed:", body.error ?? res.status);
+          }
+        } catch (e) {
+          console.error("[Lynk] contract email failed:", e);
+        }
+      }
     },
-    []
+    [data?.onboardingCases]
   );
 
   const persistCatalogue = useCallback((c: Catalogue) => {

@@ -228,6 +228,8 @@ const DE: Record<string, string> = {
     "Wählen Sie die Preislisten, die für die Aufträge dieses Lieferanten gelten.",
   "Select at least one service catalogue.": "Wählen Sie mindestens einen Leistungskatalog.",
   "Send contracts": "Verträge senden",
+  "An email with a signing link goes to {email}.":
+    "Eine E-Mail mit Signatur-Link geht an {email}.",
   "Awaiting supplier signature": "Wartet auf Unterschrift des Lieferanten",
   "Contract Sent (Pending Signature)": "Vertrag gesendet (Unterschrift ausstehend)",
 
