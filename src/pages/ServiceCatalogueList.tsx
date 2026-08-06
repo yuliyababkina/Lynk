@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Catalogue, CatalogueStatus } from "../types";
 import { useI18n } from "@/lib/i18n";
+import { translateCatalogueName } from "@/lib/ticket-i18n";
 
 const STATUS_TONE: Record<CatalogueStatus, "success" | "neutral" | "info"> = {
   Active: "success",
@@ -120,7 +121,7 @@ export function ServiceCatalogueList({
               className="text-left bg-card border border-border rounded-2xl p-4 hover:border-accent transition-colors"
             >
               <div className="flex items-start justify-between gap-2 mb-1">
-                <div className="font-semibold">{c.name}</div>
+                <div className="font-semibold">{translateCatalogueName(c.name, tr)}</div>
                 <Badge variant={STATUS_TONE[c.status]}>{tr(c.status)}</Badge>
               </div>
               <div className="text-xs text-muted-foreground mb-4">

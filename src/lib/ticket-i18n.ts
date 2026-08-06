@@ -101,3 +101,14 @@ export function translateAgeLabel(label: string, t: Translate): string {
   }
   return t(trimmed);
 }
+
+/**
+ * Translate a templated service-catalogue name ("Catalog 3 Piping"), falling
+ * back to the original. The trade part goes through the dictionary so it
+ * localises with the rest of the reference data.
+ */
+export function translateCatalogueName(name: string, t: Translate): string {
+  const m = name.match(/^Catalog (\d+) (.+)$/);
+  if (m) return t("Catalog {number} {trade}", { number: m[1], trade: t(m[2]) });
+  return t(name);
+}

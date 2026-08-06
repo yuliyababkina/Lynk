@@ -200,6 +200,7 @@ const DE: Record<string, string> = {
 
   // ── Service Catalogue page ──────────────────────────────────────────────
   "Service catalogues": "Leistungskataloge",
+  "Catalog {number} {trade}": "Katalog {number} {trade}",
   "Price lists per Region and Trade, shared with suppliers for confirmation.":
     "Preislisten pro Region und Gewerk, zur Bestätigung an Lieferanten geteilt.",
   "Upload XLS file": "XLS-Datei hochladen",

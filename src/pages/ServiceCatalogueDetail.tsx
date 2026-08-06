@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "../lib/utils";
 import type { Catalogue } from "../types";
+import { useI18n } from "@/lib/i18n";
+import { translateCatalogueName } from "@/lib/ticket-i18n";
 
 export function ServiceCatalogueDetail({
   catalogue,
@@ -14,6 +16,7 @@ export function ServiceCatalogueDetail({
   onBack: () => void;
   onStartUpdate: () => void;
 }) {
+  const { t } = useI18n();
   const [viewingVersion, setViewingVersion] = useState<string>(catalogue.currentVersion);
   const [remindersSent, setRemindersSent] = useState(false);
 
@@ -31,7 +34,7 @@ export function ServiceCatalogueDetail({
 
       <div className="flex items-start justify-between mb-5">
         <div>
-          <h1 className="text-2xl font-bold mb-1">{catalogue.name}</h1>
+          <h1 className="text-2xl font-bold mb-1">{translateCatalogueName(catalogue.name, t)}</h1>
           {isCurrent ? (
             <p className="text-sm text-muted-foreground">
               Current: {catalogue.currentVersion} · {catalogue.region} · {catalogue.trade} · Valid{" "}
