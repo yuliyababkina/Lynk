@@ -8,6 +8,7 @@ import { Pill } from "@/components/yarowa/pill";
 import { ProspectReview } from "./ProspectReview";
 import type { DocStatus, OnboardingStatus, OnboardingCase } from "../types";
 import type { ProspectDecision } from "../lib/db";
+import { useI18n } from "@/lib/i18n";
 
 // Uploaded-document status → badge (mirrors the supplier portal).
 const DOC_STATUS_META: Record<DocStatus, { label: string; variant: string }> = {
@@ -64,6 +65,7 @@ export function Onboarding({
     deleteOnboardingCase,
   } = useLynkData();
   const [tab, setTab] = useState<"All" | "Stale">("All");
+  const { t: tr } = useI18n();
   const [selected, setSelected] = useState<string | null>(initialSelectedId ?? null);
   const [reviewing, setReviewing] = useState(false);
   const [deletingCase, setDeletingCase] = useState<OnboardingCase | null>(null);
@@ -127,9 +129,9 @@ export function Onboarding({
   return (
     <div className="p-6 flex gap-6">
       <div className="flex-1 min-w-0">
-        <h1 className="text-2xl font-bold mb-1">Onboarding</h1>
+        <h1 className="text-2xl font-bold mb-1">{tr("Onboarding")}</h1>
         <p className="text-sm text-muted-foreground mb-4">
-          Prospect invitations that are stale or incomplete. Follow up to keep your pipeline moving.
+          {tr("Prospect invitations that are stale or incomplete. Follow up to keep your pipeline moving.")}
         </p>
 
         <div className="grid grid-cols-3 gap-3 mb-4">
@@ -139,7 +141,7 @@ export function Onboarding({
             { label: "Stale", value: stale },
           ].map((c) => (
             <div key={c.label} className="bg-card border border-border rounded-lg p-3">
-              <div className="text-xs text-muted-foreground mb-1">{c.label}</div>
+              <div className="text-xs text-muted-foreground mb-1">{tr(c.label)}</div>
               <div className="text-xl font-bold">{c.value}</div>
             </div>
           ))}
@@ -147,10 +149,10 @@ export function Onboarding({
 
         <div className="flex gap-1 mb-4">
           <Pill active={tab === "All"} onClick={() => setTab("All")} count={cases.length}>
-            All
+            {tr("All")}
           </Pill>
           <Pill active={tab === "Stale"} onClick={() => setTab("Stale")} count={stale}>
-            Stale
+            {tr("Stale")}
           </Pill>
         </div>
 
@@ -158,10 +160,10 @@ export function Onboarding({
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs text-muted-foreground border-b border-border">
-                <th className="px-4 py-2 font-medium">COMPANY</th>
-                <th className="px-4 py-2 font-medium">STAGE</th>
-                <th className="px-4 py-2 font-medium">STATUS</th>
-                <th className="px-4 py-2 font-medium">METRIC</th>
+                <th className="px-4 py-2 font-medium">{tr("COMPANY")}</th>
+                <th className="px-4 py-2 font-medium">{tr("STAGE")}</th>
+                <th className="px-4 py-2 font-medium">{tr("STATUS")}</th>
+                <th className="px-4 py-2 font-medium">{tr("METRIC")}</th>
               </tr>
             </thead>
             <tbody>
@@ -178,18 +180,18 @@ export function Onboarding({
                     <div className="text-xs text-muted-foreground">{c.contactName}</div>
                   </td>
                   <td className="px-4 py-3">
-                    <Badge variant="neutral">Prospect</Badge>
+                    <Badge variant="neutral">{tr("Prospect")}</Badge>
                   </td>
                   <td className="px-4 py-3">
-                    <Badge variant={onbStatusVariant(c.status) as any}>{c.status}</Badge>
+                    <Badge variant={onbStatusVariant(c.status) as any}>{tr(c.status)}</Badge>
                   </td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground">{onbMetric(c)}</td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground">{tr(onbMetric(c))}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <div className="text-xs text-muted-foreground mt-2">{filtered.length} cases</div>
+        <div className="text-xs text-muted-foreground mt-2">{tr("{count} cases", { count: filtered.length })}</div>
       </div>
 
       {selectedCase && (

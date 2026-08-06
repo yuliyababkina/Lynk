@@ -5,11 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Pill } from "@/components/yarowa/pill";
 import { AlertBanner } from "@/components/yarowa/alert-banner";
+import { useI18n } from "@/lib/i18n";
 
 const TABS = ["All Requests", "Awaiting Review", "Endorsed — Awaiting 2nd Approval", "Approved", "Rejected"] as const;
 
 export function DataGovernance({ initialSelectedId }: { initialSelectedId?: string | null }) {
   const { dataGovernanceRequests: DATA_GOVERNANCE_REQUESTS } = useLynkData();
+  const { t: tr } = useI18n();
   const [tab, setTab] = useState<(typeof TABS)[number]>("All Requests");
   const [expanded, setExpanded] = useState<string | null>(initialSelectedId ?? DATA_GOVERNANCE_REQUESTS[0]?.id ?? null);
 
@@ -25,19 +27,18 @@ export function DataGovernance({ initialSelectedId }: { initialSelectedId?: stri
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-1">Master Data Governance</h1>
+      <h1 className="text-2xl font-bold mb-1">{tr("Master Data Governance")}</h1>
       <p className="text-sm text-muted-foreground mb-4">
-        Sensitive data changes require four-eyes approval before taking effect. Every change is logged to the immutable audit trail.
+        {tr("Sensitive data changes require four-eyes approval before taking effect. Every change is logged to the immutable audit trail.")}
       </p>
 
       {counts.awaiting > 0 && (
         <AlertBanner
           type="error"
-          title={`${counts.awaiting} critical payment data change awaiting review`}
+          title={tr("{count} critical payment data change awaiting review", { count: counts.awaiting })}
           className="mb-4"
         >
-          IBAN and banking changes carry the highest fraud risk. Review carefully and verify with the
-          supplier directly before endorsing.
+          {tr("IBAN and banking changes carry the highest fraud risk. Review carefully and verify with the supplier directly before endorsing.")}
         </AlertBanner>
       )}
 
@@ -49,7 +50,7 @@ export function DataGovernance({ initialSelectedId }: { initialSelectedId?: stri
           { label: "Rejected", value: counts.rejected },
         ].map((c) => (
           <div key={c.label} className="bg-card border border-border rounded-lg p-3">
-            <div className="text-xs text-muted-foreground mb-1">{c.label}</div>
+            <div className="text-xs text-muted-foreground mb-1">{tr(c.label)}</div>
             <div className="text-xl font-bold">{c.value}</div>
           </div>
         ))}
@@ -58,7 +59,7 @@ export function DataGovernance({ initialSelectedId }: { initialSelectedId?: stri
       <div className="flex gap-1 mb-4 border-b border-border pb-2 overflow-x-auto">
         {TABS.map((t) => (
           <Pill key={t} active={tab === t} onClick={() => setTab(t)}>
-            {t}
+            {tr(t)}
           </Pill>
         ))}
       </div>
@@ -74,14 +75,14 @@ export function DataGovernance({ initialSelectedId }: { initialSelectedId?: stri
               >
                 <div className="flex items-center gap-2 text-left">
                   <span className="font-medium">{r.supplierName}</span>
-                  <Badge variant="neutral">{r.category}</Badge>
-                  {r.risk === "Critical" && <Badge variant="danger">Critical</Badge>}
+                  <Badge variant="neutral">{tr(r.category)}</Badge>
+                  {r.risk === "Critical" && <Badge variant="danger">{tr("Critical")}</Badge>}
                   <span className="text-xs text-muted-foreground">
-                    Requested by {r.requestedBy} · {r.requestedAt}
+                    {tr("Requested by {who} · {when}", { who: r.requestedBy, when: r.requestedAt })}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant="warning">{r.status}</Badge>
+                  <Badge variant="warning">{tr(r.status)}</Badge>
                   {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </div>
               </button>
@@ -104,17 +105,17 @@ export function DataGovernance({ initialSelectedId }: { initialSelectedId?: stri
                         {f.label}
                         {f.sensitive && (
                           <span className="flex items-center gap-1 text-warning-ink">
-                            <Lock size={11} /> Sensitive
+                            <Lock size={11} /> {tr("Sensitive")}
                           </span>
                         )}
                       </div>
                       <div className="grid grid-cols-2 divide-x divide-border">
                         <div className="px-3 py-2">
-                          <div className="text-xs text-muted-foreground">Before</div>
+                          <div className="text-xs text-muted-foreground">{tr("Before")}</div>
                           <div className="font-mono text-xs">{f.before}</div>
                         </div>
                         <div className="px-3 py-2 bg-success/10">
-                          <div className="text-xs text-muted-foreground">After</div>
+                          <div className="text-xs text-muted-foreground">{tr("After")}</div>
                           <div className="font-mono text-xs">{f.after}</div>
                         </div>
                       </div>
@@ -123,17 +124,17 @@ export function DataGovernance({ initialSelectedId }: { initialSelectedId?: stri
 
                   <div className="flex items-center gap-4 pt-2">
                     <div className="text-xs">
-                      <div className="text-muted-foreground">Four-eyes approval progress</div>
+                      <div className="text-muted-foreground">{tr("Four-eyes approval progress")}</div>
                       <div className="flex items-center gap-2 mt-1">
-                        <Badge variant={r.approvalStep >= 1 ? "info" : "neutral"}>1. First Review</Badge>
-                        <Badge variant="neutral">2. Final Approval</Badge>
+                        <Badge variant={r.approvalStep >= 1 ? "info" : "neutral"}>{tr("1. First Review")}</Badge>
+                        <Badge variant="neutral">{tr("2. Final Approval")}</Badge>
                       </div>
                     </div>
                   </div>
 
                   <div className="flex gap-2 pt-2">
-                    <Button variant="outline">Reject Change</Button>
-                    <Button variant="default">Endorse — First Review</Button>
+                    <Button variant="outline">{tr("Reject Change")}</Button>
+                    <Button variant="default">{tr("Endorse — First Review")}</Button>
                   </div>
                 </div>
               )}

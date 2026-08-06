@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Pill } from "@/components/yarowa/pill";
 import { AlertBanner } from "@/components/yarowa/alert-banner";
 import type { Contract, ContractStatus } from "../types";
+import { useI18n } from "@/lib/i18n";
 
 const STATUS_TONE: Record<ContractStatus, "success" | "warning" | "danger" | "info" | "neutral"> = {
   Active: "success",
@@ -24,6 +25,7 @@ export function ContractManagement({
 }) {
   const { contracts: CONTRACTS } = useLynkData();
   const [tab, setTab] = useState<(typeof TABS)[number]>("All");
+  const { t: tr } = useI18n();
 
   const filtered = useMemo(() => {
     switch (tab) {
@@ -46,15 +48,14 @@ export function ContractManagement({
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-1">Contract Management</h1>
+      <h1 className="text-2xl font-bold mb-1">{tr("Contract Management")}</h1>
       <p className="text-sm text-muted-foreground mb-4">
-        Framework contracts, renewal deadlines, and full history. No contract lapses without a decision.
+        {tr("Framework contracts, renewal deadlines, and full history. No contract lapses without a decision.")}
       </p>
 
       {urgent > 0 && (
-        <AlertBanner type="error" title={`${urgent} contract require immediate action`} className="mb-4">
-          The renewal deadline has passed or is within 30 days. Initiate renewal or opt-out now to
-          avoid a lapsed contract.
+        <AlertBanner type="error" title={tr("{count} contract require immediate action", { count: urgent })} className="mb-4">
+          {tr("The renewal deadline has passed or is within 30 days. Initiate renewal or opt-out now to avoid a lapsed contract.")}
         </AlertBanner>
       )}
 
@@ -66,7 +67,7 @@ export function ContractManagement({
           { label: "Renewal in Progress", value: CONTRACTS.filter((c) => c.status === "Renewal in Progress").length },
         ].map((c) => (
           <div key={c.label} className="bg-card border border-border rounded-lg p-3">
-            <div className="text-xs text-muted-foreground mb-1">{c.label}</div>
+            <div className="text-xs text-muted-foreground mb-1">{tr(c.label)}</div>
             <div className="text-xl font-bold">{c.value}</div>
           </div>
         ))}
@@ -75,7 +76,7 @@ export function ContractManagement({
       <div className="flex gap-1 mb-4 border-b border-border pb-2">
         {TABS.map((t) => (
           <Pill key={t} active={tab === t} onClick={() => setTab(t)}>
-            {t}
+            {tr(t)}
           </Pill>
         ))}
       </div>
@@ -84,11 +85,11 @@ export function ContractManagement({
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-xs text-muted-foreground border-b border-border">
-              <th className="px-4 py-2 font-medium">SUPPLIER / CONTRACT</th>
-              <th className="px-4 py-2 font-medium">ANNUAL VALUE</th>
-              <th className="px-4 py-2 font-medium">END DATE</th>
-              <th className="px-4 py-2 font-medium">TIME LEFT</th>
-              <th className="px-4 py-2 font-medium">STATUS</th>
+              <th className="px-4 py-2 font-medium">{tr("SUPPLIER / CONTRACT")}</th>
+              <th className="px-4 py-2 font-medium">{tr("ANNUAL VALUE")}</th>
+              <th className="px-4 py-2 font-medium">{tr("END DATE")}</th>
+              <th className="px-4 py-2 font-medium">{tr("TIME LEFT")}</th>
+              <th className="px-4 py-2 font-medium">{tr("STATUS")}</th>
             </tr>
           </thead>
           <tbody>
@@ -103,14 +104,14 @@ export function ContractManagement({
                 <td className="px-4 py-3">
                   <div className="font-medium">{c.supplierName}</div>
                   <div className="text-xs text-muted-foreground">
-                    {c.ref} · {c.type}
+                    {c.ref} · {tr(c.type)}
                   </div>
                 </td>
-                <td className="px-4 py-3">€{c.annualValue.toLocaleString()} per year</td>
+                <td className="px-4 py-3">{tr("€{value} per year", { value: c.annualValue.toLocaleString() })}</td>
                 <td className="px-4 py-3">
                   <div>{c.endDate}</div>
                   <div className="text-xs text-muted-foreground">
-                    Renewal by {c.renewalBy} · {c.noticePeriod} notice req.
+                    {tr("Renewal by {date} · {notice} notice req.", { date: c.renewalBy, notice: c.noticePeriod })}
                   </div>
                 </td>
                 <td className="px-4 py-3">{c.timeLeftLabel}</td>

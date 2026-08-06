@@ -4,6 +4,7 @@ import { useLynkData } from "../lib/LynkDataContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Pill } from "@/components/yarowa/pill";
+import { useI18n } from "@/lib/i18n";
 import type { Supplier } from "../types";
 
 type StageFilter = "all" | "prospect" | "supplier" | "provider";
@@ -35,12 +36,15 @@ export function SuppliersOverview({
   initialSelectedId?: string | null;
 }) {
   const { suppliers: SUPPLIERS } = useLynkData();
+  const { t } = useI18n();
   const [stage, setStage] = useState<StageFilter>("all");
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
     return SUPPLIERS.filter((s) => {
-      if (stage !== "all" && s.stage !== stage) return false;
+      // The DB stores capitalised stage values ("Prospect"), so compare
+      // case-insensitively — a strict === here left every filter count at 0.
+      if (stage !== "all" && s.stage.toLowerCase() !== stage) return false;
       if (query && !s.name.toLowerCase().includes(query.toLowerCase())) return false;
       return true;
     });
@@ -48,20 +52,20 @@ export function SuppliersOverview({
 
   const counts: Record<StageFilter, number> = {
     all: SUPPLIERS.length,
-    prospect: SUPPLIERS.filter((s) => s.stage === "prospect").length,
-    supplier: SUPPLIERS.filter((s) => s.stage === "supplier").length,
-    provider: SUPPLIERS.filter((s) => s.stage === "provider").length,
+    prospect: SUPPLIERS.filter((s) => s.stage.toLowerCase() === "prospect").length,
+    supplier: SUPPLIERS.filter((s) => s.stage.toLowerCase() === "supplier").length,
+    provider: SUPPLIERS.filter((s) => s.stage.toLowerCase() === "provider").length,
   };
 
   return (
     <div className="p-6">
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h1 className="text-2xl font-bold mb-1">Suppliers Overview</h1>
-          <p className="text-sm text-muted-foreground">All contacts — Prospects, Suppliers, and Providers.</p>
+          <h1 className="text-2xl font-bold mb-1">{t("Suppliers Overview")}</h1>
+          <p className="text-sm text-muted-foreground">{t("All contacts — Prospects, Suppliers, and Providers.")}</p>
         </div>
         <Button>
-          <Plus size={14} /> Invite Supplier
+          <Plus size={14} /> {t("Invite Supplier")}
         </Button>
       </div>
 
@@ -69,7 +73,7 @@ export function SuppliersOverview({
         <div className="flex gap-1">
           {(["all", "prospect", "supplier", "provider"] as const).map((s) => (
             <Pill key={s} active={stage === s} onClick={() => setStage(s)} count={counts[s]}>
-              {stageLabels[s]}
+              {t(stageLabels[s])}
             </Pill>
           ))}
         </div>
@@ -78,7 +82,7 @@ export function SuppliersOverview({
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search..."
+            placeholder={t("Search...")}
             className="pl-8 pr-3 py-1.5 text-sm rounded-md border border-border bg-background w-56"
           />
         </div>
@@ -88,13 +92,13 @@ export function SuppliersOverview({
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-xs text-muted-foreground border-b border-border">
-              <th className="px-4 py-2 font-medium">COMPANY</th>
-              <th className="px-4 py-2 font-medium">STAGE</th>
-              <th className="px-4 py-2 font-medium">TRADE</th>
-              <th className="px-4 py-2 font-medium">REGION</th>
-              <th className="px-4 py-2 font-medium">TICKETS</th>
-              <th className="px-4 py-2 font-medium">COMPLIANCE</th>
-              <th className="px-4 py-2 font-medium">RATING</th>
+              <th className="px-4 py-2 font-medium">{t("COMPANY")}</th>
+              <th className="px-4 py-2 font-medium">{t("STAGE")}</th>
+              <th className="px-4 py-2 font-medium">{t("TRADE")}</th>
+              <th className="px-4 py-2 font-medium">{t("REGION")}</th>
+              <th className="px-4 py-2 font-medium">{t("TICKETS")}</th>
+              <th className="px-4 py-2 font-medium">{t("COMPLIANCE")}</th>
+              <th className="px-4 py-2 font-medium">{t("RATING")}</th>
             </tr>
           </thead>
           <tbody>
@@ -111,14 +115,16 @@ export function SuppliersOverview({
                   <div className="text-xs text-muted-foreground">{s.contacts[0]?.name}</div>
                 </td>
                 <td className="px-4 py-3">
-                  <Badge variant="neutral">{formatStageLabel(s.stage)}</Badge>
+                  <Badge variant="neutral">{t(formatStageLabel(s.stage))}</Badge>
                 </td>
-                <td className="px-4 py-3">{s.trade}</td>
-                <td className="px-4 py-3">{s.region}</td>
+                <td className="px-4 py-3">{t(s.trade)}</td>
+                <td className="px-4 py-3">{t(s.region)}</td>
                 <td className="px-4 py-3">
                   {s.openTickets > 0 ? (
                     <Badge variant="warning">
-                      {s.openTickets} ticket{s.openTickets > 1 ? "s" : ""}
+                      {s.openTickets > 1
+                        ? t("{count} tickets", { count: s.openTickets })
+                        : t("{count} ticket", { count: s.openTickets })}
                     </Badge>
                   ) : (
                     <span className="text-muted-foreground">—</span>
@@ -128,7 +134,7 @@ export function SuppliersOverview({
                   {s.compliance === "—" ? (
                     <span className="text-muted-foreground">—</span>
                   ) : (
-                    <Badge variant={complianceTone[s.compliance]}>{s.compliance}</Badge>
+                    <Badge variant={complianceTone[s.compliance]}>{t(s.compliance)}</Badge>
                   )}
                 </td>
                 <td className="px-4 py-3">
