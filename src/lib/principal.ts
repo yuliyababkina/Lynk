@@ -27,6 +27,16 @@ export interface PrincipalContract {
   meta: string;
 }
 
+/**
+ * Contract templates the Procurement Manager can send to an approved prospect.
+ * Template management itself is out of scope — this is the finite pick list.
+ */
+export const CONTRACT_TEMPLATES = [
+  "Master Supply Agreement (v3.2)",
+  "Framework Agreement — Services (v2.1)",
+  "Framework Agreement — Goods (v2.1)",
+] as const;
+
 export const PRINCIPAL_CONTRACTS: PrincipalContract[] = [
   {
     id: "msa",

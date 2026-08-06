@@ -30,6 +30,10 @@ import { DOC_STATUS_META, docStatusMeta } from "@/lib/document-status";
 import { parseDocumentInfo, type ParsedDocumentInfo } from "@/lib/pdf-metadata";
 import { FromFileHint } from "@/components/yarowa/document-browser";
 import { useLynkData } from "../lib/LynkDataContext";
+import { useI18n } from "@/lib/i18n";
+import { CONTRACT_TEMPLATES } from "@/lib/principal";
+import { Checkbox } from "@/components/ui/checkbox";
+import { translateCatalogueName } from "@/lib/ticket-i18n";
 import type { Supplier, SupplierDoc, Contact, OnboardingCase } from "../types";
 import type { ProspectDecision } from "../lib/db";
 
@@ -37,7 +41,10 @@ import type { ProspectDecision } from "../lib/db";
 // and the prospect all see the same label/icon for a given document.
 
 const STEPS = ["Company info", "Documents", "Summary"] as const;
-type Step = (typeof STEPS)[number];
+/* "Send Contract" is a step in the flow but not a stepper dot — it only exists
+   on the happy path after the review is complete, so the stepper stays at
+   Summary while it is open. */
+type Step = (typeof STEPS)[number] | "Send Contract";
 
 type ReviewStatus = "pending" | "confirmed" | "fix";
 interface SectionReview {
@@ -78,6 +85,7 @@ export interface ProspectReviewProps {
   onClose: () => void;
   onReview: (id: string, name: string, decision: ProspectDecision, note?: string) => Promise<void>;
   onReset: (supplierId: string) => Promise<void>;
+  onSendContract: (supplierId: string, contractName: string, catalogueNames: string[]) => Promise<void>;
   onReviewDocument: (docId: string, decision: "approve" | "decline", comment?: string) => void;
 }
 
@@ -89,6 +97,7 @@ export function ProspectReview({
   onClose,
   onReview,
   onReset,
+  onSendContract,
   onReviewDocument,
 }: ProspectReviewProps) {
   // An already-decided case (Accepted/Rejected) opens on the Summary, where the
@@ -127,7 +136,11 @@ export function ProspectReview({
       </div>
 
       <div className="mb-6">
-        <WizardStepper steps={STEPS} current={step} onStepClick={(s) => setStep(s as Step)} />
+        <WizardStepper
+          steps={STEPS}
+          current={step === "Send Contract" ? "Summary" : step}
+          onStepClick={(s) => setStep(s as Step)}
+        />
       </div>
 
       {step === "Company info" && (
@@ -165,6 +178,19 @@ export function ProspectReview({
         />
       )}
 
+      {step === "Send Contract" && (
+        <div className="max-w-2xl mx-auto">
+          <SendContractStep
+            supplier={supplier}
+            onBack={() => setStep("Summary")}
+            onSend={async (contractName: string, catalogueNames: string[]) => {
+              await onSendContract(supplier.id, contractName, catalogueNames);
+              onClose();
+            }}
+          />
+        </div>
+      )}
+
       {step === "Summary" && (
         <div className="max-w-2xl mx-auto">
           <DecisionStep
@@ -178,6 +204,7 @@ export function ProspectReview({
             onBack={() => setStep("Documents")}
             onReview={onReview}
             onReset={onReset}
+            onNextSendContract={() => setStep("Send Contract")}
             onClose={onClose}
           />
         </div>
@@ -629,6 +656,7 @@ function DecisionStep({
   onBack,
   onReview,
   onReset,
+  onNextSendContract,
   onClose,
 }: {
   supplier: Supplier;
@@ -641,6 +669,7 @@ function DecisionStep({
   onBack: () => void;
   onReview: (id: string, name: string, decision: ProspectDecision, note?: string) => Promise<void>;
   onReset: (supplierId: string) => Promise<void>;
+  onNextSendContract: () => void;
   onClose: () => void;
 }) {
   const [busy, setBusy] = useState(false);
@@ -668,6 +697,7 @@ function DecisionStep({
 
   const isRejected = caseStatus === "Rejected";
   const { setCompanyApproved } = useLynkData();
+  const { t } = useI18n();
 
   async function decide(decision: ProspectDecision, note?: string) {
     setBusy(true);
@@ -775,9 +805,11 @@ function DecisionStep({
               Request update ({feedbackParts.length})
             </Button>
           ) : (
-            <Button variant="success" className="w-full" disabled={busy || !canAccept} onClick={() => decide("accept")}>
-              {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-              Accept &amp; activate supplier
+            // Approving isn't the finish line — the contract and catalogues still
+            // have to go out for signature, so the primary action names that step.
+            <Button variant="default" className="w-full" disabled={busy || !canAccept} onClick={onNextSendContract}>
+              {t("Next: Send Contract and Service catalogs")}
+              <ArrowRight className="w-4 h-4" />
             </Button>
           )}
           {!canAccept && !hasIssues && (
@@ -785,8 +817,15 @@ function DecisionStep({
               {pendingRows.length} document{pendingRows.length === 1 ? "" : "s"} still awaiting your review.
             </p>
           )}
-          <Button variant="danger" className="w-full" disabled={busy} onClick={() => setRejecting(true)}>
-            Reject application
+          {/* Secondary + destructive: consequential, but visually subordinate to
+              the one clear primary path. */}
+          <Button
+            variant="outline"
+            className="w-full text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+            disabled={busy}
+            onClick={() => setRejecting(true)}
+          >
+            {t("Reject application")}
           </Button>
         </div>
       )}
@@ -832,5 +871,113 @@ function SummaryItem({
         {meta.label}
       </Badge>
     </div>
+  );
+}
+
+/* ── Send Contract & Service Catalogs ─────────────────────────────────────
+ * The step between an approved review and an active supplier: the PM picks the
+ * contract template and the price lists that apply, and sends them for
+ * signature. Sending moves the case to "Contract Sent (Pending Signature)" —
+ * the supplier still has to sign before they become active.
+ */
+function SendContractStep({
+  supplier,
+  onBack,
+  onSend,
+}: {
+  supplier: Supplier;
+  onBack: () => void;
+  onSend: (contractName: string, catalogueNames: string[]) => Promise<void>;
+}) {
+  const { catalogues } = useLynkData();
+  const { t } = useI18n();
+  const [template, setTemplate] = useState<string>(CONTRACT_TEMPLATES[0]);
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [busy, setBusy] = useState(false);
+
+  const toggle = (name: string) =>
+    setPicked((prev) => {
+      const next = new Set(prev);
+      next.has(name) ? next.delete(name) : next.add(name);
+      return next;
+    });
+
+  async function send() {
+    setBusy(true);
+    try {
+      await onSend(template, [...picked]);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <StepShell
+      title={t("Send Contract & Service Catalogs")}
+      subtitle={t(
+        "Choose what to send {company} for signature. The case moves to awaiting signature once sent.",
+        { company: supplier.name }
+      )}
+    >
+      <div className="space-y-5">
+        <div>
+          <label className="text-xs font-medium text-muted-foreground block mb-1">
+            {t("Contract template")}
+          </label>
+          <select
+            value={template}
+            onChange={(e) => setTemplate(e.target.value)}
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+          >
+            {CONTRACT_TEMPLATES.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="text-xs font-medium text-muted-foreground block mb-1">
+            {t("Service catalogues")}
+          </label>
+          <p className="text-xs text-muted-foreground mb-2">
+            {t("Select the price lists that apply to this supplier's work orders.")}
+          </p>
+          <div className="rounded-lg border border-border divide-y divide-border/60 overflow-hidden">
+            {catalogues.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => toggle(c.name)}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-sm hover:bg-secondary/50"
+              >
+                <Checkbox checked={picked.has(c.name)} tabIndex={-1} className="pointer-events-none" />
+                <span className="min-w-0 flex-1">
+                  <span className="block font-medium truncate">{translateCatalogueName(c.name, t)}</span>
+                  <span className="block text-xs text-muted-foreground">
+                    {c.versionLabel} · {t(c.region)} · {t(c.trade)}
+                  </span>
+                </span>
+              </button>
+            ))}
+          </div>
+          {picked.size === 0 && (
+            <p className="text-xs text-muted-foreground mt-2">{t("Select at least one service catalogue.")}</p>
+          )}
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between gap-3 pt-5">
+        <Button variant="outline" onClick={onBack} disabled={busy}>
+          <ArrowLeft className="w-4 h-4" /> {t("Back")}
+        </Button>
+        <Button variant="default" onClick={send} disabled={busy || picked.size === 0}>
+          {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+          {t("Send")}
+          <ArrowRight className="w-4 h-4" />
+        </Button>
+      </div>
+    </StepShell>
   );
 }

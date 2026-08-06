@@ -45,6 +45,8 @@ function onbMetric(c: OnboardingCase, tr: Translate): string {
       return tr("Activated in Lynk");
     case "Changes Requested":
       return tr("Changes requested — awaiting resubmission");
+    case "Contract Sent (Pending Signature)":
+      return tr("Awaiting supplier signature");
     case "Rejected":
       return tr("Rejected");
     default:
@@ -62,10 +64,12 @@ const URGENCY_RANK: Record<OnboardingStatus, number> = {
   "In Review": 0,
   Stale: 1,
   "Changes Requested": 2,
-  Pending: 3,
-  Opened: 4,
-  Rejected: 5,
-  Accepted: 6,
+  // Sent for signature — progressing, waiting on the supplier.
+  "Contract Sent (Pending Signature)": 3,
+  Pending: 4,
+  Opened: 5,
+  Rejected: 6,
+  Accepted: 7,
 };
 
 export function Onboarding({
@@ -79,6 +83,7 @@ export function Onboarding({
     docs: DOCS,
     reviewProspect,
     resetProspect,
+    sendContract,
     reviewDocument,
     deleteOnboardingCase,
   } = useLynkData();
@@ -143,6 +148,7 @@ export function Onboarding({
         onClose={() => setReviewing(false)}
         onReview={reviewProspect}
         onReset={resetProspect}
+        onSendContract={sendContract}
         onReviewDocument={reviewDocument}
       />
     );

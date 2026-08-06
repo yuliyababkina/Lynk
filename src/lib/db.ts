@@ -771,6 +771,27 @@ export async function reviewProspectDb(
 }
 
 /**
+ * Send the Principal's contract + selected service catalogues to a prospect.
+ * Moves the case to "Contract Sent (Pending Signature)" — onboarding is not
+ * finished until the supplier signs.
+ */
+export async function sendContractDb(
+  supplierId: string,
+  supplierName: string,
+  contractName: string,
+  catalogueNames: string[]
+) {
+  if (!isSupabaseConfigured) return;
+  const { error } = await supabase
+    .from("onboarding_cases")
+    .update({ status: "Contract Sent (Pending Signature)" })
+    .eq("id", onboardingCaseId(supplierId));
+  if (error) console.error("[Lynk] sendContractDb failed:", error.message);
+  const docs = [contractName, ...catalogueNames].join(", ");
+  await logActivity(supplierName, "Contract and service catalogues sent for signature", docs);
+}
+
+/**
  * Reset the onboarding process — sends a dead-end case (e.g. Rejected) back to
  * the invited/awaiting state so it can restart from a clean application. The
  * existing invite record (and its magic link/token) is reused, not reissued.

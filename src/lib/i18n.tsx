@@ -213,6 +213,21 @@ const DE: Record<string, string> = {
   "{confirmed}/{total} Suppliers Confirmed": "{confirmed}/{total} Lieferanten bestätigt",
   "{count} Suppliers to confirm": "{count} Lieferanten müssen bestätigen",
 
+  // ── Send contract & service catalogues (prospect review) ────────────────
+  "Next: Send Contract and Service catalogs": "Weiter: Vertrag und Leistungskataloge senden",
+  "Reject application": "Bewerbung ablehnen",
+  "Send Contract & Service Catalogs": "Vertrag & Leistungskataloge senden",
+  "Choose what to send {company} for signature. The case moves to awaiting signature once sent.":
+    "Wählen Sie, was {company} zur Unterzeichnung gesendet wird. Der Fall wechselt nach dem Senden in den Status „wartet auf Unterschrift“.",
+  "Contract template": "Vertragsvorlage",
+  // ("Service catalogues" is already defined with the catalogue page.)
+  "Select the price lists that apply to this supplier's work orders.":
+    "Wählen Sie die Preislisten, die für die Aufträge dieses Lieferanten gelten.",
+  "Select at least one service catalogue.": "Wählen Sie mindestens einen Leistungskatalog.",
+  Send: "Senden",
+  "Awaiting supplier signature": "Wartet auf Unterschrift des Lieferanten",
+  "Contract Sent (Pending Signature)": "Vertrag gesendet (Unterschrift ausstehend)",
+
   // ── Master Data Governance page ─────────────────────────────────────────
   "Master Data Governance": "Stammdatenverwaltung",
   "Sensitive data changes require four-eyes approval before taking effect. Every change is logged to the immutable audit trail.":

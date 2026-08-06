@@ -179,6 +179,8 @@ export type OnboardingStatus =
   | "Opened"
   | "In Review"
   | "Changes Requested"
+  /** Contract + catalogues sent to the supplier; waiting on their signature. */
+  | "Contract Sent (Pending Signature)"
   | "Accepted"
   | "Rejected";
 

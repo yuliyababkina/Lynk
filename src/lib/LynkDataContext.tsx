@@ -20,6 +20,7 @@ import {
   submitProspectForReviewDb,
   reviewProspectDb,
   resetProspectDb,
+  sendContractDb,
   setDocReviewDb,
   updateSupplierDocMetadataDb,
   deleteSupplierDocumentDb,
@@ -91,6 +92,11 @@ interface LynkDataValue extends LynkDataset {
    * (magic link) is reused, not reissued.
    */
   resetProspect: (supplierId: string) => Promise<void>;
+  /**
+   * Send the Principal's contract + selected service catalogues to a prospect,
+   * moving the case to "Contract Sent (Pending Signature)".
+   */
+  sendContract: (supplierId: string, contractName: string, catalogueNames: string[]) => Promise<void>;
   /** Per-document review: approve (→ valid) or decline (→ rejected-resubmit) with a comment. */
   reviewDocument: (docId: string, decision: "approve" | "decline", comment?: string) => void;
   /** Supplier-side correction of a document's details (type / issuer / validity).
@@ -533,6 +539,26 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
     []
   );
 
+  const sendContract = useCallback(
+    async (supplierId: string, contractName: string, catalogueNames: string[]) => {
+      const caseId = onboardingCaseId(supplierId);
+      let name = supplierId;
+      setData((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          onboardingCases: prev.onboardingCases.map((c) => {
+            if (c.id !== caseId) return c;
+            name = c.companyName;
+            return { ...c, status: "Contract Sent (Pending Signature)" as const };
+          }),
+        };
+      });
+      await sendContractDb(supplierId, name, contractName, catalogueNames);
+    },
+    []
+  );
+
   const persistCatalogue = useCallback((c: Catalogue) => {
     upsertCatalogueDb(c).catch(console.error);
   }, []);
@@ -561,6 +587,7 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
       submitProspectForReview,
       reviewProspect,
       resetProspect,
+      sendContract,
       reviewDocument,
       updateDocMetadata,
       removeSupplierDoc,
@@ -588,6 +615,7 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
     submitProspectForReview,
     reviewProspect,
     resetProspect,
+    sendContract,
     reviewDocument,
     updateDocMetadata,
     removeSupplierDoc,
