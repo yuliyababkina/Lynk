@@ -20,6 +20,7 @@ import {
   submitProspectForReviewDb,
   reviewProspectDb,
   resetProspectDb,
+  revokeInvitationDb,
   sendContractDb,
   setDocReviewDb,
   updateSupplierDocMetadataDb,
@@ -93,6 +94,8 @@ interface LynkDataValue extends LynkDataset {
    * (magic link) is reused, not reissued.
    */
   resetProspect: (supplierId: string) => Promise<void>;
+  /** Deactivates a prospect's magic link; the case stays as a Draft. */
+  revokeInvitation: (caseId: string) => Promise<void>;
   /**
    * Send the Principal's contract + selected service catalogues to a prospect,
    * moving the case to "Contract Sent (Pending Signature)".
@@ -545,6 +548,26 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
     []
   );
 
+  const revokeInvitation = useCallback(
+    async (caseId: string) => {
+      let name = caseId;
+      setData((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          onboardingCases: prev.onboardingCases.map((c) => {
+            if (c.id !== caseId) return c;
+            name = c.companyName;
+            // Token dropped locally too, so the link stops resolving immediately.
+            return { ...c, status: "Draft" as const, inviteToken: undefined };
+          }),
+        };
+      });
+      await revokeInvitationDb(caseId, name);
+    },
+    []
+  );
+
   const sendContract = useCallback(
     async (supplierId: string, contractName: string, catalogueNames: string[]) => {
       const caseId = onboardingCaseId(supplierId);
@@ -625,6 +648,7 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
       submitProspectForReview,
       reviewProspect,
       resetProspect,
+      revokeInvitation,
       sendContract,
       reviewDocument,
       updateDocMetadata,
@@ -653,6 +677,7 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
     submitProspectForReview,
     reviewProspect,
     resetProspect,
+    revokeInvitation,
     sendContract,
     reviewDocument,
     updateDocMetadata,

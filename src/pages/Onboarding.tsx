@@ -1,10 +1,13 @@
 import { useMemo, useState } from "react";
-import { FileText, ExternalLink, Building2, MapPin, Mail, Phone, CheckCircle2, AlertTriangle, XCircle, Trash2, Loader2 } from "lucide-react";
+import { FileText, ExternalLink, Building2, MapPin, Mail, Phone, CheckCircle2, AlertTriangle, XCircle, Trash2, Loader2, Bell, Ban } from "lucide-react";
 import { useLynkData } from "../lib/LynkDataContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Pill } from "@/components/yarowa/pill";
+import { RowActionsMenu, type RowAction } from "@/components/yarowa/row-actions-menu";
+import { toast } from "@/components/yarowa/toast";
+import { PRINCIPAL_COMPANY, PROCUREMENT_MANAGER, PROCUREMENT_MANAGER_ROLE } from "@/lib/principal";
 import { ProspectReview } from "./ProspectReview";
 import type { DocStatus, OnboardingStatus, OnboardingCase } from "../types";
 import type { ProspectDecision } from "../lib/db";
@@ -49,6 +52,8 @@ function onbMetric(c: OnboardingCase, tr: Translate): string {
       return tr("Awaiting supplier signature");
     case "Rejected":
       return tr("Rejected");
+    case "Draft":
+      return tr("Invitation revoked");
     default:
       // Built through tr so the day count lands inside the translated phrase.
       return tr("{days}d no response", { days: c.daysNoResponse });
@@ -94,6 +99,8 @@ const URGENCY_RANK: Record<OnboardingStatus, number> = {
   Opened: 5,
   Rejected: 6,
   Accepted: 7,
+  // No live invitation, so nobody is waiting on anybody.
+  Draft: 8,
 };
 
 export function Onboarding({
@@ -110,12 +117,69 @@ export function Onboarding({
     sendContract,
     reviewDocument,
     deleteOnboardingCase,
+    revokeInvitation,
   } = useLynkData();
   const [tab, setTab] = useState<OnbTab>("All");
   const { t: tr } = useI18n();
   const [selected, setSelected] = useState<string | null>(initialSelectedId ?? null);
   const [reviewing, setReviewing] = useState(false);
   const [deletingCase, setDeletingCase] = useState<OnboardingCase | null>(null);
+  const [revokingCase, setRevokingCase] = useState<OnboardingCase | null>(null);
+
+  /* Re-sends the original invitation email. Best-effort, like the first send:
+     the reminder is a nudge, so a mail failure must not look like a hard error. */
+  async function sendReminder(c: OnboardingCase) {
+    if (!c.email || !c.inviteToken) {
+      toast({
+        title: tr("No live invitation to remind about"),
+        description: tr("Send a new invitation instead."),
+        tone: "warning",
+      });
+      return;
+    }
+    try {
+      const res = await fetch("/api/send-invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: c.email,
+          companyName: c.companyName,
+          contactName: c.contactName,
+          link: `${window.location.origin}/?invite=${c.inviteToken}`,
+          principal: PRINCIPAL_COMPANY,
+          sender: PROCUREMENT_MANAGER,
+          senderRole: PROCUREMENT_MANAGER_ROLE,
+        }),
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? "failed");
+      toast({ title: tr("Reminder sent"), description: c.email, tone: "success" });
+    } catch (e) {
+      console.error("[Lynk] reminder email failed:", e);
+      toast({ title: tr("Could not send the reminder"), description: c.email, tone: "critical" });
+    }
+  }
+
+  function actionsFor(c: OnboardingCase): RowAction[] {
+    const items: RowAction[] = [];
+    /* Offered for any case still in its application phase. A seeded case may not
+       carry a token; sendReminder says so plainly rather than the action being
+       silently absent, which made the menu look broken on most rows. */
+    if (c.status !== "Accepted" && c.status !== "Draft") {
+      items.push({ label: "Send reminder", icon: <Bell className="w-4 h-4" />, onSelect: () => sendReminder(c) });
+      items.push({
+        label: "Revoke Invitation",
+        icon: <Ban className="w-4 h-4" />,
+        onSelect: () => setRevokingCase(c),
+      });
+    }
+    items.push({
+      label: "Delete prospect",
+      icon: <Trash2 className="w-4 h-4" />,
+      destructive: true,
+      onSelect: () => setDeletingCase(c),
+    });
+    return items;
+  }
 
   const linkedFor = (c: OnboardingCase) =>
     SUPPLIERS.find((s) => s.id === c.id.replace(/^onb-/, "")) ??
@@ -220,6 +284,7 @@ export function Onboarding({
                 <th className="px-4 py-2 font-medium">{tr("STAGE")}</th>
                 <th className="px-4 py-2 font-medium">{tr("STATUS")}</th>
                 <th className="px-4 py-2 font-medium">{tr("METRIC")}</th>
+                <th className="px-4 py-2 w-10" />
               </tr>
             </thead>
             <tbody>
@@ -227,7 +292,7 @@ export function Onboarding({
                 <tr
                   key={c.id}
                   onClick={() => openCase(c)}
-                  className={`border-b border-border last:border-0 cursor-pointer hover:bg-secondary/50 ${
+                  className={`group border-b border-border last:border-0 cursor-pointer hover:bg-secondary/50 ${
                     selected === c.id ? "bg-secondary/50" : ""
                   }`}
                 >
@@ -242,6 +307,12 @@ export function Onboarding({
                     <Badge variant={onbStatusVariant(c.status) as any}>{tr(c.status)}</Badge>
                   </td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">{onbMetric(c, tr)}</td>
+                  {/* Right-aligned row actions, revealed on hover. */}
+                  <td className="px-4 py-3 w-10">
+                    <div className="flex justify-end">
+                      <RowActionsMenu actions={actionsFor(c)} />
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -365,6 +436,38 @@ export function Onboarding({
           )}
         </div>
       )}
+
+      <Dialog open={Boolean(revokingCase)} onOpenChange={(o) => !o && setRevokingCase(null)}>
+        <DialogContent showCloseButton={false} className="sm:max-w-[440px] rounded-2xl">
+          <DialogTitle className="text-base font-semibold">
+            {tr("Revoke the invitation for {company}?", { company: revokingCase?.companyName ?? "" })}
+          </DialogTitle>
+          <DialogDescription className="text-sm text-muted-foreground">
+            {tr(
+              "The existing link stops working immediately, so the prospect can no longer open their onboarding. The case stays here as a draft and you can send a new invitation later."
+            )}
+          </DialogDescription>
+          <div className="flex gap-2 pt-2">
+            <Button variant="outline" className="flex-1" onClick={() => setRevokingCase(null)}>
+              {tr("Keep invitation")}
+            </Button>
+            <Button
+              variant="danger"
+              className="flex-1"
+              onClick={async () => {
+                const target = revokingCase;
+                setRevokingCase(null);
+                if (!target) return;
+                await revokeInvitation(target.id);
+                toast({ title: tr("Invitation revoked"), description: target.companyName, tone: "warning" });
+              }}
+            >
+              <Ban className="w-4 h-4" />
+              {tr("Revoke Invitation")}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {deletingCase && (
         <DeleteCaseDialog

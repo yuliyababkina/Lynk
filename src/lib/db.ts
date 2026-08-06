@@ -771,6 +771,20 @@ export async function reviewProspectDb(
 }
 
 /**
+ * Revoke a prospect's invitation: the case stays for editing and re-sending, but
+ * the magic link is deactivated so the old link can no longer be used.
+ */
+export async function revokeInvitationDb(caseId: string, supplierName: string) {
+  if (!isSupabaseConfigured) return;
+  const { error } = await supabase
+    .from("onboarding_cases")
+    .update({ status: "Draft", invite_token: null })
+    .eq("id", caseId);
+  if (error) console.error("[Lynk] revokeInvitationDb failed:", error.message);
+  await logActivity(supplierName, "Invitation revoked — magic link deactivated");
+}
+
+/**
  * Send the Principal's contract + selected service catalogues to a prospect.
  * Moves the case to "Contract Sent (Pending Signature)" — onboarding is not
  * finished until the supplier signs.

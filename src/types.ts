@@ -174,6 +174,8 @@ export interface DataGovernanceRequest {
 }
 
 export type OnboardingStatus =
+  /** Invitation revoked or not yet sent — no live magic link. */
+  | "Draft"
   | "Stale"
   | "Pending"
   | "Opened"
