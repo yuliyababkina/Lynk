@@ -238,7 +238,12 @@ export function Onboarding({
         docs={submittedDocs}
         contact={primaryContact}
         caseItem={selectedCase}
-        onClose={() => setReviewing(false)}
+        /* Leaving the review returns to a clean list: the selection goes too,
+           so the drawer doesn't reopen behind the reviewer on the way out. */
+        onClose={() => {
+          setReviewing(false);
+          setSelected(null);
+        }}
         onReview={reviewProspect}
         onReset={resetProspect}
         onSendContract={sendContract}
