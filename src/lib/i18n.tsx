@@ -432,6 +432,8 @@ const DE: Record<string, string> = {
   // Document review statuses + browser chrome
   Declined: "Abgelehnt",
   "Pending review": "Prüfung ausstehend",
+  "Pending approval {n}/{total}": "Freigabe ausstehend {n}/{total}",
+  "Approved {n}/{total}": "Freigegeben {n}/{total}",
   Missing: "Fehlt",
   "Document type": "Dokumententyp",
   "Issued by": "Ausgestellt von",

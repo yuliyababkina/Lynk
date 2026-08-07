@@ -37,16 +37,23 @@ const DOC_STATUS_META: Record<DocStatus, { label: string; variant: string }> = {
  * One stage column: a checkmark when the stage is finished, a badge while it
  * still says something, or muted "—" when it isn't reached yet.
  */
-function StageCell({ cell, tr }: { cell: Cell; tr: (s: string) => string }) {
+function StageCell({
+  cell,
+  tr,
+}: {
+  cell: Cell;
+  tr: (s: string, vars?: Record<string, string | number>) => string;
+}) {
   if (cell.tone === "muted") return <span className="text-xs text-muted-foreground">{cell.label}</span>;
+  const label = tr(cell.label, cell.vars);
   if (cell.tone === "done")
     return (
-      <span title={tr(cell.label)} aria-label={tr(cell.label)} className="inline-flex">
+      <span title={label} aria-label={label} className="inline-flex">
         <CheckCircle2 className="size-4 text-success-ink" />
       </span>
     );
   const variant = { info: "info", warning: "warning", success: "success", danger: "danger" }[cell.tone];
-  return <Badge variant={variant as never}>{tr(cell.label)}</Badge>;
+  return <Badge variant={variant as never}>{label}</Badge>;
 }
 
 /*

@@ -1,4 +1,5 @@
 import type { OnboardingCase, Supplier, SupplierDoc } from "../types";
+import { STANDARD_DOCUMENT_TYPES } from "./onboarding-documents";
 
 /*
  * Derives the onboarding pipeline's per-stage columns from the data we actually
@@ -23,6 +24,8 @@ export type CellTone = "muted" | "info" | "warning" | "success" | "danger" | "do
 export interface Cell {
   label: string;
   tone: CellTone;
+  /** Interpolation values for labels that carry counts, e.g. "{n}/{total}". */
+  vars?: Record<string, string | number>;
 }
 
 const EMPTY: Cell = { label: "—", tone: "muted" };
@@ -59,13 +62,33 @@ export function companyInfoCell(c: OnboardingCase, supplier?: Supplier): Cell {
   return { label: "Added", tone: "info" };
 }
 
+/** Reviewed and accepted — an expiring document is still an approved one. */
+const APPROVED_DOCS: SupplierDoc["status"][] = ["valid", "warning-60", "warning-30"];
+
+/**
+ * Documents move back and forth between prospect and PM several times, so the
+ * column carries a count against the required checklist rather than a single
+ * word: "Pending approval 5/5" while the PM owes a decision, "Approved 3/5"
+ * after a partial review, "Approved 5/5" when the set is complete.
+ *
+ * The denominator is the standard checklist plus any extra file the supplier
+ * uploaded on top of it — the same set the review stepper shows — so a prospect
+ * who has submitted only part of the checklist doesn't read as fully done.
+ */
 export function documentsCell(docs: SupplierDoc[]): Cell {
   if (docs.length === 0) return EMPTY;
-  if (docs.some((d) => d.status === "pending-review")) return { label: "Pending review", tone: "warning" };
-  // Every document reviewed and none awaiting attention.
-  if (docs.every((d) => d.status === "valid" || d.status === "warning-60" || d.status === "warning-30"))
-    return { label: "Approved", tone: "success" };
-  return { label: "Uploaded", tone: "info" };
+
+  const extras = docs.filter((d) => !STANDARD_DOCUMENT_TYPES.some((t) => t.name === d.documentName));
+  const total = STANDARD_DOCUMENT_TYPES.length + extras.length;
+  const pending = docs.filter((d) => d.status === "pending-review").length;
+  const approved = docs.filter((d) => APPROVED_DOCS.includes(d.status)).length;
+
+  // Waiting on the PM takes precedence: it's the only state they can clear.
+  if (pending > 0) return { label: "Pending approval {n}/{total}", tone: "warning", vars: { n: pending, total } };
+  if (approved >= total) return { label: "Approved {n}/{total}", tone: "success", vars: { n: approved, total } };
+  // Partly approved; the rest sits with the supplier, or is blocked outright.
+  const tone: CellTone = docs.some((d) => d.status === "blocked") ? "danger" : "info";
+  return { label: "Approved {n}/{total}", tone, vars: { n: approved, total } };
 }
 
 /** Contract and price agreements share a state — see the note at the top. */
