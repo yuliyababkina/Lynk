@@ -15,7 +15,11 @@ import type { OnboardingCase, Supplier, SupplierDoc } from "../types";
  *    Signed once the case is accepted.
  */
 
-export type CellTone = "muted" | "info" | "warning" | "success" | "danger";
+/**
+ * "done" renders as a bare green checkmark rather than a badge: once a stage is
+ * finished it is no longer a status the PM has to read, so it should recede.
+ */
+export type CellTone = "muted" | "info" | "warning" | "success" | "danger" | "done";
 export interface Cell {
   label: string;
   tone: CellTone;
@@ -32,11 +36,17 @@ const PAST_INVITE: OnboardingCase["status"][] = [
   "Rejected",
 ];
 
-export function invitationCell(c: OnboardingCase): Cell {
+/**
+ * The invitation's job is done the moment the prospect starts filling the
+ * application in — from then on the interesting state lives in the later
+ * columns, so this one collapses to a checkmark. `started` is true once a
+ * supplier profile or any uploaded document exists for the case.
+ */
+export function invitationCell(c: OnboardingCase, started = false): Cell {
   if (c.status === "Draft") return EMPTY; // revoked — no live invitation
   if (c.status === "Stale") return { label: "Stale", tone: "danger" };
+  if (started || PAST_INVITE.includes(c.status)) return { label: "Invitation accepted", tone: "done" };
   if (c.status === "Opened") return { label: "Opened", tone: "info" };
-  if (PAST_INVITE.includes(c.status)) return { label: "Opened", tone: "info" };
   return { label: "Sent", tone: "info" };
 }
 

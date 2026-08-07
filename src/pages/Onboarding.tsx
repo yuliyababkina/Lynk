@@ -33,9 +33,18 @@ const DOC_STATUS_META: Record<DocStatus, { label: string; variant: string }> = {
   blocked: { label: "Blocked", variant: "critical-outline" },
 };
 
-/** One stage column: a badge, or muted "—" when the stage isn't reached yet. */
+/**
+ * One stage column: a checkmark when the stage is finished, a badge while it
+ * still says something, or muted "—" when it isn't reached yet.
+ */
 function StageCell({ cell, tr }: { cell: Cell; tr: (s: string) => string }) {
   if (cell.tone === "muted") return <span className="text-xs text-muted-foreground">{cell.label}</span>;
+  if (cell.tone === "done")
+    return (
+      <span title={tr(cell.label)} aria-label={tr(cell.label)} className="inline-flex">
+        <CheckCircle2 className="size-4 text-success-ink" />
+      </span>
+    );
   const variant = { info: "info", warning: "warning", success: "success", danger: "danger" }[cell.tone];
   return <Badge variant={variant as never}>{tr(cell.label)}</Badge>;
 }
@@ -277,8 +286,11 @@ export function Onboarding({
                 // so a row shows where the case actually stands per stage.
                 const linked = linkedFor(c);
                 const caseDocs = linked ? DOCS.filter((doc) => doc.supplierId === linked.id) : [];
+                // Any profile or uploaded document means the prospect got past
+                // the invitation, so that column can collapse to a checkmark.
+                const started = Boolean(linked) || caseDocs.length > 0;
                 const cells = [
-                  invitationCell(c),
+                  invitationCell(c, started),
                   companyInfoCell(c, linked),
                   documentsCell(caseDocs),
                   signableCell(c),

@@ -295,6 +295,7 @@ const DE: Record<string, string> = {
   Stale: "Veraltet",
   Pending: "Ausstehend",
   Opened: "Geöffnet",
+  "Invitation accepted": "Einladung angenommen",
   "In Review": "In Prüfung",
   METRIC: "KENNZAHL",
   "{days}d no response": "{days} T keine Antwort",
