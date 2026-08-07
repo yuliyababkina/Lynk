@@ -189,6 +189,14 @@ export function Onboarding({
     setSelected(c.id);
   }
 
+  /* The company name is the link straight to the case overview, matching the
+     entity link in a ticket. The row around it still opens the drawer, so both
+     depths stay reachable from the table. */
+  function openFullReview(c: OnboardingCase) {
+    setSelected(c.id);
+    setReviewing(true);
+  }
+
   // Newly invited prospects (added via addOnboardingCase) already sit at the
   // front of ONBOARDING_CASES — see LynkDataContext.
   const cases = useMemo(() => ONBOARDING_CASES, [ONBOARDING_CASES]);
@@ -312,7 +320,24 @@ export function Onboarding({
                     }`}
                   >
                     <td className="px-4 py-3">
-                      <div className="font-medium">{c.companyName}</div>
+                      {/* Only a case with a submitted profile has an overview to
+                          open, so invitation-only rows keep a plain name rather
+                          than a link that would go nowhere. */}
+                      {linked ? (
+                        <button
+                          /* Plain until pointed at: 14 blue names at rest read as
+                             noise, and the row is clickable anyway. */
+                          className="font-medium text-left hover:text-accent hover:underline transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openFullReview(c);
+                          }}
+                        >
+                          {c.companyName}
+                        </button>
+                      ) : (
+                        <div className="font-medium">{c.companyName}</div>
+                      )}
                       <div className="text-xs text-muted-foreground">{c.contactName}</div>
                     </td>
                     {cells.map((cell, i) => (
