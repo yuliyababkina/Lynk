@@ -57,8 +57,9 @@ export function companyInfoCell(c: OnboardingCase, supplier?: Supplier): Cell {
   if (!supplier) return EMPTY;
   if (c.status === "Accepted" || c.status === "Contract Sent (Pending Signature)")
     return { label: "Approved", tone: "success" };
-  if (c.status === "In Review" || c.status === "Changes Requested")
-    return { label: "Pending review", tone: "warning" };
+  // The PM asked for corrections, so the next move is the prospect's.
+  if (c.status === "Changes Requested") return { label: "Pending update", tone: "info" };
+  if (c.status === "In Review") return { label: "Pending review", tone: "warning" };
   return { label: "Added", tone: "info" };
 }
 
@@ -67,9 +68,12 @@ const APPROVED_DOCS: SupplierDoc["status"][] = ["valid", "warning-60", "warning-
 
 /**
  * Documents move back and forth between prospect and PM several times, so the
- * column carries a count against the required checklist rather than a single
- * word: "Pending approval 5/5" while the PM owes a decision, "Approved 3/5"
- * after a partial review, "Approved 5/5" when the set is complete.
+ * column names whose move it is and counts how many documents are in that
+ * state, against the required checklist:
+ *
+ *  - "Pending review 5/5"  — uploaded, the PM hasn't looked yet
+ *  - "Pending update 2/5"  — sent back or never uploaded; the prospect owes them
+ *  - "Approved 5/5"        — the whole set is through
  *
  * The denominator is the standard checklist plus any extra file the supplier
  * uploaded on top of it — the same set the review stepper shows — so a prospect
@@ -84,11 +88,12 @@ export function documentsCell(docs: SupplierDoc[]): Cell {
   const approved = docs.filter((d) => APPROVED_DOCS.includes(d.status)).length;
 
   // Waiting on the PM takes precedence: it's the only state they can clear.
-  if (pending > 0) return { label: "Pending approval {n}/{total}", tone: "warning", vars: { n: pending, total } };
+  if (pending > 0) return { label: "Pending review {n}/{total}", tone: "warning", vars: { n: pending, total } };
   if (approved >= total) return { label: "Approved {n}/{total}", tone: "success", vars: { n: approved, total } };
-  // Partly approved; the rest sits with the supplier, or is blocked outright.
+  /* Anything not approved and not awaiting review is the prospect's to fix —
+     whether it came back rejected or was never uploaded at all. */
   const tone: CellTone = docs.some((d) => d.status === "blocked") ? "danger" : "info";
-  return { label: "Approved {n}/{total}", tone, vars: { n: approved, total } };
+  return { label: "Pending update {n}/{total}", tone, vars: { n: total - approved, total } };
 }
 
 /** Contract and price agreements share a state — see the note at the top. */
