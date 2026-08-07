@@ -6,6 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Pill } from "@/components/yarowa/pill";
 import { RowActionsMenu, type RowAction } from "@/components/yarowa/row-actions-menu";
+import {
+  invitationCell,
+  companyInfoCell,
+  documentsCell,
+  signableCell,
+  lastChange,
+  formatLastChange,
+  type Cell,
+} from "@/lib/onboarding-columns";
 import { toast } from "@/components/yarowa/toast";
 import { PRINCIPAL_COMPANY, PROCUREMENT_MANAGER, PROCUREMENT_MANAGER_ROLE } from "@/lib/principal";
 import { ProspectReview } from "./ProspectReview";
@@ -23,41 +32,11 @@ const DOC_STATUS_META: Record<DocStatus, { label: string; variant: string }> = {
   blocked: { label: "Blocked", variant: "critical-outline" },
 };
 
-function onbStatusVariant(s: OnboardingStatus): string {
-  switch (s) {
-    case "Accepted":
-      return "success";
-    case "Rejected":
-    case "Stale":
-      return "danger";
-    case "Changes Requested":
-    case "Pending":
-      return "warning";
-    default:
-      return "info"; // In Review, Opened
-  }
-}
-
-type Translate = (source: string, vars?: Record<string, string | number>) => string;
-
-function onbMetric(c: OnboardingCase, tr: Translate): string {
-  switch (c.status) {
-    case "In Review":
-      return tr("Submitted — awaiting review");
-    case "Accepted":
-      return tr("Activated in Lynk");
-    case "Changes Requested":
-      return tr("Changes requested — awaiting resubmission");
-    case "Contract Sent (Pending Signature)":
-      return tr("Awaiting supplier signature");
-    case "Rejected":
-      return tr("Rejected");
-    case "Draft":
-      return tr("Invitation revoked");
-    default:
-      // Built through tr so the day count lands inside the translated phrase.
-      return tr("{days}d no response", { days: c.daysNoResponse });
-  }
+/** One stage column: a badge, or muted "—" when the stage isn't reached yet. */
+function StageCell({ cell, tr }: { cell: Cell; tr: (s: string) => string }) {
+  if (cell.tone === "muted") return <span className="text-xs text-muted-foreground">{cell.label}</span>;
+  const variant = { info: "info", warning: "warning", success: "success", danger: "danger" }[cell.tone];
+  return <Badge variant={variant as never}>{tr(cell.label)}</Badge>;
 }
 
 /*
@@ -120,7 +99,7 @@ export function Onboarding({
     revokeInvitation,
   } = useLynkData();
   const [tab, setTab] = useState<OnbTab>("All");
-  const { t: tr } = useI18n();
+  const { t: tr, lang } = useI18n();
   const [selected, setSelected] = useState<string | null>(initialSelectedId ?? null);
   const [reviewing, setReviewing] = useState(false);
   const [deletingCase, setDeletingCase] = useState<OnboardingCase | null>(null);
@@ -281,40 +260,57 @@ export function Onboarding({
             <thead>
               <tr className="text-left text-xs text-muted-foreground border-b border-border">
                 <th className="px-4 py-2 font-medium">{tr("COMPANY")}</th>
-                <th className="px-4 py-2 font-medium">{tr("STAGE")}</th>
-                <th className="px-4 py-2 font-medium">{tr("STATUS")}</th>
-                <th className="px-4 py-2 font-medium">{tr("METRIC")}</th>
+                <th className="px-4 py-2 font-medium">{tr("INVITATION")}</th>
+                <th className="px-4 py-2 font-medium">{tr("COMPANY INFO")}</th>
+                <th className="px-4 py-2 font-medium">{tr("DOCUMENTS")}</th>
+                <th className="px-4 py-2 font-medium">{tr("CONTRACT")}</th>
+                <th className="px-4 py-2 font-medium">{tr("PRICE AGREEMENTS")}</th>
+                <th className="px-4 py-2 font-medium">{tr("LAST CHANGE")}</th>
                 <th className="px-4 py-2 w-10" />
               </tr>
             </thead>
             <tbody>
-              {filtered.map((c) => (
-                <tr
-                  key={c.id}
-                  onClick={() => openCase(c)}
-                  className={`group border-b border-border last:border-0 cursor-pointer hover:bg-secondary/50 ${
-                    selected === c.id ? "bg-secondary/50" : ""
-                  }`}
-                >
-                  <td className="px-4 py-3">
-                    <div className="font-medium">{c.companyName}</div>
-                    <div className="text-xs text-muted-foreground">{c.contactName}</div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge variant="neutral">{tr("Prospect")}</Badge>
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge variant={onbStatusVariant(c.status) as any}>{tr(c.status)}</Badge>
-                  </td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground">{onbMetric(c, tr)}</td>
-                  {/* Right-aligned row actions, revealed on hover. */}
-                  <td className="px-4 py-3 w-10">
-                    <div className="flex justify-end">
-                      <RowActionsMenu actions={actionsFor(c)} />
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {filtered.map((c) => {
+                // Each stage column reads from the linked profile + documents,
+                // so a row shows where the case actually stands per stage.
+                const linked = linkedFor(c);
+                const caseDocs = linked ? DOCS.filter((doc) => doc.supplierId === linked.id) : [];
+                const cells = [
+                  invitationCell(c),
+                  companyInfoCell(c, linked),
+                  documentsCell(caseDocs),
+                  signableCell(c),
+                  signableCell(c),
+                ];
+                return (
+                  <tr
+                    key={c.id}
+                    onClick={() => openCase(c)}
+                    className={`group border-b border-border last:border-0 cursor-pointer hover:bg-secondary/50 ${
+                      selected === c.id ? "bg-secondary/50" : ""
+                    }`}
+                  >
+                    <td className="px-4 py-3">
+                      <div className="font-medium">{c.companyName}</div>
+                      <div className="text-xs text-muted-foreground">{c.contactName}</div>
+                    </td>
+                    {cells.map((cell, i) => (
+                      <td key={i} className="px-4 py-3">
+                        <StageCell cell={cell} tr={tr} />
+                      </td>
+                    ))}
+                    <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
+                      {formatLastChange(lastChange(caseDocs), lang)}
+                    </td>
+                    {/* Right-aligned row actions, revealed on hover. */}
+                    <td className="px-4 py-3 w-10">
+                      <div className="flex justify-end">
+                        <RowActionsMenu actions={actionsFor(c)} />
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
