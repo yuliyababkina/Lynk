@@ -286,6 +286,13 @@ function DocumentsReviewStep({
   const [pageInfo, setPageInfo] = useState<{ current: number; total: number } | null>(null);
   useEffect(() => setPageInfo(null), [selected?.key]);
 
+  /* Writing a change request takes over the whole footer row: the field needs
+     the width far more than the navigation does for the few seconds it's open,
+     and cancelling brings the buttons straight back. Reset on document change so
+     a half-typed comment can't follow the reviewer to the next document. */
+  const [composing, setComposing] = useState(false);
+  useEffect(() => setComposing(false), [selected?.key]);
+
   // Read type / issuer / validity out of the PDF; stored (confirmed) values win.
   const [parsed, setParsed] = useState<ParsedDocumentInfo | null>(null);
   useEffect(() => {
@@ -413,38 +420,57 @@ function DocumentsReviewStep({
               </div>
 
               {/* Document navigation sits on the same level as the review actions */}
-              <div className="border-t border-border p-3 flex items-center justify-between gap-3">
-                {/* Boundary buttons are hidden, not disabled — works for any
-                    number of documents, including a single one. */}
-                {idx > 0 ? (
-                  <Button variant="outline" size="sm" className="shrink-0" title="Previous document" onClick={goPrev}>
-                    <ChevronLeft className="w-4 h-4" /> Previous
-                  </Button>
+              <div className="border-t border-border p-3">
+                {composing && selected.doc ? (
+                  <ChangeRequestComposer
+                    key={selected.doc.id}
+                    doc={selected.doc}
+                    onCancel={() => setComposing(false)}
+                    onSend={(comment) => {
+                      onReviewDocument(selected.doc!.id, "decline", comment);
+                      setComposing(false);
+                    }}
+                  />
                 ) : (
-                  <span />
+                  <div className="flex items-center justify-between gap-3">
+                    {/* Boundary buttons are hidden, not disabled — works for any
+                        number of documents, including a single one. */}
+                    {idx > 0 ? (
+                      <Button variant="outline" size="sm" className="shrink-0" title="Previous document" onClick={goPrev}>
+                        <ChevronLeft className="w-4 h-4" /> Previous
+                      </Button>
+                    ) : (
+                      <span />
+                    )}
+                    {/* Review actions, with "Next document" always furthest right. */}
+                    <div className="flex items-center gap-2 min-w-0">
+                      {selected.doc ? (
+                        <DocActionBar
+                          doc={selected.doc}
+                          disabled={disabled}
+                          onApprove={() => onReviewDocument(selected.doc!.id, "approve")}
+                          onRequestChange={() => setComposing(true)}
+                        />
+                      ) : (
+                        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <FileX className="w-3.5 h-3.5" /> Not yet uploaded by the supplier.
+                        </span>
+                      )}
+                      {idx < rows.length - 1 && (
+                        /* Once a document is approved, moving on is the primary action. */
+                        <Button
+                          variant={selected.doc?.status === "valid" ? "default" : "outline"}
+                          size="sm"
+                          className="shrink-0"
+                          title="Next document"
+                          onClick={goNext}
+                        >
+                          Next <ChevronRight className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
                 )}
-                {/* Review actions, with "Next document" always furthest right. */}
-                <div className="flex items-center gap-2 min-w-0">
-                  {selected.doc ? (
-                    <DocActionBar key={selected.doc.id} doc={selected.doc} disabled={disabled} onReviewDocument={onReviewDocument} />
-                  ) : (
-                    <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <FileX className="w-3.5 h-3.5" /> Not yet uploaded by the supplier.
-                    </span>
-                  )}
-                  {idx < rows.length - 1 && (
-                    /* Once a document is approved, moving on is the primary action. */
-                    <Button
-                      variant={selected.doc?.status === "valid" ? "default" : "outline"}
-                      size="sm"
-                      className="shrink-0"
-                      title="Next document"
-                      onClick={goNext}
-                    >
-                      Next <ChevronRight className="w-4 h-4" />
-                    </Button>
-                  )}
-                </div>
               </div>
             </div>
           ) : (
@@ -466,55 +492,70 @@ function DocumentsReviewStep({
   );
 }
 
+/**
+ * Full-width change-request field. It owns the footer row while open, so the
+ * comment — the one free-text thing the supplier actually reads — gets all the
+ * space, with Enter to send and Escape to back out.
+ */
+function ChangeRequestComposer({
+  doc,
+  onCancel,
+  onSend,
+}: {
+  doc: SupplierDoc;
+  onCancel: () => void;
+  onSend: (comment: string) => void;
+}) {
+  const { t } = useI18n();
+  const [comment, setComment] = useState("");
+  const ready = comment.trim().length > 0;
+  // Same outcome either way: the supplier has to resubmit this document.
+  const send = () => ready && onSend(comment.trim());
+
+  return (
+    <div className="flex items-center gap-2">
+      <AlertTriangle className="w-4 h-4 shrink-0 text-warning-ink" />
+      <input
+        autoFocus
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            send();
+          } else if (e.key === "Escape") {
+            onCancel();
+          }
+        }}
+        placeholder={
+          doc.status === "valid"
+            ? t("What should the supplier update? (shared with the supplier)")
+            : t("Why is this document being declined? (shared with the supplier)")
+        }
+        className="flex-1 min-w-0 h-9 rounded-lg border border-border bg-background px-3 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      />
+      <Button variant="ghost" size="sm" className="shrink-0" onClick={onCancel}>
+        {t("Cancel")}
+      </Button>
+      <Button variant="danger" size="sm" className="shrink-0" disabled={!ready} onClick={send}>
+        {t("Send request")}
+      </Button>
+    </div>
+  );
+}
+
 function DocActionBar({
   doc,
   disabled,
-  onReviewDocument,
+  onApprove,
+  onRequestChange,
 }: {
   doc: SupplierDoc;
   disabled: boolean;
-  onReviewDocument: (docId: string, decision: "approve" | "decline", comment?: string) => void;
+  onApprove: () => void;
+  onRequestChange: () => void;
 }) {
   const { t } = useI18n();
-  const [declining, setDeclining] = useState(false);
-  const [comment, setComment] = useState("");
-  const approved = doc.status === "valid";
-
-  // Rendered inside the footer row, so no wrapper of its own.
-  if (declining) {
-    return (
-      <div className="flex-1 flex items-center gap-2 min-w-0">
-        <input
-          autoFocus
-          value={comment}
-          onChange={(e) => setComment(e.target.value)}
-          placeholder={
-            approved
-              ? "What should the supplier update? (shared with the supplier)"
-              : "Why is this document being declined? (shared with the supplier)"
-          }
-          className="flex-1 min-w-0 h-9 rounded-lg border border-border bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        />
-        <Button variant="outline" size="sm" className="shrink-0" onClick={() => setDeclining(false)}>
-          Cancel
-        </Button>
-        <Button
-          variant="danger"
-          size="sm"
-          className="shrink-0"
-          disabled={!comment.trim()}
-          onClick={() => {
-            // Same outcome either way: the supplier has to resubmit this document.
-            onReviewDocument(doc.id, "decline", comment.trim());
-            setDeclining(false);
-            setComment("");
-          }}
-        >
-          {t("Send request")}
-        </Button>
-      </div>
-    );
-  }
 
   return (
     <div className="flex items-center gap-3 min-w-0">
@@ -527,12 +568,12 @@ function DocActionBar({
           {/* Approve stays the emphasised action; asking for a change is the
               low-emphasis option and sits closest to "Next document", matching
               the Company info step. */}
-          {!approved && (
-            <Button variant="success" size="sm" onClick={() => onReviewDocument(doc.id, "approve")}>
+          {doc.status !== "valid" && (
+            <Button variant="success" size="sm" onClick={onApprove}>
               <CheckCircle2 className="w-4 h-4" /> {t("Approve")}
             </Button>
           )}
-          <Button variant="ghost" size="sm" onClick={() => setDeclining(true)}>
+          <Button variant="ghost" size="sm" onClick={onRequestChange}>
             <AlertTriangle className="w-4 h-4" /> {t("Request a change")}
           </Button>
         </div>

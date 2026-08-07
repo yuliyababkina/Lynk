@@ -218,6 +218,11 @@ const DE: Record<string, string> = {
   "Reject application": "Bewerbung ablehnen",
   "Request a change": "Änderung anfordern",
   "Send request": "Anfrage senden",
+  Cancel: "Abbrechen",
+  "What should the supplier update? (shared with the supplier)":
+    "Was soll der Lieferant aktualisieren? (wird dem Lieferanten mitgeteilt)",
+  "Why is this document being declined? (shared with the supplier)":
+    "Warum wird dieses Dokument abgelehnt? (wird dem Lieferanten mitgeteilt)",
   "Send Contract & Service Catalogs": "Vertrag & Leistungskataloge senden",
   "Send Contract": "Vertrag senden",
   "Choose what to send {company} for signature. The case moves to awaiting signature once sent.":
