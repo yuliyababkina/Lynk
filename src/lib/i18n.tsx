@@ -277,6 +277,7 @@ const DE: Record<string, string> = {
   Uploaded: "Hochgeladen",
   // ("Opened" and "Signed" are already defined above.)
   "Row actions": "Zeilenaktionen",
+  "Open full review": "Vollständige Prüfung öffnen",
   "Send reminder": "Erinnerung senden",
   "Revoke Invitation": "Einladung widerrufen",
   "Delete prospect": "Interessent löschen",

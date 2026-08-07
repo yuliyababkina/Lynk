@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
-import { FileText, ExternalLink, Building2, MapPin, Mail, Phone, CheckCircle2, AlertTriangle, XCircle, Trash2, Loader2, Bell, Ban } from "lucide-react";
+import { FileText, ExternalLink, Building2, MapPin, Mail, Phone, CheckCircle2, AlertTriangle, XCircle, Trash2, Loader2, Bell, Ban, ArrowRight } from "lucide-react";
 import { useLynkData } from "../lib/LynkDataContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Pill } from "@/components/yarowa/pill";
 import { RowActionsMenu, type RowAction } from "@/components/yarowa/row-actions-menu";
+import { DetailDrawer } from "@/components/yarowa/detail-drawer";
 import {
   invitationCell,
   companyInfoCell,
@@ -166,9 +167,10 @@ export function Onboarding({
 
   // Clicking a prospect with a full submitted profile opens the review stepper;
   // legacy invitation-only cases just show the timeline panel.
+  /* Clicking a row opens the drawer. The full-page review is a deliberate step
+     from there, so a single click can't drop the PM into a stepper. */
   function openCase(c: OnboardingCase) {
     setSelected(c.id);
-    setReviewing(Boolean(linkedFor(c)));
   }
 
   // Newly invited prospects (added via addOnboardingCase) already sit at the
@@ -222,8 +224,8 @@ export function Onboarding({
   }
 
   return (
-    <div className="p-6 flex gap-6">
-      <div className="flex-1 min-w-0">
+    <div className="flex h-full min-h-0">
+      <div className="flex-1 min-w-0 p-6 overflow-y-auto">
         <h1 className="text-2xl font-bold mb-1">{tr("Onboarding")}</h1>
         <p className="text-sm text-muted-foreground mb-4">
           {tr("Prospect invitations that are stale or incomplete. Follow up to keep your pipeline moving.")}
@@ -318,26 +320,23 @@ export function Onboarding({
       </div>
 
       {selectedCase && (
-        <div className="w-[380px] shrink-0 bg-card border border-border rounded-lg p-4 h-fit max-h-[calc(100vh-8rem)] overflow-y-auto">
-          <div className="flex items-start justify-between gap-2 mb-4">
+        <DetailDrawer
+          onClose={() => setSelected(null)}
+          header={
             <div className="min-w-0">
-              <div className="font-semibold">{selectedCase.companyName}</div>
-              <div className="text-xs text-muted-foreground">{selectedCase.contactName} · Prospect</div>
+              <div className="font-semibold truncate">{selectedCase.companyName}</div>
+              <div className="text-xs text-muted-foreground truncate">
+                {selectedCase.contactName} · {tr("Prospect")}
+              </div>
             </div>
-            {/* Removing the case from the pipeline altogether — distinct from
-                rejecting it, which is a decision the supplier is told about.
-                Quiet by default: it is housekeeping, not part of the review. */}
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="shrink-0 text-muted-foreground hover:text-destructive"
-              title="Delete onboarding case"
-              aria-label={`Delete the onboarding case for ${selectedCase.companyName}`}
-              onClick={() => setDeletingCase(selectedCase)}
-            >
-              <Trash2 className="w-3.5 h-3.5" />
+          }
+        >
+          {linkedSupplier && (
+            <Button variant="dark" className="w-full mb-4" onClick={() => setReviewing(true)}>
+              {tr("Open full review")}
+              <ArrowRight className="w-4 h-4" />
             </Button>
-          </div>
+          )}
 
           {linkedSupplier ? (
             <>
@@ -419,18 +418,24 @@ export function Onboarding({
               <div className="text-sm mb-4">
                 Invitation sent, {selectedCase.daysNoResponse} days ago. No response from contact yet.
               </div>
-              <div className="flex gap-2">
-                <Button variant="default" className="flex-1">Send Reminder</Button>
-              </div>
-              <div className="flex gap-2 mt-2">
-                <Button variant="outline" className="flex-1">Re-send Magic Link</Button>
-              </div>
-              <div className="flex gap-2 mt-2">
-                <Button variant="danger" className="flex-1">Revoke Invitation</Button>
+              {/* Same actions as the row menu, so both entry points agree. */}
+              <div className="space-y-2">
+                <Button variant="default" className="w-full" onClick={() => sendReminder(selectedCase)}>
+                  <Bell className="w-4 h-4" />
+                  {tr("Send reminder")}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                  onClick={() => setRevokingCase(selectedCase)}
+                >
+                  <Ban className="w-4 h-4" />
+                  {tr("Revoke Invitation")}
+                </Button>
               </div>
             </>
           )}
-        </div>
+        </DetailDrawer>
       )}
 
       <Dialog open={Boolean(revokingCase)} onOpenChange={(o) => !o && setRevokingCase(null)}>
