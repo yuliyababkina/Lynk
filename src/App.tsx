@@ -1,25 +1,40 @@
-import { useState } from "react";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { Sidebar } from "@/components/yarowa/sidebar";
+import { TopHeader } from "@/components/yarowa/top-header";
 import { TicketDrawer } from "@/components/yarowa/ticket-drawer";
 import { ComplianceDrawer } from "@/components/yarowa/compliance-drawer";
 import { DocumentLightbox } from "@/components/yarowa/document-lightbox";
-import { InviteSupplierModal } from "@/components/yarowa/invite-supplier-modal";
 import { Toaster, toast } from "@/components/yarowa/toast";
 import { actionResult } from "@/lib/ticket-actions";
+import { onboardingSupplierId } from "@/lib/db";
 import { useLynkData } from "./lib/LynkDataContext";
 import { Landing } from "./pages/Landing";
-import { SupplierPortal } from "./pages/SupplierPortal";
-import { Dashboard } from "./pages/Dashboard";
-import { SuppliersOverview } from "./pages/SuppliersOverview";
-import { SupplierProfile } from "./pages/SupplierProfile";
-import { ComplianceMonitoring } from "./pages/ComplianceMonitoring";
-import { ContractManagement } from "./pages/ContractManagement";
-import { DataGovernance } from "./pages/DataGovernance";
-import { Onboarding } from "./pages/Onboarding";
-import { ServiceCatalogue } from "./pages/ServiceCatalogue";
-import { Reporting } from "./pages/Reporting";
 import type { Ticket, SupplierDoc, Contract } from "./types";
 import type { LandingRole } from "./pages/Landing";
+
+// Route-level code splitting: each view/portal loads its own chunk on demand,
+// keeping the initial bundle to the landing page + shell. Landing stays eager
+// (it's the entry screen). Named exports are mapped to `default` for lazy().
+const SupplierPortal = lazy(() => import("./pages/SupplierPortal").then((m) => ({ default: m.SupplierPortal })));
+const ProspectOnboarding = lazy(() => import("./pages/ProspectOnboarding").then((m) => ({ default: m.ProspectOnboarding })));
+const Dashboard = lazy(() => import("./pages/Dashboard").then((m) => ({ default: m.Dashboard })));
+const SuppliersOverview = lazy(() => import("./pages/SuppliersOverview").then((m) => ({ default: m.SuppliersOverview })));
+const SupplierProfile = lazy(() => import("./pages/SupplierProfile").then((m) => ({ default: m.SupplierProfile })));
+const ComplianceMonitoring = lazy(() => import("./pages/ComplianceMonitoring").then((m) => ({ default: m.ComplianceMonitoring })));
+const ContractManagement = lazy(() => import("./pages/ContractManagement").then((m) => ({ default: m.ContractManagement })));
+const DataGovernance = lazy(() => import("./pages/DataGovernance").then((m) => ({ default: m.DataGovernance })));
+const Onboarding = lazy(() => import("./pages/Onboarding").then((m) => ({ default: m.Onboarding })));
+const ServiceCatalogue = lazy(() => import("./pages/ServiceCatalogue").then((m) => ({ default: m.ServiceCatalogue })));
+const Reporting = lazy(() => import("./pages/Reporting").then((m) => ({ default: m.Reporting })));
+// Large (~558 lines) and only opened behind a button — split it out too.
+const InviteSupplierModal = lazy(() =>
+  import("@/components/yarowa/invite-supplier-modal").then((m) => ({ default: m.InviteSupplierModal }))
+);
+
+// Lightweight fallback shown while a view chunk is fetched.
+function ViewFallback() {
+  return <div className="flex-1" aria-busy="true" />;
+}
 
 export type View =
   | "dashboard"
@@ -47,17 +62,56 @@ const VIEW_LABEL: Record<View, string> = {
 export default function App() {
   // Role/persona switcher
   const [role, setRole] = useState<LandingRole | null>(null);
-  
+
+  // Real magic-link invitations land here as ?invite=<token>. Once the
+  // onboarding cases are loaded we resolve the token to a specific prospect
+  // (see the effect below) instead of falling back to the fixed demo persona.
+  // `undefined` = no token in the URL, `null` = token present but not found
+  // (invalid/expired link), object = resolved successfully.
+  const [inviteProspect, setInviteProspect] = useState<
+    { id: string; companyName: string; contactName?: string } | null | undefined
+  >(
+    undefined
+  );
+
   const {
     tickets: TICKETS,
     docs: DOCS,
     suppliers: SUPPLIERS,
+    onboardingCases: ONBOARDING_CASES,
     resolvedTicketIds,
     resolveTicket: persistResolveTicket,
     unresolveTicket,
     decideRenewal: persistDecideRenewal,
     addOnboardingCase,
   } = useLynkData();
+
+  // Remembers a token we already accepted, so a data refresh can't revoke it.
+  const resolvedInviteRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const token = new URLSearchParams(window.location.search).get("invite");
+    if (!token) {
+      setInviteProspect(undefined);
+      return;
+    }
+    const match = ONBOARDING_CASES.find((c) => c.inviteToken === token);
+    if (match) {
+      resolvedInviteRef.current = token;
+      setInviteProspect({
+        id: onboardingSupplierId(match.id),
+        companyName: match.companyName,
+        contactName: match.contactName,
+      });
+      setRole("prospect");
+    } else if (resolvedInviteRef.current !== token) {
+      // Only reject a token we never resolved. This effect re-runs on every
+      // change to the onboarding cases, so without this guard any later update
+      // that touched the prospect's case would eject them from their own
+      // onboarding with "this invitation link isn't valid".
+      setInviteProspect(null);
+    }
+  }, [ONBOARDING_CASES]);
 
   const [view, setView] = useState<View>("dashboard");
   const [activeTicket, setActiveTicket] = useState<Ticket | null>(null);
@@ -66,6 +120,22 @@ export default function App() {
   const [activeDoc, setActiveDoc] = useState<SupplierDoc | null>(null);
   const [reviewDoc, setReviewDoc] = useState<SupplierDoc | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  const unresolvedTickets = TICKETS.filter(
+    (ticket) => !resolvedTicketIds.has(ticket.id) && ticket.status !== "Resolved" && !ticket.resolved
+  );
+
+  const sidebarBadgeCounts: Partial<Record<View, number>> = {
+    "data-governance": unresolvedTickets.filter(
+      (ticket) => ticket.source === "data-governance" || ticket.source === "data-quality"
+    ).length,
+    onboarding: unresolvedTickets.filter(
+      (ticket) => ticket.source === "onboarding" || ticket.source === "prospect"
+    ).length,
+    compliance: unresolvedTickets.filter((ticket) => ticket.source === "compliance-monitoring").length,
+    contracts: unresolvedTickets.filter((ticket) => ticket.source === "contracts").length,
+  };
 
   // Handle role selection from landing page
   function handleSelectRole(selectedRole: LandingRole) {
@@ -158,6 +228,22 @@ export default function App() {
     setActiveTicket(t);
   }
 
+  // A magic-link click carried a token that doesn't match any prospect
+  // (expired, already used, or mistyped) — say so instead of silently
+  // dropping them on the generic landing/role picker.
+  if (inviteProspect === null) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-background text-foreground">
+        <div className="text-center max-w-sm">
+          <div className="font-semibold mb-1">This invitation link isn't valid</div>
+          <div className="text-sm text-muted-foreground">
+            It may have expired or already been used. Contact the company that invited you for a new link.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Show landing page if no role selected
   if (!role) {
     return <Landing onSelectRole={handleSelectRole} />;
@@ -166,51 +252,49 @@ export default function App() {
   // Render Supplier Portal for supplier/prospect roles
   if (role === "supplier") {
     return (
-      <SupplierPortal
-        supplierName="Martin Weber"
-        supplierId="supplier_martin_weber"
-        onSwitchAccount={handleSwitchAccount}
-      />
+      <Suspense fallback={<ViewFallback />}>
+        <SupplierPortal
+          supplierName="Martin Weber"
+          supplierId="supplier_martin_weber"
+          onSwitchAccount={handleSwitchAccount}
+        />
+      </Suspense>
     );
   }
 
+  // Prospects go through the onboarding wizard (fill profile + upload docs +
+  // submit for review) rather than the full supplier portal.
   if (role === "prospect") {
     return (
-      <SupplierPortal
-        supplierName="Mehmet Yilmaz"
-        supplierId="supplier_mehmet_yilmaz"
-        onSwitchAccount={handleSwitchAccount}
-      />
+      <Suspense fallback={<ViewFallback />}>
+        <ProspectOnboarding
+          supplierName={inviteProspect?.companyName ?? "Yilmaz Elektrotechnik GmbH"}
+          supplierId={inviteProspect?.id ?? "supplier_mehmet_yilmaz"}
+          contactName={inviteProspect?.contactName}
+          onSwitchAccount={handleSwitchAccount}
+        />
+      </Suspense>
     );
   }
 
   // Render PM app for PM role
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-background text-foreground">
-      <Sidebar view={view} onNavigate={(v) => navigate(v)} onInvite={() => setInviteOpen(true)} />
+      <Sidebar
+        view={view}
+        onNavigate={(v) => navigate(v)}
+        onInvite={() => setInviteOpen(true)}
+        badgeCounts={sidebarBadgeCounts}
+        collapsed={!sidebarOpen}
+        onToggleCollapse={() => setSidebarOpen((open) => !open)}
+      />
 
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-14 border-b border-border flex items-center px-6 shrink-0 bg-card">
-          <span className="text-sm font-medium text-muted-foreground">
-            Lynk / Procurement Platform / <span className="text-foreground">{VIEW_LABEL[view]}</span>
-          </span>
-          <div className="flex-1" />
-          <button
-            onClick={handleSwitchAccount}
-            className="mr-3 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-            title="Switch account"
-          >
-            Switch
-          </button>
-          <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs font-semibold flex items-center justify-center cursor-pointer hover:opacity-80"
-            onClick={handleSwitchAccount}
-            title="Switch account">
-            SM
-          </div>
-        </header>
+      <div className="flex-1 flex flex-col min-w-0 bg-sidebar">
+        <TopHeader currentLabel={VIEW_LABEL[view]} onSwitchAccount={handleSwitchAccount} accountInitials="SM" />
 
         <div className="flex-1 flex min-w-0 overflow-hidden">
           <main className="flex-1 overflow-y-auto min-w-0">
+            <Suspense fallback={<ViewFallback />}>
             {view === "dashboard" && (
               <Dashboard
                 onSelectTicket={selectTicket}
@@ -262,6 +346,7 @@ export default function App() {
             )}
             {view === "reporting" && <Reporting />}
             {view === "service-catalogue" && <ServiceCatalogue initialSelectedId={pendingSelected} />}
+            </Suspense>
           </main>
 
           {activeDoc ? (
@@ -287,11 +372,15 @@ export default function App() {
         />
       )}
 
-      <InviteSupplierModal
-        open={inviteOpen}
-        onClose={() => setInviteOpen(false)}
-        onCreateProspect={(c) => addOnboardingCase(c)}
-      />
+      {inviteOpen && (
+        <Suspense fallback={null}>
+          <InviteSupplierModal
+            open={inviteOpen}
+            onClose={() => setInviteOpen(false)}
+            onCreateProspect={(c) => addOnboardingCase(c)}
+          />
+        </Suspense>
+      )}
 
       <Toaster />
     </div>

@@ -3,6 +3,8 @@
 // company, documents, requests and activity. This is prototype data — in a real
 // build it would come from the API scoped to the signed-in supplier.
 
+import { PRINCIPAL_COMPANY, PRINCIPAL_SHORT } from "@/lib/principal";
+
 export type Tone = "critical" | "orange" | "medium" | "success" | "warning" | "neutral";
 
 export type DocStatus = "valid" | "expiring" | "action-required";
@@ -31,7 +33,7 @@ export interface ActivityItem {
 export interface OverviewGroup {
   key: string;
   label: string;
-  /** Total in this state — may exceed the items previewed below it. */
+  /** Total items in this state. */
   count: number;
   tone: Tone;
   items: ActivityItem[];
@@ -85,7 +87,6 @@ export interface PortalProfile {
   fullName: string;
   firstName: string;
   role: string;
-  navCounts: NavCounts;
   stats: PortalStat[];
   overviewGroups: OverviewGroup[];
   documents: PortalDoc[];
@@ -97,16 +98,16 @@ const MARTIN: PortalProfile = {
   fullName: "Martin Weber",
   firstName: "Martin",
   role: "Supplier Manager",
-  navCounts: { overview: 1, "requested-updates": 1, documents: 1, "company-details": 1 },
   stats: [
     { key: "documents", label: "Documents", value: "2/6", hint: "1 expiring soon" },
     { key: "requested-updates", label: "Open Requests", value: "4", hint: "data change requests" },
     {
       key: "principals",
       label: "Compliance by principal",
-      value: "1/3",
+      value: "1/4",
       principals: [
-        { name: "Wincasa", tone: "warning" },
+        { name: PRINCIPAL_SHORT, tone: "warning" },
+        { name: "Wincasa", tone: "neutral" },
         { name: "GCH", tone: "neutral" },
         { name: "AT", tone: "success" },
       ],
@@ -123,7 +124,7 @@ const MARTIN: PortalProfile = {
           id: "ar-1",
           title: "Public Liability Insurance",
           detail: "expired 8 days ago",
-          principal: "Wincasa",
+          principal: PRINCIPAL_SHORT,
           ageLabel: "8 days ago",
           icon: "shield",
           actions: ["Update", "Chat"],
@@ -132,7 +133,7 @@ const MARTIN: PortalProfile = {
           id: "ar-2",
           title: "Framework Contract",
           detail: "12 days to expiry",
-          principal: "GCH",
+          principal: PRINCIPAL_SHORT,
           ageLabel: "3 days ago",
           icon: "file",
           actions: ["Upload", "Chat"],
@@ -149,7 +150,7 @@ const MARTIN: PortalProfile = {
           id: "es-1",
           title: "ISO 9001 Certificate",
           detail: "expiring in 30 days",
-          principal: "GCH",
+          principal: PRINCIPAL_SHORT,
           ageLabel: "1 day ago",
           icon: "shield",
           actions: ["Update", "Chat"],
@@ -158,7 +159,7 @@ const MARTIN: PortalProfile = {
           id: "es-2",
           title: "Profile completeness 61%",
           detail: "below 65% threshold",
-          principal: "GCH",
+          principal: PRINCIPAL_SHORT,
           ageLabel: "5 days ago",
           icon: "file",
           actions: ["Update", "Chat"],
@@ -175,7 +176,7 @@ const MARTIN: PortalProfile = {
           id: "pa-1",
           title: "Public Liability Insurance",
           detail: "expired 8 days ago",
-          principal: "Wincasa",
+          principal: PRINCIPAL_SHORT,
           ageLabel: "8 days ago",
           icon: "shield",
           actions: ["Remind"],
@@ -184,7 +185,7 @@ const MARTIN: PortalProfile = {
           id: "pa-2",
           title: "Framework Contract",
           detail: "12 days to expiry",
-          principal: "GCH",
+          principal: PRINCIPAL_SHORT,
           ageLabel: "3 days ago",
           icon: "file",
           actions: ["Remind"],
@@ -201,7 +202,7 @@ const MARTIN: PortalProfile = {
           id: "rs-1",
           title: "ISO 9001 Certificate",
           detail: "expiring in 30 days",
-          principal: "Wincasa",
+          principal: PRINCIPAL_SHORT,
           ageLabel: "1 day ago",
           icon: "shield",
           actions: ["Review"],
@@ -210,7 +211,7 @@ const MARTIN: PortalProfile = {
           id: "rs-2",
           title: "IBAN change request",
           detail: "awaiting first-eye endorsement",
-          principal: "GCH",
+          principal: PRINCIPAL_SHORT,
           ageLabel: "2 days ago",
           icon: "shield",
           actions: ["Review"],
@@ -230,8 +231,8 @@ const MARTIN: PortalProfile = {
     {
       id: "ru-1",
       from: "Sabine Müller",
-      principal: "Wincasa",
-      email: "procurement@yarowa-ag.com",
+      principal: PRINCIPAL_SHORT,
+      email: "procurement@urbanhabitat-management.de",
       sentLabel: "Today, 09:14",
       subject: "Please verify your banking details — EuroBau Components GmbH",
       body: [
@@ -245,7 +246,7 @@ const MARTIN: PortalProfile = {
     {
       id: "ru-2",
       from: "Thomas Becker",
-      principal: "GCH",
+      principal: PRINCIPAL_SHORT,
       email: "compliance@gch-group.com",
       sentLabel: "3 days ago",
       subject: "Confirm your primary contact details",
@@ -261,7 +262,7 @@ const MARTIN: PortalProfile = {
     vatId: "DE 118 204 771",
     registrationNo: "HRB 118204",
     website: "www.eurobau-components.de",
-    associate: "Wincasa",
+    associate: "Berlin",
     address: { street: "Industriestraße 42", city: "Berlin", postcode: "10115", country: "Germany" },
     payment: { iban: "DE89 3704 0044 0532 0130 00", bankName: "Commerzbank AG", bic: "COBADEHHXXX" },
   },
@@ -271,15 +272,17 @@ const MEHMET: PortalProfile = {
   fullName: "Mehmet Yilmaz",
   firstName: "Mehmet",
   role: "Supplier Manager",
-  navCounts: { overview: 1, "requested-updates": 1, documents: 1 },
   stats: [
     { key: "documents", label: "Documents", value: "2/3", hint: "1 pending review" },
     { key: "requested-updates", label: "Open Requests", value: "1", hint: "onboarding task" },
     {
       key: "principals",
       label: "Compliance by principal",
-      value: "0/1",
-      principals: [{ name: "AT", tone: "warning" }],
+      value: "0/2",
+      principals: [
+        { name: PRINCIPAL_SHORT, tone: "warning" },
+        { name: "Wincasa", tone: "neutral" },
+      ],
     },
   ],
   overviewGroups: [
@@ -293,7 +296,7 @@ const MEHMET: PortalProfile = {
           id: "m-ar-1",
           title: "Complete company profile",
           detail: "3 required fields missing",
-          principal: "AT Immobilien",
+          principal: PRINCIPAL_SHORT,
           ageLabel: "Today",
           icon: "file",
           actions: ["Complete", "Chat"],
@@ -302,7 +305,7 @@ const MEHMET: PortalProfile = {
           id: "m-ar-2",
           title: "Public Liability Insurance",
           detail: "not yet uploaded",
-          principal: "AT Immobilien",
+          principal: PRINCIPAL_SHORT,
           ageLabel: "Today",
           icon: "shield",
           actions: ["Upload", "Chat"],
@@ -326,7 +329,7 @@ const MEHMET: PortalProfile = {
           id: "m-pa-1",
           title: "Trade Licence",
           detail: "awaiting principal review",
-          principal: "AT Immobilien",
+          principal: PRINCIPAL_SHORT,
           ageLabel: "1 day ago",
           icon: "file",
           actions: ["Remind"],
@@ -350,13 +353,13 @@ const MEHMET: PortalProfile = {
     {
       id: "m-ru-1",
       from: "Sabine Müller",
-      principal: "AT Immobilien",
-      email: "procurement@yarowa-ag.com",
+      principal: PRINCIPAL_SHORT,
+      email: "procurement@urbanhabitat-management.de",
       sentLabel: "Yesterday, 14:02",
       subject: "Complete your onboarding — Yilmaz Elektrotechnik GmbH",
       body: [
         "Dear Mehmet,",
-        "Welcome to Lynk. To activate your supplier account with AT Immobilien, please complete your company profile and upload your compliance documents.",
+        `Welcome to Lynk. To activate your supplier account with ${PRINCIPAL_COMPANY}, please complete your company profile and upload your compliance documents.`,
         "Once submitted, your details will be reviewed by two members of our team before your account goes live.",
       ],
       dueLabel: "Requested by 25 Jul 2026",
@@ -367,7 +370,7 @@ const MEHMET: PortalProfile = {
     vatId: "DE 294 817 532",
     registrationNo: "HRB 214839",
     website: "www.yilmaz-elektrotechnik.de",
-    associate: "Mülheimer",
+    associate: "Cologne",
     address: { street: "Mülheimer Straße 62", city: "Duisburg", postcode: "47057", country: "Germany" },
     payment: { iban: "DE89 3704 0044 0532 0130 00", bankName: "Commerzbank AG", bic: "COBADEFFXXX" },
   },
@@ -381,6 +384,42 @@ const PROFILES: Record<string, PortalProfile> = {
 /** Resolve the portal profile for a supplier, defaulting to Martin's demo data. */
 export function getPortalProfile(supplierId: string): PortalProfile {
   return PROFILES[supplierId] ?? MARTIN;
+}
+
+const PRICE_AGREEMENT_KEYWORDS = /\b(contract|agreement|pricing|price)\b/i;
+const COMPANY_DETAILS_KEYWORDS = /\b(bank|iban|address|company|contact|profile|details|vat|registration)\b/i;
+const OVERVIEW_ALERT_GROUP_KEYS = new Set(["action-required", "expiring-soon"]);
+
+function countPriceAgreementAlerts(profile: PortalProfile): number {
+  return profile.overviewGroups
+    .filter((group) => group.key !== "resolved")
+    .flatMap((group) => group.items)
+    .filter((item) => PRICE_AGREEMENT_KEYWORDS.test(`${item.title} ${item.detail}`)).length;
+}
+
+function countCompanyDetailAlerts(profile: PortalProfile): number {
+  return profile.requestedUpdates.filter((request) =>
+    COMPANY_DETAILS_KEYWORDS.test(`${request.subject} ${request.body.join(" ")}`)
+  ).length;
+}
+
+export function getPortalNavCounts(profile: PortalProfile): NavCounts {
+  const overviewAlerts = profile.overviewGroups
+    .filter((group) => OVERVIEW_ALERT_GROUP_KEYS.has(group.key))
+    .reduce((sum, group) => sum + group.items.length, 0);
+
+  const documentAlerts = profile.documents.filter((doc) => doc.status !== "valid").length;
+  const requestedUpdatesAlerts = profile.requestedUpdates.length;
+  const priceAgreementAlerts = countPriceAgreementAlerts(profile);
+  const companyDetailAlerts = countCompanyDetailAlerts(profile);
+
+  return {
+    overview: overviewAlerts || undefined,
+    "requested-updates": requestedUpdatesAlerts || undefined,
+    documents: documentAlerts || undefined,
+    "price-agreements": priceAgreementAlerts || undefined,
+    "company-details": companyDetailAlerts || undefined,
+  };
 }
 
 export function initialsOf(name: string): string {

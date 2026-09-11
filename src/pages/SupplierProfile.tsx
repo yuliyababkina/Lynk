@@ -1,12 +1,17 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { ArrowLeft, Building2, Edit, Mail, MoreHorizontal, FileText } from "lucide-react";
 import { useLynkData } from "../lib/LynkDataContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertBanner } from "@/components/yarowa/alert-banner";
 import { CriticalityIcon } from "@/components/yarowa/criticality-icon";
-import { DocumentViewer } from "@/components/yarowa/document-viewer";
 import type { Ticket, SupplierDoc } from "../types";
+
+// Lazy — pulls the heavy pdfjs-dist bundle (+ worker) into its own chunk that is
+// only fetched when a user actually opens the PDF viewer.
+const DocumentViewer = lazy(() =>
+  import("@/components/yarowa/document-viewer").then((m) => ({ default: m.DocumentViewer }))
+);
 
 const ACTIVITY: Record<string, { label: string; who: string; date: string; tone: "warning" | "success" | "danger" | "neutral" }[]> = {
   bauparts: [
@@ -280,7 +285,11 @@ export function SupplierProfile({
         )}
       </div>
 
-      {previewDoc && <DocumentViewer doc={previewDoc} onClose={() => setPreviewDoc(null)} />}
+      {previewDoc && (
+        <Suspense fallback={null}>
+          <DocumentViewer doc={previewDoc} onClose={() => setPreviewDoc(null)} />
+        </Suspense>
+      )}
     </div>
   );
 }

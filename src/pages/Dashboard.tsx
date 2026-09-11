@@ -12,6 +12,8 @@ import { TicketStatusMenu } from "@/components/yarowa/ticket-status-menu";
 import { CriticalityIcon } from "@/components/yarowa/criticality-icon";
 import { ACTION_ICON } from "@/lib/action-icons";
 import { criticalityLabel } from "@/lib/theme";
+import { useI18n } from "@/lib/i18n";
+import { translateTicketTitle, translateAgeLabel } from "@/lib/ticket-i18n";
 import type { Ticket, Criticality, TicketCategory, TicketStatus } from "../types";
 
 const CATEGORIES: TicketCategory[] = [
@@ -45,7 +47,8 @@ export function Dashboard({
   resolvedIds: Set<string>;
   onResolve: (t: Ticket, action: string) => void;
 }) {
-  const { tickets: TICKETS, docs: DOCS, ticketStatusById, setTicketStatus } = useLynkData();
+  const { tickets: TICKETS, ticketStatusById, setTicketStatus } = useLynkData();
+  const { t: tr } = useI18n();
   const [filter, setFilter] = useState<"All tickets" | TicketCategory>("All tickets");
   const [expanded, setExpanded] = useState<Set<Criticality>>(new Set());
   const [resolvedExpanded, setResolvedExpanded] = useState(false);
@@ -92,8 +95,8 @@ export function Dashboard({
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-1">Task Queue</h1>
-      <p className="text-sm text-muted-foreground mb-4">Sorted by criticality. Click a ticket to open it.</p>
+      <h1 className="text-2xl font-bold mb-1">{tr("Task Queue")}</h1>
+      <p className="text-sm text-muted-foreground mb-4">{tr("Sorted by criticality. Click a ticket to open it.")}</p>
 
       <div className="flex flex-wrap gap-2 mb-6">
         {(["All tickets", ...CATEGORIES] as const).map((f) => (
@@ -106,10 +109,10 @@ export function Dashboard({
                 : "bg-card text-foreground border-border hover:bg-secondary/50"
             }`}
           >
-            {f}
+            {tr(f)}
             <span
               className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-xs font-bold ${
-                filter === f ? "bg-white/20 text-white" : "bg-secondary text-secondary-foreground"
+                filter === f ? "bg-primary-foreground/20 text-primary-foreground" : "bg-secondary text-secondary-foreground"
               }`}
             >
               {counts[f]}
@@ -121,7 +124,7 @@ export function Dashboard({
       {grouped.length === 0 && (
         <div className="border border-dashed border-border rounded-2xl py-16 text-center">
           <Check className="mx-auto mb-3 text-success-ink" size={28} />
-          <p className="text-sm font-medium">You're all caught up</p>
+          <p className="text-sm font-medium">{tr("You're all caught up")}</p>
           <p className="text-xs text-muted-foreground mt-1">
             No open tickets{filter !== "All tickets" ? ` in ${filter}` : ""}.
           </p>
@@ -137,24 +140,21 @@ export function Dashboard({
             <TaskGroupCard
               key={group.criticality}
               icon={<CriticalityIcon criticality={group.criticality} size={17} />}
-              label={criticalityLabel[group.criticality]}
+              label={tr(criticalityLabel[group.criticality])}
               count={group.tickets.length}
             >
               {visible.map((t) => {
                 const ActionIcon = ACTION_ICON[t.primaryAction];
                 const CategoryIcon = CATEGORY_ICON[t.category];
-                // A ticket with an uploaded renewal is reviewed (opens the doc), not dismissed.
-                const reviewable =
-                  t.source === "compliance-monitoring" && !!DOCS.find((d) => d.id === t.targetId)?.renewal;
                 return (
                   <TaskRow
                     key={t.id}
                     onClick={() => onSelectTicket(t)}
                     icon={CategoryIcon && <CategoryIcon size={16} className="text-muted-foreground" aria-hidden="true" />}
-                    title={t.title}
+                    title={translateTicketTitle(t.title, tr)}
                     subline={
                       <>
-                        {t.entityType} ·{" "}
+                        {tr(t.entityType)} ·{" "}
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -164,7 +164,7 @@ export function Dashboard({
                         >
                           {t.entityName}
                         </button>{" "}
-                        · {t.ageLabel}
+                        · {translateAgeLabel(t.ageLabel, tr)}
                       </>
                     }
                     status={
@@ -173,14 +173,16 @@ export function Dashboard({
                     action={
                       <Button
                         variant={t.criticality === "critical" || t.criticality === "high" ? "default" : "outline"}
+                        // The action opens the ticket in the drawer rather than
+                        // resolving straight from the row, so the action is always
+                        // taken with the ticket's full context in view.
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (reviewable) onSelectTicket(t);
-                          else onResolve(t, t.primaryAction);
+                          onSelectTicket(t);
                         }}
                       >
                         {ActionIcon && <ActionIcon size={14} />}
-                        {t.primaryAction}
+                        {tr(t.primaryAction)}
                       </Button>
                     }
                   />
@@ -218,12 +220,12 @@ export function Dashboard({
                 onClick={() => onSelectTicket(t)}
                 muted
                 icon={CategoryIcon && <CategoryIcon size={16} className="text-muted-foreground" aria-hidden="true" />}
-                title={t.title}
+                title={translateTicketTitle(t.title, tr)}
                 subline={
                   <span className="flex items-center gap-1">
                     {/* criticality demoted to a secondary tag once resolved */}
                     <CriticalityIcon criticality={t.criticality} size={14} />
-                    {criticalityLabel[t.criticality]}
+                    {tr(criticalityLabel[t.criticality])}
                     <span>·</span>
                     <button
                       onClick={(e) => {

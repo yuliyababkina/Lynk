@@ -38,6 +38,9 @@
   /* Brand ink — the dark navy used for the portal top bar, primary CTAs and the
    * highlighted landing card. Not a status tone; a fixed brand surface. */
   --brand-navy: #0f1b2e;
+  /* Paired foreground for content sitting on --brand-navy (white in both themes,
+   * since navy is a fixed dark surface). Completes the bg/fg token pair. */
+  --brand-navy-foreground: #ffffff;
 }
 
 @theme inline {
@@ -53,6 +56,7 @@
   --color-purple: var(--purple);
   --color-chart-orange: var(--chart-orange);
   --color-brand-navy: var(--brand-navy);
+  --color-brand-navy-foreground: var(--brand-navy-foreground);
 
   /*
    * Accessible pairs derived from each base colour (WCAG 2.2 AA):

@@ -26,7 +26,7 @@ export function TaskGroupCard({
       <div className="flex items-center gap-2 bg-secondary/60 border-b border-border px-4 py-2.5 rounded-t-2xl">
         {icon}
         <span className="text-[11px] font-bold tracking-wide uppercase">{label}</span>
-        <span className="inline-flex items-center justify-center min-w-[22px] h-[22px] px-1 rounded-full bg-white border border-border text-xs font-bold text-foreground">
+        <span className="inline-flex items-center justify-center min-w-[22px] h-[22px] px-1 rounded-full bg-card border border-border text-xs font-bold text-foreground">
           {count}
         </span>
       </div>

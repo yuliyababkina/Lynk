@@ -74,6 +74,15 @@ export interface Supplier {
   iban?: string;
   address?: string;
   lastActive: string;
+  /** When this supplier accepted the Terms & Conditions. Unset = not accepted,
+   * and nothing may be saved for them until it is. Lives here rather than on
+   * the onboarding case because acceptance outlives onboarding, and established
+   * suppliers have no case at all. */
+  termsAcceptedAt?: string;
+  /** Which version was accepted (the terms change over time). */
+  termsVersion?: string;
+  /** Who accepted, for the audit trail. */
+  termsAcceptedBy?: string;
 }
 
 export type DocStatus =
@@ -126,6 +135,14 @@ export interface SupplierDoc {
   /** Storage object path + public URL for the CURRENT valid file, if one has been attached. */
   filePath?: string;
   fileUrl?: string;
+  /** Kind of document — Certificate / Licence / Insurance Policy / … */
+  documentType?: string;
+  /** Authority or company that issued it (TÜV, Chamber of Commerce, insurer…). */
+  issuingInstitution?: string;
+  /** True for documents with no expiry (e.g. VAT registration). */
+  doesNotExpire?: boolean;
+  /** True once the uploader reviewed the pre-filled metadata instead of accepting it blindly. */
+  metadataConfirmed?: boolean;
 }
 
 export type ContractStatus = "Active" | "Expiring Soon" | "Renewal Urgent" | "Renewal in Progress" | "Opted Out";
@@ -156,7 +173,18 @@ export interface DataGovernanceRequest {
   approvalStep: 1 | 2;
 }
 
-export type OnboardingStatus = "Stale" | "Pending" | "Opened";
+export type OnboardingStatus =
+  /** Invitation revoked or not yet sent — no live magic link. */
+  | "Draft"
+  | "Stale"
+  | "Pending"
+  | "Opened"
+  | "In Review"
+  | "Changes Requested"
+  /** Contract + catalogues sent to the supplier; waiting on their signature. */
+  | "Contract Sent (Pending Signature)"
+  | "Accepted"
+  | "Rejected";
 
 export interface OnboardingCase {
   id: string;
@@ -165,6 +193,14 @@ export interface OnboardingCase {
   status: OnboardingStatus;
   daysNoResponse: number;
   criticality: Criticality;
+  /** PM feedback attached on a "Changes Requested" or "Rejected" decision.
+   * Shown to the prospect so they know what to fix. */
+  reviewNote?: string;
+  /** Prospect's contact email — where the invitation / magic link was sent. */
+  email?: string;
+  /** Unique token embedded in the invite's magic link (?invite=<inviteToken>)
+   * so a click can be resolved back to this case without a login. */
+  inviteToken?: string;
 }
 
 /**

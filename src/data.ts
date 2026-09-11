@@ -1,6 +1,14 @@
 import type { Supplier, Ticket, SupplierDoc, Contract, DataGovernanceRequest, OnboardingCase, Catalogue, CatalogueSupplier, Principal, SupplierPrincipalRelationship, DirectoryCompany, CatalogueLineDiff } from "./types";
+import { PRINCIPAL_COMPANY, PRINCIPAL_SHORT, PRINCIPAL_PROFILE } from "./lib/principal";
 
+export const PRINCIPAL_ID = "principal_urban_habitat";
+
+// Urban Habitat is the Principal that runs this tenant — every supplier and
+// prospect has a relationship with it, and Sabine always writes on its behalf
+// (see src/lib/principal.ts). The rest are other Principals a supplier may also
+// work with; they exist to make the portal look realistic, nothing acts on them.
 export const PRINCIPALS: Principal[] = [
+  { id: PRINCIPAL_ID, name: PRINCIPAL_COMPANY, associatesCount: PRINCIPAL_PROFILE.regionalOffices.length },
   { id: "principal_wincasa", name: "Wincasa", associatesCount: 3 },
   { id: "principal_gch", name: "GCH", associatesCount: 2 },
   { id: "principal_at_immobilien", name: "AT Immobilien", associatesCount: 4 },
@@ -9,15 +17,30 @@ export const PRINCIPALS: Principal[] = [
 // Martin Weber (Active Supplier - EuroBau Components)
 export const SUPPLIER_RELATIONSHIPS_MARTIN: SupplierPrincipalRelationship[] = [
   {
+    id: "rel_martin_urban_habitat",
+    supplierProfileId: "supplier_martin_weber",
+    principalId: PRINCIPAL_ID,
+    principalName: PRINCIPAL_COMPANY,
+    status: "supplier",
+    unreadCount: 2,
+    pendingCount: 1,
+    rejectedCount: 0,
+    lastMessage: {
+      from: PRINCIPAL_SHORT,
+      text: "Please update your insurance certificate",
+      at: "2 days ago",
+    },
+  },
+  {
     id: "rel_martin_wincasa",
     supplierProfileId: "supplier_martin_weber",
     principalId: "principal_wincasa",
     principalName: "Wincasa",
     status: "supplier",
-    unreadCount: 2,
-    pendingCount: 1,
+    unreadCount: 0,
+    pendingCount: 0,
     rejectedCount: 0,
-    lastMessage: { from: "Wincasa", text: "Please update your insurance certificate", at: "2 days ago" },
+    lastMessage: { from: "You", text: "All documents confirmed", at: "1 week ago" },
   },
   {
     id: "rel_martin_gch",
@@ -28,7 +51,7 @@ export const SUPPLIER_RELATIONSHIPS_MARTIN: SupplierPrincipalRelationship[] = [
     unreadCount: 0,
     pendingCount: 0,
     rejectedCount: 0,
-    lastMessage: { from: "You", text: "All documents confirmed", at: "1 week ago" },
+    lastMessage: { from: "You", text: "All documents confirmed", at: "2 weeks ago" },
   },
   {
     id: "rel_martin_at",
@@ -46,15 +69,29 @@ export const SUPPLIER_RELATIONSHIPS_MARTIN: SupplierPrincipalRelationship[] = [
 // Mehmet Yilmaz (Prospect - Yilmaz Elektrotechnik)
 export const SUPPLIER_RELATIONSHIPS_MEHMET: SupplierPrincipalRelationship[] = [
   {
+    id: "rel_mehmet_urban_habitat",
+    supplierProfileId: "supplier_mehmet_yilmaz",
+    principalId: PRINCIPAL_ID,
+    principalName: PRINCIPAL_COMPANY,
+    status: "prospect",
+    unreadCount: 0,
+    pendingCount: 4,
+    rejectedCount: 1,
+    lastMessage: {
+      from: PRINCIPAL_SHORT,
+      text: "Changes requested to your company details",
+      at: "2 days ago",
+    },
+  },
+  {
     id: "rel_mehmet_wincasa",
     supplierProfileId: "supplier_mehmet_yilmaz",
     principalId: "principal_wincasa",
     principalName: "Wincasa",
     status: "prospect",
     unreadCount: 0,
-    pendingCount: 4,
-    rejectedCount: 1,
-    lastMessage: { from: "Wincasa", text: "Changes requested to your company details", at: "2 days ago" },
+    pendingCount: 0,
+    rejectedCount: 0,
   },
 ];
 

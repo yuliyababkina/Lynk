@@ -116,8 +116,18 @@ create table if not exists onboarding_cases (
   contact_name text,
   status text not null,
   days_no_response integer default 0,
-  criticality text not null default 'low'
+  criticality text not null default 'low',
+  -- Added for real magic-link invitations: the prospect's contact email and
+  -- a unique, unguessable token embedded in the invite link
+  -- (?invite=<invite_token>) so the app can resolve which case a click
+  -- belongs to without requiring a login.
+  email text,
+  invite_token text
 );
+
+create unique index if not exists onboarding_cases_invite_token_key
+  on onboarding_cases (invite_token)
+  where invite_token is not null;
 
 -- ── Service catalogues ───────────────────────────────────────────────────────
 create table if not exists catalogues (
@@ -183,6 +193,8 @@ create policy "anon full access" on activity_log for all using (true) with check
 -- Safe to re-run even if you already executed an earlier version of this file.
 alter table supplier_docs add column if not exists file_path text;
 alter table supplier_docs add column if not exists file_url text;
+alter table onboarding_cases add column if not exists email text;
+alter table onboarding_cases add column if not exists invite_token text;
 
 -- ── Storage bucket for attached documents (certificates, insurance, etc.) ───
 -- Public bucket + anon insert, matching the "anon full access" approach above

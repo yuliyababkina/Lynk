@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RequestedUpdatePanel } from "@/components/yarowa/requested-update-panel";
+import { WizardFooter } from "@/components/yarowa/wizard-footer";
 import { getPortalProfile } from "./portal-data";
 
 export interface PortalCompanyDetailsProps {
@@ -37,7 +38,7 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <Card className="rounded-2xl border border-border ring-0 shadow-none [--card-spacing:0px] p-5 gap-0">
+    <Card className="rounded-2xl border border-border ring-0 shadow-none [--card-spacing:1.25rem] px-(--card-spacing) gap-0">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Icon className="w-4 h-4 text-primary" />
@@ -59,7 +60,14 @@ export function PortalCompanyDetails({ supplierId }: PortalCompanyDetailsProps) 
   return (
     <div className="flex flex-col lg:flex-row min-h-full">
       {/* Company details form */}
-      <section className="flex-1 min-w-0 p-6 space-y-6 max-w-2xl">
+      <section className="flex-1 min-w-0 p-6 space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold">Company Details</h1>
+          <p className="text-muted-foreground mt-1">
+            Legal profile, registered address, and payment data shared with principals.
+          </p>
+        </div>
+
         <SectionCard
           icon={Building2}
           title="Company Details"
@@ -114,14 +122,14 @@ export function PortalCompanyDetails({ supplierId }: PortalCompanyDetailsProps) 
           </div>
         </SectionCard>
 
-        <Button variant="dark" size="lg" className="w-full">
-          Update My Details →
-        </Button>
+        <WizardFooter>
+          <Button variant="dark">Update My Details →</Button>
+        </WizardFooter>
       </section>
 
       {/* Requested updates rail */}
       {activeUpdate && (
-        <aside className="lg:w-[440px] shrink-0 p-6 border-t lg:border-t-0 lg:border-l border-border">
+        <aside className="lg:w-[440px] shrink-0 p-6 border-t lg:border-t-0 lg:border-l border-border bg-card">
           <RequestedUpdatePanel update={activeUpdate} />
         </aside>
       )}

@@ -68,8 +68,8 @@ function actionVariant(label: string): "dark" | "secondary" | "outline" {
 function ActionButton({ label }: { label: string }) {
   const Icon = ACTION_ICON[label];
   return (
-    <Button variant={actionVariant(label)} size="xs">
-      {Icon && <Icon className="w-3.5 h-3.5" />}
+    <Button variant={actionVariant(label)}>
+      {Icon && <Icon className="w-4 h-4" />}
       {label}
     </Button>
   );
@@ -87,7 +87,7 @@ function GroupCard({
     <TaskGroupCard
       icon={<SectionIcon className={cn("w-[17px] h-[17px]", ICON_INK[group.tone])} />}
       label={group.label}
-      count={group.count}
+      count={group.items.length}
     >
       {group.items.length > 0 ? (
         group.items.map((item: ActivityItem) => {
@@ -136,7 +136,7 @@ function StatTile({ stat, onNavigate }: { stat: PortalStat; onNavigate?: (view: 
       role="button"
       tabIndex={0}
       onClick={() => onNavigate?.(stat.key as PortalView)}
-      className="rounded-2xl border border-border ring-0 shadow-none [--card-spacing:0px] p-5 gap-0 cursor-pointer hover:bg-secondary/50 transition-colors"
+      className="rounded-2xl border border-border ring-0 shadow-none [--card-spacing:1.25rem] px-(--card-spacing) gap-0 cursor-pointer hover:bg-secondary/50 transition-colors"
     >
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">{stat.label}</p>
@@ -201,7 +201,7 @@ export function PortalOverview({ supplierId, onNavigate, onOpenActivity }: Porta
             key={title}
             role="button"
             tabIndex={0}
-            className="rounded-2xl border border-border ring-0 shadow-none [--card-spacing:0px] p-4 cursor-pointer hover:bg-secondary/50 transition-colors"
+            className="rounded-2xl border border-border ring-0 shadow-none [--card-spacing:1rem] px-(--card-spacing) cursor-pointer hover:bg-secondary/50 transition-colors"
           >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-success-soft text-success-ink flex items-center justify-center shrink-0">

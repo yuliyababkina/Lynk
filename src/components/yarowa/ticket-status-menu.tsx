@@ -1,6 +1,7 @@
 import { useId, useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import type { TicketStatus } from "@/types";
+import { useI18n } from "@/lib/i18n";
 
 const STATUS_ORDER: TicketStatus[] = ["To do", "In progress", "Resolved"];
 
@@ -74,6 +75,7 @@ export function TicketStatusMenu({
   onChange: (status: TicketStatus) => void;
   align?: "start" | "end";
 }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
 
   return (
@@ -86,7 +88,7 @@ export function TicketStatusMenu({
         className={`inline-flex items-center gap-1 rounded-full pl-1 pr-2 py-0.5 text-xs font-medium transition-colors ${PILL[status]}`}
       >
         <StatusIcon status={status} />
-        {status}
+        {t(status)}
         <ChevronDown size={12} className="opacity-70" />
       </button>
 
@@ -112,7 +114,7 @@ export function TicketStatusMenu({
                 className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-secondary/60"
               >
                 <StatusIcon status={s} size={16} />
-                <span className="flex-1">{s}</span>
+                <span className="flex-1">{t(s)}</span>
                 {s === status && <Check size={14} className="text-muted-foreground" />}
               </button>
             ))}
