@@ -1,5 +1,6 @@
 import type { Preview } from "@storybook/react-vite";
 import React from "react";
+import { I18nProvider } from "../src/lib/i18n";
 import "../src/index.css";
 
 /** Toolbar toggle for the preset's light / dark themes. */
@@ -47,6 +48,10 @@ const preview: Preview = {
         React.createElement(Story)
       );
     },
+    /* Every component that renders user-facing text calls useI18n, which throws
+       outside a provider. Wrapping here rather than per-story keeps new stories
+       from failing for a reason that has nothing to do with what they test. */
+    (Story) => React.createElement(I18nProvider, null, React.createElement(Story)),
   ],
 };
 

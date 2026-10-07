@@ -22,6 +22,16 @@ export default defineConfig({
   },
   test: {
     projects: [{
+      // Plain node project for the logic that decides what the UI shows — label
+      // derivation, field validation, stage columns. No browser needed, so it
+      // runs in a second rather than the storybook project's twenty.
+      extends: true,
+      test: {
+        name: 'unit',
+        environment: 'node',
+        include: ['src/**/*.test.ts']
+      }
+    }, {
       extends: true,
       plugins: [
       // The plugin will run tests for the stories defined in your Storybook config

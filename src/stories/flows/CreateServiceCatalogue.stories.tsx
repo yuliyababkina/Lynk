@@ -7,14 +7,42 @@ import { CataloguePreviewTable } from "@/components/yarowa/catalogue-preview-tab
 import { SupplierReviewTable, type ReviewSupplier } from "@/components/yarowa/supplier-review-table";
 import { BottomActionBar } from "@/components/yarowa/bottom-action-bar";
 import { ServiceCatalogueWizard } from "@/pages/ServiceCatalogueWizard";
-import { PARSED_LINES, CATALOGUES } from "@/data";
+import { PARSED_LINES } from "@/data";
+import type { Catalogue } from "@/types";
 
 const STEPS = ["Upload", "Preview", "Details", "Distribution"];
-const SUPPLIERS: ReviewSupplier[] = CATALOGUES[0].suppliers.map((s) => ({
-  id: s.id,
-  name: s.name,
-  region: s.region,
-}));
+
+/* Own fixture rather than data.ts: CATALOGUES is empty now that catalogues come
+   from Supabase, and a story that reads seed data breaks the moment that seed
+   changes — this file failed to import at all for exactly that reason. */
+const SUPPLIERS: ReviewSupplier[] = [
+  { id: "cs-1", name: "Maler Rhein GmbH", region: "Nordrhein-Westfalen" },
+  { id: "cs-2", name: "Farbwerk Berlin", region: "Berlin" },
+  { id: "cs-3", name: "Anstrich & Putz AG", region: "Bayern" },
+];
+
+const CATALOGUE: Catalogue = {
+  id: "cat-1",
+  name: "Catalog 2026 Painting",
+  trade: "Painting",
+  region: "Nordrhein-Westfalen",
+  status: "Active",
+  versionLabel: "v2.1",
+  currentVersion: "2.1",
+  awaitingFirstResponse: false,
+  validFrom: "01 Jan 2026",
+  validTo: "31 Dec 2026",
+  responseModel: "actively-agree",
+  services: PARSED_LINES.map(({ id, service, category, unit, rate }) => ({
+    id,
+    service,
+    category,
+    unit,
+    rate,
+  })),
+  versions: [{ version: "2.0", publishedAt: "01 Jan 2026", note: "Initial publication" }],
+  suppliers: SUPPLIERS.map((s) => ({ id: s.id, name: s.name, region: s.region, confirmed: true })),
+};
 
 /*
  * "Flows" compose the real product components together exactly as the wizard
@@ -112,7 +140,7 @@ export const InteractiveUpdate: Story = {
   render: () => (
     <ServiceCatalogueWizard
       mode="update"
-      catalogue={CATALOGUES[0]}
+      catalogue={CATALOGUE}
       onCancel={fn()}
       onFinish={fn()}
     />
