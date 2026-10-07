@@ -7,19 +7,42 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RequestedUpdatePanel } from "@/components/yarowa/requested-update-panel";
 import { WizardFooter } from "@/components/yarowa/wizard-footer";
-import { getPortalProfile } from "./portal-data";
+import { getPortalProfile, type CompanyDetails } from "./portal-data";
 
 export interface PortalCompanyDetailsProps {
   supplierId: string;
+  /** Live company record, carrying any edits saved from the Overview panel. */
+  company?: CompanyDetails;
 }
 
-function Field({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+/**
+ * Read-only by default — the page still presents the profile as a record rather
+ * than a form. `readOnly={false}` turns the same field into an editable input so
+ * the activity panel can reuse it without a second visual language.
+ */
+export function Field({
+  label,
+  value,
+  mono,
+  readOnly = true,
+  placeholder,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+  readOnly?: boolean;
+  placeholder?: string;
+  onChange?: (value: string) => void;
+}) {
   return (
     <div className="space-y-1">
       <Label className="text-xs text-muted-foreground">{label}</Label>
       <Input
-        readOnly
+        readOnly={readOnly}
         value={value}
+        placeholder={placeholder}
+        onChange={onChange && ((e) => onChange(e.target.value))}
         className={cn("h-10 rounded-lg border-border bg-background", mono && "font-mono")}
       />
     </div>
@@ -51,9 +74,10 @@ function SectionCard({
   );
 }
 
-export function PortalCompanyDetails({ supplierId }: PortalCompanyDetailsProps) {
+export function PortalCompanyDetails({ supplierId, company: live }: PortalCompanyDetailsProps) {
   const profile = getPortalProfile(supplierId);
-  const { company, requestedUpdates } = profile;
+  const { requestedUpdates } = profile;
+  const company = live ?? profile.company;
   const { address, payment } = company;
   const activeUpdate = requestedUpdates[0];
 
@@ -102,6 +126,16 @@ export function PortalCompanyDetails({ supplierId }: PortalCompanyDetailsProps) 
               <Field label="Postcode" value={address.postcode} />
             </div>
             <Field label="Country" value={address.country} />
+          </div>
+        </SectionCard>
+
+        <SectionCard icon={Building2} title="Primary Contact">
+          <div className="space-y-4">
+            <Field label="Contact person" value={company.contact.name || "—"} />
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Contact email" value={company.contact.email || "—"} />
+              <Field label="Contact phone" value={company.contact.phone || "—"} />
+            </div>
           </div>
         </SectionCard>
 

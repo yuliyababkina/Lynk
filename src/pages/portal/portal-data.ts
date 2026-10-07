@@ -17,6 +17,13 @@ export interface PortalDoc {
   status: DocStatus;
 }
 
+/**
+ * What fixing the item actually involves — this, not the hand-typed label,
+ * decides whether the panel offers an upload or a form. Without it an expired
+ * insurance certificate and a half-filled profile both read "Update".
+ */
+export type ActivityKind = "document" | "data" | "mixed";
+
 export interface ActivityItem {
   id: string;
   title: string;
@@ -25,8 +32,34 @@ export interface ActivityItem {
   principal: string;
   ageLabel: string;
   icon: "shield" | "file";
-  /** Button labels, first is the primary/dark action. */
+  kind: ActivityKind;
+  /** Secondary button labels (Chat / Remind / Review); the primary comes from `kind`. */
   actions: string[];
+  /** The compliance document this item is about — matched against SupplierDoc.documentName. */
+  docName?: string;
+  /** Profile fields this item asks the supplier to fill, for `data` and `mixed` items. */
+  fields?: PortalFieldKey[];
+  /** A change request sent before this session, so it can still be reviewed. */
+  submitted?: { key: string; label: string; before: string; after: string }[];
+}
+
+/** Labels that mean "fix it", as opposed to chasing or re-reading an item. */
+const PRIMARY_LABELS = new Set(["Update", "Upload", "Complete"]);
+
+/**
+ * The primary action, derived from the kind rather than read from `actions`, so
+ * a document ticket can never ask the supplier to "Update" a file. Returns null
+ * for items that carry nothing to fix — a pending approval or a resolved item is
+ * read-only and only offers its secondary action.
+ */
+export function primaryActionLabel(item: ActivityItem): "Upload" | "Update" | null {
+  if (!PRIMARY_LABELS.has(item.actions[0] ?? "")) return null;
+  return item.kind === "data" ? "Update" : "Upload";
+}
+
+/** Everything after the primary action — Chat, Remind, Review — kept verbatim. */
+export function secondaryActions(item: ActivityItem): string[] {
+  return PRIMARY_LABELS.has(item.actions[0] ?? "") ? item.actions.slice(1) : item.actions;
 }
 
 /** One of the four Overview activity columns (Action required / Expiring soon / …). */
@@ -65,6 +98,27 @@ export interface RequestedUpdate {
   dueLabel: string;
 }
 
+/**
+ * Flat names for the editable profile fields. Activity items reference these so
+ * a panel can show only the fields its ticket is actually about, instead of the
+ * whole company record.
+ */
+export type PortalFieldKey =
+  | "legalName"
+  | "vatId"
+  | "registrationNo"
+  | "website"
+  | "street"
+  | "city"
+  | "postcode"
+  | "country"
+  | "iban"
+  | "bankName"
+  | "bic"
+  | "contactName"
+  | "contactEmail"
+  | "contactPhone";
+
 export interface CompanyDetails {
   legalName: string;
   vatId: string;
@@ -73,6 +127,8 @@ export interface CompanyDetails {
   associate: string;
   address: { street: string; city: string; postcode: string; country: string };
   payment: { iban: string; bankName: string; bic: string };
+  /** Primary contact — the non-sensitive half of the profile, editable in place. */
+  contact: { name: string; email: string; phone: string };
 }
 
 export interface NavCounts {
@@ -127,6 +183,8 @@ const MARTIN: PortalProfile = {
           principal: PRINCIPAL_SHORT,
           ageLabel: "8 days ago",
           icon: "shield",
+          kind: "document",
+          docName: "Public Liability Insurance",
           actions: ["Update", "Chat"],
         },
         {
@@ -136,6 +194,9 @@ const MARTIN: PortalProfile = {
           principal: PRINCIPAL_SHORT,
           ageLabel: "3 days ago",
           icon: "file",
+          kind: "mixed",
+          docName: "Framework Contract",
+          fields: ["contactEmail"],
           actions: ["Upload", "Chat"],
         },
       ],
@@ -144,7 +205,7 @@ const MARTIN: PortalProfile = {
       key: "expiring-soon",
       label: "Expiring Soon",
       count: 5,
-      tone: "orange",
+      tone: "warning",
       items: [
         {
           id: "es-1",
@@ -153,6 +214,8 @@ const MARTIN: PortalProfile = {
           principal: PRINCIPAL_SHORT,
           ageLabel: "1 day ago",
           icon: "shield",
+          kind: "document",
+          docName: "ISO 9001 Certificate",
           actions: ["Update", "Chat"],
         },
         {
@@ -162,6 +225,8 @@ const MARTIN: PortalProfile = {
           principal: PRINCIPAL_SHORT,
           ageLabel: "5 days ago",
           icon: "file",
+          kind: "data",
+          fields: ["contactName", "contactEmail", "contactPhone"],
           actions: ["Update", "Chat"],
         },
       ],
@@ -179,6 +244,8 @@ const MARTIN: PortalProfile = {
           principal: PRINCIPAL_SHORT,
           ageLabel: "8 days ago",
           icon: "shield",
+          kind: "document",
+          docName: "Public Liability Insurance",
           actions: ["Remind"],
         },
         {
@@ -188,6 +255,8 @@ const MARTIN: PortalProfile = {
           principal: PRINCIPAL_SHORT,
           ageLabel: "3 days ago",
           icon: "file",
+          kind: "document",
+          docName: "Framework Contract",
           actions: ["Remind"],
         },
       ],
@@ -205,6 +274,8 @@ const MARTIN: PortalProfile = {
           principal: PRINCIPAL_SHORT,
           ageLabel: "1 day ago",
           icon: "shield",
+          kind: "document",
+          docName: "ISO 9001 Certificate",
           actions: ["Review"],
         },
         {
@@ -214,6 +285,17 @@ const MARTIN: PortalProfile = {
           principal: PRINCIPAL_SHORT,
           ageLabel: "2 days ago",
           icon: "shield",
+          kind: "data",
+          fields: ["iban", "bankName", "bic"],
+          submitted: [
+            {
+              key: "iban",
+              label: "IBAN",
+              before: "DE89 3704 0044 0532 0130 00",
+              after: "DE12 5001 0517 0648 4898 90",
+            },
+            { key: "bankName", label: "Bank Name", before: "Commerzbank AG", after: "ING-DiBa AG" },
+          ],
           actions: ["Review"],
         },
       ],
@@ -265,6 +347,7 @@ const MARTIN: PortalProfile = {
     associate: "Berlin",
     address: { street: "Industriestraße 42", city: "Berlin", postcode: "10115", country: "Germany" },
     payment: { iban: "DE89 3704 0044 0532 0130 00", bankName: "Commerzbank AG", bic: "COBADEHHXXX" },
+    contact: { name: "Martin Weber", email: "martin.weber@eurobau-components.de", phone: "" },
   },
 };
 
@@ -299,6 +382,8 @@ const MEHMET: PortalProfile = {
           principal: PRINCIPAL_SHORT,
           ageLabel: "Today",
           icon: "file",
+          kind: "data",
+          fields: ["contactName", "contactEmail", "contactPhone"],
           actions: ["Complete", "Chat"],
         },
         {
@@ -308,6 +393,8 @@ const MEHMET: PortalProfile = {
           principal: PRINCIPAL_SHORT,
           ageLabel: "Today",
           icon: "shield",
+          kind: "document",
+          docName: "Public Liability Insurance",
           actions: ["Upload", "Chat"],
         },
       ],
@@ -316,7 +403,7 @@ const MEHMET: PortalProfile = {
       key: "expiring-soon",
       label: "Expiring Soon",
       count: 0,
-      tone: "orange",
+      tone: "warning",
       items: [],
     },
     {
@@ -332,6 +419,8 @@ const MEHMET: PortalProfile = {
           principal: PRINCIPAL_SHORT,
           ageLabel: "1 day ago",
           icon: "file",
+          kind: "document",
+          docName: "Trade Licence",
           actions: ["Remind"],
         },
       ],
@@ -373,6 +462,7 @@ const MEHMET: PortalProfile = {
     associate: "Cologne",
     address: { street: "Mülheimer Straße 62", city: "Duisburg", postcode: "47057", country: "Germany" },
     payment: { iban: "DE89 3704 0044 0532 0130 00", bankName: "Commerzbank AG", bic: "COBADEFFXXX" },
+    contact: { name: "", email: "", phone: "" },
   },
 };
 

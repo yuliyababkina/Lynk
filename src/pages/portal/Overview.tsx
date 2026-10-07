@@ -19,6 +19,8 @@ import type { PortalView } from "@/pages/SupplierPortal";
 import type { PortalActivitySelection } from "@/components/yarowa/portal-activity-drawer";
 import {
   getPortalProfile,
+  primaryActionLabel,
+  secondaryActions,
   type ActivityItem,
   type OverviewGroup,
   type PortalStat,
@@ -28,6 +30,8 @@ import {
 
 export interface PortalOverviewProps {
   supplierId: string;
+  /** Live groups, owned by SupplierPortal so a fixed ticket moves immediately. */
+  groups: OverviewGroup[];
   onNavigate?: (view: PortalView) => void;
   onOpenActivity?: (selection: PortalActivitySelection) => void;
 }
@@ -65,10 +69,22 @@ function actionVariant(label: string): "dark" | "secondary" | "outline" {
   return "outline";
 }
 
-function ActionButton({ label }: { label: string }) {
+/* The row itself opens the panel, so the button has to stop the click from
+   bubbling — otherwise the row handler fires too, the same reason the PM
+   Dashboard guards its inline actions. */
+function ActionButton({ label, onClick }: { label: string; onClick?: () => void }) {
   const Icon = ACTION_ICON[label];
   return (
-    <Button variant={actionVariant(label)}>
+    <Button
+      variant={actionVariant(label)}
+      onClick={
+        onClick &&
+        ((e: React.MouseEvent) => {
+          e.stopPropagation();
+          onClick();
+        })
+      }
+    >
       {Icon && <Icon className="w-4 h-4" />}
       {label}
     </Button>
@@ -83,6 +99,7 @@ function GroupCard({
   onOpenActivity?: (selection: PortalActivitySelection) => void;
 }) {
   const SectionIcon = SECTION_ICON[group.key] ?? CircleAlert;
+  const open = (selection: PortalActivitySelection) => onOpenActivity?.(selection);
   return (
     <TaskGroupCard
       icon={<SectionIcon className={cn("w-[17px] h-[17px]", ICON_INK[group.tone])} />}
@@ -95,7 +112,7 @@ function GroupCard({
           return (
             <TaskRow
               key={item.id}
-              onClick={() => onOpenActivity?.({ item, sectionLabel: group.label, tone: group.tone })}
+              onClick={() => open({ item, sectionLabel: group.label, tone: group.tone })}
               icon={<Icon className={cn("w-4 h-4", ICON_INK[group.tone])} />}
               title={
                 <>
@@ -109,7 +126,13 @@ function GroupCard({
               }
               action={
                 <div className="flex items-center gap-1.5">
-                  {item.actions.map((a) => (
+                  {primaryActionLabel(item) && (
+                    <ActionButton
+                      label={primaryActionLabel(item)!}
+                      onClick={() => open({ item, sectionLabel: group.label, tone: group.tone })}
+                    />
+                  )}
+                  {secondaryActions(item).map((a) => (
                     <ActionButton key={a} label={a} />
                   ))}
                 </div>
@@ -162,12 +185,17 @@ function StatTile({ stat, onNavigate }: { stat: PortalStat; onNavigate?: (view: 
   );
 }
 
-const QUICK_ACTIONS = [
-  { icon: Upload, title: "Upload Document", hint: "Renew expiring documents" },
-  { icon: PencilLine, title: "Request Data Change", hint: "IBAN, address updates" },
+const QUICK_ACTIONS: {
+  icon: typeof Upload;
+  title: string;
+  hint: string;
+  quick: "upload" | "data";
+}[] = [
+  { icon: Upload, title: "Upload Document", hint: "Renew expiring documents", quick: "upload" },
+  { icon: PencilLine, title: "Request Data Change", hint: "IBAN, address updates", quick: "data" },
 ];
 
-export function PortalOverview({ supplierId, onNavigate, onOpenActivity }: PortalOverviewProps) {
+export function PortalOverview({ supplierId, groups, onNavigate, onOpenActivity }: PortalOverviewProps) {
   const profile = getPortalProfile(supplierId);
 
   return (
@@ -189,18 +217,19 @@ export function PortalOverview({ supplierId, onNavigate, onOpenActivity }: Porta
 
       {/* Activity grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {profile.overviewGroups.map((group) => (
+        {groups.map((group) => (
           <GroupCard key={group.key} group={group} onOpenActivity={onOpenActivity} />
         ))}
       </div>
 
       {/* Quick actions */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {QUICK_ACTIONS.map(({ icon: Icon, title, hint }) => (
+        {QUICK_ACTIONS.map(({ icon: Icon, title, hint, quick }) => (
           <Card
             key={title}
             role="button"
             tabIndex={0}
+            onClick={() => onOpenActivity?.({ quick, sectionLabel: title, tone: "neutral" })}
             className="rounded-2xl border border-border ring-0 shadow-none [--card-spacing:1rem] px-(--card-spacing) cursor-pointer hover:bg-secondary/50 transition-colors"
           >
             <div className="flex items-center gap-3">

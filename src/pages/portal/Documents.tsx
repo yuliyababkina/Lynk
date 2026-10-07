@@ -7,7 +7,7 @@ import { RequestedUpdatePanel } from "@/components/yarowa/requested-update-panel
 import { DocumentMetadataForm } from "@/components/yarowa/document-metadata-form";
 import { DocumentBrowser } from "@/components/yarowa/document-browser";
 import { useLynkData } from "@/lib/LynkDataContext";
-import { recogniseDocumentMetadata, type DocumentMetadata } from "@/lib/onboarding-documents";
+import { useDocumentUpload } from "@/lib/use-document-upload";
 import { docStatusMeta } from "@/lib/document-status";
 import { getPortalProfile } from "./portal-data";
 
@@ -16,7 +16,7 @@ export interface PortalDocumentsProps {
 }
 
 export function PortalDocuments({ supplierId }: PortalDocumentsProps) {
-  const { docs: allDocs, addSupplierDoc } = useLynkData();
+  const { docs: allDocs } = useLynkData();
   const profile = getPortalProfile(supplierId);
   const supplierName = profile.company.legalName;
   const activeUpdate = profile.requestedUpdates[0];
@@ -24,38 +24,14 @@ export function PortalDocuments({ supplierId }: PortalDocumentsProps) {
   const docs = allDocs.filter((d) => d.supplierId === supplierId);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
-  // Picked file waits for the uploader to confirm the recognised metadata.
-  const [pending, setPending] = useState<{ file: File; name: string; prefill: DocumentMetadata } | null>(null);
-
-  function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = ""; // allow re-selecting the same file
-    if (!file) return;
-    if (file.type !== "application/pdf") {
-      setError("Please choose a PDF file.");
-      return;
-    }
-    setError(null);
-    const name = file.name.replace(/\.pdf$/i, "");
-    setPending({ file, name, prefill: recogniseDocumentMetadata(name) });
-  }
-
-  async function confirmUpload(metadata: DocumentMetadata) {
-    if (!pending) return;
-    setUploading(true);
-    try {
-      await addSupplierDoc(pending.file, supplierId, supplierName, undefined, pending.name, metadata);
-      setPending(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload failed.");
-    } finally {
-      setUploading(false);
-    }
-  }
+  // Same hook the Overview activity panel uses, so a document uploaded from a
+  // ticket and one uploaded here go through identical validation and metadata.
+  const { pending, uploading, error, selectFile, confirm, clear } = useDocumentUpload(
+    supplierId,
+    supplierName
+  );
 
   return (
     <div className="flex flex-col lg:flex-row min-h-full">
@@ -74,7 +50,11 @@ export function PortalDocuments({ supplierId }: PortalDocumentsProps) {
               type="file"
               accept="application/pdf"
               className="hidden"
-              onChange={handleFile}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = ""; // allow re-selecting the same file
+                selectFile(file);
+              }}
             />
             <Button variant="dark" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
               {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
@@ -92,8 +72,8 @@ export function PortalDocuments({ supplierId }: PortalDocumentsProps) {
               documentName={pending.name}
               initial={pending.prefill}
               busy={uploading}
-              onCancel={() => setPending(null)}
-              onConfirm={confirmUpload}
+              onCancel={clear}
+              onConfirm={(metadata) => confirm(metadata)}
             />
           </Card>
         )}
