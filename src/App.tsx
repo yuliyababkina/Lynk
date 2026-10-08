@@ -11,7 +11,7 @@ import { NotificationBell } from "@/components/yarowa/notification-bell";
 import { PRINCIPAL_ID } from "@/data";
 import { useLynkData } from "./lib/LynkDataContext";
 import { Landing } from "./pages/Landing";
-import type { Ticket, SupplierDoc, Contract } from "./types";
+import type { Ticket, SupplierDoc, Contract, ChatContext } from "./types";
 import type { LandingRole } from "./pages/Landing";
 
 // Route-level code splitting: each view/portal loads its own chunk on demand,
@@ -123,6 +123,9 @@ export default function App() {
   const [pendingSelected, setPendingSelected] = useState<string | null>(null);
   const [activeDoc, setActiveDoc] = useState<SupplierDoc | null>(null);
   const [reviewDoc, setReviewDoc] = useState<SupplierDoc | null>(null);
+  /* Set when a ticket's Chat button sent us to a profile: the profile opens
+     with the conversation already up and the ticket attached. */
+  const [pendingChat, setPendingChat] = useState<ChatContext | undefined>(undefined);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -247,10 +250,16 @@ export default function App() {
     setView("supplier-profile");
   }
 
+  /** Opening a profile for any other reason must not reopen a stale chat. */
+  function openProfilePlain(id: string) {
+    setPendingChat(undefined);
+    openProfile(id);
+  }
+
   // Tickets reference a supplier by display name; resolve it to the profile.
   function openSupplierByName(name: string) {
     const match = SUPPLIERS.find((s) => s.name === name);
-    if (match) openProfile(match.id);
+    if (match) openProfilePlain(match.id);
     else navigate("suppliers");
   }
 
@@ -332,7 +341,7 @@ export default function App() {
                 /* Open the supplier the conversation belongs to; the profile is
                    where the PM's own chat panel lives. */
                 const match = chatableSuppliers.find((s) => s.conversation === relationship);
-                if (match) openProfile(match.id);
+                if (match) openProfilePlain(match.id);
               }}
             />
           }
@@ -350,13 +359,18 @@ export default function App() {
               />
             )}
             {view === "suppliers" && (
-              <SuppliersOverview onOpenProfile={openProfile} initialSelectedId={pendingSelected} />
+              <SuppliersOverview onOpenProfile={openProfilePlain} initialSelectedId={pendingSelected} />
             )}
             {view === "supplier-profile" && selectedSupplierId && (
               <SupplierProfile
+                /* Remount when the chat context changes, so a second ticket's
+                   Chat button re-opens the panel instead of being swallowed by
+                   the profile's own state. */
+                key={`${selectedSupplierId}:${pendingChat?.id ?? ""}`}
                 supplierId={selectedSupplierId}
                 onBack={() => setView("suppliers")}
                 onSelectTicket={selectTicket}
+                initialChatContext={pendingChat}
               />
             )}
             {view === "data-governance" && <DataGovernance initialSelectedId={pendingSelected} />}
@@ -405,6 +419,10 @@ export default function App() {
               onOpenSupplier={openSupplierByName}
               onResolve={resolveTicket}
               onReview={setReviewDoc}
+              onOpenChat={(supplierId, context) => {
+                setPendingChat(context);
+                openProfile(supplierId);
+              }}
             />
           ) : null}
         </div>

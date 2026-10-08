@@ -14,7 +14,7 @@ import {
   PROCUREMENT_MANAGER,
   PROCUREMENT_MANAGER_ROLE,
 } from "@/lib/principal";
-import type { Ticket, SupplierDoc } from "../types";
+import type { Ticket, SupplierDoc, ChatContext } from "../types";
 
 // Lazy — pulls the heavy pdfjs-dist bundle (+ worker) into its own chunk that is
 // only fetched when a user actually opens the PDF viewer.
@@ -39,10 +39,14 @@ export function SupplierProfile({
   supplierId,
   onBack,
   onSelectTicket,
+  initialChatContext,
 }: {
   supplierId: string;
   onBack: () => void;
   onSelectTicket: (t: Ticket) => void;
+  /** Set when the profile was opened from a ticket's Chat button: the panel
+   * opens straight away with that ticket already attached to the composer. */
+  initialChatContext?: ChatContext;
 }) {
   const {
     suppliers: SUPPLIERS,
@@ -56,7 +60,7 @@ export function SupplierProfile({
   } = useLynkData();
   const { t } = useI18n();
   const [previewDoc, setPreviewDoc] = useState<SupplierDoc | null>(null);
-  const [chatOpen, setChatOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(Boolean(initialChatContext));
   const supplier = SUPPLIERS.find((s) => s.id === supplierId);
   if (!supplier) return null;
 
@@ -356,6 +360,7 @@ export function SupplierProfile({
             title={supplier.name}
             subtitle={`${supplier.trade} · ${supplier.region}`}
             readOnlyReason={readOnlyReason}
+            draftContext={initialChatContext}
             onSend={(body, context) =>
               sendMessage({
                 relationship: conversation,

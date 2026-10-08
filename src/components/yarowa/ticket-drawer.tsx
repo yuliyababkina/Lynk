@@ -1,4 +1,4 @@
-import { ArrowUpRight, AlertTriangle } from "lucide-react";
+import { ArrowUpRight, AlertTriangle, MessageSquare } from "lucide-react";
 import type { Ticket, SupplierDoc, TicketStatus } from "@/types";
 import { useLynkData } from "@/lib/LynkDataContext";
 import { ACTION_ICON } from "@/lib/action-icons";
@@ -10,6 +10,9 @@ import { TicketStatusMenu } from "@/components/yarowa/ticket-status-menu";
 import { CriticalityIcon } from "@/components/yarowa/criticality-icon";
 import { useI18n } from "@/lib/i18n";
 import { translateTicketTitle, translateAgeLabel } from "@/lib/ticket-i18n";
+import { relationshipId } from "@/lib/db";
+import { PRINCIPAL_ID } from "@/data";
+import type { ChatContext } from "@/types";
 import type { View } from "@/App";
 
 const sourceToView: Record<string, View> = {
@@ -35,6 +38,7 @@ export function TicketDrawer({
   onOpenSupplier,
   onResolve,
   onReview,
+  onOpenChat,
 }: {
   ticket: Ticket;
   onClose: () => void;
@@ -42,6 +46,8 @@ export function TicketDrawer({
   onOpenSupplier: (entityName: string) => void;
   onResolve: (ticket: Ticket, action: string) => void;
   onReview: (doc: SupplierDoc) => void;
+  /** Opens the supplier's conversation with this ticket attached. */
+  onOpenChat?: (supplierId: string, context: ChatContext) => void;
 }) {
   const {
     docs: DOCS,
@@ -50,10 +56,31 @@ export function TicketDrawer({
     onboardingCases: ONBOARDING_CASES,
     ticketStatusById,
     setTicketStatus,
+    suppliers: SUPPLIERS,
+    unreadFor,
   } = useLynkData();
   const { t } = useI18n();
   const status: TicketStatus = ticketStatusById.get(ticket.id) ?? "To do";
   const PrimaryActionIcon = ACTION_ICON[ticket.primaryAction];
+
+  /* A ticket names its entity by display name, so the conversation is found
+     the same way "Open supplier" already finds the profile. A ticket about
+     something that is not a supplier we hold a relationship with — a stale
+     name, a deleted prospect — simply gets no Chat button. */
+  const chatSupplier = SUPPLIERS.find((s) => s.name === ticket.entityName);
+  const chatUnread = chatSupplier
+    ? unreadFor(relationshipId(PRINCIPAL_ID, chatSupplier.id), "principal")
+    : 0;
+  const openChat = () => {
+    if (!chatSupplier) return;
+    // The ticket travels as the message's context, so the supplier sees what
+    // it is about without the manager retyping it.
+    onOpenChat?.(chatSupplier.id, {
+      type: doc ? "document" : "data-change",
+      id: ticket.targetId ?? ticket.id,
+      label: doc?.documentName ?? translateTicketTitle(ticket.title, t),
+    });
+  };
   const doc = ticket.source === "compliance-monitoring" ? DOCS.find((d) => d.id === ticket.targetId) : undefined;
   const contract = ticket.source === "contracts" ? CONTRACTS.find((c) => c.id === ticket.targetId) : undefined;
   const dgr = ticket.source === "data-governance" ? DATA_GOVERNANCE_REQUESTS.find((r) => r.id === ticket.targetId) : undefined;
@@ -180,6 +207,21 @@ export function TicketDrawer({
                 <Button variant="outline" className="w-full" onClick={() => onResolve(ticket, "Escalate")}>
                   <AlertTriangle size={14} />
                   {t("Escalate")}
+                </Button>
+              )}
+              {/* The supplier portal puts a Chat button on its own tickets, so
+                  the same ticket has to be answerable from this side too —
+                  otherwise the conversation only ever runs one way. Resolved
+                  only for entities we actually hold a relationship with. */}
+              {chatSupplier && (
+                <Button variant="outline" className="w-full" onClick={openChat}>
+                  <MessageSquare size={14} />
+                  {t("Chat")}
+                  {chatUnread > 0 && (
+                    <span className="ml-1 rounded-full bg-critical px-1.5 text-[10px] font-semibold text-white">
+                      {chatUnread}
+                    </span>
+                  )}
                 </Button>
               )}
             </div>
