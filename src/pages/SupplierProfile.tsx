@@ -1,10 +1,19 @@
 import { useState, lazy, Suspense } from "react";
-import { ArrowLeft, Building2, Edit, Mail, MoreHorizontal, FileText } from "lucide-react";
+import { ArrowLeft, Building2, Edit, Mail, MoreHorizontal, FileText, MessageSquare } from "lucide-react";
 import { useLynkData } from "../lib/LynkDataContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertBanner } from "@/components/yarowa/alert-banner";
 import { CriticalityIcon } from "@/components/yarowa/criticality-icon";
+import { ChatPanel } from "@/components/yarowa/chat-panel";
+import { relationshipId } from "@/lib/db";
+import { useI18n } from "@/lib/i18n";
+import { PRINCIPAL_ID } from "@/data";
+import {
+  PRINCIPAL_COMPANY,
+  PROCUREMENT_MANAGER,
+  PROCUREMENT_MANAGER_ROLE,
+} from "@/lib/principal";
 import type { Ticket, SupplierDoc } from "../types";
 
 // Lazy — pulls the heavy pdfjs-dist bundle (+ worker) into its own chunk that is
@@ -35,10 +44,36 @@ export function SupplierProfile({
   onBack: () => void;
   onSelectTicket: (t: Ticket) => void;
 }) {
-  const { suppliers: SUPPLIERS, tickets: TICKETS, contracts: CONTRACTS, docs: DOCS } = useLynkData();
+  const {
+    suppliers: SUPPLIERS,
+    tickets: TICKETS,
+    contracts: CONTRACTS,
+    docs: DOCS,
+    messagesFor,
+    sendMessage,
+    markChatRead,
+    unreadFor,
+  } = useLynkData();
+  const { t } = useI18n();
   const [previewDoc, setPreviewDoc] = useState<SupplierDoc | null>(null);
+  const [chatOpen, setChatOpen] = useState(false);
   const supplier = SUPPLIERS.find((s) => s.id === supplierId);
   if (!supplier) return null;
+
+  /* The PM is always writing on behalf of the Principal that runs this tenant,
+     so the conversation is that principal's — never another's. */
+  const conversation = relationshipId(PRINCIPAL_ID, supplierId);
+  const unread = unreadFor(conversation, "principal");
+  // An inactive supplier keeps its history but takes no new messages.
+  const readOnlyReason =
+    supplier.stage === "inactive"
+      ? t("This relationship is inactive, so the conversation is closed. It stays here for your records.")
+      : undefined;
+
+  function openChat() {
+    setChatOpen(true);
+    markChatRead(conversation, "principal");
+  }
 
   const tickets = TICKETS.filter((t) => t.entityName === supplier.name);
   const contracts = CONTRACTS.filter((c) => c.supplierName === supplier.name);
@@ -78,6 +113,14 @@ export function SupplierProfile({
           </div>
           <Button variant="outline">
             <Edit size={14} /> Edit
+          </Button>
+          <Button variant={unread > 0 ? "dark" : "outline"} onClick={openChat}>
+            <MessageSquare size={14} /> {t("Chat")}
+            {unread > 0 && (
+              <span className="ml-1 rounded-full bg-critical px-1.5 text-[10px] font-semibold text-white">
+                {unread}
+              </span>
+            )}
           </Button>
           <Button variant="outline">
             <Mail size={14} /> Contact
@@ -289,6 +332,50 @@ export function SupplierProfile({
         <Suspense fallback={null}>
           <DocumentViewer doc={previewDoc} onClose={() => setPreviewDoc(null)} />
         </Suspense>
+      )}
+
+      {/* The conversation sits over the profile rather than beside it: this page
+          is already a two-column grid, and squeezing a third rail in made every
+          card unreadable. */}
+      {chatOpen && (
+        <div className="fixed inset-y-0 right-0 z-50 flex w-[400px] flex-col border-l border-border bg-card shadow-lg animate-in slide-in-from-right-6 duration-200">
+          <div className="flex items-center justify-between border-b border-border px-4 py-2">
+            <span className="text-xs font-medium text-muted-foreground">{t("Conversation")}</span>
+            <button
+              onClick={() => setChatOpen(false)}
+              aria-label={t("Close")}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              ✕
+            </button>
+          </div>
+          <ChatPanel
+            className="min-h-0 flex-1"
+            messages={messagesFor(conversation)}
+            side="principal"
+            title={supplier.name}
+            subtitle={`${supplier.trade} · ${supplier.region}`}
+            readOnlyReason={readOnlyReason}
+            onSend={(body, context) =>
+              sendMessage({
+                relationship: conversation,
+                body,
+                author: {
+                  side: "principal",
+                  name: PROCUREMENT_MANAGER,
+                  company: PRINCIPAL_COMPANY,
+                  role: PROCUREMENT_MANAGER_ROLE,
+                },
+                context,
+              })
+            }
+            onOpenContext={(context) => {
+              // Navigation only: open the document the message is about.
+              const doc = DOCS.find((d) => d.id === context.id || d.documentName === context.id);
+              if (doc) setPreviewDoc(doc);
+            }}
+          />
+        </div>
       )}
     </div>
   );

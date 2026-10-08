@@ -19,6 +19,8 @@ import {
   Loader2,
   RotateCcw,
   FileSignature,
+  MessageSquare,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -31,9 +33,17 @@ import { STANDARD_DOCUMENT_TYPES } from "@/lib/onboarding-documents";
 import { DOC_STATUS_META, docStatusMeta } from "@/lib/document-status";
 import { parseDocumentInfo, type ParsedDocumentInfo } from "@/lib/pdf-metadata";
 import { FromFileHint } from "@/components/yarowa/document-browser";
+import { ChatPanel } from "@/components/yarowa/chat-panel";
+import { relationshipId } from "@/lib/db";
+import { PRINCIPAL_ID } from "@/data";
 import { useLynkData } from "../lib/LynkDataContext";
 import { useI18n } from "@/lib/i18n";
-import { CONTRACT_TEMPLATES } from "@/lib/principal";
+import {
+  CONTRACT_TEMPLATES,
+  PRINCIPAL_COMPANY,
+  PROCUREMENT_MANAGER,
+  PROCUREMENT_MANAGER_ROLE,
+} from "@/lib/principal";
 import { Checkbox } from "@/components/ui/checkbox";
 import { translateCatalogueName } from "@/lib/ticket-i18n";
 import type { Supplier, SupplierDoc, Contact, OnboardingCase } from "../types";
@@ -132,6 +142,23 @@ export function ProspectReview({
   const [selectedKey, setSelectedKey] = useState<string | null>(rows[0]?.key ?? null);
   const decided = caseItem.status === "Accepted" || caseItem.status === "Rejected";
 
+  const { messagesFor, sendMessage, markChatRead, unreadFor } = useLynkData();
+  const conversation = relationshipId(PRINCIPAL_ID, supplier.id);
+  const unread = unreadFor(conversation, "principal");
+  const [chatOpen, setChatOpen] = useState(false);
+  /* A rejected application closes the conversation but keeps it readable — the
+     correspondence is part of why it was rejected. An accepted one carries on:
+     prospect and supplier are the same relationship. */
+  const chatReadOnly =
+    caseItem.status === "Rejected"
+      ? t("This application was not approved, so the conversation is closed. It stays here for your records.")
+      : undefined;
+
+  function openChat() {
+    setChatOpen(true);
+    markChatRead(conversation, "principal");
+  }
+
   const editDocument = (key: string) => {
     setSelectedKey(key);
     setStep("Documents");
@@ -153,16 +180,70 @@ export function ProspectReview({
             {contact?.name ? `${contact.name} · ` : ""}Prospect · Onboarding review
           </p>
         </div>
-        {(() => {
-          const meta = CASE_BADGE[caseItem.status] ?? { variant: "info" };
-          return (
-            <Badge variant={meta.variant as never}>
-              {meta.Icon && <meta.Icon className="w-3 h-3" />}
-              {t(caseItem.status)}
-            </Badge>
-          );
-        })()}
+        <div className="flex items-center gap-3">
+          {/* The prospect can write back from their wizard, so the reviewer needs
+              somewhere to see it without leaving the review. */}
+          <Button variant={unread > 0 ? "dark" : "outline"} size="sm" onClick={openChat}>
+            <MessageSquare className="w-4 h-4" /> {t("Chat")}
+            {unread > 0 && (
+              <span className="ml-1 rounded-full bg-critical px-1.5 text-[10px] font-semibold text-white">
+                {unread}
+              </span>
+            )}
+          </Button>
+          {(() => {
+            const meta = CASE_BADGE[caseItem.status] ?? { variant: "info" };
+            return (
+              <Badge variant={meta.variant as never}>
+                {meta.Icon && <meta.Icon className="w-3 h-3" />}
+                {t(caseItem.status)}
+              </Badge>
+            );
+          })()}
+        </div>
       </div>
+
+      {chatOpen && (
+        <div className="fixed inset-y-0 right-0 z-50 flex w-[400px] flex-col border-l border-border bg-card shadow-lg animate-in slide-in-from-right-6 duration-200">
+          <div className="flex items-center justify-between border-b border-border px-4 py-2">
+            <span className="text-xs font-medium text-muted-foreground">{t("Conversation")}</span>
+            <button
+              onClick={() => setChatOpen(false)}
+              aria-label={t("Close")}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <ChatPanel
+            className="min-h-0 flex-1"
+            messages={messagesFor(conversation)}
+            side="principal"
+            title={supplier.name}
+            subtitle={contact?.name}
+            readOnlyReason={chatReadOnly}
+            onSend={(body, context) =>
+              sendMessage({
+                relationship: conversation,
+                body,
+                author: {
+                  side: "principal",
+                  name: PROCUREMENT_MANAGER,
+                  company: PRINCIPAL_COMPANY,
+                  role: PROCUREMENT_MANAGER_ROLE,
+                },
+                context,
+              })
+            }
+            onOpenContext={(context) => {
+              // Navigation only — jump to the document in the review stepper.
+              const row = rows.find((r) => r.doc?.id === context.id || r.name === context.id);
+              if (row) editDocument(row.key);
+              setChatOpen(false);
+            }}
+          />
+        </div>
+      )}
 
       <div className="mb-6">
         <WizardStepper steps={STEPS} current={step} onStepClick={(s) => setStep(s as Step)} />

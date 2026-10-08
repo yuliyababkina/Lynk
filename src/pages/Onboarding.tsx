@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { FileText, ExternalLink, Building2, MapPin, Mail, Phone, CheckCircle2, AlertTriangle, XCircle, Trash2, Loader2, Bell, Ban, ArrowRight } from "lucide-react";
+import { FileText, ExternalLink, Building2, MapPin, Mail, Phone, CheckCircle2, AlertTriangle, XCircle, Trash2, Loader2, Bell, Ban, ArrowRight, MessageSquare } from "lucide-react";
 import { useLynkData } from "../lib/LynkDataContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,8 @@ import {
 } from "@/lib/onboarding-columns";
 import { toast } from "@/components/yarowa/toast";
 import { PRINCIPAL_COMPANY, PROCUREMENT_MANAGER, PROCUREMENT_MANAGER_ROLE } from "@/lib/principal";
+import { relationshipId, onboardingSupplierId } from "@/lib/db";
+import { PRINCIPAL_ID } from "@/data";
 import { ProspectReview } from "./ProspectReview";
 import type { DocStatus, OnboardingStatus, OnboardingCase } from "../types";
 import type { ProspectDecision } from "../lib/db";
@@ -114,6 +116,7 @@ export function Onboarding({
     reviewDocument,
     deleteOnboardingCase,
     revokeInvitation,
+    unreadFor,
   } = useLynkData();
   const [tab, setTab] = useState<OnbTab>("All");
   const { t: tr, lang } = useI18n();
@@ -343,7 +346,16 @@ export function Onboarding({
                       ) : (
                         <div className="font-medium">{c.companyName}</div>
                       )}
-                      <div className="text-xs text-muted-foreground">{c.contactName}</div>
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        {c.contactName}
+                        {/* A prospect who has written and is waiting on a reply. */}
+                        {unreadFor(relationshipId(PRINCIPAL_ID, onboardingSupplierId(c.id)), "principal") > 0 && (
+                          <Badge variant="critical" title={tr("Messages")}>
+                            <MessageSquare className="w-3 h-3" />
+                            {unreadFor(relationshipId(PRINCIPAL_ID, onboardingSupplierId(c.id)), "principal")}
+                          </Badge>
+                        )}
+                      </div>
                     </td>
                     {cells.map((cell, i) => (
                       <td key={i} className="px-4 py-3">

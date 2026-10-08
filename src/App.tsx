@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, lazy, Suspense } from "react";
+import { useState, useEffect, useMemo, useRef, lazy, Suspense } from "react";
 import { Sidebar } from "@/components/yarowa/sidebar";
 import { TopHeader } from "@/components/yarowa/top-header";
 import { TicketDrawer } from "@/components/yarowa/ticket-drawer";
@@ -6,7 +6,9 @@ import { ComplianceDrawer } from "@/components/yarowa/compliance-drawer";
 import { DocumentLightbox } from "@/components/yarowa/document-lightbox";
 import { Toaster, toast } from "@/components/yarowa/toast";
 import { actionResult } from "@/lib/ticket-actions";
-import { onboardingSupplierId } from "@/lib/db";
+import { onboardingSupplierId, relationshipId } from "@/lib/db";
+import { NotificationBell } from "@/components/yarowa/notification-bell";
+import { PRINCIPAL_ID } from "@/data";
 import { useLynkData } from "./lib/LynkDataContext";
 import { Landing } from "./pages/Landing";
 import type { Ticket, SupplierDoc, Contract } from "./types";
@@ -84,6 +86,8 @@ export default function App() {
     unresolveTicket,
     decideRenewal: persistDecideRenewal,
     addOnboardingCase,
+    unreadRelationships,
+    messagesFor,
   } = useLynkData();
 
   // Remembers a token we already accepted, so a data refresh can't revoke it.
@@ -124,6 +128,33 @@ export default function App() {
 
   const unresolvedTickets = TICKETS.filter(
     (ticket) => !resolvedTicketIds.has(ticket.id) && ticket.status !== "Resolved" && !ticket.resolved
+  );
+
+  /* Every supplier the Principal has a conversation with. The PM sees only its
+     own tenant's relationships — the other principals in the mock data are the
+     supplier's business, not Urban Habitat's. */
+  const chatableSuppliers = useMemo(
+    () =>
+      SUPPLIERS.map((s) => ({
+        id: s.id,
+        name: s.name,
+        conversation: relationshipId(PRINCIPAL_ID, s.id),
+      })),
+    [SUPPLIERS]
+  );
+
+  const bellEntries = useMemo(
+    () =>
+      unreadRelationships(
+        "principal",
+        chatableSuppliers.map((s) => s.conversation)
+      ).map(({ relationship, count }) => ({
+        relationship,
+        title: chatableSuppliers.find((s) => s.conversation === relationship)?.name ?? "",
+        count,
+        latest: messagesFor(relationship).slice(-1)[0],
+      })),
+    [chatableSuppliers, unreadRelationships, messagesFor]
   );
 
   const sidebarBadgeCounts: Partial<Record<View, number>> = {
@@ -290,7 +321,22 @@ export default function App() {
       />
 
       <div className="flex-1 flex flex-col min-w-0 bg-sidebar">
-        <TopHeader currentLabel={VIEW_LABEL[view]} onSwitchAccount={handleSwitchAccount} accountInitials="SM" />
+        <TopHeader
+          currentLabel={VIEW_LABEL[view]}
+          onSwitchAccount={handleSwitchAccount}
+          accountInitials="SM"
+          trailing={
+            <NotificationBell
+              entries={bellEntries}
+              onOpen={(relationship) => {
+                /* Open the supplier the conversation belongs to; the profile is
+                   where the PM's own chat panel lives. */
+                const match = chatableSuppliers.find((s) => s.conversation === relationship);
+                if (match) openProfile(match.id);
+              }}
+            />
+          }
+        />
 
         <div className="flex-1 flex min-w-0 overflow-hidden">
           <main className="flex-1 overflow-y-auto min-w-0">

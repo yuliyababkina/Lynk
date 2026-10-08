@@ -1,10 +1,12 @@
 import { useMemo, useState } from "react";
-import { Search, Plus, Star } from "lucide-react";
+import { Search, Plus, Star, MessageSquare } from "lucide-react";
 import { useLynkData } from "../lib/LynkDataContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Pill } from "@/components/yarowa/pill";
 import { useI18n } from "@/lib/i18n";
+import { relationshipId } from "@/lib/db";
+import { PRINCIPAL_ID } from "@/data";
 import type { Supplier } from "../types";
 
 type StageFilter = "all" | "prospect" | "supplier" | "provider";
@@ -35,7 +37,7 @@ export function SuppliersOverview({
   onOpenProfile: (id: string) => void;
   initialSelectedId?: string | null;
 }) {
-  const { suppliers: SUPPLIERS } = useLynkData();
+  const { suppliers: SUPPLIERS, unreadFor } = useLynkData();
   const { t } = useI18n();
   const [stage, setStage] = useState<StageFilter>("all");
   const [query, setQuery] = useState("");
@@ -111,7 +113,17 @@ export function SuppliersOverview({
                 }`}
               >
                 <td className="px-4 py-3">
-                  <div className="font-medium">{s.name}</div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-medium">{s.name}</span>
+                    {/* Unread messages from this supplier, so the PM can see
+                        who is waiting on a reply without opening each profile. */}
+                    {unreadFor(relationshipId(PRINCIPAL_ID, s.id), "principal") > 0 && (
+                      <Badge variant="critical" title={t("Messages")}>
+                        <MessageSquare className="w-3 h-3" />
+                        {unreadFor(relationshipId(PRINCIPAL_ID, s.id), "principal")}
+                      </Badge>
+                    )}
+                  </div>
                   <div className="text-xs text-muted-foreground">{s.contacts[0]?.name}</div>
                 </td>
                 <td className="px-4 py-3">
