@@ -50,6 +50,34 @@ const DE: Record<string, string> = {
   "Principal Docs": "Auftraggeber-Dokumente",
   Complete: "Abgeschlossen",
 
+  // ── Chat ────────────────────────────────────────────────────────────────
+  Chat: "Chat",
+  Conversation: "Unterhaltung",
+  Messages: "Nachrichten",
+  "Write a message": "Nachricht schreiben",
+  "Write a message…": "Nachricht schreiben…",
+  Send: "Senden",
+  "No messages yet. Start the conversation below.":
+    "Noch keine Nachrichten. Beginnen Sie die Unterhaltung unten.",
+  "Open document": "Dokument öffnen",
+  "Open request": "Anfrage öffnen",
+  "Open application": "Bewerbung öffnen",
+  "Remove link": "Verknüpfung entfernen",
+  Yesterday: "Gestern",
+  inactive: "inaktiv",
+  "New message from {sender}: {body}": "Neue Nachricht von {sender}: {body}",
+  "{count} unread": "{count} ungelesen",
+  "{count} new messages": "{count} neue Nachrichten",
+  "No new messages": "Keine neuen Nachrichten",
+  "Notifications": "Benachrichtigungen",
+  "Message {company}": "{company} eine Nachricht senden",
+  "This application was not approved, so the conversation is closed. It stays here for your records.":
+    "Diese Bewerbung wurde nicht genehmigt, daher ist die Unterhaltung geschlossen. Sie bleibt für Ihre Unterlagen erhalten.",
+  "This relationship is inactive, so the conversation is closed. It stays here for your records.":
+    "Diese Geschäftsbeziehung ist inaktiv, daher ist die Unterhaltung geschlossen. Sie bleibt für Ihre Unterlagen erhalten.",
+  "Chat with {principal}": "Chat mit {principal}",
+  "Your conversation with {company}": "Ihre Unterhaltung mit {company}",
+
   // Machine-translation marker (free-form content)
   "Machine translated": "Maschinell übersetzt",
   "Machine translated — not the author's original wording.":
