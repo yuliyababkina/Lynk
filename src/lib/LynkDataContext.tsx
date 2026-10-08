@@ -29,12 +29,36 @@ import {
   onboardingCaseId,
   displayExpiry,
   logActivity,
+  relationshipId,
+  insertChatMessageDb,
+  markChatReadDb,
+  deleteChatForRelationshipDb,
   type LynkDataset,
   type ProspectDecision,
 } from "./db";
 import { isSupabaseConfigured } from "./supabase";
 import { PRINCIPAL_COMPANY, PROCUREMENT_MANAGER, PROCUREMENT_MANAGER_ROLE } from "./principal";
-import type { Ticket, SupplierDoc, Catalogue, OnboardingCase, TicketStatus, DocStatus } from "../types";
+import { PRINCIPAL_ID } from "../data";
+import type {
+  Ticket,
+  SupplierDoc,
+  Catalogue,
+  OnboardingCase,
+  TicketStatus,
+  DocStatus,
+  ChatMessage,
+  ChatContext,
+  ChatSide,
+} from "../types";
+
+/** Who is writing. The app has no login, so the caller — which knows its own
+ * persona — says who it is, rather than the context guessing at a current user. */
+export interface ChatAuthor {
+  side: ChatSide;
+  name: string;
+  company: string;
+  role?: string;
+}
 
 interface LynkDataValue extends LynkDataset {
   loading: boolean;
@@ -117,6 +141,27 @@ interface LynkDataValue extends LynkDataset {
   /** True when this supplier still owes a terms acceptance — no data may be
    * saved for them until then. Established suppliers have no case and are free. */
   termsPending: (supplierId: string) => boolean;
+
+  /* Chat ------------------------------------------------------------------ */
+
+  /** Every message in one conversation, oldest first. The ONLY way the UI reads
+   * messages, so the relationship scope can't be forgotten at a call site. */
+  messagesFor: (relationship: string) => ChatMessage[];
+  /** The most recent message, for list previews. */
+  lastMessageFor: (relationship: string) => ChatMessage | undefined;
+  /** Messages from the *other* side newer than this side's read marker. */
+  unreadFor: (relationship: string, side: ChatSide) => number;
+  /** Total unread across every relationship this side can see — drives the bell. */
+  unreadRelationships: (side: ChatSide, relationships: string[]) => { relationship: string; count: number }[];
+  /** Append a message. Insert-only; there is no edit or delete counterpart. */
+  sendMessage: (params: {
+    relationship: string;
+    body: string;
+    author: ChatAuthor;
+    context?: ChatContext;
+  }) => Promise<void>;
+  /** Marks this side caught up, and re-arms the single-email rule. */
+  markChatRead: (relationship: string, side: ChatSide) => void;
 }
 
 const LynkDataCtx = createContext<LynkDataValue | null>(null);
@@ -203,13 +248,163 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
     logActivity(doc.supplierName, `Renewal ${decision}ed — ${doc.documentName}`).catch(console.error);
   }, []);
 
-  const addOnboardingCase = useCallback((c: OnboardingCase) => {
-    setData((prev) =>
-      prev ? { ...prev, onboardingCases: [c, ...prev.onboardingCases] } : prev
-    );
-    insertOnboardingCaseDb(c).catch(console.error);
-    logActivity(c.companyName, "Invitation sent").catch(console.error);
+  /**
+   * Narrates a lifecycle event into the conversation. Called from the mutations
+   * that already exist (invite, submit, review) rather than from a new event
+   * system — the five events in the spec are exactly the five places this is
+   * used, and nowhere else.
+   */
+  const postSystemMessage = useCallback((supplierId: string, body: string, context?: ChatContext) => {
+    const message: ChatMessage = {
+      id: crypto.randomUUID(),
+      relationshipId: relationshipId(PRINCIPAL_ID, supplierId),
+      authorSide: "system",
+      authorName: "Lynk",
+      authorCompany: PRINCIPAL_COMPANY,
+      body,
+      context,
+      createdAt: new Date().toISOString(),
+    };
+    setData((prev) => (prev ? { ...prev, chatMessages: [...prev.chatMessages, message] } : prev));
+    insertChatMessageDb(message).catch(console.error);
   }, []);
+
+  /* ── Chat ─────────────────────────────────────────────────────────────── */
+
+  /* Reading is funnelled through these three so no component ever filters the
+     message list itself — requirement 1 holds because there is exactly one
+     place where a relationship scope could be dropped. */
+  const messagesFor = useCallback(
+    (relationship: string) =>
+      (data?.chatMessages ?? [])
+        .filter((m) => m.relationshipId === relationship)
+        .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
+    [data?.chatMessages]
+  );
+
+  const lastMessageFor = useCallback(
+    (relationship: string) => {
+      const all = messagesFor(relationship);
+      return all[all.length - 1];
+    },
+    [messagesFor]
+  );
+
+  const unreadFor = useCallback(
+    (relationship: string, side: ChatSide) => {
+      const marker = data?.chatReads.find((r) => r.relationshipId === relationship && r.side === side);
+      const since = marker?.lastReadAt;
+      return messagesFor(relationship).filter((m) => {
+        // Your own messages are never unread; system notes count for both sides.
+        if (m.authorSide === side) return false;
+        return !since || m.createdAt > since;
+      }).length;
+    },
+    [data?.chatReads, messagesFor]
+  );
+
+  const unreadRelationships = useCallback(
+    (side: ChatSide, relationships: string[]) =>
+      relationships
+        .map((relationship) => ({ relationship, count: unreadFor(relationship, side) }))
+        .filter((r) => r.count > 0),
+    [unreadFor]
+  );
+
+  const sendMessage = useCallback(
+    async ({
+      relationship,
+      body,
+      author,
+      context,
+    }: {
+      relationship: string;
+      body: string;
+      author: ChatAuthor;
+      context?: ChatContext;
+    }) => {
+      const trimmed = body.trim();
+      if (!trimmed) return;
+
+      const message: ChatMessage = {
+        // crypto.randomUUID keeps the optimistic row and the stored row the same
+        // id, so the message doesn't jump or duplicate when the insert returns.
+        id: crypto.randomUUID(),
+        relationshipId: relationship,
+        authorSide: author.side,
+        authorName: author.name,
+        authorCompany: author.company,
+        authorRole: author.role,
+        body: trimmed,
+        context,
+        createdAt: new Date().toISOString(),
+      };
+
+      setData((prev) => (prev ? { ...prev, chatMessages: [...prev.chatMessages, message] } : prev));
+      await insertChatMessageDb(message);
+
+      /* Requirement 2: every message is auditable. The body itself is the detail
+         so the log reads usefully, and the actor is whoever actually wrote it —
+         the schema's default (Sabine) would otherwise credit her with the
+         supplier's words. */
+      logActivity(
+        author.company,
+        `Chat message sent — ${author.side}`,
+        trimmed.length > 200 ? `${trimmed.slice(0, 197)}…` : trimmed,
+        author.name
+      ).catch(console.error);
+
+      // Sending is itself proof you've seen the thread.
+      markChatReadDb(relationship, author.side).catch(console.error);
+      setData((prev) =>
+        prev
+          ? {
+              ...prev,
+              chatReads: [
+                ...prev.chatReads.filter(
+                  (r) => !(r.relationshipId === relationship && r.side === author.side)
+                ),
+                { relationshipId: relationship, side: author.side, lastReadAt: message.createdAt },
+              ],
+            }
+          : prev
+      );
+    },
+    []
+  );
+
+  const markChatRead = useCallback((relationship: string, side: ChatSide) => {
+    const now = new Date().toISOString();
+    setData((prev) =>
+      prev
+        ? {
+            ...prev,
+            chatReads: [
+              ...prev.chatReads.filter((r) => !(r.relationshipId === relationship && r.side === side)),
+              { relationshipId: relationship, side, lastReadAt: now },
+            ],
+          }
+        : prev
+    );
+    markChatReadDb(relationship, side).catch(console.error);
+  }, []);
+
+  const addOnboardingCase = useCallback(
+    (c: OnboardingCase) => {
+      setData((prev) =>
+        prev ? { ...prev, onboardingCases: [c, ...prev.onboardingCases] } : prev
+      );
+      insertOnboardingCaseDb(c).catch(console.error);
+      logActivity(c.companyName, "Invitation sent").catch(console.error);
+      // Event 1 of 5: invited. Opens the conversation, so a prospect who follows
+      // the magic link finds context rather than an empty panel.
+      postSystemMessage(
+        onboardingSupplierId(c.id),
+        `${PROCUREMENT_MANAGER} invited ${c.companyName} to onboard with ${PRINCIPAL_COMPANY}.`
+      );
+    },
+    [postSystemMessage]
+  );
 
   const deleteOnboardingCase = useCallback(
     async (caseId: string, reason: string) => {
@@ -224,6 +419,14 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
         trimmed
       );
       const { removedProspect } = await deleteOnboardingCaseDb(caseId);
+
+      /* The conversation goes with the case. This is the one place messages are
+         ever removed, and it is not a user-facing delete: the case never having
+         been in the pipeline means its correspondence goes too. The activity
+         entry written above survives — it is the only record left. */
+      const relationship = relationshipId(PRINCIPAL_ID, supplierId);
+      await deleteChatForRelationshipDb(relationship);
+
       setData((prev) =>
         prev
           ? {
@@ -233,6 +436,8 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
                 ? prev.suppliers.filter((s) => s.id !== supplierId)
                 : prev.suppliers,
               docs: removedProspect ? prev.docs.filter((d) => d.supplierId !== supplierId) : prev.docs,
+              chatMessages: prev.chatMessages.filter((m) => m.relationshipId !== relationship),
+              chatReads: prev.chatReads.filter((r) => r.relationshipId !== relationship),
             }
           : prev
       );
@@ -331,6 +536,7 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
     (docId: string, decision: "approve" | "decline", comment?: string) => {
       const status: DocStatus = decision === "approve" ? "valid" : "rejected-resubmit";
       const note = decision === "approve" ? undefined : comment;
+      const doc = data?.docs.find((d) => d.id === docId);
       setData((prev) =>
         prev
           ? {
@@ -342,8 +548,26 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
           : prev
       );
       setDocReviewDb(docId, status, note ?? null).catch(console.error);
+
+      /* A decline is a message to the supplier, so it becomes one — with a link
+         back to the document it is about. The existing statusNote behaviour is
+         untouched: the comment still shows on the document itself, this only
+         adds the same words to the conversation where they can be replied to. */
+      if (decision === "decline" && comment?.trim() && doc) {
+        sendMessage({
+          relationship: relationshipId(PRINCIPAL_ID, doc.supplierId),
+          body: comment.trim(),
+          author: {
+            side: "principal",
+            name: PROCUREMENT_MANAGER,
+            company: PRINCIPAL_COMPANY,
+            role: PROCUREMENT_MANAGER_ROLE,
+          },
+          context: { type: "document", id: doc.id, label: doc.documentName },
+        }).catch(console.error);
+      }
     },
-    []
+    [data?.docs, sendMessage]
   );
 
   const updateDocMetadata = useCallback(
@@ -496,8 +720,15 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
         };
       });
       await submitProspectForReviewDb(supplierId, supplierName, contactName);
+      // Event 5 of 5: new application. Also what a re-invited, previously
+      // rejected prospect posts when they resubmit into the same conversation.
+      postSystemMessage(
+        supplierId,
+        `${supplierName} submitted their application for review.`,
+        { type: "onboarding-case", id: caseId, label: "Onboarding application" }
+      );
     },
-    []
+    [postSystemMessage]
   );
 
   const reviewProspect = useCallback(
@@ -522,8 +753,40 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
         };
       });
       await reviewProspectDb(supplierId, supplierName, decision, note);
+
+      /* Events 2–4 of 5: changes requested / accepted / rejected. The PM's note
+         is quoted so the prospect reads the reason in the conversation as well
+         as on the wizard — reviewNote itself is untouched. */
+      const caseContext: ChatContext = {
+        type: "onboarding-case",
+        id: caseId,
+        label: "Onboarding application",
+      };
+      if (decision === "accept") {
+        postSystemMessage(
+          supplierId,
+          `${PRINCIPAL_COMPANY} accepted ${supplierName}'s application. The supplier account is now active.`,
+          caseContext
+        );
+      } else if (decision === "changes") {
+        postSystemMessage(
+          supplierId,
+          note
+            ? `${PRINCIPAL_COMPANY} requested changes: ${note}`
+            : `${PRINCIPAL_COMPANY} requested changes to the application.`,
+          caseContext
+        );
+      } else {
+        postSystemMessage(
+          supplierId,
+          note
+            ? `${PRINCIPAL_COMPANY} did not approve the application: ${note}`
+            : `${PRINCIPAL_COMPANY} did not approve the application.`,
+          caseContext
+        );
+      }
     },
-    []
+    [postSystemMessage]
   );
 
   const resetProspect = useCallback(
@@ -655,6 +918,12 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
       removeSupplierDoc,
       acceptTerms,
       termsPending,
+      messagesFor,
+      lastMessageFor,
+      unreadFor,
+      unreadRelationships,
+      sendMessage,
+      markChatRead,
     };
   }, [
     data,
@@ -684,6 +953,12 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
     removeSupplierDoc,
     acceptTerms,
     termsPending,
+    messagesFor,
+    lastMessageFor,
+    unreadFor,
+    unreadRelationships,
+    sendMessage,
+    markChatRead,
   ]);
 
   if (!value) {

@@ -1,5 +1,5 @@
-import type { Supplier, Ticket, SupplierDoc, Contract, DataGovernanceRequest, OnboardingCase, Catalogue, CatalogueSupplier, Principal, SupplierPrincipalRelationship, DirectoryCompany, CatalogueLineDiff } from "./types";
-import { PRINCIPAL_COMPANY, PRINCIPAL_SHORT, PRINCIPAL_PROFILE } from "./lib/principal";
+import type { Supplier, Ticket, SupplierDoc, Contract, DataGovernanceRequest, OnboardingCase, Catalogue, CatalogueSupplier, Principal, SupplierPrincipalRelationship, DirectoryCompany, CatalogueLineDiff, ChatMessage } from "./types";
+import { PRINCIPAL_COMPANY, PRINCIPAL_SHORT, PRINCIPAL_PROFILE, PROCUREMENT_MANAGER, PROCUREMENT_MANAGER_ROLE } from "./lib/principal";
 
 export const PRINCIPAL_ID = "principal_urban_habitat";
 
@@ -92,6 +92,95 @@ export const SUPPLIER_RELATIONSHIPS_MEHMET: SupplierPrincipalRelationship[] = [
     unreadCount: 0,
     pendingCount: 0,
     rejectedCount: 0,
+  },
+];
+
+/* Chat ------------------------------------------------------------------- */
+
+// Seed conversations, used when Supabase isn't configured and as the demo's
+// starting point. Martin talks to four principals from one account and each
+// thread is a separate relationship_id — that separation IS the demo of
+// requirement 1, so every principal gets at least one message of its own.
+const hoursAgo = (h: number) => new Date(Date.now() - h * 3600_000).toISOString();
+
+const MARTIN_ID = "supplier_martin_weber";
+const MARTIN_COMPANY = "EuroBau Components GmbH";
+const MARTIN_PERSON = "Martin Weber";
+const MARTIN_ROLE = "Supplier Manager";
+
+export const CHAT_MESSAGES: ChatMessage[] = [
+  /* Urban Habitat ↔ Martin — the live thread, with a document context link. */
+  {
+    id: "msg-uh-1",
+    relationshipId: `rel_${PRINCIPAL_ID}_${MARTIN_ID}`,
+    authorSide: "principal",
+    authorName: PROCUREMENT_MANAGER,
+    authorCompany: PRINCIPAL_COMPANY,
+    authorRole: PROCUREMENT_MANAGER_ROLE,
+    body: "Your Public Liability Insurance expired last week, so you're blocked from new work orders until a renewed certificate is on file.",
+    context: {
+      type: "document",
+      id: `doc-${MARTIN_ID}-public-liability-insurance`,
+      label: "Public Liability Insurance",
+    },
+    createdAt: hoursAgo(52),
+  },
+  {
+    id: "msg-uh-2",
+    relationshipId: `rel_${PRINCIPAL_ID}_${MARTIN_ID}`,
+    authorSide: "supplier",
+    authorName: MARTIN_PERSON,
+    authorCompany: MARTIN_COMPANY,
+    authorRole: MARTIN_ROLE,
+    body: "Thanks — our broker issues the new policy on Monday. I'll upload it the same day.",
+    createdAt: hoursAgo(50),
+  },
+  {
+    id: "msg-uh-3",
+    relationshipId: `rel_${PRINCIPAL_ID}_${MARTIN_ID}`,
+    authorSide: "principal",
+    authorName: PROCUREMENT_MANAGER,
+    authorCompany: PRINCIPAL_COMPANY,
+    authorRole: PROCUREMENT_MANAGER_ROLE,
+    body: "Perfect. One more thing — could you confirm the Berlin site contact is still correct?",
+    createdAt: hoursAgo(6),
+  },
+
+  /* Wincasa ↔ Martin — a different principal, so a different conversation.
+     If this ever shows up in the Urban Habitat thread, isolation is broken. */
+  {
+    id: "msg-wc-1",
+    relationshipId: `rel_principal_wincasa_${MARTIN_ID}`,
+    authorSide: "principal",
+    authorName: "Petra Ammann",
+    authorCompany: "Wincasa",
+    authorRole: "Category Buyer",
+    body: "All your documents are confirmed for 2027. Nothing needed from your side.",
+    createdAt: hoursAgo(168),
+  },
+
+  /* GCH ↔ Martin */
+  {
+    id: "msg-gch-1",
+    relationshipId: `rel_principal_gch_${MARTIN_ID}`,
+    authorSide: "supplier",
+    authorName: MARTIN_PERSON,
+    authorCompany: MARTIN_COMPANY,
+    authorRole: MARTIN_ROLE,
+    body: "Sending over the updated rate card for the Munich region this week.",
+    createdAt: hoursAgo(336),
+  },
+
+  /* AT Immobilien ↔ Martin — same company, still onboarding elsewhere. */
+  {
+    id: "msg-at-1",
+    relationshipId: `rel_principal_at_immobilien_${MARTIN_ID}`,
+    authorSide: "principal",
+    authorName: "Tobias Reiner",
+    authorCompany: "AT Immobilien",
+    authorRole: "Procurement Lead",
+    body: "Welcome aboard — three documents are still outstanding before we can activate you.",
+    createdAt: hoursAgo(72),
   },
 ];
 

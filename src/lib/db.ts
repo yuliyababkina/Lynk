@@ -12,6 +12,9 @@ import type {
   DocStatus,
   TicketStatus,
   ComplianceEvent,
+  ChatMessage,
+  ChatRead,
+  ChatSide,
 } from "../types";
 
 export interface LynkDataset {
@@ -22,6 +25,8 @@ export interface LynkDataset {
   dataGovernanceRequests: DataGovernanceRequest[];
   onboardingCases: OnboardingCase[];
   catalogues: Catalogue[];
+  chatMessages: ChatMessage[];
+  chatReads: ChatRead[];
 }
 
 function getStaticDataset(): LynkDataset {
@@ -33,6 +38,8 @@ function getStaticDataset(): LynkDataset {
     dataGovernanceRequests: staticData.DATA_GOVERNANCE_REQUESTS,
     onboardingCases: staticData.ONBOARDING_CASES,
     catalogues: staticData.CATALOGUES,
+    chatMessages: staticData.CHAT_MESSAGES,
+    chatReads: [],
   };
 }
 
@@ -155,6 +162,33 @@ function mapOnboarding(row: any): OnboardingCase {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapChatMessage(row: any): ChatMessage {
+  return {
+    id: row.id,
+    relationshipId: row.relationship_id,
+    authorSide: row.author_side,
+    authorName: row.author_name,
+    authorCompany: row.author_company,
+    authorRole: row.author_role ?? undefined,
+    body: row.body,
+    context: row.context_type
+      ? { type: row.context_type, id: row.context_id, label: row.context_label ?? row.context_id }
+      : undefined,
+    createdAt: row.created_at,
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapChatRead(row: any): ChatRead {
+  return {
+    relationshipId: row.relationship_id,
+    side: row.side,
+    lastReadAt: row.last_read_at,
+    notifiedAt: row.notified_at ?? undefined,
+  };
+}
+
 function mapCatalogue(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   row: any,
@@ -200,23 +234,56 @@ export async function fetchAllData(): Promise<LynkDataset> {
     return getStaticDataset();
   }
 
-  const [suppliersRes, ticketsRes, docsRes, contractsRes, dgrRes, onbRes, catRes, catSuppliersRes] =
-    await Promise.all([
-      supabase.from("suppliers").select("*").order("name"),
-      supabase.from("tickets").select("*"),
-      supabase.from("supplier_docs").select("*"),
-      supabase.from("contracts").select("*"),
-      supabase.from("data_governance_requests").select("*"),
-      supabase.from("onboarding_cases").select("*"),
-      supabase.from("catalogues").select("*"),
-      supabase.from("catalogue_suppliers").select("*"),
-    ]);
+  const [
+    suppliersRes,
+    ticketsRes,
+    docsRes,
+    contractsRes,
+    dgrRes,
+    onbRes,
+    catRes,
+    catSuppliersRes,
+    chatRes,
+    chatReadsRes,
+  ] = await Promise.all([
+    supabase.from("suppliers").select("*").order("name"),
+    supabase.from("tickets").select("*"),
+    supabase.from("supplier_docs").select("*"),
+    supabase.from("contracts").select("*"),
+    supabase.from("data_governance_requests").select("*"),
+    supabase.from("onboarding_cases").select("*"),
+    supabase.from("catalogues").select("*"),
+    supabase.from("catalogue_suppliers").select("*"),
+    supabase.from("chat_messages").select("*").order("created_at"),
+    supabase.from("chat_reads").select("*"),
+  ]);
 
-  const firstError = [suppliersRes, ticketsRes, docsRes, contractsRes, dgrRes, onbRes, catRes, catSuppliersRes].find(
-    (r) => r.error
-  )?.error;
+  const firstError = [
+    suppliersRes,
+    ticketsRes,
+    docsRes,
+    contractsRes,
+    dgrRes,
+    onbRes,
+    catRes,
+    catSuppliersRes,
+  ].find((r) => r.error)?.error;
   if (firstError) {
     throw new Error(`Supabase fetch failed: ${firstError.message}`);
+  }
+
+  /* The chat tables arrive with their own migration, which has to be pasted into
+     the SQL editor by hand. Until that happens the two queries above fail while
+     everything else is fine, so chat falls back to the static threads rather
+     than taking the whole app down — the same tolerance the document-metadata
+     columns already get. */
+  const chatTablesMissing = Boolean(chatRes.error || chatReadsRes.error);
+  if (chatTablesMissing) {
+    console.warn(
+      "[Lynk] chat tables unavailable, using static threads:",
+      (chatRes.error ?? chatReadsRes.error)?.message,
+      "— run supabase/migrations/2026-10-08_add_chat.sql"
+    );
   }
 
   const catSuppliers = catSuppliersRes.data ?? [];
@@ -255,6 +322,10 @@ export async function fetchAllData(): Promise<LynkDataset> {
     dataGovernanceRequests,
     onboardingCases,
     catalogues,
+    chatMessages: chatTablesMissing
+      ? staticData.CHAT_MESSAGES
+      : (chatRes.data ?? []).map(mapChatMessage),
+    chatReads: chatTablesMissing ? [] : (chatReadsRes.data ?? []).map(mapChatRead),
   };
 }
 
@@ -669,6 +740,22 @@ export async function updateSupplierProfileDb(
   if (error) console.error("[Lynk] updateSupplierProfileDb failed:", error.message);
 }
 
+/**
+ * The key every chat query is scoped by — requirement 1, in one function.
+ *
+ * Derived rather than stored: there is no supplier_relationships table in this
+ * prototype, and a deterministic id makes a conversation idempotent the same way
+ * `onb-<supplierId>` makes a submission idempotent. A principal can only ever
+ * compute the id of a relationship it is itself part of, so it cannot name — let
+ * alone read — another principal's conversation.
+ *
+ * The prospect→supplier transition is deliberately invisible here: the id is
+ * built from the two parties, not from the relationship's status, so a prospect
+ * who is accepted keeps the same conversation.
+ */
+export const relationshipId = (principalId: string, supplierId: string) =>
+  `rel_${principalId}_${supplierId}`;
+
 /** Deterministic onboarding-case id for a prospect, so submitting is idempotent
  * (re-submitting updates the same row instead of creating duplicates). */
 export const onboardingCaseId = (supplierId: string) => `onb-${supplierId}`;
@@ -820,6 +907,82 @@ export async function resetProspectDb(supplierId: string, supplierName: string) 
     .eq("id", onboardingCaseId(supplierId));
   if (error) console.error("[Lynk] resetProspectDb failed:", error.message);
   await logActivity(supplierName, "Onboarding reset — returned to invited state");
+}
+
+/* ---------------------------------------------------------------------- */
+/* Chat                                                                     */
+/* ---------------------------------------------------------------------- */
+
+/**
+ * Appends one message. Insert-only by design (requirement 2): there is no
+ * update or delete counterpart anywhere in this module, and the production RLS
+ * block in the migration grants neither.
+ *
+ * Returns the row it wrote so the caller can show it immediately; on the static
+ * fallback it returns the same shape without persisting, so the prototype demos
+ * without a Supabase project.
+ */
+export async function insertChatMessageDb(message: ChatMessage): Promise<ChatMessage> {
+  if (!isSupabaseConfigured) return message;
+
+  const { data, error } = await supabase
+    .from("chat_messages")
+    .insert({
+      id: message.id,
+      relationship_id: message.relationshipId,
+      author_side: message.authorSide,
+      author_name: message.authorName,
+      author_company: message.authorCompany,
+      author_role: message.authorRole ?? null,
+      body: message.body,
+      context_type: message.context?.type ?? null,
+      context_id: message.context?.id ?? null,
+      context_label: message.context?.label ?? null,
+    })
+    .select()
+    .maybeSingle();
+
+  if (error) {
+    // Same tolerance as the fetch: without the migration the message lives for
+    // the session only, rather than throwing in the composer's face.
+    console.warn("[Lynk] insertChatMessageDb failed:", error.message);
+    return message;
+  }
+  return data ? mapChatMessage(data) : message;
+}
+
+/** Marks everything up to now as read for one side of one relationship.
+ * Clears `notified_at` so the next unread streak can send its single email. */
+export async function markChatReadDb(relationship: string, side: ChatSide) {
+  if (!isSupabaseConfigured) return;
+  const { error } = await supabase.from("chat_reads").upsert(
+    {
+      relationship_id: relationship,
+      side,
+      last_read_at: new Date().toISOString(),
+      notified_at: null,
+    },
+    { onConflict: "relationship_id,side" }
+  );
+  if (error) console.warn("[Lynk] markChatReadDb failed:", error.message);
+}
+
+/**
+ * Removes a conversation wholesale. The one exception to insert-only, and not a
+ * user-facing one: deleting an onboarding case takes its messages with it, the
+ * same way it takes the prospect's documents (see deleteOnboardingCaseDb). The
+ * activity_log entry written before the deletion stays — it is the only record
+ * that survives, by design.
+ *
+ * Note for production: the policy block in the migration grants no DELETE, so
+ * this path has to move to the service role on the server.
+ */
+export async function deleteChatForRelationshipDb(relationship: string) {
+  if (!isSupabaseConfigured) return;
+  const { error } = await supabase.from("chat_messages").delete().eq("relationship_id", relationship);
+  if (error) console.warn("[Lynk] deleteChatForRelationshipDb failed:", error.message);
+  const { error: readErr } = await supabase.from("chat_reads").delete().eq("relationship_id", relationship);
+  if (readErr) console.warn("[Lynk] deleteChatForRelationshipDb (reads) failed:", readErr.message);
 }
 
 /**
