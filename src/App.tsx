@@ -356,6 +356,10 @@ export default function App() {
                 onOpenSupplier={openSupplierByName}
                 resolvedIds={resolvedIds}
                 onResolve={resolveTicket}
+                onOpenChat={(supplierId, context) => {
+                  setPendingChat(context);
+                  openProfile(supplierId);
+                }}
               />
             )}
             {view === "suppliers" && (

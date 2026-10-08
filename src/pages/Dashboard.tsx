@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import {
   Check,
   ShieldCheck, Shield, FileText, ClipboardList, Rocket,
-  ChevronDown, CircleCheck,
+  ChevronDown, CircleCheck, MessageSquare,
   type LucideIcon,
 } from "lucide-react";
 import { useLynkData } from "../lib/LynkDataContext";
@@ -13,6 +13,9 @@ import { CriticalityIcon } from "@/components/yarowa/criticality-icon";
 import { ACTION_ICON } from "@/lib/action-icons";
 import { criticalityLabel } from "@/lib/theme";
 import { useI18n } from "@/lib/i18n";
+import { relationshipId } from "@/lib/db";
+import { PRINCIPAL_ID } from "@/data";
+import type { ChatContext } from "@/types";
 import { translateTicketTitle, translateAgeLabel } from "@/lib/ticket-i18n";
 import type { Ticket, Criticality, TicketCategory, TicketStatus } from "../types";
 
@@ -41,13 +44,22 @@ export function Dashboard({
   onOpenSupplier,
   resolvedIds,
   onResolve,
+  onOpenChat,
 }: {
   onSelectTicket: (t: Ticket) => void;
   onOpenSupplier: (entityName: string) => void;
   resolvedIds: Set<string>;
   onResolve: (t: Ticket, action: string) => void;
+  /** Opens the supplier's conversation with this ticket attached. */
+  onOpenChat?: (supplierId: string, context: ChatContext) => void;
 }) {
-  const { tickets: TICKETS, ticketStatusById, setTicketStatus } = useLynkData();
+  const {
+    tickets: TICKETS,
+    ticketStatusById,
+    setTicketStatus,
+    suppliers: SUPPLIERS,
+    unreadFor,
+  } = useLynkData();
   const { t: tr } = useI18n();
   const [filter, setFilter] = useState<"All tickets" | TicketCategory>("All tickets");
   const [expanded, setExpanded] = useState<Set<Criticality>>(new Set());
@@ -146,6 +158,14 @@ export function Dashboard({
               {visible.map((t) => {
                 const ActionIcon = ACTION_ICON[t.primaryAction];
                 const CategoryIcon = CATEGORY_ICON[t.category];
+                /* Same inline pairing the supplier portal uses: the action, then
+                   Chat beside it. Resolved by display name like the subline's
+                   supplier link, so a ticket about a company we hold no
+                   relationship with simply gets no Chat button. */
+                const chatSupplier = SUPPLIERS.find((s) => s.name === t.entityName);
+                const chatUnread = chatSupplier
+                  ? unreadFor(relationshipId(PRINCIPAL_ID, chatSupplier.id), "principal")
+                  : 0;
                 return (
                   <TaskRow
                     key={t.id}
@@ -171,19 +191,44 @@ export function Dashboard({
                       <TicketStatusMenu status={statusOf(t)} onChange={(s) => changeStatus(t, s)} align="start" />
                     }
                     action={
-                      <Button
-                        variant={t.criticality === "critical" || t.criticality === "high" ? "default" : "outline"}
-                        // The action opens the ticket in the drawer rather than
-                        // resolving straight from the row, so the action is always
-                        // taken with the ticket's full context in view.
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSelectTicket(t);
-                        }}
-                      >
-                        {ActionIcon && <ActionIcon size={14} />}
-                        {tr(t.primaryAction)}
-                      </Button>
+                      <div className="flex items-center gap-1.5">
+                        <Button
+                          variant={t.criticality === "critical" || t.criticality === "high" ? "default" : "outline"}
+                          // The action opens the ticket in the drawer rather than
+                          // resolving straight from the row, so the action is always
+                          // taken with the ticket's full context in view.
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelectTicket(t);
+                          }}
+                        >
+                          {ActionIcon && <ActionIcon size={14} />}
+                          {tr(t.primaryAction)}
+                        </Button>
+                        {chatSupplier && (
+                          <Button
+                            variant="secondary"
+                            // The row itself opens the drawer, so the button has
+                            // to stop the click bubbling — same guard as above.
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onOpenChat?.(chatSupplier.id, {
+                                type: "data-change",
+                                id: t.targetId ?? t.id,
+                                label: translateTicketTitle(t.title, tr),
+                              });
+                            }}
+                          >
+                            <MessageSquare size={14} />
+                            {tr("Chat")}
+                            {chatUnread > 0 && (
+                              <span className="ml-1 rounded-full bg-critical px-1.5 text-[10px] font-semibold text-white">
+                                {chatUnread}
+                              </span>
+                            )}
+                          </Button>
+                        )}
+                      </div>
                     }
                   />
                 );
