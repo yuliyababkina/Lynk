@@ -141,6 +141,12 @@ migration — see below.
 | `2026-07-15_add_ticket_status.sql` | ticket workflow status | yes |
 | `2026-07-30_add_document_metadata.sql` | `supplier_docs`: document_type, issuing_institution, does_not_expire, metadata_confirmed | **no** — verified 3 Aug 2026 |
 | `2026-07-31_add_terms_acceptance.sql` | `suppliers`: terms_accepted_at/version/by + backfill of non-prospects | yes |
+| `2026-10-08_add_chat.sql` | `chat_messages`, `chat_reads` + the production RLS policy as a commented block | **no** — pending |
+
+**The chat migration is outstanding.** Until it is applied, `fetchAllData`'s two
+chat queries 404, the app logs a warning and falls back to the seed threads in
+`src/data.ts` — chat works for a demo but nothing a persona writes survives a
+reload. Paste `2026-10-08_add_chat.sql` into the SQL Editor to close it.
 
 **The document-metadata migration is still outstanding.** Both the upload and the
 edit path fall back to writing only the columns that exist, so nothing breaks —
