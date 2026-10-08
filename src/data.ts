@@ -112,7 +112,7 @@ export const CHAT_MESSAGES: ChatMessage[] = [
   /* Urban Habitat ↔ Martin — the live thread, with a document context link. */
   {
     id: "msg-uh-1",
-    relationshipId: `rel_${PRINCIPAL_ID}_${MARTIN_ID}`,
+    relationshipId: `rel:${PRINCIPAL_ID}:${MARTIN_ID}`,
     authorSide: "principal",
     authorName: PROCUREMENT_MANAGER,
     authorCompany: PRINCIPAL_COMPANY,
@@ -127,7 +127,7 @@ export const CHAT_MESSAGES: ChatMessage[] = [
   },
   {
     id: "msg-uh-2",
-    relationshipId: `rel_${PRINCIPAL_ID}_${MARTIN_ID}`,
+    relationshipId: `rel:${PRINCIPAL_ID}:${MARTIN_ID}`,
     authorSide: "supplier",
     authorName: MARTIN_PERSON,
     authorCompany: MARTIN_COMPANY,
@@ -137,7 +137,7 @@ export const CHAT_MESSAGES: ChatMessage[] = [
   },
   {
     id: "msg-uh-3",
-    relationshipId: `rel_${PRINCIPAL_ID}_${MARTIN_ID}`,
+    relationshipId: `rel:${PRINCIPAL_ID}:${MARTIN_ID}`,
     authorSide: "principal",
     authorName: PROCUREMENT_MANAGER,
     authorCompany: PRINCIPAL_COMPANY,
@@ -150,7 +150,7 @@ export const CHAT_MESSAGES: ChatMessage[] = [
      If this ever shows up in the Urban Habitat thread, isolation is broken. */
   {
     id: "msg-wc-1",
-    relationshipId: `rel_principal_wincasa_${MARTIN_ID}`,
+    relationshipId: `rel:principal_wincasa:${MARTIN_ID}`,
     authorSide: "principal",
     authorName: "Petra Ammann",
     authorCompany: "Wincasa",
@@ -162,7 +162,7 @@ export const CHAT_MESSAGES: ChatMessage[] = [
   /* GCH ↔ Martin */
   {
     id: "msg-gch-1",
-    relationshipId: `rel_principal_gch_${MARTIN_ID}`,
+    relationshipId: `rel:principal_gch:${MARTIN_ID}`,
     authorSide: "supplier",
     authorName: MARTIN_PERSON,
     authorCompany: MARTIN_COMPANY,
@@ -174,7 +174,7 @@ export const CHAT_MESSAGES: ChatMessage[] = [
   /* AT Immobilien ↔ Martin — same company, still onboarding elsewhere. */
   {
     id: "msg-at-1",
-    relationshipId: `rel_principal_at_immobilien_${MARTIN_ID}`,
+    relationshipId: `rel:principal_at_immobilien:${MARTIN_ID}`,
     authorSide: "principal",
     authorName: "Tobias Reiner",
     authorCompany: "AT Immobilien",

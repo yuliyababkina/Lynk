@@ -752,9 +752,19 @@ export async function updateSupplierProfileDb(
  * The prospect→supplier transition is deliberately invisible here: the id is
  * built from the two parties, not from the relationship's status, so a prospect
  * who is accepted keeps the same conversation.
+ *
+ * Colons, not underscores: both halves are ids that already contain underscores
+ * (`principal_urban_habitat`, `supplier_martin_weber`), so an underscore-joined
+ * key cannot be taken apart again — which anything server-side needs to do.
  */
 export const relationshipId = (principalId: string, supplierId: string) =>
-  `rel_${principalId}_${supplierId}`;
+  `rel:${principalId}:${supplierId}`;
+
+/** The two parties back out of a relationship id. */
+export const parseRelationshipId = (relationship: string) => {
+  const [, principalId, supplierId] = relationship.split(":");
+  return { principalId, supplierId };
+};
 
 /** Deterministic onboarding-case id for a prospect, so submitting is idempotent
  * (re-submitting updates the same row instead of creating duplicates). */
