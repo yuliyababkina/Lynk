@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { TaskGroupCard, TaskRow } from "@/components/yarowa/task-group-card";
 import type { PortalView } from "@/pages/SupplierPortal";
 import type { PortalActivitySelection } from "@/components/yarowa/portal-activity-drawer";
+import type { ChatContext } from "@/types";
 import {
   getPortalProfile,
   primaryActionLabel,
@@ -30,6 +31,8 @@ import {
 
 export interface PortalOverviewProps {
   supplierId: string;
+  /** Opens the principal's conversation with this ticket attached. */
+  onOpenChat?: (draft: string, context?: ChatContext) => void;
   /** Live groups, owned by SupplierPortal so a fixed ticket moves immediately. */
   groups: OverviewGroup[];
   onNavigate?: (view: PortalView) => void;
@@ -94,9 +97,11 @@ function ActionButton({ label, onClick }: { label: string; onClick?: () => void 
 function GroupCard({
   group,
   onOpenActivity,
+  onOpenChat,
 }: {
   group: OverviewGroup;
   onOpenActivity?: (selection: PortalActivitySelection) => void;
+  onOpenChat?: (draft: string, context?: ChatContext) => void;
 }) {
   const SectionIcon = SECTION_ICON[group.key] ?? CircleAlert;
   const open = (selection: PortalActivitySelection) => onOpenActivity?.(selection);
@@ -133,7 +138,21 @@ function GroupCard({
                     />
                   )}
                   {secondaryActions(item).map((a) => (
-                    <ActionButton key={a} label={a} />
+                    <ActionButton
+                      key={a}
+                      label={a}
+                      onClick={
+                        a === "Chat"
+                          ? () =>
+                              onOpenChat?.(
+                                "",
+                                item.docName
+                                  ? { type: "document", id: item.docName, label: item.docName }
+                                  : { type: "data-change", id: item.id, label: item.title }
+                              )
+                          : undefined
+                      }
+                    />
                   ))}
                 </div>
               }
@@ -195,7 +214,7 @@ const QUICK_ACTIONS: {
   { icon: PencilLine, title: "Request Data Change", hint: "IBAN, address updates", quick: "data" },
 ];
 
-export function PortalOverview({ supplierId, groups, onNavigate, onOpenActivity }: PortalOverviewProps) {
+export function PortalOverview({ supplierId, groups, onNavigate, onOpenActivity, onOpenChat }: PortalOverviewProps) {
   const profile = getPortalProfile(supplierId);
 
   return (
@@ -218,7 +237,12 @@ export function PortalOverview({ supplierId, groups, onNavigate, onOpenActivity 
       {/* Activity grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {groups.map((group) => (
-          <GroupCard key={group.key} group={group} onOpenActivity={onOpenActivity} />
+          <GroupCard
+            key={group.key}
+            group={group}
+            onOpenActivity={onOpenActivity}
+            onOpenChat={onOpenChat}
+          />
         ))}
       </div>
 

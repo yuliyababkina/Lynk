@@ -7,6 +7,8 @@ export interface TopHeaderProps {
   onSwitchAccount?: () => void;
   accountInitials?: string;
   leading?: ReactNode;
+  /** Sits left of the language toggle — the notification bell goes here. */
+  trailing?: ReactNode;
 }
 
 export function TopHeader({
@@ -14,6 +16,7 @@ export function TopHeader({
   onSwitchAccount,
   accountInitials = "SM",
   leading,
+  trailing,
 }: TopHeaderProps) {
   const { t } = useI18n();
   return (
@@ -23,6 +26,7 @@ export function TopHeader({
           sidebar header, so repeating them here only ate horizontal space. */}
       <span className="text-sm font-medium text-brand-navy-foreground/95">{t(currentLabel)}</span>
       <div className="flex-1" />
+      {trailing ? <div className="mr-3">{trailing}</div> : null}
       <LanguageToggle tone="dark" />
       {onSwitchAccount ? (
         <>

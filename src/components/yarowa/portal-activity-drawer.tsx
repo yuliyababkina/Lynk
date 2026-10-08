@@ -25,6 +25,7 @@ import {
 } from "@/pages/portal/portal-data";
 import { PORTAL_FIELDS, fieldError, hasSensitiveField } from "@/pages/portal/portal-fields";
 import type { DocumentMetadata } from "@/lib/onboarding-documents";
+import type { ChatContext } from "@/types";
 
 export interface PortalActivitySelection {
   /** The ticket being fixed; absent when opened from a quick-action card. */
@@ -407,6 +408,7 @@ export function PortalActivityDrawer({
   onCompanyChange,
   onItemDone,
   changeRequests,
+  onOpenChat,
 }: {
   selection: PortalActivitySelection;
   supplierId: string;
@@ -417,6 +419,8 @@ export function PortalActivityDrawer({
   onItemDone: (itemId: string, outcome: ActivityOutcome, changes?: ChangeRecord[]) => void;
   /** Change requests already submitted, keyed by item id. */
   changeRequests?: Record<string, ChangeRecord[]>;
+  /** Opens the principal's conversation with this ticket already attached. */
+  onOpenChat?: (draft: string, context?: ChatContext) => void;
 }) {
   const { item, sectionLabel, tone, quick } = selection;
 
@@ -665,7 +669,24 @@ export function PortalActivityDrawer({
           {secondaryActions(item).map((a) => {
             const Icon = ACTION_ICON[a];
             return (
-              <Button key={a} variant={secondaryVariant(a)} className="w-full">
+              <Button
+                key={a}
+                variant={secondaryVariant(a)}
+                className="w-full"
+                onClick={
+                  a === "Chat"
+                    ? () =>
+                        /* The ticket travels into the composer as a link, so the
+                           supplier doesn't have to re-type what it is about. */
+                        onOpenChat?.(
+                          "",
+                          item.docName
+                            ? { type: "document", id: item.docName, label: item.docName }
+                            : { type: "data-change", id: item.id, label: item.title }
+                        )
+                    : undefined
+                }
+              >
                 {Icon && <Icon size={14} />}
                 {a}
               </Button>
