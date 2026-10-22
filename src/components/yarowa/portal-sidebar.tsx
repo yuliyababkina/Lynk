@@ -41,7 +41,9 @@ export function PortalSidebar({
     >
       <div
         className={cn(
-          "h-12 border-b border-brand-navy-foreground/10 bg-brand-navy text-brand-navy-foreground",
+          // Light, matching the top bar beside it: the two together read as one
+          // continuous strip rather than a navy block abutting a white one.
+          "h-12 border-b border-border bg-card text-foreground",
           collapsed ? "flex items-center justify-center px-2" : "flex items-center gap-2 px-4"
         )}
       >
@@ -50,8 +52,8 @@ export function PortalSidebar({
         </div>
         {!collapsed ? (
           <div>
-            <div className="text-sm font-semibold text-brand-navy-foreground leading-none">Lynk</div>
-            <div className="text-[10px] text-brand-navy-foreground/60 leading-none mt-0.5">Procurement Platform</div>
+            <div className="text-sm font-semibold leading-none">Lynk</div>
+            <div className="text-[10px] text-muted-foreground leading-none mt-0.5">Procurement Platform</div>
           </div>
         ) : null}
         {onToggleCollapse ? (
@@ -59,7 +61,7 @@ export function PortalSidebar({
             type="button"
             onClick={onToggleCollapse}
             className={cn(
-              "shrink-0 rounded p-1 text-brand-navy-foreground/70 hover:text-brand-navy-foreground hover:bg-brand-navy-foreground/10 transition-colors",
+              "shrink-0 rounded p-1 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors",
               collapsed ? "" : "ml-auto"
             )}
             aria-label={collapsed ? "Expand menu" : "Collapse menu"}

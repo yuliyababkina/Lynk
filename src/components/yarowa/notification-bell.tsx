@@ -23,11 +23,11 @@ export interface BellEntry {
 export function NotificationBell({
   entries,
   onOpen,
-  tone = "dark",
+  tone = "light",
 }: {
   entries: BellEntry[];
   onOpen: (relationship: string) => void;
-  /** `dark` sits on the navy header bar; `light` on a white one. */
+  /** `light` is the header's own surface; `dark` remains for navy surfaces. */
   tone?: "dark" | "light";
 }) {
   const { t } = useI18n();

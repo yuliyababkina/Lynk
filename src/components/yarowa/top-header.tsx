@@ -20,19 +20,19 @@ export function TopHeader({
 }: TopHeaderProps) {
   const { t } = useI18n();
   return (
-    <header className="h-12 flex items-center px-6 shrink-0 bg-brand-navy text-brand-navy-foreground">
+    <header className="h-12 flex items-center px-6 shrink-0 bg-card text-foreground border-b border-border">
       {leading ? <div className="mr-3">{leading}</div> : null}
       {/* Just the current page — the brand and platform name already sit in the
           sidebar header, so repeating them here only ate horizontal space. */}
-      <span className="text-sm font-medium text-brand-navy-foreground/95">{t(currentLabel)}</span>
+      <span className="text-sm font-medium">{t(currentLabel)}</span>
       <div className="flex-1" />
       {trailing ? <div className="mr-3">{trailing}</div> : null}
-      <LanguageToggle tone="dark" />
+      <LanguageToggle />
       {onSwitchAccount ? (
         <>
           <button
             onClick={onSwitchAccount}
-            className="mx-3 text-xs font-medium text-brand-navy-foreground/70 hover:text-brand-navy-foreground transition-colors"
+            className="mx-3 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
             title="Switch account"
           >
             {t("Switch")}

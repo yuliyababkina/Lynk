@@ -1,5 +1,4 @@
 import { ArrowRight } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { useI18n } from "@/lib/i18n";
 import { LanguageToggle } from "@/components/yarowa/language-toggle";
@@ -17,7 +16,6 @@ interface RoleCard {
   description: string;
   cta: string;
   icon: string;
-  dark?: boolean;
 }
 
 const ROLES: RoleCard[] = [
@@ -29,7 +27,6 @@ const ROLES: RoleCard[] = [
       "Dashboard, compliance monitoring, contract management, data governance, qualification, reporting.",
     cta: "Open Procurement Dashboard",
     icon: "👩‍💼",
-    dark: true,
   },
   {
     id: "supplier",
@@ -79,20 +76,10 @@ export function Landing({ onSelectRole }: LandingProps) {
             role="button"
             tabIndex={0}
             onClick={() => onSelectRole(role.id)}
-            className={cn(
-              "p-6 rounded-2xl cursor-pointer transition-all",
-              role.dark
-                ? "bg-brand-navy text-brand-navy-foreground border-transparent hover:shadow-lg"
-                : "bg-card border border-border shadow-none hover:border-foreground/20 hover:shadow-md"
-            )}
+            className="p-6 rounded-2xl cursor-pointer transition-all bg-card border border-border shadow-none hover:border-foreground/20 hover:shadow-md"
           >
             {/* Icon */}
-            <div
-              className={cn(
-                "w-11 h-11 rounded-xl flex items-center justify-center text-xl mb-4",
-                role.dark ? "bg-emerald-500/15" : "bg-success-soft"
-              )}
-            >
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xl mb-4 bg-success-soft">
               {role.icon}
             </div>
 
@@ -100,25 +87,15 @@ export function Landing({ onSelectRole }: LandingProps) {
             <h2 className="text-lg font-semibold">{role.name}</h2>
 
             {/* Role pill */}
-            <Badge
-              variant={role.dark ? "secondary" : "success"}
-              className={cn("mt-2", role.dark && "bg-emerald-500/15 text-emerald-300 border-transparent")}
-            >
+            <Badge variant="success" className="mt-2">
               {t(role.pill)}
             </Badge>
 
             {/* Description */}
-            <p className={cn("text-sm leading-relaxed mt-4", role.dark ? "text-brand-navy-foreground/70" : "text-muted-foreground")}>
-              {t(role.description)}
-            </p>
+            <p className="text-sm leading-relaxed mt-4 text-muted-foreground">{t(role.description)}</p>
 
             {/* CTA */}
-            <span
-              className={cn(
-                "inline-flex items-center gap-1.5 text-sm font-medium mt-6",
-                role.dark ? "text-emerald-400" : "text-primary"
-              )}
-            >
+            <span className="inline-flex items-center gap-1.5 text-sm font-medium mt-6 text-primary">
               {t(role.cta)}
               <ArrowRight className="w-4 h-4" />
             </span>
