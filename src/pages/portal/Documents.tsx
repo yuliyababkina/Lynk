@@ -56,7 +56,7 @@ export function PortalDocuments({ supplierId }: PortalDocumentsProps) {
                 selectFile(file);
               }}
             />
-            <Button variant="dark" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+            <Button variant="default" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
               {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
               {uploading ? "Uploading…" : "Upload document"}
             </Button>

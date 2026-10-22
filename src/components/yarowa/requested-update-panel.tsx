@@ -54,7 +54,7 @@ export function RequestedUpdatePanel({ update }: { update: RequestedUpdate }) {
       </Card>
 
       {/* Actions */}
-      <Button variant="dark" className="w-full">
+      <Button variant="default" className="w-full">
         <Eye className="w-4 h-4" />
         Review &amp; update my details →
       </Button>

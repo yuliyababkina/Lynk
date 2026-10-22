@@ -393,7 +393,7 @@ export function Onboarding({
           }
         >
           {linkedSupplier && (
-            <Button variant="dark" className="w-full mb-4" onClick={() => setReviewing(true)}>
+            <Button variant="default" className="w-full mb-4" onClick={() => setReviewing(true)}>
               {tr("Open full review")}
               <ArrowRight className="w-4 h-4" />
             </Button>

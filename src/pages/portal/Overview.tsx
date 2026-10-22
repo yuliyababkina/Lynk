@@ -66,8 +66,8 @@ const ACTION_ICON: Record<string, typeof PencilLine> = {
   Review: CircleCheck,
 };
 
-function actionVariant(label: string): "dark" | "secondary" | "outline" {
-  if (label === "Update" || label === "Upload" || label === "Complete") return "dark";
+function actionVariant(label: string): "default" | "secondary" | "outline" {
+  if (label === "Update" || label === "Upload" || label === "Complete") return "default";
   if (label === "Chat") return "secondary";
   return "outline";
 }

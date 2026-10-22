@@ -634,7 +634,7 @@ export function PortalActivityDrawer({
           )}
           {fieldKeys.length > 0 && (
             <Button
-              variant="dark"
+              variant="default"
               className="w-full"
               disabled={!canSubmitFields || saving}
               onClick={submitFields}

@@ -157,7 +157,7 @@ export function PortalCompanyDetails({ supplierId, company: live }: PortalCompan
         </SectionCard>
 
         <WizardFooter>
-          <Button variant="dark">Update My Details →</Button>
+          <Button variant="default">Update My Details →</Button>
         </WizardFooter>
       </section>
 

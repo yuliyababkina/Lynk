@@ -333,7 +333,7 @@ export function ChatPanel({
                 placeholder={t("Write a message…")}
                 className="min-h-[2.5rem] flex-1 resize-none rounded-lg border border-border bg-background p-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
-              <Button variant="dark" size="sm" disabled={!canSend} onClick={submit}>
+              <Button variant="default" size="sm" disabled={!canSend} onClick={submit}>
                 <Send className="h-4 w-4" />
                 <span className="sr-only">{t("Send")}</span>
               </Button>

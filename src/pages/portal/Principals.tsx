@@ -93,7 +93,7 @@ export function PortalPrincipals({ supplierId, onOpenChat }: PortalPrincipalsPro
                   )}
                 </div>
                 <Button
-                  variant={unread > 0 ? "dark" : "outline"}
+                  variant={unread > 0 ? "default" : "outline"}
                   className="ml-4 shrink-0"
                   onClick={() => onOpenChat?.(conversation, relationship.principalName)}
                   aria-label={t("Message {company}", { company: relationship.principalName })}

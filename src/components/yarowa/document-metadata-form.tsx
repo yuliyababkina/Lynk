@@ -140,7 +140,7 @@ export function DocumentMetadataForm({
         <Button variant="outline" className="flex-1" disabled={busy} onClick={onCancel}>
           Cancel
         </Button>
-        <Button variant="dark" className="flex-1" disabled={busy || !valid} onClick={() => onConfirm(meta)}>
+        <Button variant="default" className="flex-1" disabled={busy || !valid} onClick={() => onConfirm(meta)}>
           {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
           {editing ? "Save details" : "Confirm & upload"}
         </Button>
