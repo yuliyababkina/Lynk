@@ -44,3 +44,14 @@ export const Variants: Story = {
     </div>
   ),
 };
+
+/** Green `secondary` (shares `--secondary-brand-*` with the secondary button)
+ *  next to the grey `neutral`, which keeps the preset --secondary. */
+export const SecondaryVsNeutral: Story = {
+  render: () => (
+    <div className="flex flex-wrap gap-2">
+      <Badge variant="secondary">secondary</Badge>
+      <Badge variant="neutral">neutral</Badge>
+    </div>
+  ),
+};

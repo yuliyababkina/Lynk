@@ -2,6 +2,39 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 
 const TOKENS = [
   { group: "Base", items: ["background", "foreground", "card", "primary", "secondary", "muted", "accent", "border"] },
+  {
+    group: "Brand & actions",
+    items: [
+      "yarowa-green",
+      "primary",
+      "primary-hover",
+      "primary-active",
+      "secondary-brand",
+      "secondary-brand-hover",
+      "secondary-brand-active",
+      "secondary-brand-foreground",
+      "secondary-brand-ring",
+    ],
+  },
+  {
+    // Every grey is written on --neutral-hue (the brand's hue, tokens.css) at very
+    // low chroma. White surfaces (background, card, popover) stay pure white.
+    group: "Neutrals (brand-tinted)",
+    items: [
+      "foreground",
+      "secondary",
+      "secondary-foreground",
+      "muted",
+      "muted-foreground",
+      "border",
+      "input",
+      "ring",
+      "sidebar",
+      "sidebar-accent",
+      "sidebar-accent-foreground",
+    ],
+  },
+  { group: "Chart greys (brand-tinted)", items: ["chart-1", "chart-2", "chart-3", "chart-4", "chart-5"] },
   { group: "Status", items: ["success", "warning", "destructive"] },
   { group: "Criticality", items: ["critical", "high", "medium", "low"] },
   { group: "Badge tints (soft / ink)", items: ["critical-soft", "critical-ink", "success-soft", "success-ink", "warning-soft", "warning-ink"] },

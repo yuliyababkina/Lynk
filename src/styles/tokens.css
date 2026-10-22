@@ -11,16 +11,67 @@
  */
 
 :root {
+  /*
+   * Yarowa green — the brand green, and the one place it is written down.
+   * The brand points here: --primary and --sidebar-primary in the preset
+   * (../index.css). --success is NOT the brand any more — it is a status
+   * tone and sits with the other semantic colours below.
+   */
+  --yarowa-green: #4C8A14;
+
+  /*
+   * Neutral hue — the OKLCH hue every grey in the preset (../index.css) is
+   * written on: text, muted surfaces, borders, rings, the sidebar, the grey
+   * chart scale. It is the brand green's hue, at chroma low enough (0.003–0.016)
+   * that the greys read as grey with a faint green warmth rather than as green.
+   * Pure white surfaces stay white. Set it to 0 with 0 chroma for plain greys.
+   */
+  --neutral-hue: 134;
+  /*
+   * The same green, darker, for solid surfaces that carry white text.
+   * The brand green at button sizes (14px) is 4.24:1 against white — under AA.
+   * 18% black takes it to 5.9:1 (≈ #3E7110): AA with room to spare, while
+   * staying close to the brand (AAA at 7:1 needed ~30% and read as too dark).
+   * --primary and the sidebar mark take this one value, so they remain a
+   * single colour; --yarowa-green above stays the brand's own
+   * hex for anywhere that isn't carrying white text.
+   */
+  --yarowa-green-solid: color-mix(in srgb, var(--yarowa-green), black 18%);
+
+  /*
+   * Primary button interaction steps — darker than --primary, never lighter.
+   * The preset's hover (bg-primary/80) let the page show through and lightened
+   * the button below AA on white. Mixed in OKLCH so the hue stays the brand's;
+   * derived from --primary, so they follow it. Small steps, because the base
+   * is already darkened. White label: 5.9:1 default, 7.0:1 hover, 8.1:1
+   * active. Same in both themes.
+   */
+  --primary-hover: color-mix(in oklch, var(--primary), black 8%);   /* ≈ #36640D */
+  --primary-active: color-mix(in oklch, var(--primary), black 15%); /* ≈ #305A0A */
+
   /* Status tones (preset owns --destructive; we add its foreground + success/warning) */
-  --success: #047857;
+  /*
+   * Success — its own green, not the brand. Picked to sit in the same family
+   * as the other status tones (red/blue/yellow -600): a cooler, emerald-leaning
+   * hue (150 vs the brand's 134) at the lightness of critical and medium, so it
+   * reads as "status", not "Yarowa". White on it: 4.9:1 (critical 4.8, medium
+   * 5.2). Its -soft/-ink pair below follows: ink on soft 7.8:1.
+   */
+  --success: #008238; /* oklch(0.53 0.15 150) */
+  /* Success button interaction steps — darken, like --primary-hover/-active.
+     The preset-style /90 faded it to 4.2:1 on white. White: 5.9:1 / 7.0:1. */
+  --success-hover: color-mix(in oklch, var(--success), black 8%);   /* ≈ #007431 */
+  --success-active: color-mix(in oklch, var(--success), black 15%); /* ≈ #00682B */
   --success-foreground: #ffffff;
-  --warning: #ca8a04;
+  /* Yellow at -700, not -600: #ca8a04 was 2.9:1 as text on white and under its
+     own white label. #a16207 is 4.9:1 both ways; warning-ink on soft 7.7:1. */
+  --warning: #a16207;
   --warning-foreground: #ffffff;
   --destructive-foreground: #ffffff;
 
   /* Ticket criticality */
   --critical: #dc2626;
-  --high: #ca8a04;
+  --high: #a16207; /* same as --warning — see the note there */
   --medium: #2563eb;
   --low: #64748b;
 
@@ -33,7 +84,8 @@
    * 60-day (amber) and 30-day (orange) stages must read as different urgency,
    * and chart series. Its -soft/-ink pair powers the orange status badge.
    */
-  --chart-orange: #ea580c;
+  /* -700, not -600: #ea580c was 3.6:1 as text on white. #c2410c is 5.2:1. */
+  --chart-orange: #c2410c;
 
   /* Brand ink — the dark navy used for the portal top bar, primary CTAs and the
    * highlighted landing card. Not a status tone; a fixed brand surface. */
@@ -41,11 +93,51 @@
   /* Paired foreground for content sitting on --brand-navy (white in both themes,
    * since navy is a fixed dark surface). Completes the bg/fg token pair. */
   --brand-navy-foreground: #ffffff;
+
+  /*
+   * Secondary brand — the green secondary button and the secondary badge.
+   * A pale tint of the brand with brand-green text, on the brand's OKLCH hue
+   * (134, the hue of --yarowa-green-solid). Separate from the preset's
+   * --secondary on purpose: that one is the neutral grey surface behind hover
+   * rows, chat bubbles and card headers, and should stay grey.
+   * Contrast of the text (WCAG 2.x): 8.9:1 default, 8.2:1 hover, 7.5:1 active —
+   * AAA (7:1) in every state, in both themes.
+   * Focus ring: 5.3:1 against white, 4.8:1 against the button.
+   */
+  --secondary-brand: oklch(0.97 0.02 134);           /* #F0F8EB */
+  --secondary-brand-hover: oklch(0.94 0.03 134);     /* #E3F0DC */
+  --secondary-brand-active: oklch(0.91 0.04 134);    /* #D7E8CD */
+  --secondary-brand-foreground: oklch(0.38 0.10 134); /* #2A4D0B */
+  --secondary-brand-ring: oklch(0.52 0.14 134);      /* #447913 */
+  /* Outline one tone darker than the fill, so the button holds its edge on
+     white (the fill alone is 1.09:1 against it). Darkens again on hover/press
+     so it never melts into the darker fill. Decorative: the label carries
+     identification, so no 3:1 requirement applies. */
+  --secondary-brand-border: oklch(0.90 0.045 134);       /* #D2E5C7 */
+  --secondary-brand-border-hover: oklch(0.86 0.06 134);  /* #C1DAB3 */
+}
+
+.dark {
+  /* Dark theme — text 9.7:1 / 8.3:1 / 7.1:1; ring 8.3:1 to the page, 5.7:1 to the button. */
+  --secondary-brand: oklch(0.30 0.05 134);           /* #233319 */
+  --secondary-brand-hover: oklch(0.34 0.055 134);    /* #2C3E20 */
+  --secondary-brand-active: oklch(0.38 0.06 134);    /* #354928 */
+  --secondary-brand-foreground: oklch(0.88 0.12 134); /* #B7E997 */
+  --secondary-brand-ring: oklch(0.72 0.15 134);      /* #7CB851 */
+  /* On dark the outline steps lighter than the fill. */
+  --secondary-brand-border: oklch(0.40 0.065 134);
+  --secondary-brand-border-hover: oklch(0.46 0.075 134);
 }
 
 @theme inline {
+  --color-yarowa-green: var(--yarowa-green);
+  --color-yarowa-green-solid: var(--yarowa-green-solid);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-active: var(--primary-active);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
+  --color-success-hover: var(--success-hover);
+  --color-success-active: var(--success-active);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
   --color-destructive-foreground: var(--destructive-foreground);
@@ -57,6 +149,13 @@
   --color-chart-orange: var(--chart-orange);
   --color-brand-navy: var(--brand-navy);
   --color-brand-navy-foreground: var(--brand-navy-foreground);
+  --color-secondary-brand: var(--secondary-brand);
+  --color-secondary-brand-hover: var(--secondary-brand-hover);
+  --color-secondary-brand-active: var(--secondary-brand-active);
+  --color-secondary-brand-foreground: var(--secondary-brand-foreground);
+  --color-secondary-brand-ring: var(--secondary-brand-ring);
+  --color-secondary-brand-border: var(--secondary-brand-border);
+  --color-secondary-brand-border-hover: var(--secondary-brand-border-hover);
 
   /*
    * Accessible pairs derived from each base colour (WCAG 2.2 AA):

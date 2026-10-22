@@ -9,21 +9,30 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/80",
+        // Darkens on hover/press (--primary-hover/-active in tokens.css) rather
+        // than the preset's /80, which faded it below AA on white.
+        default:
+          "bg-primary text-primary-foreground hover:bg-primary-hover active:bg-primary-active aria-expanded:bg-primary-hover",
         outline:
           "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:bg-transparent dark:hover:bg-input/30",
+        // Green secondary — tokens in tokens.css (--secondary-brand-*). Explicit
+        // hover/active steps instead of /80 opacity, which lightens on white, and
+        // a solid ring: the shared ring-ring/30 drops below 3:1 against the tint.
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
+          "border-secondary-brand-border bg-secondary-brand text-secondary-brand-foreground hover:border-secondary-brand-border-hover hover:bg-secondary-brand-hover active:border-secondary-brand-border-hover active:bg-secondary-brand-active aria-expanded:bg-secondary-brand-hover focus-visible:border-secondary-brand-border focus-visible:ring-2 focus-visible:ring-secondary-brand-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         ghost:
           "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
         destructive:
-          "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
+          "bg-destructive/10 text-destructive hover:bg-destructive/15 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
         link: "text-primary underline-offset-4 hover:underline",
         // Lynk solid semantic buttons (preset's destructive is soft; danger is solid)
         danger: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        success: "bg-success text-success-foreground hover:bg-success/90",
-        // Brand navy CTA (portal primary actions, "Update My Details", etc.)
-        dark: "bg-brand-navy text-brand-navy-foreground hover:bg-brand-navy/90",
+        success: "bg-success text-success-foreground hover:bg-success-hover active:bg-success-active",
+        /* There was a `dark` variant here — the brand-navy CTA used for portal
+           primary actions. A primary action is a primary action wherever it is,
+           so those call sites now use `default` and wear the Yarowa green.
+           --brand-navy stays a surface colour: the top bar, the sidebar header
+           and the highlighted landing card. */
       },
       size: {
         default:

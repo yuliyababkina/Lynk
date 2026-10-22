@@ -42,11 +42,24 @@ body {
 
 /*
  * Task Queue ticket row — responsive reflow via grid template areas.
- * Classical breakpoints (lg 1024, xl 1280):
+ *
+ * It measures the list it sits in, not the window. These rows live two to a
+ * screen inside cards that the chat dock can take 380px away from, so a row
+ * that watched the viewport kept its widest layout in a column less than half
+ * that size — the title truncated to nothing and the supplier name wrapped a
+ * word per line. The list below is the query container.
  *   • base  (narrow) : title / supplier / status / action stacked in one column
- *   • lg    (medium) : status drops to a third row under the supplier; action on the right
- *   • xl    (wide)   : status + action sit inline on the right, level with the heading
+ *   • 28rem (medium) : status drops to a third row under the supplier; action on the right
+ *   • 36rem (wide)   : status + action sit inline on the right, level with the heading
+ *
+ * The wide band starts above the width two columns get on a 1440px screen: at
+ * that size the title reads better with the row to itself and the status under
+ * it than squeezed between the status pill and the buttons.
  */
+.ticket-list {
+  container-type: inline-size;
+}
+
 .ticket-row {
   display: grid;
   align-items: start;
@@ -62,7 +75,7 @@ body {
 .ticket-row .tr-status { grid-area: status; justify-self: start; }
 .ticket-row .tr-action { grid-area: action; justify-self: start; }
 
-@media (min-width: 1024px) {
+@container (min-width: 28rem) {
   .ticket-row {
     grid-template-columns: auto 1fr auto;
     grid-template-areas:
@@ -72,7 +85,7 @@ body {
   .ticket-row .tr-action { justify-self: end; }
 }
 
-@media (min-width: 1280px) {
+@container (min-width: 36rem) {
   .ticket-row {
     grid-template-columns: auto 1fr auto auto;
     grid-template-areas: "icon main status action";
@@ -123,72 +136,88 @@ body {
 }
 
 :root {
+  /* Neutrals carry a faint tint of the brand hue (--neutral-hue, tokens.css).
+     Pure white surfaces (background, card, popover) stay #FFFFFF. */
   --background: oklch(1 0 0);
-  --foreground: oklch(0.147 0.004 49.25);
+  --foreground: oklch(0.147 0.006 var(--neutral-hue));
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.147 0.004 49.25);
+  --card-foreground: oklch(0.147 0.006 var(--neutral-hue));
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.147 0.004 49.25);
-  --primary: oklch(0.508 0.118 165.612);
-  --primary-foreground: oklch(0.979 0.021 166.113);
-  --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
-  --muted: oklch(0.97 0.001 106.424);
-  --muted-foreground: oklch(0.553 0.013 58.071);
+  --popover-foreground: oklch(0.147 0.006 var(--neutral-hue));
+  /* The brand green on a solid surface — see --yarowa-green-solid in tokens.css. */
+  --primary: var(--yarowa-green-solid);
+  /* Pure white rather than the preset's green-tinted white: this green is
+     light enough that the label needs every bit of contrast it can get. */
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.967 0.004 var(--neutral-hue));
+  --secondary-foreground: oklch(0.21 0.008 var(--neutral-hue));
+  --muted: oklch(0.97 0.004 var(--neutral-hue));
+  --muted-foreground: oklch(0.54 0.016 var(--neutral-hue));
   /* Brand override: keep links/accent blue (not the preset's green). */
   --accent: #2563eb;
   --accent-foreground: #ffffff;
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.923 0.003 48.717);
-  --input: oklch(0.923 0.003 48.717);
-  --ring: oklch(0.709 0.01 56.259);
-  --chart-1: oklch(0.869 0.005 56.366);
-  --chart-2: oklch(0.553 0.013 58.071);
-  --chart-3: oklch(0.444 0.011 73.639);
-  --chart-4: oklch(0.374 0.01 67.558);
-  --chart-5: oklch(0.268 0.007 34.298);
+  /* Preset red darkened a step (0.577 → 0.52): at 0.577 the destructive
+     button's red-on-tint label was 4.0:1. Now 5.1:1 on the /10 tint, 6.2:1
+     under a white label. */
+  --destructive: oklch(0.52 0.21 27.325);
+  --border: oklch(0.923 0.006 var(--neutral-hue));
+  --input: oklch(0.923 0.006 var(--neutral-hue));
+  /* Focus ring 3.6:1 against white (WCAG 1.4.11 asks 3:1); 0.709 was 2.6:1. */
+  --ring: oklch(0.62 0.014 var(--neutral-hue));
+  --chart-1: oklch(0.869 0.008 var(--neutral-hue));
+  --chart-2: oklch(0.553 0.016 var(--neutral-hue));
+  --chart-3: oklch(0.444 0.014 var(--neutral-hue));
+  --chart-4: oklch(0.374 0.012 var(--neutral-hue));
+  --chart-5: oklch(0.268 0.009 var(--neutral-hue));
   --radius: 0.45rem;
-  --sidebar: oklch(0.985 0.001 106.423);
-  --sidebar-foreground: oklch(0.147 0.004 49.25);
-  --sidebar-primary: oklch(0.596 0.145 163.225);
-  --sidebar-primary-foreground: oklch(0.979 0.021 166.113);
-  --sidebar-accent: oklch(0.97 0.001 106.424);
-  --sidebar-accent-foreground: oklch(0.216 0.006 56.043);
-  --sidebar-border: oklch(0.923 0.003 48.717);
-  --sidebar-ring: oklch(0.709 0.01 56.259);
+  --sidebar: oklch(0.985 0.003 var(--neutral-hue));
+  --sidebar-foreground: oklch(0.147 0.006 var(--neutral-hue));
+  /* The logo tile and avatar. On a light sidebar these sit next to primary
+     buttons, so they take the brand green itself rather than a lighter step —
+     at this hue a lighter step reads as a second, limier green. */
+  --sidebar-primary: var(--yarowa-green-solid);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.97 0.004 var(--neutral-hue));
+  --sidebar-accent-foreground: oklch(0.216 0.008 var(--neutral-hue));
+  --sidebar-border: oklch(0.923 0.006 var(--neutral-hue));
+  --sidebar-ring: oklch(0.62 0.014 var(--neutral-hue));
 }
 
 .dark {
-  --background: oklch(0.147 0.004 49.25);
-  --foreground: oklch(0.985 0.001 106.423);
-  --card: oklch(0.216 0.006 56.043);
-  --card-foreground: oklch(0.985 0.001 106.423);
-  --popover: oklch(0.216 0.006 56.043);
-  --popover-foreground: oklch(0.985 0.001 106.423);
-  --primary: oklch(0.432 0.095 166.913);
-  --primary-foreground: oklch(0.979 0.021 166.113);
-  --secondary: oklch(0.274 0.006 286.033);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.268 0.007 34.298);
-  --muted-foreground: oklch(0.709 0.01 56.259);
+  --background: oklch(0.147 0.006 var(--neutral-hue));
+  --foreground: oklch(0.985 0.003 var(--neutral-hue));
+  --card: oklch(0.216 0.008 var(--neutral-hue));
+  --card-foreground: oklch(0.985 0.003 var(--neutral-hue));
+  --popover: oklch(0.216 0.008 var(--neutral-hue));
+  --popover-foreground: oklch(0.985 0.003 var(--neutral-hue));
+  /* The same green in both themes — it reads well on a dark surface, so there
+     is no reason for a second value to drift from it. */
+  --primary: var(--yarowa-green-solid);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.274 0.009 var(--neutral-hue));
+  --secondary-foreground: oklch(0.985 0.003 var(--neutral-hue));
+  --muted: oklch(0.268 0.009 var(--neutral-hue));
+  --muted-foreground: oklch(0.709 0.014 var(--neutral-hue));
   /* Brand override: keep links/accent blue (not the preset's green). */
   --accent: #3b82f6;
   --accent-foreground: #ffffff;
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.553 0.013 58.071);
-  --chart-1: oklch(0.869 0.005 56.366);
-  --chart-2: oklch(0.553 0.013 58.071);
-  --chart-3: oklch(0.444 0.011 73.639);
-  --chart-4: oklch(0.374 0.01 67.558);
-  --chart-5: oklch(0.268 0.007 34.298);
-  --sidebar: oklch(0.216 0.006 56.043);
-  --sidebar-foreground: oklch(0.985 0.001 106.423);
-  --sidebar-primary: oklch(0.696 0.17 162.48);
-  --sidebar-primary-foreground: oklch(0.262 0.051 172.552);
-  --sidebar-accent: oklch(0.268 0.007 34.298);
-  --sidebar-accent-foreground: oklch(0.985 0.001 106.423);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.553 0.013 58.071);
+  --border: oklch(0.985 0.01 var(--neutral-hue) / 10%);
+  --input: oklch(0.985 0.01 var(--neutral-hue) / 15%);
+  --ring: oklch(0.553 0.016 var(--neutral-hue));
+  --chart-1: oklch(0.869 0.008 var(--neutral-hue));
+  --chart-2: oklch(0.553 0.016 var(--neutral-hue));
+  --chart-3: oklch(0.444 0.014 var(--neutral-hue));
+  --chart-4: oklch(0.374 0.012 var(--neutral-hue));
+  --chart-5: oklch(0.268 0.009 var(--neutral-hue));
+  --sidebar: oklch(0.216 0.008 var(--neutral-hue));
+  --sidebar-foreground: oklch(0.985 0.003 var(--neutral-hue));
+  /* Lighter than the brand green here, so the logo tile stays legible on a
+     dark sidebar — the light theme has no such need. Same hue as the brand. */
+  --sidebar-primary: oklch(0.696 0.17 134.5);
+  --sidebar-primary-foreground: oklch(0.262 0.051 134.5);
+  --sidebar-accent: oklch(0.268 0.009 var(--neutral-hue));
+  --sidebar-accent-foreground: oklch(0.985 0.003 var(--neutral-hue));
+  --sidebar-border: oklch(0.985 0.01 var(--neutral-hue) / 10%);
+  --sidebar-ring: oklch(0.553 0.016 var(--neutral-hue));
 }
