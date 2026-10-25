@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RequestedUpdatePanel } from "@/components/yarowa/requested-update-panel";
 import { WizardFooter } from "@/components/yarowa/wizard-footer";
+import { useI18n } from "@/lib/i18n";
 import { getPortalProfile, type CompanyDetails } from "./portal-data";
 
 export interface PortalCompanyDetailsProps {
@@ -19,6 +20,9 @@ export interface PortalCompanyDetailsProps {
  * Read-only by default — the page still presents the profile as a record rather
  * than a form. `readOnly={false}` turns the same field into an editable input so
  * the activity panel can reuse it without a second visual language.
+ *
+ * The label is translated here rather than at each call site, so every surface
+ * that reuses this field — this page and the activity panel — gets it.
  */
 export function Field({
   label,
@@ -35,13 +39,14 @@ export function Field({
   placeholder?: string;
   onChange?: (value: string) => void;
 }) {
+  const { t } = useI18n();
   return (
     <div className="space-y-1">
-      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <Label className="text-xs text-muted-foreground">{t(label)}</Label>
       <Input
         readOnly={readOnly}
         value={value}
-        placeholder={placeholder}
+        placeholder={placeholder && t(placeholder)}
         onChange={onChange && ((e) => onChange(e.target.value))}
         className={cn("h-10 rounded-lg border-border bg-background", mono && "font-mono")}
       />
@@ -60,12 +65,13 @@ function SectionCard({
   action?: React.ReactNode;
   children: React.ReactNode;
 }) {
+  const { t } = useI18n();
   return (
     <Card className="rounded-2xl border border-border ring-0 shadow-none [--card-spacing:1.25rem] px-(--card-spacing) gap-0">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Icon className="w-4 h-4 text-primary" />
-          <h2 className="text-base font-semibold">{title}</h2>
+          <h2 className="text-base font-semibold">{t(title)}</h2>
         </div>
         {action}
       </div>
@@ -75,6 +81,7 @@ function SectionCard({
 }
 
 export function PortalCompanyDetails({ supplierId, company: live }: PortalCompanyDetailsProps) {
+  const { t } = useI18n();
   const profile = getPortalProfile(supplierId);
   const { requestedUpdates } = profile;
   const company = live ?? profile.company;
@@ -86,9 +93,9 @@ export function PortalCompanyDetails({ supplierId, company: live }: PortalCompan
       {/* Company details form */}
       <section className="flex-1 min-w-0 p-6 space-y-6">
         <div>
-          <h1 className="text-2xl font-bold">Company Details</h1>
+          <h1 className="text-2xl font-bold">{t("Company Details")}</h1>
           <p className="text-muted-foreground mt-1">
-            Legal profile, registered address, and payment data shared with principals.
+            {t("Legal profile, registered address, and payment data shared with principals.")}
           </p>
         </div>
 
@@ -98,7 +105,7 @@ export function PortalCompanyDetails({ supplierId, company: live }: PortalCompan
           action={
             <Badge variant="secondary">
               <Lock className="w-3 h-3" />
-              Read only
+              {t("Read only")}
             </Badge>
           }
         >
@@ -114,7 +121,7 @@ export function PortalCompanyDetails({ supplierId, company: live }: PortalCompan
 
         {/* Associate selector */}
         <Button variant="ghost" className="h-auto px-2 py-1 text-lg font-semibold gap-2">
-          Associate: {company.associate}
+          {t("Associate: {name}", { name: company.associate })}
           <ChevronDown className="w-4 h-4 text-muted-foreground" />
         </Button>
 
@@ -145,7 +152,7 @@ export function PortalCompanyDetails({ supplierId, company: live }: PortalCompan
           action={
             <Badge variant="critical-outline">
               <Lock className="w-3 h-3" />
-              Sensitive
+              {t("Sensitive")}
             </Badge>
           }
         >
@@ -157,7 +164,7 @@ export function PortalCompanyDetails({ supplierId, company: live }: PortalCompan
         </SectionCard>
 
         <WizardFooter>
-          <Button variant="dark">Update My Details →</Button>
+          <Button variant="default">{t("Update My Details →")}</Button>
         </WizardFooter>
       </section>
 

@@ -150,6 +150,8 @@ const DE: Record<string, string> = {
   Escalate: "Eskalieren",
   Renew: "Verlängern",
   Remind: "Erinnern",
+  Update: "Aktualisieren",
+  Upload: "Hochladen",
   Approve: "Genehmigen",
   Request: "Anfordern",
 
@@ -512,6 +514,107 @@ const DE: Record<string, string> = {
   "You're now a supplier 🎉": "Sie sind jetzt Lieferant 🎉",
   "Contracts signed. {company} is active for {principal} and can now receive work orders. Manage your documents, contracts and details anytime from your supplier portal.":
     "Verträge unterzeichnet. {company} ist für {principal} aktiv und kann nun Aufträge erhalten. Verwalten Sie Ihre Dokumente, Verträge und Daten jederzeit über Ihr Lieferantenportal.",
+
+  // ── Supplier portal ─────────────────────────────────────────────────────
+  // The view labels this portal's nav and breadcrumb use are already defined
+  // above; what follows is the page chrome inside them.
+  "Expand menu": "Menü ausklappen",
+  "Collapse menu": "Menü einklappen",
+  Close: "Schließen",
+  You: "Sie",
+
+  // Overview
+  "Good morning, {name}": "Guten Morgen, {name}",
+  "Here's the current status of your supplier account with Lynk.":
+    "Hier ist der aktuelle Stand Ihres Lieferantenkontos bei Lynk.",
+  "Nothing here right now.": "Hier ist derzeit nichts.",
+  "You're all caught up": "Sie sind auf dem aktuellen Stand",
+  "Open Requests": "Offene Anfragen",
+  "Compliance by principal": "Compliance nach Auftraggeber",
+  "1 expiring soon": "1 läuft bald ab",
+  "1 pending review": "1 wartet auf Prüfung",
+  "data change requests": "Datenänderungsanträge",
+  "onboarding task": "Onboarding-Aufgabe",
+  "Pending Approval": "Warten auf Freigabe",
+  "Upload Document": "Dokument hochladen",
+  "Renew expiring documents": "Ablaufende Dokumente erneuern",
+  "Request Data Change": "Datenänderung beantragen",
+  "IBAN, address updates": "IBAN- und Adressänderungen",
+
+  // Activity items (prototype fixtures — a real build sends these translated)
+  "Complete company profile": "Firmenprofil vervollständigen",
+  "Framework Contract": "Rahmenvertrag",
+  "IBAN change request": "IBAN-Änderungsantrag",
+  "Profile completeness 61%": "Profilvollständigkeit 61 %",
+  "expired 8 days ago": "vor 8 Tagen abgelaufen",
+  "expiring in 30 days": "läuft in 30 Tagen ab",
+  "12 days to expiry": "12 Tage bis zum Ablauf",
+  "below 65% threshold": "unter dem Schwellenwert von 65 %",
+  "3 required fields missing": "3 Pflichtfelder fehlen",
+  "not yet uploaded": "noch nicht hochgeladen",
+  "awaiting principal review": "wartet auf Prüfung durch den Auftraggeber",
+  "awaiting first-eye endorsement": "wartet auf Erstprüfung",
+  // ("1 day ago" and "Today" are already defined with the relative age labels.)
+  "2 days ago": "vor 2 Tagen",
+  "3 days ago": "vor 3 Tagen",
+  "5 days ago": "vor 5 Tagen",
+  "8 days ago": "vor 8 Tagen",
+  "Today, 09:14": "Heute, 09:14",
+  "Yesterday, 14:02": "Gestern, 14:02",
+
+  // Documents
+  "Compliance files shared with your principals, with expiry status and actions.":
+    "Compliance-Dokumente, die Sie mit Ihren Auftraggebern teilen — mit Ablaufstatus und Aktionen.",
+  "Upload document": "Dokument hochladen",
+  "Uploading…": "Wird hochgeladen…",
+  "All Documents": "Alle Dokumente",
+  "No documents yet — upload your first PDF above.":
+    "Noch keine Dokumente — laden Sie oben Ihr erstes PDF hoch.",
+
+  // Company details
+  "Legal profile, registered address, and payment data shared with principals.":
+    "Rechtliche Angaben, eingetragene Adresse und Zahlungsdaten, die mit Auftraggebern geteilt werden.",
+  "Read only": "Nur lesen",
+  "Associate: {name}": "Niederlassung: {name}",
+  "Update My Details →": "Meine Daten aktualisieren →",
+  // Field labels come in as props (see portal-fields.ts), so they never appear
+  // as a literal t("…") — the rest of this profile's labels are defined above.
+  "Primary Contact": "Hauptansprechpartner",
+  "Contact person": "Ansprechpartner",
+  "Contact email": "E-Mail des Ansprechpartners",
+  "Contact phone": "Telefon des Ansprechpartners",
+
+  // Requested updates
+  "Review principal requests, update company data, and confirm changes.":
+    "Anfragen der Auftraggeber prüfen, Firmendaten aktualisieren und Änderungen bestätigen.",
+  "No pending updates": "Keine offenen Anfragen",
+  "All information your principals need is up to date.":
+    "Alle Angaben, die Ihre Auftraggeber benötigen, sind aktuell.",
+  "Action required": "Handlung erforderlich",
+  "Review & update my details →": "Meine Daten prüfen & aktualisieren →",
+  "Nothing has changed — confirm current details":
+    "Nichts hat sich geändert — aktuelle Daten bestätigen",
+  "Requested by 30 Jun 2026": "Angefordert bis 30. Juni 2026",
+  "Requested by 22 Jul 2026": "Angefordert bis 22. Juli 2026",
+  "Requested by 25 Jul 2026": "Angefordert bis 25. Juli 2026",
+
+  // Price agreements
+  "Rate cards and framework pricing agreed with your principals.":
+    "Preislisten und Rahmenkonditionen, die mit Ihren Auftraggebern vereinbart wurden.",
+  "No price agreements yet": "Noch keine Preisvereinbarungen",
+  "When a principal shares a rate card or framework agreement with you, it will appear here for review.":
+    "Sobald ein Auftraggeber eine Preisliste oder einen Rahmenvertrag mit Ihnen teilt, erscheint sie hier zur Prüfung.",
+
+  // Principals
+  "My Principals": "Meine Auftraggeber",
+  "Companies you work with or are onboarding with":
+    "Unternehmen, mit denen Sie zusammenarbeiten oder im Onboarding sind",
+  "Changes Requested": "Änderungen angefordert",
+
+  // Portal onboarding placeholder
+  "Onboarding Coming Soon": "Onboarding folgt in Kürze",
+  "The onboarding wizard for prospect relationships will be built here.":
+    "Der Onboarding-Assistent für Interessenten-Beziehungen entsteht hier.",
 };
 
 const STORAGE_KEY = "lynk-lang";

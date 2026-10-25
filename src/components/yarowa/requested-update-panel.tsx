@@ -3,17 +3,24 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { useI18n } from "@/lib/i18n";
 import type { RequestedUpdate } from "@/pages/portal/portal-data";
 
 /*
  * The "Requested Updates" email card + action buttons. Shown as a right-hand rail
  * on the Documents and Company Details screens, and reused standalone. Renders one
  * request (subject, sender, body, due date) with the confirm / update actions.
+ *
+ * The card's chrome translates; the subject and body don't — they are the
+ * principal's own words, which belong to the machine-translation seam.
  */
 export function RequestedUpdatePanel({ update }: { update: RequestedUpdate }) {
+  const { t } = useI18n();
   return (
     <div className="space-y-4">
-      <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Requested Updates</h2>
+      <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {t("Requested Updates")}
+      </h2>
 
       <Card className="rounded-2xl border border-border ring-0 shadow-none [--card-spacing:0px] gap-0">
         {/* Sender */}
@@ -26,11 +33,11 @@ export function RequestedUpdatePanel({ update }: { update: RequestedUpdate }) {
               {update.from} · {update.principal}
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {update.email} · {update.sentLabel}
+              {update.email} · {t(update.sentLabel)}
             </p>
           </div>
           <Badge variant="critical-outline" className="shrink-0">
-            Action required
+            {t("Action required")}
           </Badge>
         </div>
         <Separator />
@@ -49,17 +56,17 @@ export function RequestedUpdatePanel({ update }: { update: RequestedUpdate }) {
         <Separator />
         <div className="flex items-center gap-2 px-4 py-3 bg-muted/50">
           <Clock className="w-3.5 h-3.5 text-chart-orange-ink" />
-          <span className="text-xs font-medium text-chart-orange-ink">{update.dueLabel}</span>
+          <span className="text-xs font-medium text-chart-orange-ink">{t(update.dueLabel)}</span>
         </div>
       </Card>
 
       {/* Actions */}
-      <Button variant="dark" className="w-full">
+      <Button variant="default" className="w-full">
         <Eye className="w-4 h-4" />
-        Review &amp; update my details →
+        {t("Review & update my details →")}
       </Button>
       <Button variant="outline" className="w-full">
-        Nothing has changed — confirm current details
+        {t("Nothing has changed — confirm current details")}
       </Button>
     </div>
   );

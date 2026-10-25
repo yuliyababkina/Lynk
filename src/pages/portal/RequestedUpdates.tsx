@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { AlertBanner } from "@/components/yarowa/alert-banner";
 import { RequestedUpdatePanel } from "@/components/yarowa/requested-update-panel";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 import { getPortalProfile } from "./portal-data";
 
 export interface PortalRequestedUpdatesProps {
@@ -11,6 +12,7 @@ export interface PortalRequestedUpdatesProps {
 }
 
 export function PortalRequestedUpdates({ supplierId }: PortalRequestedUpdatesProps) {
+  const { t } = useI18n();
   const profile = getPortalProfile(supplierId);
   const updates = profile.requestedUpdates;
   const [selectedId, setSelectedId] = useState<string>(updates[0]?.id ?? "");
@@ -20,15 +22,15 @@ export function PortalRequestedUpdates({ supplierId }: PortalRequestedUpdatesPro
     <div className="flex flex-col lg:flex-row min-h-full">
       <section className="flex-1 min-w-0 p-6 space-y-6 bg-sidebar">
         <div>
-          <h1 className="text-2xl font-bold">Requested Updates</h1>
+          <h1 className="text-2xl font-bold">{t("Requested Updates")}</h1>
           <p className="text-muted-foreground mt-1">
-            Review principal requests, update company data, and confirm changes.
+            {t("Review principal requests, update company data, and confirm changes.")}
           </p>
         </div>
 
         {updates.length === 0 || !selected ? (
-          <AlertBanner type="success" title="No pending updates">
-            All information your principals need is up to date.
+          <AlertBanner type="success" title={t("No pending updates")}>
+            {t("All information your principals need is up to date.")}
           </AlertBanner>
         ) : (
           <div className="space-y-3">
@@ -47,11 +49,13 @@ export function PortalRequestedUpdates({ supplierId }: PortalRequestedUpdatesPro
                 >
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm font-semibold text-primary truncate">{u.principal}</p>
-                    <Badge variant="warning">Action required</Badge>
+                    <Badge variant="warning">{t("Action required")}</Badge>
                   </div>
+                  {/* Subject and body are principal-authored free text: they go
+                      through the machine-translation seam, not this dictionary. */}
                   <p className="text-sm font-medium mt-1 line-clamp-2">{u.subject}</p>
                   <p className="text-xs text-muted-foreground mt-2">
-                    {u.from} · {u.sentLabel}
+                    {u.from} · {t(u.sentLabel)}
                   </p>
                 </Card>
               );

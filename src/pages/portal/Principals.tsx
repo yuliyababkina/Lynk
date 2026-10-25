@@ -42,8 +42,8 @@ export function PortalPrincipals({ supplierId, onOpenChat }: PortalPrincipalsPro
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">My Principals</h1>
-        <p className="text-muted-foreground mt-1">Companies you work with or are onboarding with</p>
+        <h1 className="text-3xl font-bold">{t("My Principals")}</h1>
+        <p className="text-muted-foreground mt-1">{t("Companies you work with or are onboarding with")}</p>
       </div>
 
       <div className="space-y-3">
@@ -70,11 +70,11 @@ export function PortalPrincipals({ supplierId, onOpenChat }: PortalPrincipalsPro
                   </div>
                   <div className="grid grid-cols-3 gap-4 text-sm mb-3">
                     <div>
-                      <p className="text-muted-foreground">Pending</p>
+                      <p className="text-muted-foreground">{t("Pending")}</p>
                       <p className="text-lg font-semibold">{relationship.pendingCount}</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Changes Requested</p>
+                      <p className="text-muted-foreground">{t("Changes Requested")}</p>
                       <p className="text-lg font-semibold text-destructive">{relationship.rejectedCount}</p>
                     </div>
                     <div>
@@ -93,7 +93,7 @@ export function PortalPrincipals({ supplierId, onOpenChat }: PortalPrincipalsPro
                   )}
                 </div>
                 <Button
-                  variant={unread > 0 ? "dark" : "outline"}
+                  variant={unread > 0 ? "default" : "outline"}
                   className="ml-4 shrink-0"
                   onClick={() => onOpenChat?.(conversation, relationship.principalName)}
                   aria-label={t("Message {company}", { company: relationship.principalName })}

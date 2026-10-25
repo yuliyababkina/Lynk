@@ -12,6 +12,7 @@ import { MockDocumentPage } from "@/components/yarowa/mock-document-page";
 import { PdfCanvas } from "@/components/yarowa/pdf-canvas";
 import { toast } from "@/components/yarowa/toast";
 import { useLynkData } from "@/lib/LynkDataContext";
+import { useI18n } from "@/lib/i18n";
 import { useDocumentUpload, formatFileSize } from "@/lib/use-document-upload";
 import { docStatusMeta } from "@/lib/document-status";
 import { cn } from "@/lib/utils";
@@ -423,6 +424,7 @@ export function PortalActivityDrawer({
   onOpenChat?: (draft: string, context?: ChatContext) => void;
 }) {
   const { item, sectionLabel, tone, quick } = selection;
+  const { t } = useI18n();
 
   // A quick-action card opens the same panel with nothing preselected, so the
   // supplier never meets a second, differently-shaped upload screen.
@@ -527,9 +529,12 @@ export function PortalActivityDrawer({
   const canSubmitFields = changedKeys.length > 0 && allValid;
 
   return (
+    /* The section label arrives as the English source — the panel keys its own
+       behaviour off it — so it is translated here, matching the card the
+       supplier came from. */
     <DetailDrawer
       onClose={attemptClose}
-      header={<Badge variant={tone as never}>{sectionLabel}</Badge>}
+      header={<Badge variant={tone as never}>{t(sectionLabel)}</Badge>}
     >
       <h3 className="font-semibold text-base mb-1">
         {item?.title ?? (kind === "data" ? "Request a data change" : "Upload a document")}
@@ -634,7 +639,7 @@ export function PortalActivityDrawer({
           )}
           {fieldKeys.length > 0 && (
             <Button
-              variant="dark"
+              variant="default"
               className="w-full"
               disabled={!canSubmitFields || saving}
               onClick={submitFields}

@@ -14,6 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n";
 import { TaskGroupCard, TaskRow } from "@/components/yarowa/task-group-card";
 import type { PortalView } from "@/pages/SupplierPortal";
 import type { PortalActivitySelection } from "@/components/yarowa/portal-activity-drawer";
@@ -66,16 +67,21 @@ const ACTION_ICON: Record<string, typeof PencilLine> = {
   Review: CircleCheck,
 };
 
-function actionVariant(label: string): "dark" | "secondary" | "outline" {
-  if (label === "Update" || label === "Upload" || label === "Complete") return "dark";
+function actionVariant(label: string): "default" | "secondary" | "outline" {
+  if (label === "Update" || label === "Upload" || label === "Complete") return "default";
   if (label === "Chat") return "secondary";
   return "outline";
 }
 
 /* The row itself opens the panel, so the button has to stop the click from
    bubbling — otherwise the row handler fires too, the same reason the PM
-   Dashboard guards its inline actions. */
+   Dashboard guards its inline actions.
+
+   `label` is the English source throughout — it picks the icon and the variant,
+   and it is what the drawer matches on — so it is translated only on the way
+   to the screen. */
 function ActionButton({ label, onClick }: { label: string; onClick?: () => void }) {
+  const { t } = useI18n();
   const Icon = ACTION_ICON[label];
   return (
     <Button
@@ -89,7 +95,7 @@ function ActionButton({ label, onClick }: { label: string; onClick?: () => void 
       }
     >
       {Icon && <Icon className="w-4 h-4" />}
-      {label}
+      {t(label)}
     </Button>
   );
 }
@@ -103,12 +109,15 @@ function GroupCard({
   onOpenActivity?: (selection: PortalActivitySelection) => void;
   onOpenChat?: (draft: string, context?: ChatContext) => void;
 }) {
+  const { t } = useI18n();
   const SectionIcon = SECTION_ICON[group.key] ?? CircleAlert;
+  /* `sectionLabel` travels as the English source: the drawer keys its own
+     behaviour off it, and translates it for its header badge. */
   const open = (selection: PortalActivitySelection) => onOpenActivity?.(selection);
   return (
     <TaskGroupCard
       icon={<SectionIcon className={cn("w-[17px] h-[17px]", ICON_INK[group.tone])} />}
-      label={group.label}
+      label={t(group.label)}
       count={group.items.length}
     >
       {group.items.length > 0 ? (
@@ -121,12 +130,12 @@ function GroupCard({
               icon={<Icon className={cn("w-4 h-4", ICON_INK[group.tone])} />}
               title={
                 <>
-                  {item.title} <span className="font-normal text-muted-foreground">— {item.detail}</span>
+                  {t(item.title)} <span className="font-normal text-muted-foreground">— {t(item.detail)}</span>
                 </>
               }
               subline={
                 <>
-                  {item.principal} · {item.ageLabel}
+                  {item.principal} · {t(item.ageLabel)}
                 </>
               }
               action={
@@ -160,7 +169,7 @@ function GroupCard({
           );
         })
       ) : (
-        <p className="py-6 px-4 text-sm text-muted-foreground text-center">Nothing here right now.</p>
+        <p className="py-6 px-4 text-sm text-muted-foreground text-center">{t("Nothing here right now.")}</p>
       )}
     </TaskGroupCard>
   );
@@ -173,6 +182,7 @@ const CHIP_ICON: Record<PrincipalChip["tone"], { Icon: typeof CircleCheck; ink: 
 };
 
 function StatTile({ stat, onNavigate }: { stat: PortalStat; onNavigate?: (view: PortalView) => void }) {
+  const { t } = useI18n();
   return (
     <Card
       role="button"
@@ -181,7 +191,7 @@ function StatTile({ stat, onNavigate }: { stat: PortalStat; onNavigate?: (view: 
       className="rounded-2xl border border-border ring-0 shadow-none [--card-spacing:1.25rem] px-(--card-spacing) gap-0 cursor-pointer hover:bg-secondary/50 transition-colors"
     >
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">{stat.label}</p>
+        <p className="text-sm text-muted-foreground">{t(stat.label)}</p>
         <ArrowRight className="w-4 h-4 text-muted-foreground" />
       </div>
       <p className="text-3xl font-bold mt-2">{stat.value}</p>
@@ -198,7 +208,7 @@ function StatTile({ stat, onNavigate }: { stat: PortalStat; onNavigate?: (view: 
           })}
         </div>
       ) : (
-        <p className="text-xs text-muted-foreground mt-2">{stat.hint}</p>
+        <p className="text-xs text-muted-foreground mt-2">{stat.hint ? t(stat.hint) : null}</p>
       )}
     </Card>
   );
@@ -215,15 +225,16 @@ const QUICK_ACTIONS: {
 ];
 
 export function PortalOverview({ supplierId, groups, onNavigate, onOpenActivity, onOpenChat }: PortalOverviewProps) {
+  const { t } = useI18n();
   const profile = getPortalProfile(supplierId);
 
   return (
     <div className="p-6 space-y-6">
       {/* Greeting */}
       <div>
-        <h1 className="text-2xl font-bold">Good morning, {profile.firstName}</h1>
+        <h1 className="text-2xl font-bold">{t("Good morning, {name}", { name: profile.firstName })}</h1>
         <p className="text-muted-foreground mt-1">
-          Here's the current status of your supplier account with Lynk.
+          {t("Here's the current status of your supplier account with Lynk.")}
         </p>
       </div>
 
@@ -261,8 +272,8 @@ export function PortalOverview({ supplierId, groups, onNavigate, onOpenActivity,
                 <Icon className="w-4 h-4" />
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-semibold truncate">{title}</p>
-                <p className="text-xs text-muted-foreground truncate">{hint}</p>
+                <p className="text-sm font-semibold truncate">{t(title)}</p>
+                <p className="text-xs text-muted-foreground truncate">{t(hint)}</p>
               </div>
             </div>
           </Card>
