@@ -356,6 +356,7 @@ const DE: Record<string, string> = {
   "{count} tickets": "{count} Tickets",
   // Trades (reference data)
   Plumbing: "Sanitärinstallation",
+  "Heating & Plumbing": "Heizung & Sanitär",
   Drywall: "Trockenbau",
   "Building Components": "Bauteile",
   HVAC: "Heizung/Klima",
@@ -615,6 +616,91 @@ const DE: Record<string, string> = {
   "Onboarding Coming Soon": "Onboarding folgt in Kürze",
   "The onboarding wizard for prospect relationships will be built here.":
     "Der Onboarding-Assistent für Interessenten-Beziehungen entsteht hier.",
+
+  // ── Invite Supplier wizard ──────────────────────────────────────────────
+  // ("Invite Supplier" itself is defined above with the PM sidebar nav.)
+  "Send an onboarding invitation to a new supplier":
+    "Senden Sie eine Onboarding-Einladung an einen neuen Lieferanten",
+  "Search the platform or invite a new supplier by email":
+    "Durchsuchen Sie die Plattform oder laden Sie einen neuen Lieferanten per E-Mail ein",
+  // Stepper ("Review" is already defined with the ticket actions)
+  Contact: "Kontakt",
+  Details: "Angaben",
+  Settings: "Einstellungen",
+  // Contact step
+  "Who are you inviting?": "Wen möchten Sie einladen?",
+  "Company name": "Firmenname",
+  "Search or enter company name…": "Firmenname suchen oder eingeben…",
+  "Full name": "Vollständiger Name",
+  "Email address": "E-Mail-Adresse",
+  // Platform match card
+  "{company} is already on Lynk": "{company} ist bereits auf Lynk",
+  "{company} is already connected": "{company} ist bereits verbunden",
+  "This supplier has a verified profile. Sending a connection request will notify their account manager — no email invite needed.":
+    "Dieser Lieferant hat ein verifiziertes Profil. Eine Verbindungsanfrage benachrichtigt seinen Kundenbetreuer — eine E-Mail-Einladung ist nicht nötig.",
+  "This supplier is active in your network. You can manage them in the Suppliers Catalogue.":
+    "Dieser Lieferant ist in Ihrem Netzwerk aktiv. Sie können ihn im Lieferantenkatalog verwalten.",
+  "On Lynk": "Auf Lynk",
+  Connected: "Verbunden",
+  // Cities (reference data, from the company directory)
+  Munich: "München",
+  Berlin: "Berlin",
+  Stuttgart: "Stuttgart",
+  // Details step (the trades themselves are defined with the overview filters)
+  "What trades does this supplier cover?": "Welche Gewerke deckt dieser Lieferant ab?",
+  Trade: "Gewerk",
+  "Search trades…": "Gewerke suchen…",
+  "Remove {trade}": "{trade} entfernen",
+  "{count} selected": "{count} ausgewählt",
+  "Clear all": "Alle entfernen",
+  "Select at least one trade to continue":
+    "Wählen Sie mindestens ein Gewerk aus, um fortzufahren",
+  // Settings step
+  "Invitation settings": "Einladungseinstellungen",
+  "Send welcome email": "Willkommens-E-Mail senden",
+  "The supplier receives a branded onboarding email with a portal link.":
+    "Der Lieferant erhält eine gebrandete Onboarding-E-Mail mit einem Portal-Link.",
+  "Require onboarding checklist": "Onboarding-Checkliste verlangen",
+  "Supplier must complete profile, upload documents, and sign agreements.":
+    "Der Lieferant muss sein Profil vervollständigen, Dokumente hochladen und Vereinbarungen unterzeichnen.",
+  "Personal note (optional)": "Persönliche Nachricht (optional)",
+  "Add a short message for their account manager…":
+    "Fügen Sie eine kurze Nachricht für seinen Kundenbetreuer hinzu…",
+  "Add a short message that will appear in the invitation email…":
+    "Fügen Sie eine kurze Nachricht hinzu, die in der Einladungs-E-Mail erscheint…",
+  // Review step ("Prospect" is already defined with the stage badges)
+  Company: "Unternehmen",
+  Action: "Aktion",
+  "Invitation email": "Einladungs-E-Mail",
+  Trades: "Gewerke",
+  "Welcome email": "Willkommens-E-Mail",
+  "Onboarding checklist": "Onboarding-Checkliste",
+  "Connection request": "Verbindungsanfrage",
+  Yes: "Ja",
+  No: "Nein",
+  Required: "Erforderlich",
+  Optional: "Optional",
+  "A connection request will be sent to {company}'s account manager.":
+    "Eine Verbindungsanfrage wird an den Kundenbetreuer von {company} gesendet.",
+  "An invitation will be sent to {email}. The company will appear as a {prospect} until they complete onboarding.":
+    "Eine Einladung wird an {email} gesendet. Das Unternehmen erscheint als {prospect}, bis das Onboarding abgeschlossen ist.",
+  // Sending + result toasts
+  "Sending connection request…": "Verbindungsanfrage wird gesendet…",
+  "Sending invitation…": "Einladung wird gesendet…",
+  "Send connection request": "Verbindungsanfrage senden",
+  "Send Invitation": "Einladung senden",
+  "Connection request sent": "Verbindungsanfrage gesendet",
+  "{company}'s account manager was notified.":
+    "Der Kundenbetreuer von {company} wurde benachrichtigt.",
+  "Invitation sent": "Einladung gesendet",
+  "Prospect added": "Interessent hinzugefügt",
+  "{company} added as a Prospect — invite emailed to {email}.":
+    "{company} als Interessent hinzugefügt — Einladung an {email} gesendet.",
+  "{company} added as a Prospect — awaiting onboarding.":
+    "{company} als Interessent hinzugefügt — Onboarding steht aus.",
+  "Couldn't send invitation": "Einladung konnte nicht gesendet werden",
+  "Please try again.": "Bitte versuchen Sie es erneut.",
+  "Failed to send invitation email": "Einladungs-E-Mail konnte nicht gesendet werden",
 };
 
 const STORAGE_KEY = "lynk-lang";

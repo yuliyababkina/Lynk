@@ -12,8 +12,11 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/components/yarowa/toast";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 import { PRINCIPAL_COMPANY, PROCUREMENT_MANAGER, PROCUREMENT_MANAGER_ROLE } from "@/lib/principal";
 
+/* Step names are the English source: the wizard branches on them, and they are
+   the dictionary keys, so they are translated only where they render. */
 type StepName = "Contact" | "Details" | "Settings" | "Review";
 
 function stepsFor(match: InviteMatch): StepName[] {
@@ -44,6 +47,7 @@ export function InviteSupplierModal({
   const [requireChecklist, setRequireChecklist] = useState(true);
   const [note, setNote] = useState("");
   const [sending, setSending] = useState(false);
+  const { t } = useI18n();
 
   // Reset everything each time the modal is opened.
   useEffect(() => {
@@ -62,8 +66,8 @@ export function InviteSupplierModal({
 
   const subtitle =
     match === "new"
-      ? "Send an onboarding invitation to a new supplier"
-      : "Search the platform or invite a new supplier by email";
+      ? t("Send an onboarding invitation to a new supplier")
+      : t("Search the platform or invite a new supplier by email");
 
   const companySuggestions = useMemo(() => {
     const q = company.trim().toLowerCase();
@@ -106,8 +110,8 @@ export function InviteSupplierModal({
         // send, this notifies an existing account inside the platform.
         await new Promise((r) => window.setTimeout(r, 900));
         toast({
-          title: "Connection request sent",
-          description: `${company}'s account manager was notified.`,
+          title: t("Connection request sent"),
+          description: t("{company}'s account manager was notified.", { company }),
           tone: "success",
         });
       } else {
@@ -136,7 +140,10 @@ export function InviteSupplierModal({
           });
           if (!res.ok) {
             const body = await res.json().catch(() => ({}));
-            throw new Error(body.error || "Failed to send invitation email");
+            // The server's own message wins when it sends one; it is already
+            // written for the reader, and the seam for it is the mail service,
+            // not this dictionary.
+            throw new Error(body.error || t("Failed to send invitation email"));
           }
         }
 
@@ -151,18 +158,21 @@ export function InviteSupplierModal({
           inviteToken,
         });
         toast({
-          title: sendWelcome ? "Invitation sent" : "Prospect added",
+          title: sendWelcome ? t("Invitation sent") : t("Prospect added"),
           description: sendWelcome
-            ? `${company} added as a Prospect — invite emailed to ${email.trim()}.`
-            : `${company} added as a Prospect — awaiting onboarding.`,
+            ? t("{company} added as a Prospect — invite emailed to {email}.", {
+                company,
+                email: email.trim(),
+              })
+            : t("{company} added as a Prospect — awaiting onboarding.", { company }),
           tone: "success",
         });
       }
       onClose();
     } catch (err) {
       toast({
-        title: "Couldn't send invitation",
-        description: err instanceof Error ? err.message : "Please try again.",
+        title: t("Couldn't send invitation"),
+        description: err instanceof Error ? err.message : t("Please try again."),
         tone: "critical",
       });
     } finally {
@@ -176,7 +186,9 @@ export function InviteSupplierModal({
     setI((n) => n + 1);
   }
 
-  const profileTrades = picked ? picked.trade : trades.join(", ");
+  /* Trades are reference data: English in the catalogue, German on the way out
+     (the same entries the Suppliers Overview filters already translate). */
+  const profileTrades = picked ? t(picked.trade) : trades.map((trade) => t(trade)).join(", ");
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -187,11 +199,11 @@ export function InviteSupplierModal({
         {/* Header */}
         <div className="flex items-start justify-between px-5 pt-5 pb-4">
           <div className="min-w-0">
-            <DialogTitle className="text-base font-semibold">Invite Supplier</DialogTitle>
+            <DialogTitle className="text-base font-semibold">{t("Invite Supplier")}</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground mt-0.5">{subtitle}</DialogDescription>
           </div>
           <DialogClose asChild>
-            <button className="shrink-0 text-muted-foreground hover:text-foreground" aria-label="Close">
+            <button className="shrink-0 text-muted-foreground hover:text-foreground" aria-label={t("Close")}>
               <X size={18} />
             </button>
           </DialogClose>
@@ -216,7 +228,7 @@ export function InviteSupplierModal({
                     {done ? <Check size={14} /> : idx + 1}
                   </span>
                   <span className={cn("font-medium", current || done ? "text-foreground" : "text-muted-foreground")}>
-                    {s}
+                    {t(s)}
                   </span>
                   {idx < steps.length - 1 && <ChevronRight size={14} className="text-muted-foreground/50 mx-1" />}
                 </li>
@@ -233,7 +245,7 @@ export function InviteSupplierModal({
                 <Send size={22} className="text-success-ink" />
               </span>
               <div className="font-semibold">
-                {match === "on-lynk" ? "Sending connection request…" : "Sending invitation…"}
+                {match === "on-lynk" ? t("Sending connection request…") : t("Sending invitation…")}
               </div>
               <div className="text-sm text-muted-foreground mt-1">{match === "on-lynk" ? company : email}</div>
             </div>
@@ -282,7 +294,9 @@ export function InviteSupplierModal({
           <div className="border-t border-border px-5 py-3 flex items-center justify-between">
             {stepIndex === 0 ? (
               <DialogClose asChild>
-                <button className="text-sm font-medium text-muted-foreground hover:text-foreground">Cancel</button>
+                <button className="text-sm font-medium text-muted-foreground hover:text-foreground">
+                  {t("Cancel")}
+                </button>
               </DialogClose>
             ) : (
               <button
@@ -290,22 +304,22 @@ export function InviteSupplierModal({
                 className="inline-flex items-center gap-1 text-sm font-medium text-foreground hover:text-foreground"
               >
                 <ChevronRight size={15} className="rotate-180" />
-                Back
+                {t("Back")}
               </button>
             )}
 
             {match === "connected" ? (
-              <Button variant="outline" onClick={onClose}>Close</Button>
+              <Button variant="outline" onClick={onClose}>{t("Close")}</Button>
             ) : (
               <Button onClick={primary} disabled={!canContinue}>
                 {step === "Review" ? (
                   <>
                     <Send size={14} />
-                    {match === "on-lynk" ? "Send connection request" : "Send Invitation"}
+                    {match === "on-lynk" ? t("Send connection request") : t("Send Invitation")}
                   </>
                 ) : (
                   <>
-                    Continue
+                    {t("Continue")}
                     <ChevronRight size={15} />
                   </>
                 )}
@@ -347,17 +361,18 @@ function ContactStep(props: {
   match: InviteMatch;
 }) {
   const { company, onType, picked, dropdown, setDropdown, suggestions, onSelect, contact, setContact, email, setEmail, match } = props;
+  const { t } = useI18n();
   return (
     <div>
-      <SectionLabel icon={Mail}>Who are you inviting?</SectionLabel>
+      <SectionLabel icon={Mail}>{t("Who are you inviting?")}</SectionLabel>
 
       <label className="block text-sm font-medium mb-1">
-        Company name<span className="text-critical-ink">*</span>
+        {t("Company name")}<span className="text-critical-ink">*</span>
       </label>
       <div className="relative">
         <input
           className={cn(fieldCls, "pr-9")}
-          placeholder="Search or enter company name…"
+          placeholder={t("Search or enter company name…")}
           value={company}
           onChange={(e) => onType(e.target.value)}
           onFocus={() => setDropdown(true)}
@@ -390,11 +405,11 @@ function ContactStep(props: {
       {/* New-company fields only */}
       {match === "new" && (
         <>
-          <label className="block text-sm font-medium mb-1 mt-4">Contact person</label>
-          <input className={fieldCls} placeholder="Full name" value={contact} onChange={(e) => setContact(e.target.value)} />
+          <label className="block text-sm font-medium mb-1 mt-4">{t("Contact person")}</label>
+          <input className={fieldCls} placeholder={t("Full name")} value={contact} onChange={(e) => setContact(e.target.value)} />
 
           <label className="block text-sm font-medium mb-1 mt-4">
-            Email address<span className="text-critical-ink">*</span>
+            {t("Email address")}<span className="text-critical-ink">*</span>
           </label>
           <input
             className={fieldCls}
@@ -409,6 +424,7 @@ function ContactStep(props: {
 }
 
 function MatchCard({ company, match }: { company: DirectoryCompany; match: InviteMatch }) {
+  const { t } = useI18n();
   const onLynk = match === "on-lynk";
   return (
     <div className={cn("mt-4 rounded-lg p-3", onLynk ? "bg-medium-soft" : "bg-success-soft")}>
@@ -417,13 +433,17 @@ function MatchCard({ company, match }: { company: DirectoryCompany; match: Invit
           {onLynk ? <Link2 size={16} className="text-medium-ink" /> : <UserRoundCheck size={16} className="text-success-ink" />}
         </span>
         <div>
+          {/* One sentence per state rather than a stitched-together phrase —
+              German puts "bereits" where English puts "already". */}
           <div className={cn("text-sm font-semibold", onLynk ? "text-medium-ink" : "text-success-ink")}>
-            {company.name} is already {onLynk ? "on Lynk" : "connected"}
+            {onLynk
+              ? t("{company} is already on Lynk", { company: company.name })
+              : t("{company} is already connected", { company: company.name })}
           </div>
           <div className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
             {onLynk
-              ? "This supplier has a verified profile. Sending a connection request will notify their account manager — no email invite needed."
-              : "This supplier is active in your network. You can manage them in the Suppliers Catalogue."}
+              ? t("This supplier has a verified profile. Sending a connection request will notify their account manager — no email invite needed.")
+              : t("This supplier is active in your network. You can manage them in the Suppliers Catalogue.")}
           </div>
         </div>
       </div>
@@ -432,7 +452,7 @@ function MatchCard({ company, match }: { company: DirectoryCompany; match: Invit
         <div className="min-w-0 flex-1">
           <div className="text-sm font-medium truncate">{company.name}</div>
           <div className="text-xs text-muted-foreground">
-            {company.trade} · {company.city}
+            {t(company.trade)} · {t(company.city)}
           </div>
         </div>
         {company.rating != null && (
@@ -447,32 +467,45 @@ function MatchCard({ company, match }: { company: DirectoryCompany; match: Invit
             onLynk ? "bg-medium/15 text-medium-ink" : "bg-success/15 text-success-ink"
           )}
         >
-          {onLynk ? "On Lynk" : "Connected"}
+          {onLynk ? t("On Lynk") : t("Connected")}
         </span>
       </div>
     </div>
   );
 }
 
-function DetailsStep({ trades, toggle, clear }: { trades: string[]; toggle: (t: string) => void; clear: () => void }) {
+function DetailsStep({
+  trades,
+  toggle,
+  clear,
+}: {
+  trades: string[];
+  toggle: (trade: string) => void;
+  clear: () => void;
+}) {
+  const { t } = useI18n();
   return (
     <div>
-      <SectionLabel icon={Building2}>What trades does this supplier cover?</SectionLabel>
+      <SectionLabel icon={Building2}>{t("What trades does this supplier cover?")}</SectionLabel>
       <label className="block text-sm font-medium mb-1">
-        Trade<span className="text-critical-ink">*</span>
+        {t("Trade")}<span className="text-critical-ink">*</span>
       </label>
 
       {/* Selected chips */}
       <div className="flex items-center gap-1.5 flex-wrap rounded-md border border-border bg-card px-2.5 py-2 min-h-9">
         {trades.length === 0 ? (
           <span className="text-sm text-muted-foreground inline-flex items-center gap-2">
-            <Search size={14} /> Search trades…
+            <Search size={14} /> {t("Search trades…")}
           </span>
         ) : (
-          trades.map((t) => (
-            <span key={t} className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
-              {t}
-              <button onClick={() => toggle(t)} className="text-muted-foreground hover:text-foreground" aria-label={`Remove ${t}`}>
+          trades.map((trade) => (
+            <span key={trade} className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
+              {t(trade)}
+              <button
+                onClick={() => toggle(trade)}
+                className="text-muted-foreground hover:text-foreground"
+                aria-label={t("Remove {trade}", { trade: t(trade) })}
+              >
                 <X size={12} />
               </button>
             </span>
@@ -483,25 +516,29 @@ function DetailsStep({ trades, toggle, clear }: { trades: string[]; toggle: (t: 
       {/* Checklist */}
       <div className="mt-2 rounded-md border border-border overflow-hidden">
         <ul className="max-h-[180px] overflow-y-auto">
-          {TRADES.map((t) => (
-            <li key={t}>
+          {TRADES.map((trade) => (
+            <li key={trade}>
               <button
                 type="button"
-                onClick={() => toggle(t)}
+                onClick={() => toggle(trade)}
                 className="w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-secondary/50"
               >
-                <Checkbox checked={trades.includes(t)} tabIndex={-1} className="pointer-events-none" />
-                {t}
+                <Checkbox checked={trades.includes(trade)} tabIndex={-1} className="pointer-events-none" />
+                {t(trade)}
               </button>
             </li>
           ))}
         </ul>
         <div className="flex items-center justify-between border-t border-border px-3 py-2 text-xs">
-          <span className="text-muted-foreground">{trades.length} selected</span>
-          <button onClick={clear} className="font-medium text-accent hover:underline">Clear all</button>
+          <span className="text-muted-foreground">{t("{count} selected", { count: trades.length })}</span>
+          <button onClick={clear} className="font-medium text-accent hover:underline">
+            {t("Clear all")}
+          </button>
         </div>
       </div>
-      {trades.length === 0 && <p className="text-xs text-muted-foreground mt-2">Select at least one trade to continue</p>}
+      {trades.length === 0 && (
+        <p className="text-xs text-muted-foreground mt-2">{t("Select at least one trade to continue")}</p>
+      )}
     </div>
   );
 }
@@ -516,36 +553,41 @@ function SettingsStep(props: {
   setNote: (v: string) => void;
 }) {
   const { match, sendWelcome, setSendWelcome, requireChecklist, setRequireChecklist, note, setNote } = props;
+  const { t } = useI18n();
   return (
     <div>
-      <SectionLabel icon={Tag}>Invitation settings</SectionLabel>
+      <SectionLabel icon={Tag}>{t("Invitation settings")}</SectionLabel>
 
       {match === "new" && (
         <div className="space-y-3 mb-4">
           <label className="flex items-start gap-2.5 cursor-pointer">
             <Checkbox checked={sendWelcome} onCheckedChange={(v) => setSendWelcome(!!v)} className="mt-0.5" />
             <span>
-              <span className="block text-sm font-medium">Send welcome email</span>
-              <span className="block text-xs text-muted-foreground">The supplier receives a branded onboarding email with a portal link.</span>
+              <span className="block text-sm font-medium">{t("Send welcome email")}</span>
+              <span className="block text-xs text-muted-foreground">
+                {t("The supplier receives a branded onboarding email with a portal link.")}
+              </span>
             </span>
           </label>
           <label className="flex items-start gap-2.5 cursor-pointer">
             <Checkbox checked={requireChecklist} onCheckedChange={(v) => setRequireChecklist(!!v)} className="mt-0.5" />
             <span>
-              <span className="block text-sm font-medium">Require onboarding checklist</span>
-              <span className="block text-xs text-muted-foreground">Supplier must complete profile, upload documents, and sign agreements.</span>
+              <span className="block text-sm font-medium">{t("Require onboarding checklist")}</span>
+              <span className="block text-xs text-muted-foreground">
+                {t("Supplier must complete profile, upload documents, and sign agreements.")}
+              </span>
             </span>
           </label>
         </div>
       )}
 
-      <label className="block text-sm font-medium mb-1">Personal note (optional)</label>
+      <label className="block text-sm font-medium mb-1">{t("Personal note (optional)")}</label>
       <textarea
         className={cn(fieldCls, "min-h-[88px] resize-none")}
         placeholder={
           match === "on-lynk"
-            ? "Add a short message for their account manager…"
-            : "Add a short message that will appear in the invitation email…"
+            ? t("Add a short message for their account manager…")
+            : t("Add a short message that will appear in the invitation email…")
         }
         value={note}
         onChange={(e) => setNote(e.target.value)}
@@ -554,10 +596,13 @@ function SettingsStep(props: {
   );
 }
 
+/* The label is translated here rather than at each call site, the way the
+   portal's Field does it — every row gets it from one place. */
 function ReviewRow({ label, value }: { label: string; value: React.ReactNode }) {
+  const { t } = useI18n();
   return (
     <div className="flex items-center justify-between gap-4 px-4 py-3 border-b border-border last:border-0">
-      <span className="text-sm text-muted-foreground">{label}</span>
+      <span className="text-sm text-muted-foreground">{t(label)}</span>
       <span className="text-sm font-medium text-right">{value}</span>
     </div>
   );
@@ -573,6 +618,7 @@ function ReviewStep(props: {
   requireChecklist: boolean;
 }) {
   const { match, company, contact, email, trades, sendWelcome, requireChecklist } = props;
+  const { t } = useI18n();
   const onLynk = match === "on-lynk";
   return (
     <div>
@@ -580,23 +626,52 @@ function ReviewStep(props: {
         <ReviewRow label="Company" value={company} />
         {!onLynk && <ReviewRow label="Contact" value={contact || "—"} />}
         {onLynk ? (
-          <ReviewRow label="Action" value="Connection request" />
+          <ReviewRow label="Action" value={t("Connection request")} />
         ) : (
           <ReviewRow label="Invitation email" value={email} />
         )}
         <ReviewRow label="Trades" value={trades || "—"} />
-        {!onLynk && <ReviewRow label="Welcome email" value={sendWelcome ? "Yes" : "No"} />}
-        {!onLynk && <ReviewRow label="Onboarding checklist" value={requireChecklist ? "Required" : "Optional"} />}
-      </div>
-      <p className="text-xs text-muted-foreground leading-relaxed">
-        {onLynk ? (
-          <>A connection request will be sent to <span className="font-semibold text-foreground">{company}</span>'s account manager.</>
-        ) : (
-          <>
-            An invitation will be sent to <span className="font-semibold text-foreground">{email}</span>. The company will appear
-            as a <span className="font-semibold text-foreground">Prospect</span> until they complete onboarding.
-          </>
+        {!onLynk && <ReviewRow label="Welcome email" value={sendWelcome ? t("Yes") : t("No")} />}
+        {!onLynk && (
+          <ReviewRow
+            label="Onboarding checklist"
+            value={requireChecklist ? t("Required") : t("Optional")}
+          />
         )}
+      </div>
+      {/* Split on the unsubstituted slots so each language can put the emphasised
+          company, address and stage where its own grammar needs them, instead of
+          concatenating fragments — the same way the onboarding terms line does. */}
+      <p className="text-xs text-muted-foreground leading-relaxed">
+        {onLynk
+          ? (() => {
+              const [before, after = ""] = t(
+                "A connection request will be sent to {company}'s account manager."
+              ).split("{company}");
+              return (
+                <>
+                  {before}
+                  <span className="font-semibold text-foreground">{company}</span>
+                  {after}
+                </>
+              );
+            })()
+          : (() => {
+              const sentence = t(
+                "An invitation will be sent to {email}. The company will appear as a {prospect} until they complete onboarding."
+              );
+              const [before, rest = ""] = sentence.split("{email}");
+              const [middle, after = ""] = rest.split("{prospect}");
+              return (
+                <>
+                  {before}
+                  <span className="font-semibold text-foreground">{email}</span>
+                  {middle}
+                  <span className="font-semibold text-foreground">{t("Prospect")}</span>
+                  {after}
+                </>
+              );
+            })()}
       </p>
     </div>
   );
