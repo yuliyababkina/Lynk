@@ -701,6 +701,49 @@ const DE: Record<string, string> = {
   "Couldn't send invitation": "Einladung konnte nicht gesendet werden",
   "Please try again.": "Bitte versuchen Sie es erneut.",
   "Failed to send invitation email": "Einladungs-E-Mail konnte nicht gesendet werden",
+
+  // ── Document browser + renewal review ───────────────────────────────────
+  // Shared by the PM review, the portal and the onboarding wizard, so these
+  // belong to every role's vocabulary rather than one screen's.
+  "No documents.": "Keine Dokumente.",
+  Document: "Dokument",
+  "Select a document to preview.": "Wählen Sie ein Dokument zur Vorschau aus.",
+  "This certificate does not expire": "Dieses Zertifikat läuft nicht ab",
+  // (The "Expires" line is already defined above with the document statuses.)
+  "(from file)": "(aus Datei)",
+  "Read from the document — not yet confirmed":
+    "Aus dem Dokument gelesen — noch nicht bestätigt",
+  // Pages within the open document
+  "{current} of {total} page": "Seite {current} von {total}",
+  "{current} of {total} pages": "Seite {current} von {total}",
+  // Moving between documents (distinct from the wizard's Back/Continue)
+  Previous: "Vorheriges",
+  Next: "Nächstes",
+  "Previous document": "Vorheriges Dokument",
+  "Next document": "Nächstes Dokument",
+  "Not yet uploaded.": "Noch nicht hochgeladen.",
+  // Renewal review card + lightbox
+  "Renewal Uploaded — Awaiting Review": "Verlängerung hochgeladen — wartet auf Prüfung",
+  "Uploaded {date}": "Hochgeladen am {date}",
+  "Review document": "Dokument prüfen",
+  "Review {file}": "{file} prüfen",
+  "Review the uploaded renewal, then accept or reject it.":
+    "Prüfen Sie die hochgeladene Verlängerung und nehmen Sie sie an oder lehnen Sie sie ab.",
+  Reject: "Ablehnen",
+  "Accept & Replace": "Annehmen & ersetzen",
+  "Accept & Reactivate Supplier": "Annehmen & Lieferant reaktivieren",
+
+  // ── Catalogue preview table ─────────────────────────────────────────────
+  "No rows parsed": "Keine Zeilen erkannt",
+  "The uploaded file contained no service lines.":
+    "Die hochgeladene Datei enthielt keine Leistungszeilen.",
+  SERVICE: "LEISTUNG",
+  UNIT: "EINHEIT",
+  RATE: "SATZ",
+  CHANGE: "ÄNDERUNG",
+  // ("Added" is already defined with the data-governance change log.)
+  Changed: "Geändert",
+  Removed: "Entfernt",
 };
 
 const STORAGE_KEY = "lynk-lang";

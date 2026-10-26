@@ -10,9 +10,10 @@ import { useI18n } from "@/lib/i18n";
 
 /** Marks a value that was read from the file, not confirmed by a person. */
 export function FromFileHint() {
+  const { t } = useI18n();
   return (
-    <span className="ml-1.5 text-[10px] text-muted-foreground" title="Read from the document — not yet confirmed">
-      (from file)
+    <span className="ml-1.5 text-[10px] text-muted-foreground" title={t("Read from the document — not yet confirmed")}>
+      {t("(from file)")}
     </span>
   );
 }
@@ -111,7 +112,7 @@ export function DocumentBrowser({
     <div className={`flex gap-4 ${height}`}>
       {/* Left: document list */}
       <div className="w-72 shrink-0 overflow-y-auto space-y-1.5 pr-1">
-        {rows.length === 0 && <p className="text-sm text-muted-foreground">No documents.</p>}
+        {rows.length === 0 && <p className="text-sm text-muted-foreground">{t("No documents.")}</p>}
         {rows.map((r) => {
           const meta = docStatusMeta(r.status);
           const active = selected?.key === r.key;
@@ -145,7 +146,9 @@ export function DocumentBrowser({
             <div className="px-4 py-2.5 border-b border-border flex items-start justify-between gap-3">
               <div className="min-w-0">
               <p className="text-sm font-semibold truncate">{t(selected.name)}</p>
-              <p className="text-xs text-muted-foreground">{selected.category || "Document"}</p>
+              <p className="text-xs text-muted-foreground">
+                {selected.category ? t(selected.category) : t("Document")}
+              </p>
               {selected.status && info && (
                 <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 mt-2 text-xs">
                   <dt className="text-muted-foreground">{t("Document type")}</dt>
@@ -162,10 +165,10 @@ export function DocumentBrowser({
                   <dd>
                     {info.doesNotExpire ? (
                       <span className="inline-flex items-center gap-1.5 text-success-ink">
-                        <ShieldCheck className="w-3 h-3" /> This certificate does not expire
+                        <ShieldCheck className="w-3 h-3" /> {t("This certificate does not expire")}
                       </span>
                     ) : info.expiryDate ? (
-                      `Expires ${info.expiryDate}`
+                      t("Expires {date}", { date: info.expiryDate })
                     ) : (
                       "—"
                     )}
@@ -199,7 +202,10 @@ export function DocumentBrowser({
             {/* Pages within the open document */}
             <div className="flex items-center justify-center py-2 border-t border-border text-xs text-muted-foreground tabular-nums">
               {selected.fileUrl && pageInfo
-                ? `${pageInfo.current} of ${pageInfo.total} page${pageInfo.total === 1 ? "" : "s"}`
+                ? t(
+                    pageInfo.total === 1 ? "{current} of {total} page" : "{current} of {total} pages",
+                    { current: pageInfo.current, total: pageInfo.total }
+                  )
                 : "—"}
             </div>
 
@@ -208,8 +214,8 @@ export function DocumentBrowser({
               {/* Boundary buttons are hidden, not disabled — works for any
                   number of documents, including a single one. */}
               {idx > 0 ? (
-                <Button variant="outline" size="sm" className="shrink-0" title="Previous document" onClick={goPrev}>
-                  <ChevronLeft className="w-4 h-4" /> Previous
+                <Button variant="outline" size="sm" className="shrink-0" title={t("Previous document")} onClick={goPrev}>
+                  <ChevronLeft className="w-4 h-4" /> {t("Previous")}
                 </Button>
               ) : (
                 <span />
@@ -220,12 +226,12 @@ export function DocumentBrowser({
                 renderActions(selected)
               ) : !selected.status ? (
                 <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <FileX className="w-3.5 h-3.5" /> Not yet uploaded.
+                  <FileX className="w-3.5 h-3.5" /> {t("Not yet uploaded.")}
                 </span>
               ) : null}
                 {idx < rows.length - 1 && (
-                  <Button variant="outline" size="sm" className="shrink-0" title="Next document" onClick={goNext}>
-                    Next <ChevronRight className="w-4 h-4" />
+                  <Button variant="outline" size="sm" className="shrink-0" title={t("Next document")} onClick={goNext}>
+                    {t("Next")} <ChevronRight className="w-4 h-4" />
                   </Button>
                 )}
               </div>
@@ -233,7 +239,7 @@ export function DocumentBrowser({
           </div>
         ) : (
           <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">
-            Select a document to preview.
+            {t("Select a document to preview.")}
           </div>
         )}
       </div>

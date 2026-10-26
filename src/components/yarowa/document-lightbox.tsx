@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { X, FileText } from "lucide-react";
 import type { SupplierDoc } from "@/types";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n";
 
 /*
  * Full-screen lightbox that previews an uploaded renewal document at large size
@@ -18,6 +19,7 @@ export function DocumentLightbox({
   onClose: () => void;
   onDecision: (decision: "accept" | "reject") => void;
 }) {
+  const { t } = useI18n();
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
@@ -25,7 +27,8 @@ export function DocumentLightbox({
   }, [onClose]);
 
   if (!doc.renewal) return null;
-  const acceptLabel = doc.status === "blocked" ? "Accept & Reactivate Supplier" : "Accept & Replace";
+  const acceptLabel =
+    doc.status === "blocked" ? t("Accept & Reactivate Supplier") : t("Accept & Replace");
 
   return (
     <div
@@ -35,7 +38,7 @@ export function DocumentLightbox({
       <div
         role="dialog"
         aria-modal="true"
-        aria-label={`Review ${doc.renewal.fileName}`}
+        aria-label={t("Review {file}", { file: doc.renewal.fileName })}
         className="bg-card rounded-2xl shadow-2xl w-full max-w-3xl max-h-[88vh] flex flex-col overflow-hidden animate-in zoom-in-95 fade-in duration-150"
         onClick={(e) => e.stopPropagation()}
       >
@@ -45,10 +48,11 @@ export function DocumentLightbox({
           <div className="min-w-0 flex-1">
             <div className="text-sm font-semibold truncate">{doc.renewal.fileName}</div>
             <div className="text-xs text-muted-foreground truncate">
-              {doc.renewal.fileSize} · Uploaded {doc.renewal.uploadedAt} · {doc.renewal.uploadedBy}
+              {doc.renewal.fileSize} · {t("Uploaded {date}", { date: doc.renewal.uploadedAt })} ·{" "}
+              {doc.renewal.uploadedBy}
             </div>
           </div>
-          <button onClick={onClose} aria-label="Close" className="text-muted-foreground hover:text-foreground shrink-0">
+          <button onClick={onClose} aria-label={t("Close")} className="text-muted-foreground hover:text-foreground shrink-0">
             <X size={18} />
           </button>
         </div>
@@ -61,7 +65,7 @@ export function DocumentLightbox({
         {/* Actions */}
         <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-3 shrink-0">
           <div className="text-xs text-muted-foreground hidden sm:block">
-            Review the uploaded renewal, then accept or reject it.
+            {t("Review the uploaded renewal, then accept or reject it.")}
           </div>
           <div className="flex gap-2">
             <Button
@@ -69,7 +73,7 @@ export function DocumentLightbox({
               className="text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
               onClick={() => onDecision("reject")}
             >
-              Reject
+              {t("Reject")}
             </Button>
             <Button variant="success" onClick={() => onDecision("accept")}>
               {acceptLabel}
@@ -81,7 +85,14 @@ export function DocumentLightbox({
   );
 }
 
-// A faux paper document so the lightbox reads like a real PDF preview.
+/*
+ * A faux paper document so the lightbox reads like a real PDF preview.
+ *
+ * Its wording stays as authored, like the names of uploaded files: this stands
+ * in for the supplier's own certificate, which arrives in whatever language it
+ * was issued in. The chrome around it — header, hint, decision buttons —
+ * translates.
+ */
 function DocumentPreview({ doc }: { doc: SupplierDoc }) {
   const ref = doc.id.replace(/[^0-9]/g, "").padStart(4, "0");
   return (
@@ -124,7 +135,7 @@ function DocumentPreview({ doc }: { doc: SupplierDoc }) {
           <div className="h-px w-32 bg-slate-300" />
           <div className="text-xs text-slate-500 mt-1">Authorised signature</div>
         </div>
-        <div className="size-16 rounded-full border-2 border-emerald-500/40 text-emerald-600/70 grid place-items-center text-[9px] font-bold text-center leading-tight rotate-[-8deg]">
+        <div className="size-16 rounded-full border-2 border-lime-600/40 text-lime-700/70 grid place-items-center text-[9px] font-bold text-center leading-tight rotate-[-8deg]">
           RENEWED
           <br />
           2026

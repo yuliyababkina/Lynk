@@ -1,6 +1,7 @@
 import { Upload, FileText, Eye } from "lucide-react";
 import type { SupplierDoc } from "@/types";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n";
 
 /*
  * The "renewal awaiting review" block shown wherever a compliance document has an
@@ -9,12 +10,13 @@ import { Button } from "@/components/ui/button";
  * review experience is identical no matter where the ticket was opened from.
  */
 export function RenewalReviewCard({ doc, onReview }: { doc: SupplierDoc; onReview: () => void }) {
+  const { t } = useI18n();
   if (!doc.renewal) return null;
   return (
     <div className="border border-border rounded-lg overflow-hidden">
       <div className="flex items-center gap-2 bg-secondary/60 border-b border-border px-3 py-2">
         <Upload size={14} className="text-foreground" aria-hidden="true" />
-        <span className="text-xs font-semibold">Renewal Uploaded — Awaiting Review</span>
+        <span className="text-xs font-semibold">{t("Renewal Uploaded — Awaiting Review")}</span>
       </div>
       <div className="p-3 space-y-3">
         <button
@@ -26,13 +28,13 @@ export function RenewalReviewCard({ doc, onReview }: { doc: SupplierDoc; onRevie
           <span className="min-w-0">
             <span className="block text-sm font-medium truncate">{doc.renewal.fileName}</span>
             <span className="block text-xs text-muted-foreground">
-              {doc.renewal.fileSize} · Uploaded {doc.renewal.uploadedAt}
+              {doc.renewal.fileSize} · {t("Uploaded {date}", { date: doc.renewal.uploadedAt })}
             </span>
           </span>
         </button>
         <Button variant="default" className="w-full" onClick={onReview}>
           <Eye size={14} />
-          Review document
+          {t("Review document")}
         </Button>
       </div>
     </div>
