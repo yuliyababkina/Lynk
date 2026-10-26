@@ -397,7 +397,7 @@ export function ProspectOnboarding({
         <div className="flex-1" />
         {/* Present on every step of the wizard, including the welcome/consent
             screen — asking a question must never require finishing onboarding. */}
-        <Button variant={chatUnread > 0 ? "dark" : "outline"} size="sm" className="mr-3" onClick={openChat}>
+        <Button variant={chatUnread > 0 ? "default" : "outline"} size="sm" className="mr-3" onClick={openChat}>
           <MessageSquare className="w-4 h-4" />
           {t("Chat")}
           {chatUnread > 0 && (
@@ -581,7 +581,7 @@ export function ProspectOnboarding({
                       {/* Uploading a file again supersedes the stored one and sends
                           the new version back for review. */}
                       <Button
-                        variant={!r.status || declined ? "dark" : "outline"}
+                        variant={!r.status || declined ? "default" : "outline"}
                         size="sm"
                         className="shrink-0"
                         disabled={uploading}
@@ -617,7 +617,7 @@ export function ProspectOnboarding({
                 </p>
               )}
               <WizardFooter onBack={() => setStep("company")}>
-                <Button variant="dark" disabled={!requiredStandardDone || submitting} onClick={submitForReview}>
+                <Button variant="default" disabled={!requiredStandardDone || submitting} onClick={submitForReview}>
                   {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                   {t("Submit for Review")} <ArrowRight className="w-4 h-4" />
                 </Button>
@@ -857,7 +857,7 @@ function WelcomeStep({
 
       {!rejected && (
         <>
-          <Button variant="dark" className="w-full mt-6" disabled={!termsAccepted} onClick={onNext}>
+          <Button variant="default" className="w-full mt-6" disabled={!termsAccepted} onClick={onNext}>
             {changesRequested ? t("Update & Resubmit My Details") : t("Review & Confirm My Details")}{" "}
             <ArrowRight className="w-4 h-4" />
           </Button>
@@ -946,7 +946,7 @@ function CompanyStep({
       </div>
 
       <WizardFooter onBack={onBack}>
-        <Button variant="dark" disabled={saving} onClick={onSubmit}>
+        <Button variant="default" disabled={saving} onClick={onSubmit}>
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
           {approved ? t("Continue") : t("Submit My Details")} <ArrowRight className="w-4 h-4" />
         </Button>
@@ -1222,7 +1222,7 @@ function ContractsStep({
                   </span>
                 </label>
                 <div className="flex justify-end">
-                  <Button variant="dark" disabled={!agreed} onClick={sign}>
+                  <Button variant="default" disabled={!agreed} onClick={sign}>
                     <PenLine className="w-4 h-4" />
                     {t("Sign as {name}", { name: signerName })}
                   </Button>
@@ -1234,7 +1234,7 @@ function ContractsStep({
       </div>
 
       <WizardFooter>
-        <Button variant="dark" disabled={!allSigned} onClick={onActivate}>
+        <Button variant="default" disabled={!allSigned} onClick={onActivate}>
           {t("Activate supplier account")} <ArrowRight className="w-4 h-4" />
         </Button>
       </WizardFooter>

@@ -183,7 +183,7 @@ export function ProspectReview({
         <div className="flex items-center gap-3">
           {/* The prospect can write back from their wizard, so the reviewer needs
               somewhere to see it without leaving the review. */}
-          <Button variant={unread > 0 ? "dark" : "outline"} size="sm" onClick={openChat}>
+          <Button variant={unread > 0 ? "default" : "outline"} size="sm" onClick={openChat}>
             <MessageSquare className="w-4 h-4" /> {t("Chat")}
             {unread > 0 && (
               <span className="ml-1 rounded-full bg-critical px-1.5 text-[10px] font-semibold text-white">
@@ -999,7 +999,7 @@ function DecisionStep({
               <Button variant="outline" className="flex-1" disabled={busy} onClick={() => setResetting(false)}>
                 Cancel
               </Button>
-              <Button variant="dark" className="flex-1" disabled={busy} onClick={reset}>
+              <Button variant="default" className="flex-1" disabled={busy} onClick={reset}>
                 {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
                 Reset onboarding
               </Button>
@@ -1045,7 +1045,7 @@ function DecisionStep({
               {t("Reject application")}
             </Button>
             {hasIssues ? (
-              <Button variant="dark" disabled={busy} onClick={() => decide("changes", combinedFeedback)}>
+              <Button variant="default" disabled={busy} onClick={() => decide("changes", combinedFeedback)}>
                 {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                 Request update ({feedbackParts.length})
               </Button>
