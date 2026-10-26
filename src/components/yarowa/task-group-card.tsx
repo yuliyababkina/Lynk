@@ -5,8 +5,9 @@ import { cn } from "@/lib/utils";
  * Shared "grouped task list" surface used by the PM Task Queue (Dashboard) and the
  * Supplier Portal Overview. A card with a tinted header (leading icon + uppercase
  * label + count pill) over a divided list of TaskRows. Rows lay out on the
- * responsive `.ticket-row` grid defined in index.css (icon / main / status /
- * action), so the two surfaces stay visually identical.
+ * `.ticket-row` grid defined in index.css (icon / main / status / action),
+ * which reflows on the list's own width, so the two surfaces stay visually
+ * identical wherever they are put.
  */
 export function TaskGroupCard({
   icon,
@@ -30,7 +31,10 @@ export function TaskGroupCard({
           {count}
         </span>
       </div>
-      <div className="divide-y divide-border">{children}</div>
+      {/* The rows reflow on this list's own width — see `.ticket-list` in
+          index.css — so a card in a narrow column lays out like a narrow card,
+          however wide the window happens to be. */}
+      <div className="ticket-list divide-y divide-border">{children}</div>
     </div>
   );
 }

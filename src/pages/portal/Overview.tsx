@@ -229,7 +229,7 @@ export function PortalOverview({ supplierId, groups, onNavigate, onOpenActivity,
   const profile = getPortalProfile(supplierId);
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="@container p-6 space-y-6">
       {/* Greeting */}
       <div>
         <h1 className="text-2xl font-bold">{t("Good morning, {name}", { name: profile.firstName })}</h1>
@@ -239,14 +239,16 @@ export function PortalOverview({ supplierId, groups, onNavigate, onOpenActivity,
       </div>
 
       {/* Stat tiles */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 @min-[44rem]:grid-cols-3 gap-4">
         {profile.stats.map((stat) => (
           <StatTile key={stat.key} stat={stat} onNavigate={onNavigate} />
         ))}
       </div>
 
-      {/* Activity grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {/* Activity grid. Same rule as the PM Task Queue: two columns only while
+          both stay wide enough for a full ticket row, measured on this page's
+          width rather than the window's, since the chat dock narrows it. */}
+      <div className="grid grid-cols-1 @min-[60rem]:grid-cols-2 gap-4">
         {groups.map((group) => (
           <GroupCard
             key={group.key}
@@ -258,7 +260,7 @@ export function PortalOverview({ supplierId, groups, onNavigate, onOpenActivity,
       </div>
 
       {/* Quick actions */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 @min-[32rem]:grid-cols-2 gap-4">
         {QUICK_ACTIONS.map(({ icon: Icon, title, hint, quick }) => (
           <Card
             key={title}

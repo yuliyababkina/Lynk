@@ -20,7 +20,7 @@ import { toast } from "@/components/yarowa/toast";
 import { PRINCIPAL_COMPANY, PROCUREMENT_MANAGER, PROCUREMENT_MANAGER_ROLE } from "@/lib/principal";
 import { relationshipId, onboardingSupplierId } from "@/lib/db";
 import { PRINCIPAL_ID } from "@/data";
-import { ProspectReview } from "./ProspectReview";
+import { ProspectReview, type ProspectReviewProps } from "./ProspectReview";
 import type { DocStatus, OnboardingStatus, OnboardingCase } from "../types";
 import type { ProspectDecision } from "../lib/db";
 import { useI18n } from "@/lib/i18n";
@@ -103,8 +103,11 @@ const URGENCY_RANK: Record<OnboardingStatus, number> = {
 
 export function Onboarding({
   initialSelectedId,
+  onOpenChat,
 }: {
   initialSelectedId?: string | null;
+  /** Passed through to the prospect review, which opens the shell's chat dock. */
+  onOpenChat: ProspectReviewProps["onOpenChat"];
 }) {
   const {
     onboardingCases: ONBOARDING_CASES,
@@ -251,6 +254,7 @@ export function Onboarding({
         onReset={resetProspect}
         onSendContract={sendContract}
         onReviewDocument={reviewDocument}
+        onOpenChat={onOpenChat}
       />
     );
   }

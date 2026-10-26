@@ -8,15 +8,9 @@ import { CriticalityIcon } from "@/components/yarowa/criticality-icon";
 import { criticalityLabel } from "@/lib/theme";
 import { docStatusMeta } from "@/lib/document-status";
 import { translateAgeLabel, translateTicketTitle } from "@/lib/ticket-i18n";
-import { ChatPanel } from "@/components/yarowa/chat-panel";
 import { relationshipId } from "@/lib/db";
 import { useI18n } from "@/lib/i18n";
 import { PRINCIPAL_ID } from "@/data";
-import {
-  PRINCIPAL_COMPANY,
-  PROCUREMENT_MANAGER,
-  PROCUREMENT_MANAGER_ROLE,
-} from "@/lib/principal";
 import type { Ticket, SupplierDoc, ChatContext } from "../types";
 
 // Lazy — pulls the heavy pdfjs-dist bundle (+ worker) into its own chunk that is
@@ -42,28 +36,27 @@ export function SupplierProfile({
   supplierId,
   onBack,
   onSelectTicket,
-  initialChatContext,
+  onOpenChat,
 }: {
   supplierId: string;
   onBack: () => void;
   onSelectTicket: (t: Ticket) => void;
-  /** Set when the profile was opened from a ticket's Chat button: the panel
-   * opens straight away with that ticket already attached to the composer. */
-  initialChatContext?: ChatContext;
+  /** Opens the shell's chat dock on this supplier's conversation. */
+  onOpenChat: (
+    supplierId: string,
+    draftContext?: ChatContext,
+    overrides?: { onOpenContext?: (context: ChatContext) => void }
+  ) => void;
 }) {
   const {
     suppliers: SUPPLIERS,
     tickets: TICKETS,
     contracts: CONTRACTS,
     docs: DOCS,
-    messagesFor,
-    sendMessage,
-    markChatRead,
     unreadFor,
   } = useLynkData();
   const { t } = useI18n();
   const [previewDoc, setPreviewDoc] = useState<SupplierDoc | null>(null);
-  const [chatOpen, setChatOpen] = useState(Boolean(initialChatContext));
   const supplier = SUPPLIERS.find((s) => s.id === supplierId);
   if (!supplier) return null;
 
@@ -71,15 +64,16 @@ export function SupplierProfile({
      so the conversation is that principal's — never another's. */
   const conversation = relationshipId(PRINCIPAL_ID, supplierId);
   const unread = unreadFor(conversation, "principal");
-  // An inactive supplier keeps its history but takes no new messages.
-  const readOnlyReason =
-    supplier.stage === "inactive"
-      ? t("This relationship is inactive, so the conversation is closed. It stays here for your records.")
-      : undefined;
 
   function openChat() {
-    setChatOpen(true);
-    markChatRead(conversation, "principal");
+    onOpenChat(supplierId, undefined, {
+      // While the profile is up, a document link previews in place rather than
+      // sending the manager off to Compliance Monitoring.
+      onOpenContext: (context) => {
+        const doc = DOCS.find((d) => d.id === context.id || d.documentName === context.id);
+        if (doc) setPreviewDoc(doc);
+      },
+    });
   }
 
   const tickets = TICKETS.filter((t) => t.entityName === supplier.name);
@@ -370,50 +364,6 @@ export function SupplierProfile({
         </Suspense>
       )}
 
-      {/* The conversation sits over the profile rather than beside it: this page
-          is already a two-column grid, and squeezing a third rail in made every
-          card unreadable. */}
-      {chatOpen && (
-        <div className="fixed inset-y-0 right-0 z-50 flex w-[400px] flex-col border-l border-border bg-card shadow-lg animate-in slide-in-from-right-6 duration-200">
-          <div className="flex items-center justify-between border-b border-border px-4 py-2">
-            <span className="text-xs font-medium text-muted-foreground">{t("Conversation")}</span>
-            <button
-              onClick={() => setChatOpen(false)}
-              aria-label={t("Close")}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              ✕
-            </button>
-          </div>
-          <ChatPanel
-            className="min-h-0 flex-1"
-            messages={messagesFor(conversation)}
-            side="principal"
-            title={supplier.name}
-            subtitle={`${supplier.trade} · ${supplier.region}`}
-            readOnlyReason={readOnlyReason}
-            draftContext={initialChatContext}
-            onSend={(body, context) =>
-              sendMessage({
-                relationship: conversation,
-                body,
-                author: {
-                  side: "principal",
-                  name: PROCUREMENT_MANAGER,
-                  company: PRINCIPAL_COMPANY,
-                  role: PROCUREMENT_MANAGER_ROLE,
-                },
-                context,
-              })
-            }
-            onOpenContext={(context) => {
-              // Navigation only: open the document the message is about.
-              const doc = DOCS.find((d) => d.id === context.id || d.documentName === context.id);
-              if (doc) setPreviewDoc(doc);
-            }}
-          />
-        </div>
-      )}
     </div>
   );
 }

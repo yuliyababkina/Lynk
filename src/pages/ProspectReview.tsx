@@ -20,7 +20,6 @@ import {
   RotateCcw,
   FileSignature,
   MessageSquare,
-  X,
   type LucideIcon,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -33,20 +32,16 @@ import { STANDARD_DOCUMENT_TYPES } from "@/lib/onboarding-documents";
 import { DOC_STATUS_META, docStatusMeta } from "@/lib/document-status";
 import { parseDocumentInfo, type ParsedDocumentInfo } from "@/lib/pdf-metadata";
 import { FromFileHint } from "@/components/yarowa/document-browser";
-import { ChatPanel } from "@/components/yarowa/chat-panel";
 import { relationshipId } from "@/lib/db";
 import { PRINCIPAL_ID } from "@/data";
 import { useLynkData } from "../lib/LynkDataContext";
 import { useI18n } from "@/lib/i18n";
 import {
   CONTRACT_TEMPLATES,
-  PRINCIPAL_COMPANY,
-  PROCUREMENT_MANAGER,
-  PROCUREMENT_MANAGER_ROLE,
 } from "@/lib/principal";
 import { Checkbox } from "@/components/ui/checkbox";
 import { translateCatalogueName } from "@/lib/ticket-i18n";
-import type { Supplier, SupplierDoc, Contact, OnboardingCase } from "../types";
+import type { Supplier, SupplierDoc, Contact, OnboardingCase, ChatContext } from "../types";
 import type { ProspectDecision } from "../lib/db";
 
 // Status presentation comes from the shared definition so the PM, the supplier,
@@ -106,6 +101,16 @@ export interface ProspectReviewProps {
   onReset: (supplierId: string) => Promise<void>;
   onSendContract: (supplierId: string, contractName: string, catalogueNames: string[]) => Promise<void>;
   onReviewDocument: (docId: string, decision: "approve" | "decline", comment?: string) => void;
+  /** Opens the shell's chat dock on this prospect's conversation. */
+  onOpenChat: (
+    supplierId: string,
+    draftContext?: ChatContext,
+    overrides?: {
+      subtitle?: string;
+      readOnlyReason?: string;
+      onOpenContext?: (context: ChatContext) => void;
+    }
+  ) => void;
 }
 
 export function ProspectReview({
@@ -118,6 +123,7 @@ export function ProspectReview({
   onReset,
   onSendContract,
   onReviewDocument,
+  onOpenChat,
 }: ProspectReviewProps) {
   // An already-decided case (Accepted/Rejected) opens on the Summary, where the
   // outcome — and the Reset action for a rejected case — is shown, so the PM
@@ -142,27 +148,32 @@ export function ProspectReview({
   const [selectedKey, setSelectedKey] = useState<string | null>(rows[0]?.key ?? null);
   const decided = caseItem.status === "Accepted" || caseItem.status === "Rejected";
 
-  const { messagesFor, sendMessage, markChatRead, unreadFor } = useLynkData();
+  const { unreadFor } = useLynkData();
   const conversation = relationshipId(PRINCIPAL_ID, supplier.id);
   const unread = unreadFor(conversation, "principal");
-  const [chatOpen, setChatOpen] = useState(false);
-  /* A rejected application closes the conversation but keeps it readable — the
-     correspondence is part of why it was rejected. An accepted one carries on:
-     prospect and supplier are the same relationship. */
-  const chatReadOnly =
-    caseItem.status === "Rejected"
-      ? t("This application was not approved, so the conversation is closed. It stays here for your records.")
-      : undefined;
-
-  function openChat() {
-    setChatOpen(true);
-    markChatRead(conversation, "principal");
-  }
 
   const editDocument = (key: string) => {
     setSelectedKey(key);
     setStep("Documents");
   };
+
+  function openChat() {
+    onOpenChat(supplier.id, undefined, {
+      subtitle: contact?.name,
+      /* A rejected application closes the conversation but keeps it readable —
+         the correspondence is part of why it was rejected. An accepted one
+         carries on: prospect and supplier are the same relationship. */
+      readOnlyReason:
+        caseItem.status === "Rejected"
+          ? t("This application was not approved, so the conversation is closed. It stays here for your records.")
+          : undefined,
+      onOpenContext: (context) => {
+        // Navigation only — jump to the document in the review stepper.
+        const row = rows.find((r) => r.doc?.id === context.id || r.name === context.id);
+        if (row) editDocument(row.key);
+      },
+    });
+  }
 
   return (
     <div className="p-6">
@@ -202,48 +213,6 @@ export function ProspectReview({
           })()}
         </div>
       </div>
-
-      {chatOpen && (
-        <div className="fixed inset-y-0 right-0 z-50 flex w-[400px] flex-col border-l border-border bg-card shadow-lg animate-in slide-in-from-right-6 duration-200">
-          <div className="flex items-center justify-between border-b border-border px-4 py-2">
-            <span className="text-xs font-medium text-muted-foreground">{t("Conversation")}</span>
-            <button
-              onClick={() => setChatOpen(false)}
-              aria-label={t("Close")}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-          <ChatPanel
-            className="min-h-0 flex-1"
-            messages={messagesFor(conversation)}
-            side="principal"
-            title={supplier.name}
-            subtitle={contact?.name}
-            readOnlyReason={chatReadOnly}
-            onSend={(body, context) =>
-              sendMessage({
-                relationship: conversation,
-                body,
-                author: {
-                  side: "principal",
-                  name: PROCUREMENT_MANAGER,
-                  company: PRINCIPAL_COMPANY,
-                  role: PROCUREMENT_MANAGER_ROLE,
-                },
-                context,
-              })
-            }
-            onOpenContext={(context) => {
-              // Navigation only — jump to the document in the review stepper.
-              const row = rows.find((r) => r.doc?.id === context.id || r.name === context.id);
-              if (row) editDocument(row.key);
-              setChatOpen(false);
-            }}
-          />
-        </div>
-      )}
 
       <div className="mb-6">
         <WizardStepper steps={STEPS} current={step} onStepClick={(s) => setStep(s as Step)} />

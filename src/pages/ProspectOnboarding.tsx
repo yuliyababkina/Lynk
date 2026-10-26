@@ -17,7 +17,6 @@ import {
   ClipboardList,
   PenLine,
   MessageSquare,
-  X,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -40,7 +39,7 @@ import {
   PROCUREMENT_MANAGER,
   type PrincipalContract,
 } from "@/lib/principal";
-import { ChatPanel } from "@/components/yarowa/chat-panel";
+import { ChatDock, useChatDock } from "@/components/yarowa/chat-dock";
 import { relationshipId } from "@/lib/db";
 import { PRINCIPAL_ID } from "@/data";
 import { toast } from "@/components/yarowa/toast";
@@ -109,9 +108,6 @@ export function ProspectOnboarding({
     reviewProspect,
     acceptTerms,
     companyApprovedIds,
-    messagesFor,
-    sendMessage,
-    markChatRead,
     unreadFor,
   } = useLynkData();
   // Live status per document type — the same values the Procurement Manager sees.
@@ -373,16 +369,31 @@ export function ProspectOnboarding({
      (assertTermsAccepted) has nothing to protect here. */
   const conversation = relationshipId(PRINCIPAL_ID, supplierId);
   const chatUnread = unreadFor(conversation, "supplier");
-  const [chatOpen, setChatOpen] = useState(false);
-  // A rejected application closes the thread but keeps it readable.
-  const chatReadOnly =
-    reviewStatus === "Rejected"
-      ? t("This application was not approved, so the conversation is closed. It stays here for your records.")
-      : undefined;
+  const chat = useChatDock();
 
   function openChat() {
-    setChatOpen(true);
-    markChatRead(conversation, "supplier");
+    chat.open({
+      relationship: conversation,
+      side: "supplier",
+      author: {
+        side: "supplier",
+        name: actingAs,
+        company: prospectCompany,
+        role: profile.role,
+      },
+      title: PRINCIPAL,
+      subtitle: t("Your conversation with {company}", { company: PRINCIPAL }),
+      // A rejected application closes the thread but keeps it readable.
+      readOnlyReason:
+        reviewStatus === "Rejected"
+          ? t("This application was not approved, so the conversation is closed. It stays here for your records.")
+          : undefined,
+      onOpenContext: () => {
+        // The wizard is the whole surface here, so a link just sends the
+        // prospect to the documents step rather than anywhere new.
+        setStep("documents");
+      },
+    });
   }
 
   // The approved (contracts) state has no `step`; drive the stepper from it.
@@ -429,8 +440,10 @@ export function ProspectOnboarding({
         </div>
       )}
 
-      {/* Body */}
-      <div className="flex-1 overflow-y-auto">
+      {/* Body. The wizard and the chat are siblings in a flex row, so opening a
+          conversation pushes the wizard aside rather than covering it. */}
+      <div className="flex flex-1 min-h-0">
+        <div className="flex-1 min-w-0 overflow-y-auto">
         {/* The documents step needs the full width so the preview can show the
             page at 100% scale; the form/summary steps read better in a column. */}
         <div
@@ -664,49 +677,10 @@ export function ProspectOnboarding({
           </>
           )}
         </div>
-      </div>
-
-      {chatOpen && (
-        <div className="fixed inset-y-0 right-0 z-50 flex w-[400px] flex-col border-l border-border bg-card shadow-lg animate-in slide-in-from-right-6 duration-200">
-          <div className="flex items-center justify-between border-b border-border px-4 py-2">
-            <span className="text-xs font-medium text-muted-foreground">{t("Conversation")}</span>
-            <button
-              onClick={() => setChatOpen(false)}
-              aria-label={t("Close")}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-          <ChatPanel
-            className="min-h-0 flex-1"
-            messages={messagesFor(conversation)}
-            side="supplier"
-            title={PRINCIPAL}
-            subtitle={t("Your conversation with {company}", { company: PRINCIPAL })}
-            readOnlyReason={chatReadOnly}
-            onSend={(body, context) =>
-              sendMessage({
-                relationship: conversation,
-                body,
-                author: {
-                  side: "supplier",
-                  name: actingAs,
-                  company: prospectCompany,
-                  role: profile.role,
-                },
-                context,
-              })
-            }
-            onOpenContext={() => {
-              // The wizard is the whole surface here, so a link just sends the
-              // prospect to the documents step rather than anywhere new.
-              setChatOpen(false);
-              setStep("documents");
-            }}
-          />
         </div>
-      )}
+
+        <ChatDock conversation={chat.conversation} onClose={chat.close} />
+      </div>
     </div>
   );
 }

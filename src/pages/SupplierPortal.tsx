@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { X } from "lucide-react";
 import { PortalSidebar } from "@/components/yarowa/portal-sidebar";
 import { Toaster } from "@/components/yarowa/toast";
 import { TopHeader } from "@/components/yarowa/top-header";
@@ -16,7 +15,7 @@ import {
   type ChangeRecord,
   type PortalActivitySelection,
 } from "@/components/yarowa/portal-activity-drawer";
-import { ChatPanel } from "@/components/yarowa/chat-panel";
+import { ChatDock, useChatDock } from "@/components/yarowa/chat-dock";
 import { NotificationBell } from "@/components/yarowa/notification-bell";
 import { useLynkData } from "@/lib/LynkDataContext";
 import { relationshipId } from "@/lib/db";
@@ -55,14 +54,10 @@ export function SupplierPortal({ supplierName, supplierId, onSwitchAccount }: Po
   const [view, setView] = useState<PortalView>("overview");
   const [activity, setActivity] = useState<PortalActivitySelection | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  /* The open conversation. `draft`/`draftContext` carry an item through from a
-     Chat button, so the supplier doesn't have to re-describe what it is about. */
-  const [chat, setChat] = useState<{
-    relationship: string;
-    principalName: string;
-    draft?: string;
-    draftContext?: ChatContext;
-  } | null>(null);
+  /* The portal's single open conversation. `draft`/`draftContext` carry an item
+     through from a Chat button, so the supplier doesn't have to re-describe
+     what it is about. */
+  const chat = useChatDock();
 
   /* Tickets and profile edits live here for the length of the session, the same
      way the rest of the portal holds its state — so fixing something from the
@@ -109,7 +104,7 @@ export function SupplierPortal({ supplierName, supplierId, onSwitchAccount }: Po
   }, []);
 
   const { t } = useI18n();
-  const { messagesFor, sendMessage, markChatRead, unreadRelationships } = useLynkData();
+  const { messagesFor, unreadRelationships } = useLynkData();
   /** Who this persona is, for the "Company | Person · role" line on each message. */
   const profile = getPortalProfile(supplierId);
 
@@ -146,20 +141,42 @@ export function SupplierPortal({ supplierName, supplierId, onSwitchAccount }: Po
     [myRelationships, unreadRelationships, messagesFor]
   );
 
-  const openChat = useCallback(
-    (relationship: string, principalName: string, draft?: string, draftContext?: ChatContext) => {
-      setActivity(null);
-      setChat({ relationship, principalName, draft, draftContext });
-      // Opening is what marks it read — and re-arms the unread email.
-      markChatRead(relationship, "supplier");
-    },
-    [markChatRead]
-  );
-
   // Switching views closes any open detail drawer.
   const navigate = (v: PortalView) => {
     setActivity(null);
     setView(v);
+  };
+
+  const openChat = (
+    relationship: string,
+    principalName: string,
+    draft?: string,
+    draftContext?: ChatContext
+  ) => {
+    /* One rail at a time: the ticket drawer and the chat are both 380px, and
+       side by side they leave the portal itself unreadable below 1600px. The
+       ticket travels into the composer as a link, so nothing is lost. */
+    setActivity(null);
+    chat.open({
+      relationship,
+      side: "supplier",
+      author: {
+        side: "supplier",
+        name: profile.fullName,
+        company: company.legalName,
+        role: profile.role,
+      },
+      title: principalName,
+      subtitle: t("Your conversation with {company}", { company: principalName }),
+      draft,
+      draftContext,
+      onOpenContext: (context) => {
+        // Navigation only — chat never acts on the thing it links to.
+        if (context.type === "document") navigate("documents");
+        else if (context.type === "data-change") navigate("requested-updates");
+        else navigate("onboarding");
+      },
+    });
   };
 
   const supplierInitials = supplierName
@@ -200,7 +217,11 @@ export function SupplierPortal({ supplierName, supplierId, onSwitchAccount }: Po
                 supplierId={supplierId}
                 groups={groups}
                 onNavigate={navigate}
-                onOpenActivity={setActivity}
+                onOpenActivity={(selection) => {
+                  // One rail at a time, in both directions — see openChat.
+                  chat.close();
+                  setActivity(selection);
+                }}
                 onOpenChat={(draft, context) =>
                   openChat(ownRelationship, PRINCIPAL_SHORT, draft, context)
                 }
@@ -236,48 +257,7 @@ export function SupplierPortal({ supplierName, supplierId, onSwitchAccount }: Po
             />
           )}
 
-          {chat && (
-            <aside className="w-[380px] shrink-0 border-l border-border bg-card h-full animate-in slide-in-from-right-6 fade-in duration-200 flex flex-col">
-              <div className="flex items-center justify-between border-b border-border px-4 py-2">
-                <span className="text-xs font-medium text-muted-foreground">{t("Conversation")}</span>
-                <button
-                  onClick={() => setChat(null)}
-                  aria-label={t("Close")}
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-              <ChatPanel
-                className="flex-1 min-h-0"
-                messages={messagesFor(chat.relationship)}
-                side="supplier"
-                title={chat.principalName}
-                subtitle={t("Your conversation with {company}", { company: chat.principalName })}
-                draft={chat.draft}
-                draftContext={chat.draftContext}
-                onSend={(body, context) =>
-                  sendMessage({
-                    relationship: chat.relationship,
-                    body,
-                    author: {
-                      side: "supplier",
-                      name: profile.fullName,
-                      company: company.legalName,
-                      role: profile.role,
-                    },
-                    context,
-                  })
-                }
-                onOpenContext={(context) => {
-                  // Navigation only — chat never acts on the thing it links to.
-                  if (context.type === "document") navigate("documents");
-                  else if (context.type === "data-change") navigate("requested-updates");
-                  else navigate("onboarding");
-                }}
-              />
-            </aside>
-          )}
+          <ChatDock conversation={chat.conversation} onClose={chat.close} />
         </div>
       </div>
 

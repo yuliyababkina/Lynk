@@ -106,7 +106,7 @@ export function Dashboard({
   const resolvedVisible = resolvedExpanded ? resolvedFiltered : resolvedFiltered.slice(0, COLLAPSED_ROWS);
 
   return (
-    <div className="p-6">
+    <div className="@container p-6">
       <h1 className="text-2xl font-bold mb-1">{tr("Task Queue")}</h1>
       <p className="text-sm text-muted-foreground mb-4">{tr("Sorted by criticality. Click a ticket to open it.")}</p>
 
@@ -143,7 +143,10 @@ export function Dashboard({
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-4">
+      {/* Two columns only while both stay wide enough to hold a full ticket
+          row; below that one wide column beats two cramped ones. Measured on
+          this page's own width, which the chat dock changes. */}
+      <div className="grid grid-cols-1 @min-[60rem]:grid-cols-2 gap-4">
         {grouped.map((group) => {
           const isExpanded = expanded.has(group.criticality);
           const hasOverflow = group.tickets.length > COLLAPSED_ROWS;

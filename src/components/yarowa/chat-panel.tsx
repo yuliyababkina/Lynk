@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FileText, Lock, Send, SlidersHorizontal, ClipboardList } from "lucide-react";
+import { FileText, Lock, Send, SlidersHorizontal, ClipboardList, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
@@ -24,6 +24,9 @@ export interface ChatPanelProps {
   /** Shown above the thread, e.g. the principal or the supplier company. */
   title: string;
   subtitle?: string;
+  /** Renders the close (X) in this panel's own header, so the surface holding
+   * it — dock or Sheet — doesn't have to add a second header bar above it. */
+  onClose?: () => void;
   onSend?: (body: string, context?: ChatContext) => void | Promise<void>;
   /** Opening the thing a message is about. Navigation only — never an action. */
   onOpenContext?: (context: ChatContext) => void;
@@ -183,6 +186,7 @@ export function ChatPanel({
   side,
   title,
   subtitle,
+  onClose,
   onSend,
   onOpenContext,
   readOnlyReason,
@@ -250,9 +254,21 @@ export function ChatPanel({
 
   return (
     <section className={cn("flex min-h-0 flex-col", className)} aria-label={t("Conversation")}>
-      <header className="shrink-0 border-b border-border px-4 py-3">
-        <h3 className="truncate text-sm font-semibold">{title}</h3>
-        {subtitle && <p className="truncate text-xs text-muted-foreground">{subtitle}</p>}
+      <header className="flex shrink-0 items-start gap-2 border-b border-border px-4 py-3">
+        <div className="min-w-0 flex-1">
+          <h3 className="truncate text-sm font-semibold">{title}</h3>
+          {subtitle && <p className="truncate text-xs text-muted-foreground">{subtitle}</p>}
+        </div>
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={t("Close")}
+            className="shrink-0 rounded-md text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <X className="h-[18px] w-[18px]" />
+          </button>
+        )}
       </header>
 
       {/* Polite, so a message arriving mid-task doesn't interrupt the reader. */}

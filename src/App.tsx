@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef, lazy, Suspense } from "react";
 import { Sidebar } from "@/components/yarowa/sidebar";
+import { ChatDock, useChatDock, type ChatConversation } from "@/components/yarowa/chat-dock";
 import { TopHeader } from "@/components/yarowa/top-header";
 import { TicketDrawer } from "@/components/yarowa/ticket-drawer";
 import { ComplianceDrawer } from "@/components/yarowa/compliance-drawer";
@@ -9,6 +10,11 @@ import { actionResult } from "@/lib/ticket-actions";
 import { onboardingSupplierId, relationshipId } from "@/lib/db";
 import { NotificationBell } from "@/components/yarowa/notification-bell";
 import { PRINCIPAL_ID } from "@/data";
+import {
+  PRINCIPAL_COMPANY,
+  PROCUREMENT_MANAGER,
+  PROCUREMENT_MANAGER_ROLE,
+} from "@/lib/principal";
 import { useI18n } from "@/lib/i18n";
 import { useLynkData } from "./lib/LynkDataContext";
 import { Landing } from "./pages/Landing";
@@ -91,6 +97,8 @@ export default function App() {
     messagesFor,
   } = useLynkData();
   const { t } = useI18n();
+  /** The PM shell's single open conversation — see ChatDock. */
+  const chat = useChatDock();
 
   // Remembers a token we already accepted, so a data refresh can't revoke it.
   const resolvedInviteRef = useRef<string | null>(null);
@@ -125,9 +133,6 @@ export default function App() {
   const [pendingSelected, setPendingSelected] = useState<string | null>(null);
   const [activeDoc, setActiveDoc] = useState<SupplierDoc | null>(null);
   const [reviewDoc, setReviewDoc] = useState<SupplierDoc | null>(null);
-  /* Set when a ticket's Chat button sent us to a profile: the profile opens
-     with the conversation already up and the ticket attached. */
-  const [pendingChat, setPendingChat] = useState<ChatContext | undefined>(undefined);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -189,6 +194,8 @@ export default function App() {
     // document's drawer, not merely highlight its row.
     const doc = v === "compliance" && selectedId ? DOCS.find((d) => d.id === selectedId) : undefined;
     setActiveDoc(doc ?? null);
+    // Opening that drawer takes the rail, so the chat gives it up.
+    if (doc) chat.close();
     setPendingSelected(selectedId ?? null);
     setView(v);
   }
@@ -252,22 +259,70 @@ export default function App() {
     setView("supplier-profile");
   }
 
-  /** Opening a profile for any other reason must not reopen a stale chat. */
-  function openProfilePlain(id: string) {
-    setPendingChat(undefined);
-    openProfile(id);
-  }
-
   // Tickets reference a supplier by display name; resolve it to the profile.
   function openSupplierByName(name: string) {
     const match = SUPPLIERS.find((s) => s.name === name);
-    if (match) openProfilePlain(match.id);
+    if (match) openProfile(match.id);
     else navigate("suppliers");
+  }
+
+  /*
+   * Every PM-side Chat button lands here: the conversation opens beside
+   * whatever the manager is already looking at, rather than sending them to
+   * the supplier profile first. The ticket travels in as the composer's
+   * attached context, so the supplier still sees what it is about.
+   *
+   * The PM writes on behalf of the Principal running this tenant, so the
+   * relationship is always that principal's — never another's.
+   */
+  function openSupplierChat(
+    supplierId: string,
+    draftContext?: ChatContext,
+    /* A page that knows more than the supplier record does — the prospect
+       review knows the application's status and its contact — refines the
+       header and the context handler without owning a panel of its own. */
+    overrides?: Partial<ChatConversation>
+  ) {
+    const supplier = SUPPLIERS.find((s) => s.id === supplierId);
+    if (!supplier) return;
+    /* One rail at a time: at 1280px a ticket drawer and the chat side by side
+       leave the page itself unreadable. The ticket's context travels into the
+       composer anyway, so nothing is lost by closing it. */
+    setActiveTicket(null);
+    setActiveDoc(null);
+    chat.open({
+      relationship: relationshipId(PRINCIPAL_ID, supplierId),
+      side: "principal",
+      author: {
+        side: "principal",
+        name: PROCUREMENT_MANAGER,
+        company: PRINCIPAL_COMPANY,
+        role: PROCUREMENT_MANAGER_ROLE,
+      },
+      title: supplier.name,
+      // Trade and region are reference data, same as everywhere else.
+      subtitle: `${t(supplier.trade)} · ${t(supplier.region)}`,
+      // An inactive supplier keeps its history but takes no new messages.
+      readOnlyReason:
+        supplier.stage === "inactive"
+          ? t("This relationship is inactive, so the conversation is closed. It stays here for your records.")
+          : undefined,
+      draftContext,
+      onOpenContext: (context) => {
+        // Navigation only — go to where the linked thing lives.
+        if (context.type === "document") navigate("compliance", context.id);
+        else if (context.type === "data-change") navigate("data-governance", context.id);
+        else navigate("onboarding", context.id);
+      },
+      ...overrides,
+    });
   }
 
   function selectTicket(t: Ticket) {
     setActiveDoc(null);
     setActiveTicket(t);
+    // One rail at a time, in both directions — see openSupplierChat.
+    chat.close();
   }
 
   // A magic-link click carried a token that doesn't match any prospect
@@ -340,10 +395,9 @@ export default function App() {
             <NotificationBell
               entries={bellEntries}
               onOpen={(relationship) => {
-                /* Open the supplier the conversation belongs to; the profile is
-                   where the PM's own chat panel lives. */
+                // Opens the conversation itself, wherever the manager is.
                 const match = chatableSuppliers.find((s) => s.conversation === relationship);
-                if (match) openProfilePlain(match.id);
+                if (match) openSupplierChat(match.id);
               }}
             />
           }
@@ -358,34 +412,30 @@ export default function App() {
                 onOpenSupplier={openSupplierByName}
                 resolvedIds={resolvedIds}
                 onResolve={resolveTicket}
-                onOpenChat={(supplierId, context) => {
-                  setPendingChat(context);
-                  openProfile(supplierId);
-                }}
+                onOpenChat={openSupplierChat}
               />
             )}
             {view === "suppliers" && (
-              <SuppliersOverview onOpenProfile={openProfilePlain} initialSelectedId={pendingSelected} />
+              <SuppliersOverview onOpenProfile={openProfile} initialSelectedId={pendingSelected} />
             )}
             {view === "supplier-profile" && selectedSupplierId && (
               <SupplierProfile
-                /* Remount when the chat context changes, so a second ticket's
-                   Chat button re-opens the panel instead of being swallowed by
-                   the profile's own state. */
-                key={`${selectedSupplierId}:${pendingChat?.id ?? ""}`}
                 supplierId={selectedSupplierId}
                 onBack={() => setView("suppliers")}
                 onSelectTicket={selectTicket}
-                initialChatContext={pendingChat}
+                onOpenChat={openSupplierChat}
               />
             )}
             {view === "data-governance" && <DataGovernance initialSelectedId={pendingSelected} />}
-            {view === "onboarding" && <Onboarding initialSelectedId={pendingSelected} />}
+            {view === "onboarding" && (
+              <Onboarding initialSelectedId={pendingSelected} onOpenChat={openSupplierChat} />
+            )}
             {view === "compliance" && (
               <ComplianceMonitoring
                 onSelectDoc={(doc: SupplierDoc) => {
                   setActiveTicket(null);
                   setActiveDoc(doc);
+                  chat.close();
                 }}
                 selectedDocId={activeDoc?.id ?? pendingSelected}
                 initialSelectedId={pendingSelected}
@@ -425,12 +475,11 @@ export default function App() {
               onOpenSupplier={openSupplierByName}
               onResolve={resolveTicket}
               onReview={setReviewDoc}
-              onOpenChat={(supplierId, context) => {
-                setPendingChat(context);
-                openProfile(supplierId);
-              }}
+              onOpenChat={openSupplierChat}
             />
           ) : null}
+
+          <ChatDock conversation={chat.conversation} onClose={chat.close} />
         </div>
       </div>
 

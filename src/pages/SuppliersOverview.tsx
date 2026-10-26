@@ -90,8 +90,10 @@ export function SuppliersOverview({
         </div>
       </div>
 
-      <div className="bg-card border border-border rounded-lg overflow-hidden">
-        <table className="w-full text-sm">
+      {/* Scrolls inside its own box rather than pushing the page sideways, so
+          the table stays usable when the chat dock takes 380px off the width. */}
+      <div className="bg-card border border-border rounded-lg overflow-x-auto">
+        <table className="w-full min-w-[720px] text-sm">
           <thead>
             <tr className="text-left text-xs text-muted-foreground border-b border-border">
               <th className="px-4 py-2 font-medium">{t("COMPANY")}</th>
