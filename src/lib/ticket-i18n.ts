@@ -79,6 +79,11 @@ const TITLE_PATTERNS: TitlePattern[] = [
     key: "Profile completeness {pct}% — below {target}% preferred",
     vars: (m) => ({ pct: m[1], target: m[2] }),
   },
+  {
+    re: /^Profile completeness (\d+)% — below (\d+)% threshold$/,
+    key: "Profile completeness {pct}% — below {target}% threshold",
+    vars: (m) => ({ pct: m[1], target: m[2] }),
+  },
 ];
 
 /** Translate a templated ticket title, falling back to the original. */

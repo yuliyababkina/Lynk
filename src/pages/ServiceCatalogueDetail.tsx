@@ -63,14 +63,14 @@ export function ServiceCatalogueDetail({
 
       <div className="grid grid-cols-[1fr_320px] gap-4 items-start">
         <div className="bg-card border border-border rounded-lg overflow-hidden">
-          <div className="px-4 py-3 border-b border-border font-semibold text-sm">Services</div>
+          <div className="px-4 py-3 border-b border-border font-semibold text-sm">{t("Services")}</div>
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs text-muted-foreground border-b border-border">
-                <th className="px-4 py-2 font-medium">SERVICE</th>
-                <th className="px-4 py-2 font-medium">CATEGORY</th>
-                <th className="px-4 py-2 font-medium">UNIT</th>
-                <th className="px-4 py-2 font-medium">RATE</th>
+                <th className="px-4 py-2 font-medium">{t("SERVICE")}</th>
+                <th className="px-4 py-2 font-medium">{t("CATEGORY")}</th>
+                <th className="px-4 py-2 font-medium">{t("UNIT")}</th>
+                <th className="px-4 py-2 font-medium">{t("RATE")}</th>
               </tr>
             </thead>
             <tbody>
@@ -89,12 +89,12 @@ export function ServiceCatalogueDetail({
         <div className="space-y-4">
           <div className="bg-card border border-border rounded-lg overflow-hidden">
             <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-              <span className="font-semibold text-sm">Service catalogue alerts</span>
+              <span className="font-semibold text-sm">{t("Service catalogue alerts")}</span>
               <Badge variant={nonCompliant.length > 0 ? "danger" : "success"}>{nonCompliant.length}</Badge>
             </div>
             {nonCompliant.length === 0 ? (
               <div className="px-4 py-4 text-sm text-muted-foreground flex items-center gap-2">
-                <CheckCircle2 size={15} className="text-success" /> All suppliers compliant
+                <CheckCircle2 size={15} className="text-success" /> {t("All suppliers compliant")}
               </div>
             ) : (
               <>
@@ -102,7 +102,7 @@ export function ServiceCatalogueDetail({
                   <div key={s.id} className="px-4 py-2.5 border-b border-border flex items-center gap-2 text-sm">
                     <AlertTriangle size={14} className="text-warning shrink-0" />
                     <span className="font-medium truncate">{s.name}</span>
-                    <span className="text-xs text-muted-foreground ml-auto shrink-0">Not confirmed</span>
+                    <span className="text-xs text-muted-foreground ml-auto shrink-0">{t("Not confirmed")}</span>
                   </div>
                 ))}
                 <div className="px-4 py-3">
@@ -121,7 +121,7 @@ export function ServiceCatalogueDetail({
           </div>
 
           <div className="bg-card border border-border rounded-lg overflow-hidden">
-            <div className="px-4 py-3 border-b border-border font-semibold text-sm">History log</div>
+            <div className="px-4 py-3 border-b border-border font-semibold text-sm">{t("History log")}</div>
             {catalogue.versions.map((v) => (
               <button
                 key={v.version}
@@ -133,7 +133,7 @@ export function ServiceCatalogueDetail({
               >
                 <div className="flex items-center gap-2 text-sm">
                   <span className="font-medium">{v.version}</span>
-                  {v.version === catalogue.currentVersion && <Badge variant="success">Current</Badge>}
+                  {v.version === catalogue.currentVersion && <Badge variant="success">{t("Current")}</Badge>}
                 </div>
                 <div className="text-xs text-muted-foreground mt-0.5">
                   {v.publishedAt} · {v.note}

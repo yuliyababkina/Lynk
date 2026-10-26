@@ -45,10 +45,9 @@ export function ServiceCatalogueList({
           <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center mb-4">
             <FileSpreadsheet size={26} className="text-muted-foreground" />
           </div>
-          <h2 className="text-lg font-semibold mb-1">Create a Service catalogue</h2>
+          <h2 className="text-lg font-semibold mb-1">{tr("Create a Service catalogue")}</h2>
           <p className="text-sm text-muted-foreground mb-5 max-w-sm">
-            Upload a price list of services scoped by Region and Trade, then share it with your
-            suppliers for confirmation.
+            {tr("Upload a price list of services scoped by Region and Trade, then share it with your suppliers for confirmation.")}
           </p>
           <Button onClick={onStartCreate}>
             <Upload size={14} /> {tr("Upload XLS file")}

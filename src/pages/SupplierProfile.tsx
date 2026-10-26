@@ -5,6 +5,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertBanner } from "@/components/yarowa/alert-banner";
 import { CriticalityIcon } from "@/components/yarowa/criticality-icon";
+import { criticalityLabel } from "@/lib/theme";
+import { docStatusMeta } from "@/lib/document-status";
+import { translateAgeLabel, translateTicketTitle } from "@/lib/ticket-i18n";
 import { ChatPanel } from "@/components/yarowa/chat-panel";
 import { relationshipId } from "@/lib/db";
 import { useI18n } from "@/lib/i18n";
@@ -88,7 +91,7 @@ export function SupplierProfile({
   return (
     <div className="p-6">
       <button onClick={onBack} className="flex items-center gap-1 text-sm text-muted-foreground mb-3 hover:text-foreground">
-        <ArrowLeft size={14} /> Suppliers Overview <span className="mx-1">/</span> <span className="text-foreground font-medium">{supplier.name}</span>
+        <ArrowLeft size={14} /> {t("Suppliers Overview")} <span className="mx-1">/</span> <span className="text-foreground font-medium">{supplier.name}</span>
       </button>
 
       <div className="flex items-start justify-between mb-5">
@@ -99,24 +102,25 @@ export function SupplierProfile({
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-bold">{supplier.name}</h1>
-              <Badge variant="neutral">{supplier.stage}</Badge>
+              <Badge variant="neutral">{t(supplier.stage)}</Badge>
             </div>
             <div className="text-xs text-muted-foreground mt-0.5">
-              {supplier.trade} · {supplier.region} · Last active {supplier.lastActive}
+              {t(supplier.trade)} · {t(supplier.region)} ·{" "}
+              {t("Last active {when}", { when: translateAgeLabel(supplier.lastActive, t) })}
             </div>
           </div>
         </div>
         <div className="flex items-center gap-5">
           <div className="text-center">
             <div className="text-xl font-bold">{healthScore}</div>
-            <div className="text-[10px] text-muted-foreground uppercase">Health Score</div>
+            <div className="text-[10px] text-muted-foreground uppercase">{t("Health Score")}</div>
           </div>
           <div className="text-center">
             <div className="text-xl font-bold">{supplier.openTickets}</div>
-            <div className="text-[10px] text-muted-foreground uppercase">Open Tickets</div>
+            <div className="text-[10px] text-muted-foreground uppercase">{t("Open Tickets")}</div>
           </div>
           <Button variant="outline">
-            <Edit size={14} /> Edit
+            <Edit size={14} /> {t("Edit")}
           </Button>
           <Button variant={unread > 0 ? "default" : "outline"} onClick={openChat}>
             <MessageSquare size={14} /> {t("Chat")}
@@ -127,7 +131,7 @@ export function SupplierProfile({
             )}
           </Button>
           <Button variant="outline">
-            <Mail size={14} /> Contact
+            <Mail size={14} /> {t("Contact")}
           </Button>
           <Button variant="ghost">
             <MoreHorizontal size={16} />
@@ -137,14 +141,20 @@ export function SupplierProfile({
 
       <div className="grid grid-cols-5 gap-3 mb-5">
         {[
-          { label: "Compliance", value: supplier.compliance === "Fully Compliant" ? "Good" : "Warning" },
-          { label: "Contracts", value: contracts.length > 0 ? contracts[0].status : "—" },
-          { label: "Documents", value: `${docs.filter((d) => d.status === "valid").length}/${docs.length || 5} valid` },
+          { label: "Compliance", value: t(supplier.compliance === "Fully Compliant" ? "Good" : "Warning") },
+          { label: "Contracts", value: contracts.length > 0 ? t(contracts[0].status) : "—" },
+          {
+            label: "Documents",
+            value: t("{valid}/{total} valid", {
+              valid: docs.filter((d) => d.status === "valid").length,
+              total: docs.length || 5,
+            }),
+          },
           { label: "Performance", value: `${healthScore}/100` },
           { label: "Open Tickets", value: supplier.openTickets },
         ].map((c) => (
           <div key={c.label} className="bg-card border border-border rounded-lg p-3">
-            <div className="text-xs text-muted-foreground mb-1">{c.label}</div>
+            <div className="text-xs text-muted-foreground mb-1">{t(c.label)}</div>
             <div className="font-semibold">{c.value}</div>
           </div>
         ))}
@@ -152,26 +162,32 @@ export function SupplierProfile({
 
       <div className="mb-5">
         <div className="text-xs font-semibold uppercase text-muted-foreground mb-2">
-          Open Tickets · {tickets.length}
+          {t("Open Tickets")} · {tickets.length}
         </div>
         <div className="bg-card border border-border rounded-lg divide-y divide-border">
-          {tickets.length === 0 && <div className="p-4 text-sm text-muted-foreground">No open tickets.</div>}
-          {tickets.map((t) => (
+          {tickets.length === 0 && (
+            <div className="p-4 text-sm text-muted-foreground">{t("No open tickets.")}</div>
+          )}
+          {tickets.map((ticket) => (
             <button
-              key={t.id}
-              onClick={() => onSelectTicket(t)}
+              key={ticket.id}
+              onClick={() => onSelectTicket(ticket)}
               className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-secondary/50"
             >
               <div className="min-w-0">
-                <div className="text-sm font-medium truncate">{t.title}</div>
-                <div className="text-xs text-muted-foreground mt-0.5">{t.ageLabel}</div>
+                {/* Same treatment the Task Queue gives a ticket: the title is a
+                    templated backend string, the age a relative label. */}
+                <div className="text-sm font-medium truncate">{translateTicketTitle(ticket.title, t)}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">
+                  {translateAgeLabel(ticket.ageLabel, t)}
+                </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <Badge variant={t.criticality}>
-                  <CriticalityIcon criticality={t.criticality} />
-                  {t.criticality}
+                <Badge variant={ticket.criticality}>
+                  <CriticalityIcon criticality={ticket.criticality} />
+                  {t(criticalityLabel[ticket.criticality])}
                 </Badge>
-                <Button variant="outline">{t.primaryAction}</Button>
+                <Button variant="outline">{t(ticket.primaryAction)}</Button>
               </div>
             </button>
           ))}
@@ -180,14 +196,14 @@ export function SupplierProfile({
 
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-card border border-border rounded-lg p-4">
-          <div className="text-xs font-semibold uppercase text-muted-foreground mb-3">Contacts</div>
+          <div className="text-xs font-semibold uppercase text-muted-foreground mb-3">{t("Contacts")}</div>
           <div className="space-y-3">
             {supplier.contacts.map((c) => (
               <div key={c.name} className="flex items-center justify-between text-sm">
                 <div>
                   <span className="font-medium">{c.name}</span>{" "}
-                  {c.primary && <Badge variant="info">Primary</Badge>}
-                  <div className="text-xs text-muted-foreground">{c.role}</div>
+                  {c.primary && <Badge variant="info">{t("Primary")}</Badge>}
+                  <div className="text-xs text-muted-foreground">{t(c.role)}</div>
                   <div className="text-xs text-muted-foreground">{c.email}</div>
                 </div>
                 <div className="text-xs text-muted-foreground">{c.phone}</div>
@@ -197,31 +213,37 @@ export function SupplierProfile({
         </div>
 
         <div className="bg-card border border-border rounded-lg p-4">
-          <div className="text-xs font-semibold uppercase text-muted-foreground mb-3">Services</div>
-          <div className="text-xs text-muted-foreground mb-1">Trade Categories</div>
+          <div className="text-xs font-semibold uppercase text-muted-foreground mb-3">{t("Services")}</div>
+          <div className="text-xs text-muted-foreground mb-1">{t("Trade Categories")}</div>
           <div className="flex flex-wrap gap-1.5 mb-3">
-            {[supplier.trade, "Site Safety"].map((t) => (
-              <Badge key={t} variant="neutral">{t}</Badge>
+            {[supplier.trade, "Site Safety"].map((tag) => (
+              <Badge key={tag} variant="neutral">
+                {t(tag)}
+              </Badge>
             ))}
           </div>
-          <div className="text-xs text-muted-foreground mb-1">Regions Served</div>
+          <div className="text-xs text-muted-foreground mb-1">{t("Regions Served")}</div>
           <div className="flex flex-wrap gap-1.5 mb-3">
             {supplier.regionsServed.map((r) => (
-              <Badge key={r} variant="neutral">{r}</Badge>
+              <Badge key={r} variant="neutral">
+                {t(r)}
+              </Badge>
             ))}
           </div>
-          <div className="text-xs text-muted-foreground mb-1">Capabilities</div>
+          <div className="text-xs text-muted-foreground mb-1">{t("Capabilities")}</div>
           <div className="flex flex-wrap gap-1.5">
             {supplier.capabilities.map((c) => (
-              <Badge key={c} variant="neutral">{c}</Badge>
+              <Badge key={c} variant="neutral">
+                {t(c)}
+              </Badge>
             ))}
           </div>
         </div>
 
         <div className="bg-card border border-border rounded-lg p-4">
           <div className="flex items-center justify-between mb-3">
-            <div className="text-xs font-semibold uppercase text-muted-foreground">Documents</div>
-            <span className="text-xs text-muted-foreground">{docs.length} on file</span>
+            <div className="text-xs font-semibold uppercase text-muted-foreground">{t("Documents")}</div>
+            <span className="text-xs text-muted-foreground">{t("{count} on file", { count: docs.length })}</span>
           </div>
           <div className="divide-y divide-border">
             {docs.map((d) => {
@@ -234,34 +256,38 @@ export function SupplierProfile({
                       <button
                         onClick={() => setPreviewDoc(d)}
                         className="flex items-center gap-1.5 text-sm font-medium truncate hover:underline hover:text-accent"
-                        title="Preview attached document"
+                        title={t("Preview attached document")}
                       >
                         <FileText size={14} className="text-muted-foreground shrink-0" />
-                        {d.documentName}
+                        {t(d.documentName)}
                       </button>
                     ) : (
                       <span className="flex items-center gap-1.5 text-sm font-medium truncate">
                         <FileText size={14} className="text-muted-foreground shrink-0" />
-                        {d.documentName}
+                        {t(d.documentName)}
                       </span>
                     )}
                     <div className="text-xs text-muted-foreground mt-0.5 truncate">
-                      {d.documentCategory}
-                      {d.expiryDate ? ` · Expires ${d.expiryDate}` : ""}
+                      {t(d.documentCategory)}
+                      {d.expiryDate ? ` · ${t("Expires {date}", { date: d.expiryDate })}` : ""}
                     </div>
                   </div>
-                  <Badge variant={badgeVariant} className="shrink-0">{d.status}</Badge>
+                  <Badge variant={badgeVariant} className="shrink-0">
+                    {t(docStatusMeta(d.status).label)}
+                  </Badge>
                 </div>
               );
             })}
-            {docs.length === 0 && <div className="text-sm text-muted-foreground">No documents on file.</div>}
+            {docs.length === 0 && (
+              <div className="text-sm text-muted-foreground">{t("No documents on file.")}</div>
+            )}
           </div>
         </div>
 
         <div className="bg-card border border-border rounded-lg p-4">
           <div className="flex items-center justify-between mb-3">
-            <div className="text-xs font-semibold uppercase text-muted-foreground">Contracts</div>
-            <span className="text-xs text-accent">View all</span>
+            <div className="text-xs font-semibold uppercase text-muted-foreground">{t("Contracts")}</div>
+            <span className="text-xs text-accent">{t("View all")}</span>
           </div>
           <div className="space-y-2 text-sm">
             {contracts.map((c) => (
@@ -269,42 +295,48 @@ export function SupplierProfile({
                 <div>
                   <div className="font-medium">{c.ref}</div>
                   <div className="text-xs text-muted-foreground">
-                    {c.type} · Valid to {c.endDate}
+                    {t(c.type)} · {t("Valid to {date}", { date: c.endDate })}
                   </div>
                 </div>
-                <Badge variant="warning">{c.status}</Badge>
+                <Badge variant="warning">{t(c.status)}</Badge>
               </div>
             ))}
-            {contracts.length === 0 && <div className="text-muted-foreground">No contracts on file.</div>}
+            {contracts.length === 0 && (
+              <div className="text-muted-foreground">{t("No contracts on file.")}</div>
+            )}
           </div>
         </div>
 
         {supplier.iban && (
           <div className="bg-card border border-border rounded-lg p-4">
-            <div className="text-xs font-semibold uppercase text-muted-foreground mb-3">Master Data</div>
+            <div className="text-xs font-semibold uppercase text-muted-foreground mb-3">
+              {t("Master Data")}
+            </div>
             <div className="space-y-2 text-sm">
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">VAT ID</span>
+                <span className="text-muted-foreground">{t("VAT ID")}</span>
                 <span className="font-medium">{supplier.vatId}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">IBAN</span>
+                <span className="text-muted-foreground">{t("IBAN")}</span>
                 <span className="font-medium">{supplier.iban}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Address</span>
+                <span className="text-muted-foreground">{t("Address")}</span>
                 <span className="font-medium">{supplier.address}</span>
               </div>
             </div>
             <AlertBanner type="warning" className="mt-3">
-              IBAN change request pending four-eyes approval
+              {t("IBAN change request pending four-eyes approval")}
             </AlertBanner>
           </div>
         )}
 
         {activity.length > 0 && (
           <div className="bg-card border border-border rounded-lg p-4">
-            <div className="text-xs font-semibold uppercase text-muted-foreground mb-3">Activity Timeline</div>
+            <div className="text-xs font-semibold uppercase text-muted-foreground mb-3">
+              {t("Activity Timeline")}
+            </div>
             <div className="space-y-3">
               {activity.map((a, i) => (
                 <div key={i} className="flex gap-2 text-sm">
@@ -320,7 +352,7 @@ export function SupplierProfile({
                     }`}
                   />
                   <div>
-                    <div className="font-medium leading-tight">{a.label}</div>
+                    <div className="font-medium leading-tight">{t(a.label)}</div>
                     <div className="text-xs text-muted-foreground">
                       {a.date} · {a.who}
                     </div>

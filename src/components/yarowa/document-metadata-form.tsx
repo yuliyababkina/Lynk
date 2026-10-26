@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DOCUMENT_TYPE_OPTIONS, type DocumentMetadata } from "@/lib/onboarding-documents";
+import { useI18n } from "@/lib/i18n";
 
 /*
  * Shown right after a file is picked: the app pre-fills what it recognised from
@@ -38,6 +39,7 @@ export function DocumentMetadataForm({
   onConfirm: (metadata: DocumentMetadata) => void;
 }) {
   const editing = mode === "edit";
+  const { t } = useI18n();
   const [meta, setMeta] = useState<DocumentMetadata>(initial);
   const set = <K extends keyof DocumentMetadata>(k: K, v: DocumentMetadata[K]) =>
     setMeta((m) => ({ ...m, [k]: v }));
@@ -101,7 +103,7 @@ export function DocumentMetadataForm({
           id="doc-issuer"
           value={meta.issuingInstitution}
           onChange={(e) => set("issuingInstitution", e.target.value)}
-          placeholder="e.g. TÜV Süd, Chamber of Commerce, Allianz"
+          placeholder={t("e.g. TÜV Süd, Chamber of Commerce, Allianz")}
           className="h-10 rounded-lg border-border bg-background"
         />
       </div>

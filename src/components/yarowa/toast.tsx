@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { CheckCircle2, AlertTriangle, Info, X, Undo2 } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
 /*
  * Lightweight, dependency-free toast system.
@@ -94,6 +95,8 @@ const TONE_ICON_COLOR: Record<ToastTone, string> = {
 };
 
 export function Toaster() {
+  // `t` is the toast in this scope, so the translator takes the pages' alias.
+  const { t: tr } = useI18n();
   const items = useSyncExternalStore(subscribe, () => toasts, () => toasts);
 
   if (items.length === 0) return null;
@@ -130,7 +133,7 @@ export function Toaster() {
             <button
               onClick={() => dismissToast(t.id)}
               className="shrink-0 text-muted-foreground hover:text-foreground"
-              aria-label="Dismiss"
+              aria-label={tr("Dismiss")}
             >
               <X size={15} />
             </button>

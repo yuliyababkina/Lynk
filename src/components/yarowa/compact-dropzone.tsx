@@ -3,6 +3,7 @@ import { Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { MAX_UPLOAD_MB } from "@/lib/use-document-upload";
+import { useI18n } from "@/lib/i18n";
 
 /*
  * Drop target sized for the 380px detail rail. FileUploadCard is the same idea
@@ -19,6 +20,7 @@ export function CompactDropzone({
   disabled?: boolean;
   label?: string;
 }) {
+  const { t } = useI18n();
   const inputRef = useRef<HTMLInputElement>(null);
   const [over, setOver] = useState(false);
 
@@ -52,7 +54,7 @@ export function CompactDropzone({
         }}
       />
       <Upload className="w-4 h-4 mx-auto text-muted-foreground" />
-      <p className="text-xs font-medium mt-1.5">{label}</p>
+      <p className="text-xs font-medium mt-1.5">{t(label)}</p>
       <Button
         variant="outline"
         size="sm"
@@ -60,9 +62,11 @@ export function CompactDropzone({
         disabled={disabled}
         onClick={() => inputRef.current?.click()}
       >
-        Browse files
+        {t("Browse files")}
       </Button>
-      <p className="text-xs text-muted-foreground mt-2">PDF only · up to {MAX_UPLOAD_MB} MB</p>
+      <p className="text-xs text-muted-foreground mt-2">
+        {t("PDF only · up to {max} MB", { max: MAX_UPLOAD_MB })}
+      </p>
     </div>
   );
 }

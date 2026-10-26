@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from "react";
 import { X } from "lucide-react";
 import { PdfCanvas } from "@/components/yarowa/pdf-canvas";
+import { useI18n } from "@/lib/i18n";
 
 /*
  * Full-size look at a file the supplier has picked but not yet submitted.
@@ -24,6 +25,7 @@ export function FilePreviewLightbox({
   children?: ReactNode;
   onClose: () => void;
 }) {
+  const { t } = useI18n();
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
@@ -45,9 +47,9 @@ export function FilePreviewLightbox({
         <div className="flex items-center gap-3 border-b border-border px-4 py-3 shrink-0">
           <div className="min-w-0 flex-1">
             <div className="text-sm font-semibold truncate">{fileName}</div>
-            {fileSize && <div className="text-xs text-muted-foreground">{fileSize} · not submitted yet</div>}
+            {fileSize && <div className="text-xs text-muted-foreground">{fileSize} · {t("not submitted yet")}</div>}
           </div>
-          <button onClick={onClose} aria-label="Close" className="text-muted-foreground hover:text-foreground shrink-0">
+          <button onClick={onClose} aria-label={t("Close")} className="text-muted-foreground hover:text-foreground shrink-0">
             <X size={18} />
           </button>
         </div>

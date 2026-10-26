@@ -9,11 +9,11 @@ import { cn } from "@/lib/utils";
 const LANGS: Lang[] = ["en", "de"];
 
 export function LanguageToggle({ tone = "light" }: { tone?: "light" | "dark" }) {
-  const { lang, setLang } = useI18n();
+  const { lang, setLang, t } = useI18n();
   return (
     <div
       role="group"
-      aria-label="Language"
+      aria-label={t("Language")}
       className={cn(
         "inline-flex items-center rounded-full p-0.5 text-[11px] font-semibold",
         tone === "dark" ? "bg-white/10" : "bg-secondary"

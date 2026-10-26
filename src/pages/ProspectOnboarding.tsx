@@ -34,7 +34,12 @@ import { useLynkData } from "@/lib/LynkDataContext";
 import { recogniseDocumentMetadata, type DocumentMetadata } from "@/lib/onboarding-documents";
 import { docStatusMeta } from "@/lib/document-status";
 import { validityToISODate, type ParsedDocumentInfo } from "@/lib/pdf-metadata";
-import { PRINCIPAL_COMPANY, PRINCIPAL_CONTRACTS, type PrincipalContract } from "@/lib/principal";
+import {
+  PRINCIPAL_COMPANY,
+  PRINCIPAL_CONTRACTS,
+  PROCUREMENT_MANAGER,
+  type PrincipalContract,
+} from "@/lib/principal";
 import { ChatPanel } from "@/components/yarowa/chat-panel";
 import { relationshipId } from "@/lib/db";
 import { PRINCIPAL_ID } from "@/data";
@@ -477,9 +482,9 @@ export function ProspectOnboarding({
           {step === "documents" && pending && (
             <section className="space-y-5">
               <div>
-                <h1 className="text-xl font-bold">Review document details</h1>
+                <h1 className="text-xl font-bold">{t("Review document details")}</h1>
                 <p className="text-muted-foreground mt-1 text-sm">
-                  Confirm the details below so your principals can verify this document.
+                  {t("Confirm the details below so your principals can verify this document.")}
                 </p>
               </div>
               {error && <p className="text-sm text-destructive">{error}</p>}
@@ -499,12 +504,15 @@ export function ProspectOnboarding({
           {step === "documents" && !pending && editing && (
             <section className="space-y-5">
               <div>
-                <h1 className="text-xl font-bold">Edit document details</h1>
+                <h1 className="text-xl font-bold">{t("Edit document details")}</h1>
+                {/* One sentence per case: the tail is a clause, and German would
+                    not hang it off the end the way English does. */}
                 <p className="text-muted-foreground mt-1 text-sm">
-                  Correct what this document says. The uploaded file itself isn't changed
                   {editing.doc.status === "valid"
-                    ? " — because procurement already approved these details, the document goes back for review."
-                    : "."}
+                    ? t(
+                        "Correct what this document says. The uploaded file itself isn't changed — because procurement already approved these details, the document goes back for review."
+                      )
+                    : t("Correct what this document says. The uploaded file itself isn't changed.")}
                 </p>
               </div>
               {error && <p className="text-sm text-destructive">{error}</p>}
@@ -550,8 +558,8 @@ export function ProspectOnboarding({
                       <Button
                         variant="outline"
                         size="icon-sm"
-                        title="Edit details"
-                        aria-label={`Edit the details of ${r.name}`}
+                        title={t("Edit details")}
+                        aria-label={t("Edit the details of {document}", { document: t(r.name) })}
                         onClick={() => startEdit(def.key)}
                       >
                         <Pencil className="w-3.5 h-3.5" />
@@ -559,8 +567,8 @@ export function ProspectOnboarding({
                       <Button
                         variant="destructive"
                         size="icon-sm"
-                        title="Delete document"
-                        aria-label={`Delete ${r.name}`}
+                        title={t("Delete document")}
+                        aria-label={t("Delete {document}", { document: t(r.name) })}
                         onClick={() => setConfirmDelete(live)}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -786,7 +794,7 @@ function WelcomeStep({
         <div
           className="mt-3 max-h-64 overflow-y-auto rounded-lg border border-border bg-secondary/30 p-3 space-y-3"
           tabIndex={0}
-          aria-label="Terms and Conditions"
+          aria-label={t("Terms and Conditions")}
         >
           {TERMS_SECTIONS.map((sec) => (
             <div key={sec.heading}>
@@ -1048,31 +1056,36 @@ function UploadRow({
 
 /* ── Step 5: Done ─────────────────────────────────────────────────────── */
 function DoneStep() {
+  const { t } = useI18n();
   return (
     <section className="text-center pt-6">
       <div className="w-12 h-12 rounded-full bg-success-soft mx-auto flex items-center justify-center">
         <CheckCircle2 className="w-6 h-6 text-success" />
       </div>
-      <h1 className="text-2xl font-bold mt-4">You're all done!</h1>
+      <h1 className="text-2xl font-bold mt-4">{t("You're all done!")}</h1>
       <p className="text-muted-foreground mt-2 text-sm max-w-md mx-auto">
-        Your profile and all required documents have been submitted. Sabine Müller at Lynk will now complete
-        the qualification review. You'll receive an email once a decision has been made.
+        {t(
+          "Your profile and all required documents have been submitted. {manager} at Lynk will now complete the qualification review. You'll receive an email once a decision has been made.",
+          { manager: PROCUREMENT_MANAGER }
+        )}
       </p>
 
       <Card className="rounded-2xl border border-border ring-0 shadow-none text-left mt-6 [--card-spacing:1.25rem] px-(--card-spacing)">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">
-          What happens next
+          {t("What happens next")}
         </p>
         <ol className="space-y-2">
           {[
-            "Procurement team reviews your qualification score",
-            "You'll be notified by email of the outcome",
-            `If approved, ${PRINCIPAL} will send you the main contract and pricing catalogues to review and sign`,
-            "Signing the contracts activates your supplier account",
-          ].map((t, i) => (
+            t("Procurement team reviews your qualification score"),
+            t("You'll be notified by email of the outcome"),
+            t("If approved, {principal} will send you the main contract and pricing catalogues to review and sign", {
+              principal: PRINCIPAL,
+            }),
+            t("Signing the contracts activates your supplier account"),
+          ].map((line, i) => (
             <li key={i} className="flex gap-2 text-sm">
               <span className="text-primary font-semibold">{i + 1}</span>
-              <span className="text-muted-foreground">{t}</span>
+              <span className="text-muted-foreground">{line}</span>
             </li>
           ))}
         </ol>
@@ -1081,7 +1094,7 @@ function DoneStep() {
       <div className="mt-4 flex items-start gap-2 rounded-lg border border-border bg-accent/5 p-3 text-left">
         <ShieldCheck className="w-4 h-4 text-accent shrink-0 mt-0.5" />
         <p className="text-xs text-muted-foreground">
-          Your data is protected under GDPR. You can request deletion at any time.
+          {t("Your data is protected under GDPR. You can request deletion at any time.")}
         </p>
       </div>
     </section>
@@ -1172,9 +1185,9 @@ function ContractsStep({
                     </span>
                   </span>
                   {rowSigned ? (
-                    <CheckCircle2 className="w-4 h-4 text-success-ink shrink-0 mt-0.5" aria-label="Signed" />
+                    <CheckCircle2 className="w-4 h-4 text-success-ink shrink-0 mt-0.5" aria-label={t("Signed")} />
                   ) : (
-                    <span className="mt-1.5 w-2 h-2 rounded-full bg-warning shrink-0" aria-label="Awaiting signature" />
+                    <span className="mt-1.5 w-2 h-2 rounded-full bg-warning shrink-0" aria-label={t("Awaiting signature")} />
                   )}
                 </button>
               );

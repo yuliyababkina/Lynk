@@ -37,6 +37,7 @@ import {
   type ProspectDecision,
 } from "./db";
 import { isSupabaseConfigured } from "./supabase";
+import { useI18n } from "./i18n";
 import { PRINCIPAL_COMPANY, PROCUREMENT_MANAGER, PROCUREMENT_MANAGER_ROLE } from "./principal";
 import { PRINCIPAL_ID } from "../data";
 import type {
@@ -167,6 +168,7 @@ interface LynkDataValue extends LynkDataset {
 const LynkDataCtx = createContext<LynkDataValue | null>(null);
 
 export function LynkDataProvider({ children }: { children: ReactNode }) {
+  const { t } = useI18n();
   const [data, setData] = useState<LynkDataset | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -966,11 +968,11 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
       <div className="flex h-screen w-screen items-center justify-center bg-background text-foreground">
         {error ? (
           <div className="text-center max-w-sm">
-            <div className="font-semibold mb-1">Couldn't load Lynk data</div>
+            <div className="font-semibold mb-1">{t("Couldn't load Lynk data")}</div>
             <div className="text-sm text-muted-foreground">{error}</div>
           </div>
         ) : (
-          <div className="text-sm text-muted-foreground">Loading Lynk…</div>
+          <div className="text-sm text-muted-foreground">{t("Loading Lynk…")}</div>
         )}
       </div>
     );

@@ -3,6 +3,7 @@ import { Loader2, FileText } from "lucide-react";
 import * as pdfjsLib from "pdfjs-dist";
 import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
 
@@ -25,6 +26,7 @@ export function PdfCanvas({
    * so the surrounding chrome can show "1 of 7 pages". */
   onPageInfo?: (info: { current: number; total: number }) => void;
 }) {
+  const { t } = useI18n();
   const pagesRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
@@ -117,14 +119,14 @@ export function PdfCanvas({
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground gap-2">
           <Loader2 size={16} className="animate-spin" />
-          Loading document…
+          {t("Loading document…")}
         </div>
       )}
       {error && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
-          <span>Couldn't render the preview.</span>
+          <span>{t("Couldn't render the preview.")}</span>
           <a href={fileUrl} target="_blank" rel="noreferrer" className="text-accent hover:underline">
-            Open in a new tab
+            {t("Open in a new tab")}
           </a>
         </div>
       )}

@@ -254,7 +254,7 @@ export function Dashboard({
         <TaskGroupCard
           className="mt-4"
           icon={<CircleCheck size={17} strokeWidth={2.25} className="text-success" />}
-          label="Resolved"
+          label={tr("Resolved")}
           count={resolvedFiltered.length}
         >
           {resolvedVisible.map((t) => {

@@ -356,6 +356,7 @@ function DocumentsReviewStep({
   onBack: () => void;
   onNext: () => void;
 }) {
+  const { t } = useI18n();
   const selected = rows.find((r) => r.key === selectedKey) ?? rows[0];
   const idx = selected ? rows.findIndex((r) => r.key === selected.key) : -1;
   const goPrev = () => idx > 0 && onSelect(rows[idx - 1].key);
@@ -405,9 +406,9 @@ function DocumentsReviewStep({
   return (
     <div>
       <div className="mb-4">
-        <h2 className="text-lg font-semibold">Uploaded documents</h2>
+        <h2 className="text-lg font-semibold">{t("Uploaded documents")}</h2>
         <p className="text-sm text-muted-foreground mt-0.5">
-          Review each document — open the preview, then approve or decline with a comment.
+          {t("Review each document — open the preview, then approve or decline with a comment.")}
         </p>
       </div>
 
@@ -444,25 +445,25 @@ function DocumentsReviewStep({
             <div className="w-full flex flex-col border border-border rounded-xl overflow-hidden bg-card">
               <div className="px-4 py-2.5 border-b border-border flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                <p className="text-sm font-semibold truncate">{selected.name}</p>
-                <p className="text-xs text-muted-foreground">{selected.category}</p>
+                <p className="text-sm font-semibold truncate">{t(selected.name)}</p>
+                <p className="text-xs text-muted-foreground">{t(selected.category)}</p>
                 {selected.doc && info && (
                   <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 mt-2 text-xs">
-                    <dt className="text-muted-foreground">Document type</dt>
+                    <dt className="text-muted-foreground">{t("Document type")}</dt>
                     <dd>
                       {info.documentType || "—"}
                       {info.fromFile.type && <FromFileHint />}
                     </dd>
-                    <dt className="text-muted-foreground">Issued by</dt>
+                    <dt className="text-muted-foreground">{t("Issued by")}</dt>
                     <dd>
                       {info.issuingInstitution || "—"}
                       {info.fromFile.issuer && <FromFileHint />}
                     </dd>
-                    <dt className="text-muted-foreground">Validity</dt>
+                    <dt className="text-muted-foreground">{t("Validity")}</dt>
                     <dd>
                       {info.doesNotExpire ? (
                         <span className="inline-flex items-center gap-1.5 text-success-ink">
-                          <ShieldCheck className="w-3 h-3" /> This certificate does not expire
+                          <ShieldCheck className="w-3 h-3" /> {t("This certificate does not expire")}
                         </span>
                       ) : info.expiryDate ? (
                         `Expires ${info.expiryDate}`
@@ -517,8 +518,14 @@ function DocumentsReviewStep({
                     {/* Boundary buttons are hidden, not disabled — works for any
                         number of documents, including a single one. */}
                     {idx > 0 ? (
-                      <Button variant="outline" size="sm" className="shrink-0" title="Previous document" onClick={goPrev}>
-                        <ChevronLeft className="w-4 h-4" /> Previous
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="shrink-0"
+                        title={t("Previous document")}
+                        onClick={goPrev}
+                      >
+                        <ChevronLeft className="w-4 h-4" /> {t("Previous")}
                       </Button>
                     ) : (
                       <span />
@@ -543,10 +550,10 @@ function DocumentsReviewStep({
                           variant={selected.doc?.status === "valid" ? "default" : "outline"}
                           size="sm"
                           className="shrink-0"
-                          title="Next document"
+                          title={t("Next document")}
                           onClick={goNext}
                         >
-                          Next <ChevronRight className="w-4 h-4" />
+                          {t("Next")} <ChevronRight className="w-4 h-4" />
                         </Button>
                       )}
                     </div>
@@ -664,12 +671,15 @@ function DocActionBar({
 }
 
 /* ── Building blocks ─────────────────────────────────────────────────────── */
+/* Title, subtitle and row label arrive as the English source; these two
+   translate them, so each call site stays a plain string. */
 function StepShell({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
+  const { t } = useI18n();
   return (
     <Card className="rounded-2xl border border-border ring-0 shadow-none [--card-spacing:1.5rem] px-(--card-spacing)">
       <div className="mb-4">
-        <h2 className="text-lg font-semibold">{title}</h2>
-        <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
+        <h2 className="text-lg font-semibold">{t(title)}</h2>
+        <p className="text-sm text-muted-foreground mt-0.5">{t(subtitle)}</p>
       </div>
       {children}
     </Card>
@@ -677,11 +687,12 @@ function StepShell({ title, subtitle, children }: { title: string; subtitle: str
 }
 
 function Row({ icon, label, value }: { icon?: React.ReactNode; label: string; value: string }) {
+  const { t } = useI18n();
   return (
     <div className="flex items-baseline justify-between gap-4 border-b border-border/60 pb-2 last:border-0">
       <dt className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0">
         {icon}
-        {label}
+        {t(label)}
       </dt>
       <dd className="text-sm text-right">{value}</dd>
     </div>
@@ -702,6 +713,7 @@ function SectionReviewControl({
   fixing?: boolean;
   onFixingChange?: (v: boolean) => void;
 }) {
+  const { t } = useI18n();
   const [localFixing, setLocalFixing] = useState(false);
   const [draft, setDraft] = useState("");
 
@@ -717,7 +729,7 @@ function SectionReviewControl({
     if (section.status === "confirmed") {
       return (
         <div className="mt-5 flex items-center gap-2 rounded-lg border border-success/30 bg-success-soft/40 px-3 py-2 text-sm text-success-ink">
-          <CheckCircle2 className="w-4 h-4 shrink-0" /> Verified and accepted
+          <CheckCircle2 className="w-4 h-4 shrink-0" /> {t("Verified and accepted")}
         </div>
       );
     }
@@ -725,7 +737,7 @@ function SectionReviewControl({
       return (
         <div className="mt-5 rounded-lg border border-warning/40 bg-warning-soft/40 px-3 py-2.5 text-sm text-warning-ink">
           <span className="flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 shrink-0" /> Fix requested
+            <AlertTriangle className="w-4 h-4 shrink-0" /> {t("Fix requested")}
           </span>
           {section.comment && <p className="text-xs text-warning-ink/90 mt-1">“{section.comment}”</p>}
         </div>
@@ -738,10 +750,10 @@ function SectionReviewControl({
     return (
       <div className="mt-5 flex items-center justify-between rounded-lg border border-success/30 bg-success-soft/40 px-3 py-2">
         <span className="flex items-center gap-2 text-sm text-success-ink">
-          <CheckCircle2 className="w-4 h-4" /> Section confirmed
+          <CheckCircle2 className="w-4 h-4" /> {t("Section confirmed")}
         </span>
         <Button variant="ghost" size="xs" onClick={() => onChange({ status: "pending", comment: "" })}>
-          Undo
+          {t("Undo")}
         </Button>
       </div>
     );
@@ -752,10 +764,10 @@ function SectionReviewControl({
       <div className="mt-5 rounded-lg border border-warning/40 bg-warning-soft/40 px-3 py-2.5">
         <div className="flex items-center justify-between">
           <span className="flex items-center gap-2 text-sm text-warning-ink">
-            <AlertTriangle className="w-4 h-4" /> Fix requested
+            <AlertTriangle className="w-4 h-4" /> {t("Fix requested")}
           </span>
           <Button variant="ghost" size="xs" onClick={() => onChange({ status: "pending", comment: "" })}>
-            Undo
+            {t("Undo")}
           </Button>
         </div>
         {section.comment && <p className="text-xs text-warning-ink/90 mt-1">“{section.comment}”</p>}
@@ -771,12 +783,12 @@ function SectionReviewControl({
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           rows={3}
-          placeholder="What does the supplier need to fix in this section?"
+          placeholder={t("What does the supplier need to fix in this section?")}
           className="w-full rounded-lg border border-border bg-background p-2 text-sm resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => setFixing(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             variant="default"
@@ -787,7 +799,7 @@ function SectionReviewControl({
               setFixing(false);
             }}
           >
-            Save comment
+            {t("Save comment")}
           </Button>
         </div>
       </div>
@@ -797,10 +809,10 @@ function SectionReviewControl({
   return (
     <div className="mt-5 flex gap-2">
       <Button variant="success" size="sm" className="flex-1" onClick={() => onChange({ status: "confirmed", comment: "" })}>
-        <CheckCircle2 className="w-4 h-4" /> Confirm section
+        <CheckCircle2 className="w-4 h-4" /> {t("Confirm section")}
       </Button>
       <Button variant="outline" size="sm" className="flex-1" onClick={() => setFixing(true)}>
-        Request a fix / comment
+        {t("Request a fix / comment")}
       </Button>
     </div>
   );
@@ -990,10 +1002,21 @@ function DecisionStep({
       {isRejected ? (
         resetting ? (
           <div className="space-y-2">
+            {/* Split on the slot so German can place the emphasised status
+                where its own grammar needs it. */}
             <div className="rounded-lg border border-border bg-secondary/40 p-3 text-xs text-muted-foreground">
-              This clears the submitted application and returns the case to{" "}
-              <span className="font-medium text-foreground">Invited</span>. The existing magic link keeps working,
-              so the prospect can start over.
+              {(() => {
+                const [before, after = ""] = t(
+                  "This clears the submitted application and returns the case to {status}. The existing magic link keeps working, so the prospect can start over."
+                ).split("{status}");
+                return (
+                  <>
+                    {before}
+                    <span className="font-medium text-foreground">{t("Invited")}</span>
+                    {after}
+                  </>
+                );
+              })()}
             </div>
             <div className="flex gap-2">
               <Button variant="outline" className="flex-1" disabled={busy} onClick={() => setResetting(false)}>
@@ -1018,7 +1041,7 @@ function DecisionStep({
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             rows={3}
-            placeholder="Reason for rejection (shared with the supplier)"
+            placeholder={t("Reason for rejection (shared with the supplier)")}
             className="w-full rounded-lg border border-border bg-background p-2 text-sm resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
           <div className="flex gap-2">
@@ -1082,6 +1105,7 @@ function SummaryItem({
   meta: { variant: string; Icon: LucideIcon; iconClass: string; label: string; note?: string };
   onEdit?: () => void;
 }) {
+  const { t } = useI18n();
   return (
     <div className="flex items-start justify-between gap-3 px-3 py-2.5">
       <div className="min-w-0">
@@ -1091,8 +1115,8 @@ function SummaryItem({
           {onEdit && (
             <button
               onClick={onEdit}
-              title="Review / edit"
-              aria-label={`Edit ${label}`}
+              title={t("Review / edit")}
+              aria-label={t("Edit {section}", { section: t(label) })}
               className="text-muted-foreground hover:text-foreground shrink-0"
             >
               <Pencil className="w-3.5 h-3.5" />

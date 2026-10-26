@@ -9,6 +9,7 @@ import { actionResult } from "@/lib/ticket-actions";
 import { onboardingSupplierId, relationshipId } from "@/lib/db";
 import { NotificationBell } from "@/components/yarowa/notification-bell";
 import { PRINCIPAL_ID } from "@/data";
+import { useI18n } from "@/lib/i18n";
 import { useLynkData } from "./lib/LynkDataContext";
 import { Landing } from "./pages/Landing";
 import type { Ticket, SupplierDoc, Contract, ChatContext } from "./types";
@@ -89,6 +90,7 @@ export default function App() {
     unreadRelationships,
     messagesFor,
   } = useLynkData();
+  const { t } = useI18n();
 
   // Remembers a token we already accepted, so a data refresh can't revoke it.
   const resolvedInviteRef = useRef<string | null>(null);
@@ -275,9 +277,9 @@ export default function App() {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background text-foreground">
         <div className="text-center max-w-sm">
-          <div className="font-semibold mb-1">This invitation link isn't valid</div>
+          <div className="font-semibold mb-1">{t("This invitation link isn't valid")}</div>
           <div className="text-sm text-muted-foreground">
-            It may have expired or already been used. Contact the company that invited you for a new link.
+            {t("It may have expired or already been used. Contact the company that invited you for a new link.")}
           </div>
         </div>
       </div>

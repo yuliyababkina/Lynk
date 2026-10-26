@@ -3,6 +3,7 @@ import { X, ExternalLink, Loader2 } from "lucide-react";
 import * as pdfjsLib from "pdfjs-dist";
 import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import type { SupplierDoc } from "@/types";
+import { useI18n } from "@/lib/i18n";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
 
@@ -16,6 +17,7 @@ const SCALE_100 = 96 / 72;
  * Accept/Reject flow lives in DocumentLightbox instead.
  */
 export function DocumentViewer({ doc, onClose }: { doc: SupplierDoc; onClose: () => void }) {
+  const { t } = useI18n();
   const pagesRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -105,14 +107,14 @@ export function DocumentViewer({ doc, onClose }: { doc: SupplierDoc; onClose: ()
             target="_blank"
             rel="noreferrer"
             className="text-muted-foreground hover:text-foreground shrink-0"
-            aria-label="Open in new tab"
-            title="Open in new tab"
+            aria-label={t("Open in new tab")}
+            title={t("Open in new tab")}
           >
             <ExternalLink size={16} />
           </a>
           <button
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t("Close")}
             className="text-muted-foreground hover:text-foreground shrink-0"
           >
             <X size={18} />
@@ -123,14 +125,14 @@ export function DocumentViewer({ doc, onClose }: { doc: SupplierDoc; onClose: ()
           {loading && (
             <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground gap-2">
               <Loader2 size={16} className="animate-spin" />
-              Loading document…
+              {t("Loading document…")}
             </div>
           )}
           {error && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
-              <span>Couldn't render the preview.</span>
+              <span>{t("Couldn't render the preview.")}</span>
               <a href={doc.fileUrl} target="_blank" rel="noreferrer" className="text-accent hover:underline">
-                Open in a new tab
+                {t("Open in a new tab")}
               </a>
             </div>
           )}

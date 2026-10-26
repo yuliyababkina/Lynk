@@ -150,11 +150,11 @@ export function TicketDrawer({
             </div>
             <div className="grid grid-cols-2 gap-2 pt-1">
               <div>
-                <div className="text-muted-foreground">End date</div>
+                <div className="text-muted-foreground">{t("End date")}</div>
                 <div className="font-medium">{contract.endDate}</div>
               </div>
               <div>
-                <div className="text-muted-foreground">Renewal by</div>
+                <div className="text-muted-foreground">{t("Renewal by")}</div>
                 <div className="font-medium">{contract.renewalBy}</div>
               </div>
             </div>

@@ -33,14 +33,14 @@ export function TopHeader({
           <button
             onClick={onSwitchAccount}
             className="mx-3 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-            title="Switch account"
+            title={t("Switch account")}
           >
             {t("Switch")}
           </button>
           <button
             onClick={onSwitchAccount}
             className="w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs font-semibold flex items-center justify-center cursor-pointer hover:opacity-80"
-            title="Switch account"
+            title={t("Switch account")}
           >
             {accountInitials}
           </button>
