@@ -1,5 +1,6 @@
 import { Upload, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n";
 
 /*
  * Drag-and-drop file upload card for the catalogue wizard. When `loading` is
@@ -20,11 +21,12 @@ export function FileUploadCard({
   loadingLabel?: string;
   loadingFilename?: string;
 }) {
+  const { t } = useI18n();
   if (loading) {
     return (
       <div className="border border-border rounded-2xl py-20 flex flex-col items-center justify-center bg-card">
         <Loader2 size={28} className="animate-spin text-muted-foreground mb-4" />
-        <p className="text-sm font-medium mb-1">{loadingLabel}</p>
+        <p className="text-sm font-medium mb-1">{t(loadingLabel)}</p>
         {loadingFilename && <p className="text-xs text-muted-foreground">{loadingFilename}</p>}
       </div>
     );
@@ -35,9 +37,9 @@ export function FileUploadCard({
       <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center mb-3">
         <Upload size={22} className="text-muted-foreground" />
       </div>
-      <p className="text-sm text-muted-foreground mb-4 max-w-xs">{description}</p>
+      <p className="text-sm text-muted-foreground mb-4 max-w-xs">{t(description)}</p>
       <Button onClick={onUpload}>
-        <Upload size={14} /> {buttonLabel}
+        <Upload size={14} /> {t(buttonLabel)}
       </Button>
     </div>
   );

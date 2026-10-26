@@ -102,6 +102,40 @@ export function translateAgeLabel(label: string, t: Translate): string {
   return t(trimmed);
 }
 
+/*
+ * A compliance document's status note is written from the same small set of
+ * sentences, some with the supplier's name in them. Same reasoning as the
+ * titles above: templated backend prose, so it matches a pattern rather than
+ * going through the dictionary whole.
+ */
+const STATUS_NOTE_PATTERNS: TitlePattern[] = [
+  {
+    re: /^(.+) cannot be assigned new work orders until this document is renewed and accepted\. A renewal has been uploaded and is awaiting your review\.$/,
+    key: "{supplier} cannot be assigned new work orders until this document is renewed and accepted. A renewal has been uploaded and is awaiting your review.",
+    vars: (m) => ({ supplier: m[1] }),
+  },
+  {
+    re: /^(.+) cannot be assigned new work orders until this document is renewed and accepted\.$/,
+    key: "{supplier} cannot be assigned new work orders until this document is renewed and accepted.",
+    vars: (m) => ({ supplier: m[1] }),
+  },
+  {
+    re: /^The submitted declaration was rejected during review\. (.+) has been asked to correct and resubmit the document\.$/,
+    key: "The submitted declaration was rejected during review. {supplier} has been asked to correct and resubmit the document.",
+    vars: (m) => ({ supplier: m[1] }),
+  },
+];
+
+/** Translate a document's status note, falling back to the original. */
+export function translateStatusNote(note: string, t: Translate): string {
+  for (const p of STATUS_NOTE_PATTERNS) {
+    const m = note.match(p.re);
+    if (m) return t(p.key, p.vars(m, t));
+  }
+  // Notes with no supplier name in them are plain dictionary entries.
+  return t(note);
+}
+
 /**
  * Translate a templated service-catalogue name ("Catalog 3 Piping"), falling
  * back to the original. The trade part goes through the dictionary so it

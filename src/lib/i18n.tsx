@@ -716,9 +716,12 @@ const DE: Record<string, string> = {
   // Pages within the open document
   "{current} of {total} page": "Seite {current} von {total}",
   "{current} of {total} pages": "Seite {current} von {total}",
-  // Moving between documents (distinct from the wizard's Back/Continue)
-  Previous: "Vorheriges",
-  Next: "Nächstes",
+  // Moving between documents. The buttons borrow the generic words, the way
+  // the English does — the wizard's own footer says "Next" too, and one key
+  // cannot hold both "Nächstes (Dokument)" and "Weiter". The tooltips carry
+  // the precise wording.
+  Previous: "Zurück",
+  Next: "Weiter",
   "Previous document": "Vorheriges Dokument",
   "Next document": "Nächstes Dokument",
   "Not yet uploaded.": "Noch nicht hochgeladen.",
@@ -744,6 +747,139 @@ const DE: Record<string, string> = {
   // ("Added" is already defined with the data-governance change log.)
   Changed: "Geändert",
   Removed: "Entfernt",
+
+  // ── Compliance drawer ───────────────────────────────────────────────────
+  // (The status badges, "Expired …d ago" and "…d remaining" are defined above
+  // with the Compliance Monitoring page.)
+  "Expiry date": "Ablaufdatum",
+  "Days remaining": "Verbleibende Tage",
+  "Auto-notified": "Automatisch benachrichtigt",
+  "View attached document": "Angehängtes Dokument ansehen",
+  "Document history": "Dokumentenverlauf",
+  // Status callout headings
+  "Supplier blocked from work orders": "Lieferant für Aufträge gesperrt",
+  "Resubmission required": "Erneute Einreichung erforderlich",
+  "Awaiting your review": "Wartet auf Ihre Prüfung",
+  "Expiring soon": "Läuft bald ab",
+  "30-day auto-notification sent": "30-Tage-Benachrichtigung gesendet",
+  "Document valid": "Dokument gültig",
+  // Status notes. The three with a supplier name in them are matched as
+  // patterns in ticket-i18n.ts, like the ticket titles.
+  "{supplier} cannot be assigned new work orders until this document is renewed and accepted. A renewal has been uploaded and is awaiting your review.":
+    "{supplier} können keine neuen Aufträge zugewiesen werden, bis dieses Dokument verlängert und angenommen wurde. Eine Verlängerung wurde hochgeladen und wartet auf Ihre Prüfung.",
+  "{supplier} cannot be assigned new work orders until this document is renewed and accepted.":
+    "{supplier} können keine neuen Aufträge zugewiesen werden, bis dieses Dokument verlängert und angenommen wurde.",
+  "The submitted declaration was rejected during review. {supplier} has been asked to correct and resubmit the document.":
+    "Die eingereichte Erklärung wurde bei der Prüfung abgelehnt. {supplier} wurde gebeten, das Dokument zu korrigieren und erneut einzureichen.",
+  "A renewed certificate has been uploaded ahead of expiry and is awaiting your review before it replaces the current version.":
+    "Ein erneuertes Zertifikat wurde vor Ablauf hochgeladen und wartet auf Ihre Prüfung, bevor es die aktuelle Version ersetzt.",
+  "A renewed licence has been uploaded and is awaiting your review before it replaces the current version.":
+    "Eine erneuerte Lizenz wurde hochgeladen und wartet auf Ihre Prüfung, bevor sie die aktuelle Version ersetzt.",
+  "This document expires within 30 days. The 30-day auto-notification has been sent to the supplier portal.":
+    "Dieses Dokument läuft innerhalb von 30 Tagen ab. Die 30-Tage-Benachrichtigung wurde an das Lieferantenportal gesendet.",
+  "This document expires within 60 days. The supplier has been notified to upload a renewal.":
+    "Dieses Dokument läuft innerhalb von 60 Tagen ab. Der Lieferant wurde aufgefordert, eine Verlängerung hochzuladen.",
+  "This document is valid and no action is required.":
+    "Dieses Dokument ist gültig, es ist keine Handlung erforderlich.",
+  // Recommendation banner
+  "60-day window — action recommended": "60-Tage-Fenster — Handlung empfohlen",
+  "Send a manual reminder now to give the supplier time to prepare their renewal.":
+    "Senden Sie jetzt eine manuelle Erinnerung, damit der Lieferant Zeit für die Verlängerung hat.",
+  "30-day window — action recommended": "30-Tage-Fenster — Handlung empfohlen",
+  "The 30-day auto-notification has been sent. A manual reminder can prompt a faster response.":
+    "Die 30-Tage-Benachrichtigung wurde gesendet. Eine manuelle Erinnerung kann eine schnellere Antwort bewirken.",
+  "Expired — supplier blocked": "Abgelaufen — Lieferant gesperrt",
+  "This document has expired and the supplier is blocked from new work orders until a renewal is uploaded and accepted.":
+    "Dieses Dokument ist abgelaufen und der Lieferant ist für neue Aufträge gesperrt, bis eine Verlängerung hochgeladen und angenommen wurde.",
+  "The last upload was rejected in review. Ask the supplier to correct and re-submit the document.":
+    "Der letzte Upload wurde bei der Prüfung abgelehnt. Bitten Sie den Lieferanten, das Dokument zu korrigieren und erneut einzureichen.",
+  // Action cards + their toasts
+  "Send Manual Reminder": "Manuelle Erinnerung senden",
+  "Notify {supplier} to upload their renewal":
+    "{supplier} auffordern, die Verlängerung hochzuladen",
+  "Ask {supplier} to correct and re-upload":
+    "{supplier} bitten, zu korrigieren und erneut hochzuladen",
+  "Escalate to Manager": "An die Leitung eskalieren",
+  "Flag this blocked supplier for management review":
+    "Diesen gesperrten Lieferanten zur Prüfung durch die Leitung melden",
+  "Revoke Supplier Access": "Lieferantenzugang entziehen",
+  "Block immediately — re-enable when document is renewed":
+    "Sofort sperren — nach Verlängerung des Dokuments wieder freigeben",
+  "{supplier} was reminded to renew {document}.":
+    "{supplier} wurde an die Verlängerung von {document} erinnert.",
+  "Supplier access revoked": "Lieferantenzugang entzogen",
+  "{supplier} is blocked from new work orders until {document} is renewed.":
+    "{supplier} ist für neue Aufträge gesperrt, bis {document} verlängert wurde.",
+  "Escalated to manager": "An die Leitung eskaliert",
+  "{document} — {supplier} flagged for review.":
+    "{document} — {supplier} zur Prüfung gemeldet.",
+  // Document-history timeline (the fixed set the backend writes)
+  "Document verified — valid": "Dokument geprüft — gültig",
+  "60-day expiry warning triggered": "60-Tage-Ablaufwarnung ausgelöst",
+  "30-day auto-notification sent to supplier portal":
+    "30-Tage-Benachrichtigung an das Lieferantenportal gesendet",
+  "Document expired — supplier blocked from work orders":
+    "Dokument abgelaufen — Lieferant für Aufträge gesperrt",
+  "Document uploaded by supplier": "Dokument vom Lieferanten hochgeladen",
+  "Renewal document uploaded by supplier":
+    "Verlängerungsdokument vom Lieferanten hochgeladen",
+  "Manual reminder sent": "Manuelle Erinnerung gesendet",
+  "Rejected — incomplete smelter list": "Abgelehnt — unvollständige Schmelzhüttenliste",
+  "Rejected — missing signature page": "Abgelehnt — fehlende Unterschriftenseite",
+
+  // ── Service-catalogue wizard ────────────────────────────────────────────
+  "Cancel and go back": "Abbrechen und zurück",
+  "Create a Service catalogue": "Leistungskatalog erstellen",
+  "Upload new version — {catalogue}": "Neue Version hochladen — {catalogue}",
+  // Stepper ("Upload" and "Details" are defined above)
+  Preview: "Vorschau",
+  Distribution: "Verteilung",
+  // Upload step
+  "Drag an XLS file here, or choose one from your computer.":
+    "Ziehen Sie eine XLS-Datei hierher oder wählen Sie eine von Ihrem Computer.",
+  "Upload the updated price list. It will be compared against the current active version.":
+    "Laden Sie die aktualisierte Preisliste hoch. Sie wird mit der aktuellen aktiven Version verglichen.",
+  "Upload updated file": "Aktualisierte Datei hochladen",
+  "Parsing file…": "Datei wird eingelesen…",
+  "Comparing with current version…": "Vergleich mit der aktuellen Version…",
+  // Preview step summary tiles
+  "Rows added": "Zeilen hinzugefügt",
+  "Rows changed": "Zeilen geändert",
+  "Rows removed": "Zeilen entfernt",
+  "Total rows": "Zeilen gesamt",
+  Categories: "Kategorien",
+  "Trades detected": "Erkannte Gewerke",
+  "Regions detected": "Erkannte Regionen",
+  // Details step
+  Name: "Name",
+  "e.g. Catalog 5 Painting South": "z. B. Katalog 5 Malerarbeiten Süd",
+  "New version": "Neue Version",
+  Region: "Region",
+  "Validity period": "Gültigkeitszeitraum",
+  "Supplier response model": "Antwortmodell der Lieferanten",
+  "Actively agree": "Aktiv zustimmen",
+  "Suppliers must explicitly confirm the catalogue before it applies to them.":
+    "Lieferanten müssen den Katalog ausdrücklich bestätigen, bevor er für sie gilt.",
+  "Actively disagree": "Aktiv widersprechen",
+  "Silence counts as acceptance; suppliers must explicitly opt out.":
+    "Schweigen gilt als Zustimmung; Lieferanten müssen ausdrücklich widersprechen.",
+  // Distribution step
+  "Suppliers matched automatically by {region} + {trade}. Untick any you want to exclude.":
+    "Lieferanten wurden automatisch nach {region} + {trade} zugeordnet. Entfernen Sie den Haken bei allen, die Sie ausschließen möchten.",
+  "Suppliers linked to this catalogue will be notified to re-confirm {version}.":
+    "Mit diesem Katalog verknüpfte Lieferanten werden aufgefordert, {version} erneut zu bestätigen.",
+  "the new version": "die neue Version",
+  "No matching suppliers": "Keine passenden Lieferanten",
+  "No suppliers match this catalogue's region and trade yet.":
+    "Noch keine Lieferanten passen zu Region und Gewerk dieses Katalogs.",
+  "Select all": "Alle auswählen",
+  "Deselect all": "Auswahl aufheben",
+  SUPPLIER: "LIEFERANT",
+  "Include {supplier}": "{supplier} einbeziehen",
+  // Wizard footer
+  "Save as draft": "Als Entwurf speichern",
+  "Publish & share with suppliers": "Veröffentlichen & mit Lieferanten teilen",
+  "Publish & notify suppliers": "Veröffentlichen & Lieferanten benachrichtigen",
 };
 
 const STORAGE_KEY = "lynk-lang";
