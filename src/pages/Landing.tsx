@@ -79,7 +79,7 @@ export function Landing({ onSelectRole }: LandingProps) {
             className="p-6 rounded-2xl cursor-pointer transition-all bg-card border border-border shadow-none hover:border-foreground/20 hover:shadow-md"
           >
             {/* Icon */}
-            <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xl mb-4 bg-success-soft">
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xl mb-4 bg-secondary-brand">
               {role.icon}
             </div>
 
@@ -87,7 +87,7 @@ export function Landing({ onSelectRole }: LandingProps) {
             <h2 className="text-lg font-semibold">{role.name}</h2>
 
             {/* Role pill */}
-            <Badge variant="success" className="mt-2">
+            <Badge variant="secondary" className="mt-2">
               {t(role.pill)}
             </Badge>
 

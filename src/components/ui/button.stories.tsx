@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { Plus } from "lucide-react";
 import { Button } from "./button";
 
 const meta = {
@@ -114,4 +115,30 @@ export const PrimaryStates: Story = {
       </div>
     );
   },
+};
+
+/**
+ * Corner radius — 4px, from `rounded-[4px]` on the component's base class in
+ * `button.tsx` rather than from the `--radius` scale. The same corner holds at
+ * every size and on the square icon buttons, where it is most visible.
+ */
+export const CornerRadius: Story = {
+  render: () => (
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-wrap items-center gap-2">
+        {(["xs", "sm", "default", "lg"] as const).map((size) => (
+          <Button key={size} size={size}>
+            Size {size}
+          </Button>
+        ))}
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        {(["icon-xs", "icon-sm", "icon", "icon-lg"] as const).map((size) => (
+          <Button key={size} size={size} variant="outline" aria-label={`Add (${size})`}>
+            <Plus />
+          </Button>
+        ))}
+      </div>
+    </div>
+  ),
 };
