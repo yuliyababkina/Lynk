@@ -41,7 +41,8 @@ const preview: Preview = {
           style: {
             background: "var(--background)",
             color: "var(--foreground)",
-            padding: "1.5rem",
+            // Full-screen stories (the platform shell) fill the canvas edge to edge.
+            padding: context.parameters.layout === "fullscreen" ? 0 : "1.5rem",
             minHeight: "100%",
           },
         },

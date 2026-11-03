@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { useI18n } from "@/lib/i18n";
 import type { View } from "@/App";
 
-const NAV: { id: View; label: string; icon: LucideIcon }[] = [
+export const NAV: { id: View; label: string; icon: LucideIcon }[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutGrid },
   { id: "suppliers", label: "Suppliers", icon: Users },
   { id: "data-governance", label: "Data Governance", icon: Shield },

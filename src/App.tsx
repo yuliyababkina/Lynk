@@ -1,5 +1,9 @@
 import { useState, useEffect, useMemo, useRef, lazy, Suspense } from "react";
-import { Sidebar } from "@/components/yarowa/sidebar";
+import { Sidebar, NAV as LYNK_NAV } from "@/components/yarowa/sidebar";
+import { Plus, ShieldCheck } from "lucide-react";
+import { SidebarProvider, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
+import { MfeSidebar } from "@/shell/MfeSidebar";
+import { Region } from "@/shell/inspector";
 import { ChatDock, useChatDock, type ChatConversation } from "@/components/yarowa/chat-dock";
 import { TopHeader } from "@/components/yarowa/top-header";
 import { TicketDrawer } from "@/components/yarowa/ticket-drawer";
@@ -68,9 +72,19 @@ const VIEW_LABEL: Record<View, string> = {
   "service-catalogue": "Service Catalogue",
 };
 
-export default function App() {
+export interface AppProps {
+  /**
+   * Running as a micro frontend inside the platform shell. The shell owns the
+   * header (app switcher, language, user), so Lynk drops its own account
+   * switcher and language toggle, skips the roles board and renders its inner
+   * menu with the shared MfeSidebar.
+   */
+  embedded?: boolean;
+}
+
+export default function App({ embedded = false }: AppProps = {}) {
   // Role/persona switcher
-  const [role, setRole] = useState<LandingRole | null>(null);
+  const [role, setRole] = useState<LandingRole | null>(embedded ? "pm" : null);
 
   // Real magic-link invitations land here as ?invite=<token>. Once the
   // onboarding cases are loaded we resolve the token to a specific prospect
@@ -376,20 +390,51 @@ export default function App() {
 
   // Render PM app for PM role
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-background text-foreground">
-      <Sidebar
-        view={view}
-        onNavigate={(v) => navigate(v)}
-        onInvite={() => setInviteOpen(true)}
-        badgeCounts={sidebarBadgeCounts}
-        collapsed={!sidebarOpen}
-        onToggleCollapse={() => setSidebarOpen((open) => !open)}
-      />
+    <div
+      className={
+        embedded
+          ? "flex h-full w-full overflow-hidden bg-background text-foreground"
+          : "flex h-screen w-screen overflow-hidden bg-background text-foreground"
+      }
+    >
+      {embedded ? (
+        <SidebarProvider className="h-full min-h-0 w-auto shrink-0">
+          <Region owner="mfe" label={t("inner menu")} className="h-full">
+            <MfeSidebar
+              appName="Supplier Management"
+              appIcon={ShieldCheck}
+              items={LYNK_NAV.map((n) => ({ ...n, badge: sidebarBadgeCounts[n.id] }))}
+              activeId={view === "supplier-profile" ? "suppliers" : view}
+              onSelect={(id) => navigate(id as View)}
+              footer={
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton onClick={() => setInviteOpen(true)}>
+                      <Plus />
+                      <span>{t("Invite Supplier")}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              }
+            />
+          </Region>
+        </SidebarProvider>
+      ) : (
+        <Sidebar
+          view={view}
+          onNavigate={(v) => navigate(v)}
+          onInvite={() => setInviteOpen(true)}
+          badgeCounts={sidebarBadgeCounts}
+          collapsed={!sidebarOpen}
+          onToggleCollapse={() => setSidebarOpen((open) => !open)}
+        />
+      )}
 
       <div className="flex-1 flex flex-col min-w-0 bg-sidebar">
         <TopHeader
           currentLabel={VIEW_LABEL[view]}
-          onSwitchAccount={handleSwitchAccount}
+          onSwitchAccount={embedded ? undefined : handleSwitchAccount}
+          showLanguage={!embedded}
           accountInitials="SM"
           trailing={
             <NotificationBell

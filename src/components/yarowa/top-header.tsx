@@ -9,6 +9,8 @@ export interface TopHeaderProps {
   leading?: ReactNode;
   /** Sits left of the language toggle — the notification bell goes here. */
   trailing?: ReactNode;
+  /** Off inside the platform shell, which owns the language switch. */
+  showLanguage?: boolean;
 }
 
 export function TopHeader({
@@ -17,6 +19,7 @@ export function TopHeader({
   accountInitials = "SM",
   leading,
   trailing,
+  showLanguage = true,
 }: TopHeaderProps) {
   const { t } = useI18n();
   return (
@@ -27,7 +30,7 @@ export function TopHeader({
       <span className="text-sm font-medium">{t(currentLabel)}</span>
       <div className="flex-1" />
       {trailing ? <div className="mr-3">{trailing}</div> : null}
-      <LanguageToggle />
+      {showLanguage ? <LanguageToggle /> : null}
       {onSwitchAccount ? (
         <>
           <button
