@@ -19,6 +19,19 @@ export default defineConfig([
     languageOptions: { ecmaVersion: 2020, globals: globals.browser },
   },
   {
+    // A leading underscore marks a name as deliberately unused (`_supplierId`,
+    // `{ change: _change, ...line }`), and a rest sibling is the idiom for
+    // "everything except these keys". typescript-eslint's default honours
+    // neither, which flags code that is already written this way.
+    files: ["**/*.{ts,tsx}"],
+    rules: {
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_", ignoreRestSiblings: true },
+      ],
+    },
+  },
+  {
     // Tooling files run in Node, not the browser.
     files: ["*.{ts,js}", ".storybook/**/*.{ts,tsx}"],
     languageOptions: { globals: globals.node },

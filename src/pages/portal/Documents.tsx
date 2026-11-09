@@ -1,15 +1,14 @@
 import { useRef, useState } from "react";
-import { FileText, Upload, Loader2, ExternalLink } from "lucide-react";
+import { Upload, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { RequestedUpdatePanel } from "@/components/yarowa/requested-update-panel";
 import { DocumentMetadataForm } from "@/components/yarowa/document-metadata-form";
 import { DocumentBrowser } from "@/components/yarowa/document-browser";
 import { useLynkData } from "@/lib/LynkDataContext";
 import { useI18n } from "@/lib/i18n";
 import { useDocumentUpload } from "@/lib/use-document-upload";
-import { docStatusMeta } from "@/lib/document-status";
 import { getPortalProfile } from "./portal-data";
 
 export interface PortalDocumentsProps {
@@ -47,7 +46,7 @@ export function PortalDocuments({ supplierId }: PortalDocumentsProps) {
             </p>
           </div>
           <div className="shrink-0">
-            <input
+            <Input
               ref={fileInputRef}
               type="file"
               accept="application/pdf"

@@ -5,7 +5,7 @@ export interface PortalOnboardingProps {
   supplierId: string;
 }
 
-export function PortalOnboarding({ supplierId }: PortalOnboardingProps) {
+export function PortalOnboarding({ supplierId: _supplierId }: PortalOnboardingProps) {
   const { t } = useI18n();
   return (
     <div className="p-6">
