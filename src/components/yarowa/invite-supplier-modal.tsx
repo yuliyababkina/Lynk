@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Mail, Building2, Tag, Search, ChevronRight, ChevronsUpDown, Check, X, Send,
   Link2, UserRoundCheck, Star, ShieldCheck,
@@ -10,6 +10,9 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/yarowa/toast";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
@@ -49,20 +52,14 @@ export function InviteSupplierModal({
   const [sending, setSending] = useState(false);
   const { t } = useI18n();
 
-  // Reset everything each time the modal is opened.
-  useEffect(() => {
-    if (open) {
-      setI(0); setCompany(""); setPicked(null); setDropdown(false);
-      setContact(""); setEmail(""); setTrades([]);
-      setSendWelcome(true); setRequireChecklist(true); setNote(""); setSending(false);
-    }
-  }, [open]);
+  // No reset effect: App mounts this only while the invite is open
+  // (`{inviteOpen && <InviteSupplierModal …/>}`), so each opening starts from
+  // the defaults above on a fresh mount.
 
   const match: InviteMatch = picked?.state ?? "new";
   const steps = stepsFor(match);
   const stepIndex = Math.min(i, steps.length - 1);
   const step = steps[stepIndex];
-  const isLast = stepIndex === steps.length - 1;
 
   const subtitle =
     match === "new"
@@ -203,9 +200,13 @@ export function InviteSupplierModal({
             <DialogDescription className="text-sm text-muted-foreground mt-0.5">{subtitle}</DialogDescription>
           </div>
           <DialogClose asChild>
-            <button className="shrink-0 text-muted-foreground hover:text-foreground" aria-label={t("Close")}>
-              <X size={18} />
-            </button>
+            <Button
+              variant="ghost"
+              className="h-auto shrink-0 border-0 p-0 text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
+              aria-label={t("Close")}
+            >
+              <X size={18} className="size-[18px]" />
+            </Button>
           </DialogClose>
         </div>
 
@@ -294,18 +295,22 @@ export function InviteSupplierModal({
           <div className="border-t border-border px-5 py-3 flex items-center justify-between">
             {stepIndex === 0 ? (
               <DialogClose asChild>
-                <button className="text-sm font-medium text-muted-foreground hover:text-foreground">
+                <Button
+                  variant="ghost"
+                  className="h-auto border-0 p-0 text-sm font-medium text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
+                >
                   {t("Cancel")}
-                </button>
+                </Button>
               </DialogClose>
             ) : (
-              <button
+              <Button
+                variant="ghost"
                 onClick={() => setI((n) => n - 1)}
-                className="inline-flex items-center gap-1 text-sm font-medium text-foreground hover:text-foreground"
+                className="h-auto gap-1 border-0 p-0 text-sm font-medium text-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
               >
-                <ChevronRight size={15} className="rotate-180" />
+                <ChevronRight size={15} className="size-[15px] rotate-180" />
                 {t("Back")}
-              </button>
+              </Button>
             )}
 
             {match === "connected" ? (
@@ -343,8 +348,9 @@ function SectionLabel({ icon: Icon, children }: { icon: typeof Mail; children: R
   );
 }
 
-const fieldCls =
-  "w-full rounded-md border border-border bg-card px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40";
+// Overrides that keep the compact field look on shadcn Input / Textarea.
+const fieldCls = "h-auto rounded-md border-border bg-card px-3 py-2 text-sm";
+const labelCls = "block text-sm font-medium leading-5 mb-1";
 
 function ContactStep(props: {
   company: string;
@@ -366,11 +372,11 @@ function ContactStep(props: {
     <div>
       <SectionLabel icon={Mail}>{t("Who are you inviting?")}</SectionLabel>
 
-      <label className="block text-sm font-medium mb-1">
+      <Label className={labelCls}>
         {t("Company name")}<span className="text-critical-ink">*</span>
-      </label>
+      </Label>
       <div className="relative">
-        <input
+        <Input
           className={cn(fieldCls, "pr-9")}
           placeholder={t("Search or enter company name…")}
           value={company}
@@ -383,16 +389,17 @@ function ContactStep(props: {
           <ul className="absolute z-10 mt-1 w-full rounded-md border border-border bg-popover shadow-lg overflow-hidden">
             {suggestions.map((c) => (
               <li key={c.name}>
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
                   onMouseDown={(e) => {
                     e.preventDefault();
                     onSelect(c);
                   }}
-                  className="w-full text-left px-3 py-2 text-sm hover:bg-secondary/60"
+                  className="flex h-auto w-full justify-start rounded-none border-0 px-3 py-2 text-left text-sm font-normal whitespace-normal hover:bg-secondary/60 dark:hover:bg-secondary/60"
                 >
                   {c.name}
-                </button>
+                </Button>
               </li>
             ))}
           </ul>
@@ -405,13 +412,13 @@ function ContactStep(props: {
       {/* New-company fields only */}
       {match === "new" && (
         <>
-          <label className="block text-sm font-medium mb-1 mt-4">{t("Contact person")}</label>
-          <input className={fieldCls} placeholder={t("Full name")} value={contact} onChange={(e) => setContact(e.target.value)} />
+          <Label className={`${labelCls} mt-4`}>{t("Contact person")}</Label>
+          <Input className={fieldCls} placeholder={t("Full name")} value={contact} onChange={(e) => setContact(e.target.value)} />
 
-          <label className="block text-sm font-medium mb-1 mt-4">
+          <Label className={`${labelCls} mt-4`}>
             {t("Email address")}<span className="text-critical-ink">*</span>
-          </label>
-          <input
+          </Label>
+          <Input
             className={fieldCls}
             placeholder="contact@company.com"
             value={email}
@@ -487,9 +494,9 @@ function DetailsStep({
   return (
     <div>
       <SectionLabel icon={Building2}>{t("What trades does this supplier cover?")}</SectionLabel>
-      <label className="block text-sm font-medium mb-1">
+      <Label className={labelCls}>
         {t("Trade")}<span className="text-critical-ink">*</span>
-      </label>
+      </Label>
 
       {/* Selected chips */}
       <div className="flex items-center gap-1.5 flex-wrap rounded-md border border-border bg-card px-2.5 py-2 min-h-9">
@@ -501,13 +508,14 @@ function DetailsStep({
           trades.map((trade) => (
             <span key={trade} className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
               {t(trade)}
-              <button
+              <Button
+                variant="ghost"
                 onClick={() => toggle(trade)}
-                className="text-muted-foreground hover:text-foreground"
+                className="h-auto border-0 p-0 text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
                 aria-label={t("Remove {trade}", { trade: t(trade) })}
               >
-                <X size={12} />
-              </button>
+                <X size={12} className="size-3" />
+              </Button>
             </span>
           ))
         )}
@@ -518,22 +526,27 @@ function DetailsStep({
         <ul className="max-h-[180px] overflow-y-auto">
           {TRADES.map((trade) => (
             <li key={trade}>
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 onClick={() => toggle(trade)}
-                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-secondary/50"
+                className="flex h-auto w-full justify-start gap-2.5 rounded-none border-0 px-3 py-2 text-sm font-normal whitespace-normal hover:bg-secondary/50 dark:hover:bg-secondary/50"
               >
                 <Checkbox checked={trades.includes(trade)} tabIndex={-1} className="pointer-events-none" />
                 {t(trade)}
-              </button>
+              </Button>
             </li>
           ))}
         </ul>
         <div className="flex items-center justify-between border-t border-border px-3 py-2 text-xs">
           <span className="text-muted-foreground">{t("{count} selected", { count: trades.length })}</span>
-          <button onClick={clear} className="font-medium text-accent hover:underline">
+          <Button
+            variant="ghost"
+            onClick={clear}
+            className="h-auto border-0 p-0 text-xs font-medium text-accent hover:bg-transparent hover:text-accent hover:underline dark:hover:bg-transparent"
+          >
             {t("Clear all")}
-          </button>
+          </Button>
         </div>
       </div>
       {trades.length === 0 && (
@@ -560,7 +573,7 @@ function SettingsStep(props: {
 
       {match === "new" && (
         <div className="space-y-3 mb-4">
-          <label className="flex items-start gap-2.5 cursor-pointer">
+          <Label className="cursor-pointer items-start gap-2.5 font-normal leading-normal">
             <Checkbox checked={sendWelcome} onCheckedChange={(v) => setSendWelcome(!!v)} className="mt-0.5" />
             <span>
               <span className="block text-sm font-medium">{t("Send welcome email")}</span>
@@ -568,8 +581,8 @@ function SettingsStep(props: {
                 {t("The supplier receives a branded onboarding email with a portal link.")}
               </span>
             </span>
-          </label>
-          <label className="flex items-start gap-2.5 cursor-pointer">
+          </Label>
+          <Label className="cursor-pointer items-start gap-2.5 font-normal leading-normal">
             <Checkbox checked={requireChecklist} onCheckedChange={(v) => setRequireChecklist(!!v)} className="mt-0.5" />
             <span>
               <span className="block text-sm font-medium">{t("Require onboarding checklist")}</span>
@@ -577,13 +590,13 @@ function SettingsStep(props: {
                 {t("Supplier must complete profile, upload documents, and sign agreements.")}
               </span>
             </span>
-          </label>
+          </Label>
         </div>
       )}
 
-      <label className="block text-sm font-medium mb-1">{t("Personal note (optional)")}</label>
-      <textarea
-        className={cn(fieldCls, "min-h-[88px] resize-none")}
+      <Label className={labelCls}>{t("Personal note (optional)")}</Label>
+      <Textarea
+        className={cn(fieldCls, "field-sizing-fixed min-h-[88px]")}
         placeholder={
           match === "on-lynk"
             ? t("Add a short message for their account manager…")
