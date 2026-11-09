@@ -11,6 +11,7 @@ import { toast } from "@/components/yarowa/toast";
 import { useI18n } from "@/lib/i18n";
 import { translateStatusNote } from "@/lib/ticket-i18n";
 import type { Tone } from "@/lib/tones";
+import { Button } from "@/components/ui/button";
 
 // Badge-variant name per status (distinct from the ActionCard `Tone` scale).
 type BadgeTone = "success" | "warning" | "orange" | "danger" | "info" | "neutral" | "purple";
@@ -194,9 +195,14 @@ export function ComplianceDrawer({
               {doc.supplierName} · {t(doc.trade)}
             </div>
           </div>
-          <button onClick={onClose} className="shrink-0 text-muted-foreground hover:text-foreground" aria-label={t("Close")}>
-            <X size={18} />
-          </button>
+          <Button
+            variant="ghost"
+            onClick={onClose}
+            className="h-auto shrink-0 border-0 p-0 text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
+            aria-label={t("Close")}
+          >
+            <X size={18} className="size-[18px]" />
+          </Button>
         </div>
       </div>
 

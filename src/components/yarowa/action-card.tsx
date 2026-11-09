@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TONE, type Tone } from "@/lib/tones";
+import { Button } from "@/components/ui/button";
 
 /*
  * A full-width, tappable action choice — soft tinted surface, rounded icon chip,
@@ -24,21 +25,22 @@ export function ActionCard({
 }) {
   const t = TONE[tone];
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
       onClick={onClick}
       className={cn(
-        "group w-full text-left flex items-center gap-3 rounded-2xl border border-border bg-card p-3.5 transition-colors hover:bg-secondary/50 active:translate-y-px",
+        "group h-auto w-full justify-start gap-3 rounded-2xl border-border bg-card p-3.5 text-left font-normal whitespace-normal hover:bg-secondary/50 dark:hover:bg-secondary/50 active:translate-y-px",
         className
       )}
     >
       <span className={cn("grid size-9 shrink-0 place-items-center rounded-xl", t.chip)}>
-        <Icon size={18} className={t.ink} aria-hidden="true" />
+        <Icon size={18} className={cn("size-[18px]", t.ink)} aria-hidden="true" />
       </span>
       <span className="min-w-0">
         <span className="block font-semibold text-sm text-foreground">{title}</span>
         {description && <span className="block text-xs text-muted-foreground mt-0.5">{description}</span>}
       </span>
-    </button>
+    </Button>
   );
 }

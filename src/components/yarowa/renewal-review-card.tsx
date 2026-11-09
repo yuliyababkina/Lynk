@@ -19,19 +19,20 @@ export function RenewalReviewCard({ doc, onReview }: { doc: SupplierDoc; onRevie
         <span className="text-xs font-semibold">{t("Renewal Uploaded — Awaiting Review")}</span>
       </div>
       <div className="p-3 space-y-3">
-        <button
+        <Button
           type="button"
+          variant="ghost"
           onClick={onReview}
-          className="w-full text-left flex items-center gap-3 rounded-md border border-border p-2.5 transition-colors hover:bg-secondary/50"
+          className="h-auto w-full justify-start gap-3 rounded-md border-border p-2.5 text-left font-normal whitespace-normal hover:bg-secondary/50 dark:hover:bg-secondary/50"
         >
-          <FileText size={22} className="shrink-0 text-medium-ink" aria-hidden="true" />
+          <FileText size={22} className="size-[22px] shrink-0 text-medium-ink" aria-hidden="true" />
           <span className="min-w-0">
             <span className="block text-sm font-medium truncate">{doc.renewal.fileName}</span>
             <span className="block text-xs text-muted-foreground">
               {doc.renewal.fileSize} · {t("Uploaded {date}", { date: doc.renewal.uploadedAt })}
             </span>
           </span>
-        </button>
+        </Button>
         <Button variant="default" className="w-full" onClick={onReview}>
           <Eye size={14} />
           {t("Review document")}
