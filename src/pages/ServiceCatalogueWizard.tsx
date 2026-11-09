@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import { CATALOGUE_REGIONS, CATALOGUE_TRADES, PARSED_LINES, DIFF_LINES } from "../data";
 import { cn } from "../lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { WizardStepper } from "@/components/yarowa/wizard-stepper";
 import { useI18n } from "@/lib/i18n";
 import { FileUploadCard } from "@/components/yarowa/file-upload-card";
@@ -9,8 +14,7 @@ import { SupplierReviewTable } from "@/components/yarowa/supplier-review-table";
 import { BottomActionBar } from "@/components/yarowa/bottom-action-bar";
 import type { Catalogue, ResponseModel } from "../types";
 
-const STEPS = ["Upload", "Parsing", "Preview", "Details", "Distribution"] as const;
-type Step = (typeof STEPS)[number];
+type Step = "Upload" | "Parsing" | "Preview" | "Details" | "Distribution";
 
 // Parsing is a transient loading state, not a numbered step in the header.
 const VISIBLE_STEPS = ["Upload", "Preview", "Details", "Distribution"] as const;
@@ -90,7 +94,11 @@ export function ServiceCatalogueWizard({
 
   const nextVersion = isUpdate && catalogue ? nextVersionOf(catalogue.currentVersion) : null;
 
-  const inputCls = "bg-card border border-border rounded-md px-3 py-1.5 text-sm w-full";
+  // Overrides that keep the compact field look on shadcn Input / NativeSelect.
+  const inputCls = "h-auto rounded-md border-border bg-card px-3 py-1.5 text-sm";
+  const selectCls =
+    "w-full [&_select]:h-auto [&_select]:rounded-md [&_select]:border-border [&_select]:bg-card [&_select]:py-1.5 [&_select]:pl-3";
+  const labelCls = "block text-xs font-medium leading-4 text-muted-foreground mb-1";
   const title = isUpdate
     ? t("Upload new version — {catalogue}", { catalogue: catalogue?.name ?? "" })
     : t("Create a Service catalogue");
@@ -121,9 +129,13 @@ export function ServiceCatalogueWizard({
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <button onClick={onCancel} className="text-sm text-muted-foreground hover:text-foreground mb-3">
+      <Button
+        variant="ghost"
+        onClick={onCancel}
+        className="mb-3 h-auto border-0 p-0 text-sm font-normal text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
+      >
         ← {t("Cancel and go back")}
-      </button>
+      </Button>
       <h1 className="text-2xl font-bold mb-6 text-center">{title}</h1>
       <div className="mb-8">
         <WizardStepper
@@ -191,8 +203,8 @@ export function ServiceCatalogueWizard({
         <div>
           <div className="bg-card border border-border rounded-2xl p-5 mb-6 space-y-4 max-w-lg mx-auto">
             <div>
-              <label className="text-xs font-medium text-muted-foreground block mb-1">{t("Name")}</label>
-              <input
+              <Label className={labelCls}>{t("Name")}</Label>
+              <Input
                 className={inputCls}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -202,79 +214,67 @@ export function ServiceCatalogueWizard({
             </div>
             {nextVersion && (
               <div>
-                <label className="text-xs font-medium text-muted-foreground block mb-1">
-                  {t("New version")}
-                </label>
-                <input className={cn(inputCls, "bg-secondary/50")} value={nextVersion} readOnly />
+                <Label className={labelCls}>{t("New version")}</Label>
+                <Input className={`${inputCls} bg-secondary/50`} value={nextVersion} readOnly />
               </div>
             )}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-medium text-muted-foreground block mb-1">{t("Region")}</label>
-                <select className={inputCls} value={region} onChange={(e) => setRegion(e.target.value)}>
+                <Label className={labelCls}>{t("Region")}</Label>
+                <NativeSelect className={selectCls} value={region} onChange={(e) => setRegion(e.target.value)}>
                   {CATALOGUE_REGIONS.map((r) => (
-                    <option key={r} value={r}>
+                    <NativeSelectOption key={r} value={r}>
                       {t(r)}
-                    </option>
+                    </NativeSelectOption>
                   ))}
-                </select>
+                </NativeSelect>
               </div>
               <div>
-                <label className="text-xs font-medium text-muted-foreground block mb-1">{t("Trade")}</label>
-                <select className={inputCls} value={trade} onChange={(e) => setTrade(e.target.value)}>
+                <Label className={labelCls}>{t("Trade")}</Label>
+                <NativeSelect className={selectCls} value={trade} onChange={(e) => setTrade(e.target.value)}>
                   {CATALOGUE_TRADES.map((tradeOption) => (
-                    <option key={tradeOption} value={tradeOption}>
+                    <NativeSelectOption key={tradeOption} value={tradeOption}>
                       {t(tradeOption)}
-                    </option>
+                    </NativeSelectOption>
                   ))}
-                </select>
+                </NativeSelect>
               </div>
             </div>
             <div>
-              <label className="text-xs font-medium text-muted-foreground block mb-1">
-                {t("Validity period")}
-              </label>
+              <Label className={labelCls}>{t("Validity period")}</Label>
               <div className="grid grid-cols-2 gap-3">
-                <input type="date" className={inputCls} value={validFrom} onChange={(e) => setValidFrom(e.target.value)} />
-                <input type="date" className={inputCls} value={validTo} onChange={(e) => setValidTo(e.target.value)} />
+                <Input type="date" className={inputCls} value={validFrom} onChange={(e) => setValidFrom(e.target.value)} />
+                <Input type="date" className={inputCls} value={validTo} onChange={(e) => setValidTo(e.target.value)} />
               </div>
             </div>
             <div>
-              <label className="text-xs font-medium text-muted-foreground block mb-2">
+              <Label className="block text-xs font-medium leading-4 text-muted-foreground mb-2">
                 {t("Supplier response model")}
-              </label>
-              <div className="space-y-2">
-                <label className="flex items-start gap-2 text-sm cursor-pointer">
-                  <input
-                    type="radio"
-                    name="response-model"
-                    className="mt-0.5 accent-primary"
-                    checked={responseModel === "actively-agree"}
-                    onChange={() => setResponseModel("actively-agree")}
-                  />
+              </Label>
+              <RadioGroup
+                value={responseModel}
+                onValueChange={(v) => setResponseModel(v as ResponseModel)}
+                className="gap-2"
+              >
+                <Label htmlFor="response-model-agree" className="cursor-pointer items-start gap-2 text-sm font-normal leading-5">
+                  <RadioGroupItem id="response-model-agree" value="actively-agree" className="mt-0.5" />
                   <span>
                     <span className="font-medium">{t("Actively agree")}</span>
                     <span className="block text-xs text-muted-foreground">
                       {t("Suppliers must explicitly confirm the catalogue before it applies to them.")}
                     </span>
                   </span>
-                </label>
-                <label className="flex items-start gap-2 text-sm cursor-pointer">
-                  <input
-                    type="radio"
-                    name="response-model"
-                    className="mt-0.5 accent-primary"
-                    checked={responseModel === "actively-disagree"}
-                    onChange={() => setResponseModel("actively-disagree")}
-                  />
+                </Label>
+                <Label htmlFor="response-model-disagree" className="cursor-pointer items-start gap-2 text-sm font-normal leading-5">
+                  <RadioGroupItem id="response-model-disagree" value="actively-disagree" className="mt-0.5" />
                   <span>
                     <span className="font-medium">{t("Actively disagree")}</span>
                     <span className="block text-xs text-muted-foreground">
                       {t("Silence counts as acceptance; suppliers must explicitly opt out.")}
                     </span>
                   </span>
-                </label>
-              </div>
+                </Label>
+              </RadioGroup>
             </div>
           </div>
           <div className="max-w-lg mx-auto">
