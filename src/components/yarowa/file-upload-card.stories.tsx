@@ -8,7 +8,7 @@ const meta = {
   tags: ["autodocs"],
   args: { onUpload: fn() },
   parameters: { layout: "padded" },
-  decorators: [(Story) => <div style={{ maxWidth: 512, margin: "0 auto" }}><Story /></div>],
+  decorators: [(Story) => <div className="mx-auto max-w-lg"><Story /></div>],
 } satisfies Meta<typeof FileUploadCard>;
 
 export default meta;

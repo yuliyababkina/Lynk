@@ -52,9 +52,9 @@ export function Reporting() {
           <div className="font-semibold text-sm mb-1">{tr("Compliance Rate & Avg Score Trend")}</div>
           <div className="text-xs text-muted-foreground mb-3">{tr("Across all suppliers · {period}", { period: tr(period) })}</div>
           <div className="h-40 flex items-end gap-3 px-2">
-            {[81, 79, 83, 80].map((v, i) => (
+            {["h-[81%]", "h-[79%]", "h-[83%]", "h-[80%]"].map((h, i) => (
               <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                <div className="w-full bg-accent/20 rounded-t" style={{ height: `${v}%` }} />
+                <div className={`w-full bg-accent/20 rounded-t ${h}`} />
                 <span className="text-[10px] text-muted-foreground">{["Q2 25", "Q3 25", "Q4 25", "Q1 26"][i]}</span>
               </div>
             ))}
@@ -65,14 +65,14 @@ export function Reporting() {
           <div className="text-xs text-muted-foreground mb-3">{tr("Active suppliers by score band")}</div>
           <div className="h-40 flex items-end gap-3 px-2">
             {[
-              { band: "90-100", v: 2, color: "bg-success" },
-              { band: "80-89", v: 3, color: "bg-success/70" },
-              { band: "70-79", v: 2, color: "bg-high" },
-              { band: "60-69", v: 1, color: "bg-chart-orange" },
-              { band: "<60", v: 1, color: "bg-critical" },
+              { band: "90-100", h: "h-1/2", color: "bg-success" },
+              { band: "80-89", h: "h-3/4", color: "bg-success/70" },
+              { band: "70-79", h: "h-1/2", color: "bg-high" },
+              { band: "60-69", h: "h-1/4", color: "bg-chart-orange" },
+              { band: "<60", h: "h-1/4", color: "bg-critical" },
             ].map((b) => (
               <div key={b.band} className="flex-1 flex flex-col items-center gap-1">
-                <div className={`w-full ${b.color} rounded-t`} style={{ height: `${b.v * 25}%` }} />
+                <div className={`w-full ${b.color} rounded-t ${b.h}`} />
                 <span className="text-[10px] text-muted-foreground">{b.band}</span>
               </div>
             ))}
@@ -86,16 +86,16 @@ export function Reporting() {
           <div className="text-xs text-muted-foreground mb-3">{tr("Percentage of suppliers with no critical flags")}</div>
           <div className="space-y-2">
             {[
-              { label: "Consulting", v: 100, color: "bg-success" },
-              { label: "HVAC", v: 100, color: "bg-success" },
-              { label: "Plumbing", v: 100, color: "bg-success" },
-              { label: "IT Services", v: 65, color: "bg-critical" },
-              { label: "Manufacturing", v: 40, color: "bg-critical" },
+              { label: "Consulting", w: "w-full", color: "bg-success" },
+              { label: "HVAC", w: "w-full", color: "bg-success" },
+              { label: "Plumbing", w: "w-full", color: "bg-success" },
+              { label: "IT Services", w: "w-[65%]", color: "bg-critical" },
+              { label: "Manufacturing", w: "w-[40%]", color: "bg-critical" },
             ].map((r) => (
               <div key={r.label} className="flex items-center gap-2 text-xs">
                 <span className="w-24 text-muted-foreground">{tr(r.label)}</span>
                 <div className="flex-1 bg-secondary rounded h-2">
-                  <div className={`${r.color} h-2 rounded`} style={{ width: `${r.v}%` }} />
+                  <div className={`${r.color} h-2 rounded ${r.w}`} />
                 </div>
               </div>
             ))}

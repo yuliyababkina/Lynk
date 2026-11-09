@@ -129,8 +129,8 @@ function Block({ block }: { block: WireframeBlock }) {
           </CardHeader>
           <CardContent>
             <div className="flex h-48 items-end gap-3">
-              {[40, 65, 50, 80, 60, 90, 70, 55, 85, 75, 95, 68].map((h, i) => (
-                <Skeleton key={i} className="flex-1 rounded-sm" style={{ height: `${h}%` }} />
+              {["h-[40%]", "h-[65%]", "h-[50%]", "h-[80%]", "h-[60%]", "h-[90%]", "h-[70%]", "h-[55%]", "h-[85%]", "h-[75%]", "h-[95%]", "h-[68%]"].map((h, i) => (
+                <Skeleton key={i} className={`flex-1 rounded-sm ${h}`} />
               ))}
             </div>
           </CardContent>
