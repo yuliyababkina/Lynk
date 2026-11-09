@@ -86,11 +86,11 @@ export function ContractManagement({
         <Table>
           <TableHeader>
             <TableRow className="text-xs border-border hover:bg-transparent">
-              <TableHead className="h-auto px-4 py-2 text-muted-foreground">{tr("SUPPLIER / CONTRACT")}</TableHead>
-              <TableHead className="h-auto px-4 py-2 text-muted-foreground">{tr("ANNUAL VALUE")}</TableHead>
-              <TableHead className="h-auto px-4 py-2 text-muted-foreground">{tr("END DATE")}</TableHead>
-              <TableHead className="h-auto px-4 py-2 text-muted-foreground">{tr("TIME LEFT")}</TableHead>
-              <TableHead className="h-auto px-4 py-2 text-muted-foreground">{tr("STATUS")}</TableHead>
+              <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("SUPPLIER / CONTRACT")}</TableHead>
+              <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("ANNUAL VALUE")}</TableHead>
+              <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("END DATE")}</TableHead>
+              <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("TIME LEFT")}</TableHead>
+              <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("STATUS")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

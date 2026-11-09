@@ -45,11 +45,11 @@ export function CataloguePreviewTable({
       <Table>
         <TableHeader>
           <TableRow className="text-xs border-border hover:bg-transparent">
-            <TableHead className="h-auto px-4 py-2 text-muted-foreground">{t("SERVICE")}</TableHead>
-            <TableHead className="h-auto px-4 py-2 text-muted-foreground">{t("CATEGORY")}</TableHead>
-            <TableHead className="h-auto px-4 py-2 text-muted-foreground">{t("UNIT")}</TableHead>
-            <TableHead className="h-auto px-4 py-2 text-muted-foreground">{t("RATE")}</TableHead>
-            {showDiff && <TableHead className="h-auto px-4 py-2 text-muted-foreground">{t("CHANGE")}</TableHead>}
+            <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{t("SERVICE")}</TableHead>
+            <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{t("CATEGORY")}</TableHead>
+            <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{t("UNIT")}</TableHead>
+            <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{t("RATE")}</TableHead>
+            {showDiff && <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{t("CHANGE")}</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>

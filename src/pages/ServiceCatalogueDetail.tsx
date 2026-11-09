@@ -73,10 +73,10 @@ export function ServiceCatalogueDetail({
           <Table>
             <TableHeader>
               <TableRow className="text-xs border-border hover:bg-transparent">
-                <TableHead className="h-auto px-4 py-2 text-muted-foreground">{t("SERVICE")}</TableHead>
-                <TableHead className="h-auto px-4 py-2 text-muted-foreground">{t("CATEGORY")}</TableHead>
-                <TableHead className="h-auto px-4 py-2 text-muted-foreground">{t("UNIT")}</TableHead>
-                <TableHead className="h-auto px-4 py-2 text-muted-foreground">{t("RATE")}</TableHead>
+                <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{t("SERVICE")}</TableHead>
+                <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{t("CATEGORY")}</TableHead>
+                <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{t("UNIT")}</TableHead>
+                <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{t("RATE")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

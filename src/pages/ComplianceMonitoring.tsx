@@ -121,10 +121,10 @@ export function ComplianceMonitoring({
         <Table>
           <TableHeader>
             <TableRow className="text-xs border-border hover:bg-transparent">
-              <TableHead className="h-auto px-4 py-2 text-muted-foreground">{tr("DOCUMENT / SUPPLIER")}</TableHead>
-              <TableHead className="h-auto px-4 py-2 text-muted-foreground">{tr("CATEGORY")}</TableHead>
-              <TableHead className="h-auto px-4 py-2 text-muted-foreground">{tr("EXPIRY")}</TableHead>
-              <TableHead className="h-auto px-4 py-2 text-muted-foreground">{tr("STATUS")}</TableHead>
+              <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("DOCUMENT / SUPPLIER")}</TableHead>
+              <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("CATEGORY")}</TableHead>
+              <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("EXPIRY")}</TableHead>
+              <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("STATUS")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

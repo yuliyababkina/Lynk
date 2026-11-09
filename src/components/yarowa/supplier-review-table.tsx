@@ -55,9 +55,9 @@ export function SupplierReviewTable({
         <Table>
           <TableHeader>
             <TableRow className="text-xs text-muted-foreground border-border hover:bg-transparent">
-              <TableHead className="h-auto w-10 px-4 py-2 text-muted-foreground"></TableHead>
-              <TableHead className="h-auto px-4 py-2 text-muted-foreground">{t("SUPPLIER")}</TableHead>
-              <TableHead className="h-auto px-4 py-2 text-muted-foreground">{t("REGION")}</TableHead>
+              <TableHead className="h-auto w-10 px-4 py-2 whitespace-normal text-muted-foreground"></TableHead>
+              <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{t("SUPPLIER")}</TableHead>
+              <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{t("REGION")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

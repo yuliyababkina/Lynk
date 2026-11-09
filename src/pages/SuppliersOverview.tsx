@@ -98,13 +98,13 @@ export function SuppliersOverview({
         <Table className="min-w-[720px]">
           <TableHeader>
             <TableRow className="text-xs border-border hover:bg-transparent">
-              <TableHead className="h-auto px-4 py-2 text-muted-foreground">{t("COMPANY")}</TableHead>
-              <TableHead className="h-auto px-4 py-2 text-muted-foreground">{t("STAGE")}</TableHead>
-              <TableHead className="h-auto px-4 py-2 text-muted-foreground">{t("TRADE")}</TableHead>
-              <TableHead className="h-auto px-4 py-2 text-muted-foreground">{t("REGION")}</TableHead>
-              <TableHead className="h-auto px-4 py-2 text-muted-foreground">{t("TICKETS")}</TableHead>
-              <TableHead className="h-auto px-4 py-2 text-muted-foreground">{t("COMPLIANCE")}</TableHead>
-              <TableHead className="h-auto px-4 py-2 text-muted-foreground">{t("RATING")}</TableHead>
+              <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{t("COMPANY")}</TableHead>
+              <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{t("STAGE")}</TableHead>
+              <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{t("TRADE")}</TableHead>
+              <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{t("REGION")}</TableHead>
+              <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{t("TICKETS")}</TableHead>
+              <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{t("COMPLIANCE")}</TableHead>
+              <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{t("RATING")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
