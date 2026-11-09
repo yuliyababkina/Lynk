@@ -3,6 +3,7 @@ import { Upload, Users, FileSpreadsheet } from "lucide-react";
 import { CATALOGUE_REGIONS, CATALOGUE_TRADES } from "../data";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import type { Catalogue, CatalogueStatus } from "../types";
 import { useI18n } from "@/lib/i18n";
 import { translateCatalogueName } from "@/lib/ticket-i18n";
@@ -64,7 +65,9 @@ export function ServiceCatalogueList({
       (status === "All statuses" || c.status === status)
   );
 
-  const selectCls = "bg-card border border-border rounded-md px-3 py-1.5 text-sm";
+  // Overrides for the inner <select> of NativeSelect: keeps the compact filter look.
+  const selectCls =
+    "[&_select]:h-auto [&_select]:rounded-md [&_select]:border-border [&_select]:bg-card [&_select]:py-1.5 [&_select]:pl-3";
 
   return (
     <div className="p-6">
@@ -83,28 +86,28 @@ export function ServiceCatalogueList({
       <div className="flex gap-2 mb-5">
         {/* Option values stay the English keys the filters compare against; only
             the visible label is translated. */}
-        <select className={selectCls} value={region} onChange={(e) => setRegion(e.target.value)}>
-          <option value="All regions">{tr("All regions")}</option>
+        <NativeSelect className={selectCls} value={region} onChange={(e) => setRegion(e.target.value)}>
+          <NativeSelectOption value="All regions">{tr("All regions")}</NativeSelectOption>
           {CATALOGUE_REGIONS.map((r) => (
-            <option key={r} value={r}>
+            <NativeSelectOption key={r} value={r}>
               {tr(r)}
-            </option>
+            </NativeSelectOption>
           ))}
-        </select>
-        <select className={selectCls} value={trade} onChange={(e) => setTrade(e.target.value)}>
-          <option value="All types">{tr("All types")}</option>
+        </NativeSelect>
+        <NativeSelect className={selectCls} value={trade} onChange={(e) => setTrade(e.target.value)}>
+          <NativeSelectOption value="All types">{tr("All types")}</NativeSelectOption>
           {CATALOGUE_TRADES.map((t) => (
-            <option key={t} value={t}>
+            <NativeSelectOption key={t} value={t}>
               {tr(t)}
-            </option>
+            </NativeSelectOption>
           ))}
-        </select>
-        <select className={selectCls} value={status} onChange={(e) => setStatus(e.target.value)}>
-          <option value="All statuses">{tr("All statuses")}</option>
-          <option value="Active">{tr("Active")}</option>
-          <option value="Draft">{tr("Draft")}</option>
-          <option value="Upcoming">{tr("Upcoming")}</option>
-        </select>
+        </NativeSelect>
+        <NativeSelect className={selectCls} value={status} onChange={(e) => setStatus(e.target.value)}>
+          <NativeSelectOption value="All statuses">{tr("All statuses")}</NativeSelectOption>
+          <NativeSelectOption value="Active">{tr("Active")}</NativeSelectOption>
+          <NativeSelectOption value="Draft">{tr("Draft")}</NativeSelectOption>
+          <NativeSelectOption value="Upcoming">{tr("Upcoming")}</NativeSelectOption>
+        </NativeSelect>
       </div>
 
       {filtered.length === 0 ? (
@@ -114,10 +117,11 @@ export function ServiceCatalogueList({
       ) : (
         <div className="grid grid-cols-3 gap-4">
           {filtered.map((c) => (
-            <button
+            <Button
               key={c.id}
+              variant="ghost"
               onClick={() => onOpenCatalogue(c.id)}
-              className="text-left bg-card border border-border rounded-2xl p-4 hover:border-accent transition-colors"
+              className="h-auto flex-col items-stretch justify-start gap-0 rounded-2xl border-border bg-card p-4 text-left font-normal leading-normal whitespace-normal hover:border-accent hover:bg-card dark:hover:bg-card"
             >
               <div className="flex items-start justify-between gap-2 mb-1">
                 <div className="font-semibold">{translateCatalogueName(c.name, tr)}</div>
@@ -127,10 +131,10 @@ export function ServiceCatalogueList({
                 {c.versionLabel} · {tr(c.region)} · {tr(c.trade)}
               </div>
               <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <Users size={14} />
+                <Users size={14} className="size-3.5" />
                 {confirmationLabel(c, tr)}
               </div>
-            </button>
+            </Button>
           ))}
         </div>
       )}

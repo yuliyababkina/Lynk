@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { MAX_UPLOAD_MB } from "@/lib/use-document-upload";
 import { useI18n } from "@/lib/i18n";
 
@@ -42,7 +43,7 @@ export function CompactDropzone({
         disabled && "opacity-50 pointer-events-none"
       )}
     >
-      <input
+      <Input
         ref={inputRef}
         type="file"
         accept="application/pdf"
