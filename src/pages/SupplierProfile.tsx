@@ -162,7 +162,7 @@ export function SupplierProfile({
         <div className="text-xs font-semibold uppercase text-muted-foreground mb-2">
           {t("Open Tickets")} · {tickets.length}
         </div>
-        <div className="bg-card border border-border rounded-lg divide-y divide-border">
+        <div className="bg-card border border-border rounded-lg">
           {tickets.length === 0 && (
             <div className="p-4 text-sm text-muted-foreground">{t("No open tickets.")}</div>
           )}
@@ -171,7 +171,7 @@ export function SupplierProfile({
               key={ticket.id}
               variant="ghost"
               onClick={() => onSelectTicket(ticket)}
-              className="flex h-auto w-full justify-between gap-3 rounded-none border-0 px-4 py-3 text-left font-normal leading-normal whitespace-normal hover:bg-secondary/50 dark:hover:bg-secondary/50"
+              className="flex h-auto w-full justify-between gap-3 rounded-none border-0 border-b border-border px-4 py-3 text-left font-normal leading-normal whitespace-normal last:border-b-0 hover:bg-secondary/50 dark:hover:bg-secondary/50"
             >
               <div className="min-w-0">
                 {/* Same treatment the Task Queue gives a ticket: the title is a

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ComponentProps, type ReactNode } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -25,11 +25,15 @@ import {
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { Textarea } from "@/components/ui/textarea";
 import { WizardStepper } from "@/components/yarowa/wizard-stepper";
 import { WizardFooter } from "@/components/yarowa/wizard-footer";
 import { PdfCanvas } from "@/components/yarowa/pdf-canvas";
 import { STANDARD_DOCUMENT_TYPES } from "@/lib/onboarding-documents";
-import { DOC_STATUS_META, docStatusMeta } from "@/lib/document-status";
+import { DOC_STATUS_META, docStatusMeta, type DocBadgeVariant } from "@/lib/document-status";
 import { parseDocumentInfo, type ParsedDocumentInfo } from "@/lib/pdf-metadata";
 import { FromFileHint } from "@/components/yarowa/document-browser";
 import { relationshipId } from "@/lib/db";
@@ -177,12 +181,13 @@ export function ProspectReview({
 
   return (
     <div className="p-6">
-      <button
+      <Button
+        variant="ghost"
         onClick={onClose}
-        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4"
+        className="mb-4 flex h-auto justify-start gap-1.5 border-0 p-0 text-sm font-normal text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
       >
         <ArrowLeft className="w-4 h-4" /> Back to onboarding
-      </button>
+      </Button>
 
       <div className="flex items-start justify-between gap-4 mb-5">
         <div>
@@ -334,44 +339,6 @@ function DocumentsReviewStep({
   // Every uploaded document needs a decision before the summary makes sense.
   const pendingCount = rows.filter((r) => r.doc?.status === "pending-review").length;
 
-  const [pageInfo, setPageInfo] = useState<{ current: number; total: number } | null>(null);
-  useEffect(() => setPageInfo(null), [selected?.key]);
-
-  /* Writing a change request takes over the whole footer row: the field needs
-     the width far more than the navigation does for the few seconds it's open,
-     and cancelling brings the buttons straight back. Reset on document change so
-     a half-typed comment can't follow the reviewer to the next document. */
-  const [composing, setComposing] = useState(false);
-  useEffect(() => setComposing(false), [selected?.key]);
-
-  // Read type / issuer / validity out of the PDF; stored (confirmed) values win.
-  const [parsed, setParsed] = useState<ParsedDocumentInfo | null>(null);
-  useEffect(() => {
-    setParsed(null);
-    const url = selected?.doc?.fileUrl;
-    if (!url) return;
-    let cancelled = false;
-    parseDocumentInfo(url).then((i) => !cancelled && setParsed(i));
-    return () => {
-      cancelled = true;
-    };
-  }, [selected?.doc?.fileUrl]);
-
-  const d = selected?.doc;
-  const info = d
-    ? {
-        documentType: d.documentType || parsed?.documentType,
-        issuingInstitution: d.issuingInstitution || parsed?.issuingInstitution,
-        expiryDate: d.expiryDate || parsed?.validity,
-        doesNotExpire: d.doesNotExpire || parsed?.doesNotExpire,
-        fromFile: {
-          type: !d.documentType && Boolean(parsed?.documentType),
-          issuer: !d.issuingInstitution && Boolean(parsed?.issuingInstitution),
-          validity: !d.expiryDate && !d.doesNotExpire && Boolean(parsed?.validity || parsed?.doesNotExpire),
-        },
-      }
-    : null;
-
   return (
     <div>
       <div className="mb-4">
@@ -388,148 +355,45 @@ function DocumentsReviewStep({
             const meta = DOC_STATUS_META[r.doc?.status ?? "missing"];
             const active = selected?.key === r.key;
             return (
-              <button
+              <Button
                 key={r.key}
+                variant="ghost"
                 onClick={() => onSelect(r.key)}
-                className={`w-full flex items-center justify-between gap-2 rounded-lg border px-3 py-2.5 text-left transition-colors ${
-                  active ? "border-primary bg-secondary/60" : "border-border hover:bg-secondary/40"
+                className={`h-auto w-full justify-between gap-2 rounded-lg px-3 py-2.5 text-left font-normal whitespace-normal ${
+                  active
+                    ? "border-primary bg-secondary/60 hover:bg-secondary/60 dark:hover:bg-secondary/60"
+                    : "border-border hover:bg-secondary/40 dark:hover:bg-secondary/40"
                 }`}
               >
                 <span className="flex items-center gap-2 min-w-0">
                   <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
                   <span className="text-sm font-medium truncate">{r.name}</span>
                 </span>
-                <Badge variant={meta.variant as any} className="shrink-0">
-                  <meta.Icon className="w-3 h-3" />
+                <Badge variant={meta.variant} className="shrink-0">
+                  <meta.Icon className="size-3" />
                   {meta.label}
                 </Badge>
-              </button>
+              </Button>
             );
           })}
         </div>
 
-        {/* Right: preview at document width, centered in the remaining space */}
+        {/* Right: preview at document width, centered in the remaining space.
+            Keyed by document (and its file), so the panel's own state — page
+            count, the open change-request field, the parsed PDF info — starts
+            fresh whenever the reviewer moves to another document. */}
         <div className="flex-1 min-w-0 flex justify-center">
           {selected ? (
-            <div className="w-full flex flex-col border border-border rounded-xl overflow-hidden bg-card">
-              <div className="px-4 py-2.5 border-b border-border flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                <p className="text-sm font-semibold truncate">{t(selected.name)}</p>
-                <p className="text-xs text-muted-foreground">{t(selected.category)}</p>
-                {selected.doc && info && (
-                  <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 mt-2 text-xs">
-                    <dt className="text-muted-foreground">{t("Document type")}</dt>
-                    <dd>
-                      {info.documentType || "—"}
-                      {info.fromFile.type && <FromFileHint />}
-                    </dd>
-                    <dt className="text-muted-foreground">{t("Issued by")}</dt>
-                    <dd>
-                      {info.issuingInstitution || "—"}
-                      {info.fromFile.issuer && <FromFileHint />}
-                    </dd>
-                    <dt className="text-muted-foreground">{t("Validity")}</dt>
-                    <dd>
-                      {info.doesNotExpire ? (
-                        <span className="inline-flex items-center gap-1.5 text-success-ink">
-                          <ShieldCheck className="w-3 h-3" /> {t("This certificate does not expire")}
-                        </span>
-                      ) : info.expiryDate ? (
-                        `Expires ${info.expiryDate}`
-                      ) : (
-                        "—"
-                      )}
-                      {info.fromFile.validity && <FromFileHint />}
-                    </dd>
-                  </dl>
-                )}
-                </div>
-                {/* Status, same badge style as the list on the left */}
-                {(() => {
-                  const m = docStatusMeta(selected.doc?.status);
-                  return (
-                    <Badge variant={m.variant as any} className="shrink-0">
-                      <m.Icon className="w-3 h-3" />
-                      {m.label}
-                    </Badge>
-                  );
-                })()}
-              </div>
-
-              <PdfCanvas
-                key={selected.key}
-                fileUrl={selected.doc?.fileUrl}
-                className="flex-1 min-h-0"
-                onPageInfo={setPageInfo}
-              />
-
-              {/* Pages within the open document */}
-              <div className="flex items-center justify-center py-2 border-t border-border text-xs text-muted-foreground tabular-nums">
-                {selected.doc?.fileUrl && pageInfo
-                  ? `${pageInfo.current} of ${pageInfo.total} page${pageInfo.total === 1 ? "" : "s"}`
-                  : "—"}
-              </div>
-
-              {/* Document navigation sits on the same level as the review actions */}
-              <div className="border-t border-border p-3">
-                {composing && selected.doc ? (
-                  <ChangeRequestComposer
-                    key={selected.doc.id}
-                    doc={selected.doc}
-                    onCancel={() => setComposing(false)}
-                    onSend={(comment) => {
-                      onReviewDocument(selected.doc!.id, "decline", comment);
-                      setComposing(false);
-                    }}
-                  />
-                ) : (
-                  <div className="flex items-center justify-between gap-3">
-                    {/* Boundary buttons are hidden, not disabled — works for any
-                        number of documents, including a single one. */}
-                    {idx > 0 ? (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="shrink-0"
-                        title={t("Previous document")}
-                        onClick={goPrev}
-                      >
-                        <ChevronLeft className="w-4 h-4" /> {t("Previous")}
-                      </Button>
-                    ) : (
-                      <span />
-                    )}
-                    {/* Review actions, with "Next document" always furthest right. */}
-                    <div className="flex items-center gap-2 min-w-0">
-                      {selected.doc ? (
-                        <DocActionBar
-                          doc={selected.doc}
-                          disabled={disabled}
-                          onApprove={() => onReviewDocument(selected.doc!.id, "approve")}
-                          onRequestChange={() => setComposing(true)}
-                        />
-                      ) : (
-                        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <FileX className="w-3.5 h-3.5" /> Not yet uploaded by the supplier.
-                        </span>
-                      )}
-                      {idx < rows.length - 1 && (
-                        /* Once a document is approved, moving on is the primary action. */
-                        <Button
-                          variant={selected.doc?.status === "valid" ? "default" : "outline"}
-                          size="sm"
-                          className="shrink-0"
-                          title={t("Next document")}
-                          onClick={goNext}
-                        >
-                          {t("Next")} <ChevronRight className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+            <DocumentPreviewPanel
+              key={`${selected.key}:${selected.doc?.fileUrl ?? ""}`}
+              selected={selected}
+              idx={idx}
+              count={rows.length}
+              disabled={disabled}
+              onReviewDocument={onReviewDocument}
+              goPrev={goPrev}
+              goNext={goNext}
+            />
           ) : (
             <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">
               Select a document to preview.
@@ -546,6 +410,186 @@ function DocumentsReviewStep({
         nextHint={`${pendingCount} document${pendingCount === 1 ? "" : "s"} still awaiting your review`}
       />
     </div>
+  );
+}
+
+/* The right-hand side of the review: header, PDF, page count and actions for
+   ONE document. Mounted with a key per document, so its state resets by being
+   new rather than by effects that set state when the selection changes. */
+function DocumentPreviewPanel({
+  selected,
+  idx,
+  count,
+  disabled,
+  onReviewDocument,
+  goPrev,
+  goNext,
+}: {
+  selected: DocRow;
+  idx: number;
+  count: number;
+  disabled: boolean;
+  onReviewDocument: (docId: string, decision: "approve" | "decline", comment?: string) => void;
+  goPrev: () => void;
+  goNext: () => void;
+}) {
+  const { t } = useI18n();
+  const [pageInfo, setPageInfo] = useState<{ current: number; total: number } | null>(null);
+
+  /* Writing a change request takes over the whole footer row: the field needs
+     the width far more than the navigation does for the few seconds it's open,
+     and cancelling brings the buttons straight back. */
+  const [composing, setComposing] = useState(false);
+
+  // Read type / issuer / validity out of the PDF; stored (confirmed) values win.
+  const [parsed, setParsed] = useState<ParsedDocumentInfo | null>(null);
+  const url = selected.doc?.fileUrl;
+  useEffect(() => {
+    if (!url) return;
+    let cancelled = false;
+    parseDocumentInfo(url).then((i) => {
+      if (!cancelled) setParsed(i);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [url]);
+
+  const d = selected.doc;
+  const info = d
+    ? {
+        documentType: d.documentType || parsed?.documentType,
+        issuingInstitution: d.issuingInstitution || parsed?.issuingInstitution,
+        expiryDate: d.expiryDate || parsed?.validity,
+        doesNotExpire: d.doesNotExpire || parsed?.doesNotExpire,
+        fromFile: {
+          type: !d.documentType && Boolean(parsed?.documentType),
+          issuer: !d.issuingInstitution && Boolean(parsed?.issuingInstitution),
+          validity: !d.expiryDate && !d.doesNotExpire && Boolean(parsed?.validity || parsed?.doesNotExpire),
+        },
+      }
+    : null;
+
+  return (
+      <div className="w-full flex flex-col border border-border rounded-xl overflow-hidden bg-card">
+        <div className="px-4 py-2.5 border-b border-border flex items-start justify-between gap-3">
+          <div className="min-w-0">
+          <p className="text-sm font-semibold truncate">{t(selected.name)}</p>
+          <p className="text-xs text-muted-foreground">{t(selected.category)}</p>
+          {selected.doc && info && (
+            <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 mt-2 text-xs">
+              <dt className="text-muted-foreground">{t("Document type")}</dt>
+              <dd>
+                {info.documentType || "—"}
+                {info.fromFile.type && <FromFileHint />}
+              </dd>
+              <dt className="text-muted-foreground">{t("Issued by")}</dt>
+              <dd>
+                {info.issuingInstitution || "—"}
+                {info.fromFile.issuer && <FromFileHint />}
+              </dd>
+              <dt className="text-muted-foreground">{t("Validity")}</dt>
+              <dd>
+                {info.doesNotExpire ? (
+                  <span className="inline-flex items-center gap-1.5 text-success-ink">
+                    <ShieldCheck className="w-3 h-3" /> {t("This certificate does not expire")}
+                  </span>
+                ) : info.expiryDate ? (
+                  `Expires ${info.expiryDate}`
+                ) : (
+                  "—"
+                )}
+                {info.fromFile.validity && <FromFileHint />}
+              </dd>
+            </dl>
+          )}
+          </div>
+          {/* Status, same badge style as the list on the left */}
+          {(() => {
+            const m = docStatusMeta(selected.doc?.status);
+            return (
+              <Badge variant={m.variant} className="shrink-0">
+                <m.Icon className="w-3 h-3" />
+                {m.label}
+              </Badge>
+            );
+          })()}
+        </div>
+
+        <PdfCanvas
+          key={selected.key}
+          fileUrl={selected.doc?.fileUrl}
+          className="flex-1 min-h-0"
+          onPageInfo={setPageInfo}
+        />
+
+        {/* Pages within the open document */}
+        <div className="flex items-center justify-center py-2 border-t border-border text-xs text-muted-foreground tabular-nums">
+          {selected.doc?.fileUrl && pageInfo
+            ? `${pageInfo.current} of ${pageInfo.total} page${pageInfo.total === 1 ? "" : "s"}`
+            : "—"}
+        </div>
+
+        {/* Document navigation sits on the same level as the review actions */}
+        <div className="border-t border-border p-3">
+          {composing && selected.doc ? (
+            <ChangeRequestComposer
+              key={selected.doc.id}
+              doc={selected.doc}
+              onCancel={() => setComposing(false)}
+              onSend={(comment) => {
+                onReviewDocument(selected.doc!.id, "decline", comment);
+                setComposing(false);
+              }}
+            />
+          ) : (
+            <div className="flex items-center justify-between gap-3">
+              {/* Boundary buttons are hidden, not disabled — works for any
+                  number of documents, including a single one. */}
+              {idx > 0 ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0"
+                  title={t("Previous document")}
+                  onClick={goPrev}
+                >
+                  <ChevronLeft className="w-4 h-4" /> {t("Previous")}
+                </Button>
+              ) : (
+                <span />
+              )}
+              {/* Review actions, with "Next document" always furthest right. */}
+              <div className="flex items-center gap-2 min-w-0">
+                {selected.doc ? (
+                  <DocActionBar
+                    doc={selected.doc}
+                    disabled={disabled}
+                    onApprove={() => onReviewDocument(selected.doc!.id, "approve")}
+                    onRequestChange={() => setComposing(true)}
+                  />
+                ) : (
+                  <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <FileX className="w-3.5 h-3.5" /> Not yet uploaded by the supplier.
+                  </span>
+                )}
+                {idx < count - 1 && (
+                  /* Once a document is approved, moving on is the primary action. */
+                  <Button
+                    variant={selected.doc?.status === "valid" ? "default" : "outline"}
+                    size="sm"
+                    className="shrink-0"
+                    title={t("Next document")}
+                    onClick={goNext}
+                  >
+                    {t("Next")} <ChevronRight className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
   );
 }
 
@@ -572,7 +616,7 @@ function ChangeRequestComposer({
   return (
     <div className="flex items-center gap-2">
       <AlertTriangle className="w-4 h-4 shrink-0 text-warning-ink" />
-      <input
+      <Input
         autoFocus
         value={comment}
         onChange={(e) => setComment(e.target.value)}
@@ -589,7 +633,7 @@ function ChangeRequestComposer({
             ? t("What should the supplier update? (shared with the supplier)")
             : t("Why is this document being declined? (shared with the supplier)")
         }
-        className="flex-1 min-w-0 h-9 rounded-lg border border-border bg-background px-3 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="h-9 flex-1 rounded-lg border-border bg-background px-3 py-0 text-sm"
       />
       <Button variant="ghost" size="sm" className="shrink-0" onClick={onCancel}>
         {t("Cancel")}
@@ -747,13 +791,13 @@ function SectionReviewControl({
   if (fixing) {
     return (
       <div className="mt-5 space-y-2">
-        <textarea
+        <Textarea
           autoFocus
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           rows={3}
           placeholder={t("What does the supplier need to fix in this section?")}
-          className="w-full rounded-lg border border-border bg-background p-2 text-sm resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="field-sizing-fixed min-h-0 rounded-lg border-border bg-background p-2 text-sm"
         />
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => setFixing(false)}>
@@ -921,7 +965,7 @@ function DecisionStep({
     }
   }
 
-  const companyMeta =
+  const companyMeta: ComponentProps<typeof SummaryItem>["meta"] =
     company.status === "confirmed"
       ? { variant: "success-outline", Icon: CheckCircle2, iconClass: "text-success", label: "Confirmed", note: "" }
       : company.status === "fix"
@@ -1005,13 +1049,13 @@ function DecisionStep({
         )
       ) : rejecting ? (
         <div className="space-y-2">
-          <textarea
+          <Textarea
             autoFocus
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             rows={3}
             placeholder={t("Reason for rejection (shared with the supplier)")}
-            className="w-full rounded-lg border border-border bg-background p-2 text-sm resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="field-sizing-fixed min-h-0 rounded-lg border-border bg-background p-2 text-sm"
           />
           <div className="flex gap-2">
             <Button variant="outline" className="flex-1" disabled={busy} onClick={() => setRejecting(false)}>
@@ -1071,7 +1115,7 @@ function SummaryItem({
   onEdit,
 }: {
   label: string;
-  meta: { variant: string; Icon: LucideIcon; iconClass: string; label: string; note?: string };
+  meta: { variant: DocBadgeVariant; Icon: LucideIcon; iconClass: string; label: string; note?: string };
   onEdit?: () => void;
 }) {
   const { t } = useI18n();
@@ -1082,19 +1126,20 @@ function SummaryItem({
           <meta.Icon className={`w-4 h-4 shrink-0 ${meta.iconClass}`} />
           <span className="text-sm font-medium truncate">{label}</span>
           {onEdit && (
-            <button
+            <Button
+              variant="ghost"
               onClick={onEdit}
               title={t("Review / edit")}
               aria-label={t("Edit {section}", { section: t(label) })}
-              className="text-muted-foreground hover:text-foreground shrink-0"
+              className="h-auto shrink-0 border-0 p-0 text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
             >
-              <Pencil className="w-3.5 h-3.5" />
-            </button>
+              <Pencil className="size-3.5" />
+            </Button>
           )}
         </div>
         {meta.note && <p className="text-xs text-muted-foreground mt-0.5 ml-6">“{meta.note}”</p>}
       </div>
-      <Badge variant={meta.variant as any} className="shrink-0">
+      <Badge variant={meta.variant} className="shrink-0">
         {meta.label}
       </Badge>
     </div>
@@ -1128,7 +1173,8 @@ function SendContractStep({
   const toggle = (name: string) =>
     setPicked((prev) => {
       const next = new Set(prev);
-      next.has(name) ? next.delete(name) : next.add(name);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
       return next;
     });
 
@@ -1151,36 +1197,37 @@ function SendContractStep({
     >
       <div className="space-y-5">
         <div>
-          <label className="text-xs font-medium text-muted-foreground block mb-1">
+          <Label className="block text-xs font-medium leading-4 text-muted-foreground mb-1">
             {t("Contract template")}
-          </label>
-          <select
+          </Label>
+          <NativeSelect
             value={template}
             onChange={(e) => setTemplate(e.target.value)}
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+            className="w-full [&_select]:h-auto [&_select]:rounded-lg [&_select]:border-border [&_select]:bg-background [&_select]:py-2 [&_select]:pl-3"
           >
             {CONTRACT_TEMPLATES.map((c) => (
-              <option key={c} value={c}>
+              <NativeSelectOption key={c} value={c}>
                 {c}
-              </option>
+              </NativeSelectOption>
             ))}
-          </select>
+          </NativeSelect>
         </div>
 
         <div>
-          <label className="text-xs font-medium text-muted-foreground block mb-1">
+          <Label className="block text-xs font-medium leading-4 text-muted-foreground mb-1">
             {t("Service catalogues")}
-          </label>
+          </Label>
           <p className="text-xs text-muted-foreground mb-2">
             {t("Select the price lists that apply to this supplier's work orders.")}
           </p>
-          <div className="rounded-lg border border-border divide-y divide-border/60 overflow-hidden">
+          <div className="rounded-lg border border-border overflow-hidden">
             {catalogues.map((c) => (
-              <button
+              <Button
                 key={c.id}
                 type="button"
+                variant="ghost"
                 onClick={() => toggle(c.name)}
-                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-sm hover:bg-secondary/50"
+                className="flex h-auto w-full justify-start gap-2.5 rounded-none border-0 border-b border-border/60 px-3 py-2.5 text-left text-sm font-normal whitespace-normal last:border-b-0 hover:bg-secondary/50 dark:hover:bg-secondary/50"
               >
                 <Checkbox checked={picked.has(c.name)} tabIndex={-1} className="pointer-events-none" />
                 <span className="min-w-0 flex-1">
@@ -1189,7 +1236,7 @@ function SendContractStep({
                     {c.versionLabel} · {t(c.region)} · {t(c.trade)}
                   </span>
                 </span>
-              </button>
+              </Button>
             ))}
           </div>
           {picked.size === 0 && (
