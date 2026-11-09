@@ -15,22 +15,33 @@ const SCALE_100 = 96 / 72;
  * environment — including embedded/headless browser panes that lack a native
  * PDF plugin. Fills its container; scrolls when the document is taller.
  */
-export function PdfCanvas({
-  fileUrl,
-  className,
-  onPageInfo,
-}: {
+type PdfCanvasProps = {
   fileUrl?: string;
   className?: string;
   /** Reports the page the viewer is looking at and the document's page count,
    * so the surrounding chrome can show "1 of 7 pages". */
   onPageInfo?: (info: { current: number; total: number }) => void;
-}) {
+};
+
+/* Keyed by file: a different document gets a fresh component, so it starts
+   from "loading, no error" rather than resetting that state inside the effect. */
+export function PdfCanvas(props: PdfCanvasProps) {
+  return <PdfCanvasBody key={props.fileUrl ?? ""} {...props} />;
+}
+
+function PdfCanvasBody({ fileUrl, className, onPageInfo }: PdfCanvasProps) {
   const { t } = useI18n();
   const pagesRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // The render effect runs once per file but must report to the CURRENT
+  // callback, so it reads the latest one from a ref instead of depending on it.
+  const onPageInfoRef = useRef(onPageInfo);
+  useEffect(() => {
+    onPageInfoRef.current = onPageInfo;
+  });
 
   // Which rendered page is closest to the top of the viewport → "current page".
   function reportCurrentPage() {
@@ -49,8 +60,6 @@ export function PdfCanvas({
   useEffect(() => {
     if (!fileUrl) return;
     let cancelled = false;
-    setLoading(true);
-    setError(null);
     const task = pdfjsLib.getDocument({ url: fileUrl });
 
     (async () => {
@@ -60,7 +69,7 @@ export function PdfCanvas({
         if (cancelled || !container) return;
         container.replaceChildren();
         // Publish the page count as soon as it's known, before rendering.
-        onPageInfo?.({ current: 1, total: pdf.numPages });
+        onPageInfoRef.current?.({ current: 1, total: pdf.numPages });
         const dpr = window.devicePixelRatio || 1;
 
         for (let n = 1; n <= pdf.numPages; n++) {

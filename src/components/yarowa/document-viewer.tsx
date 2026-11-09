@@ -3,6 +3,7 @@ import { X, ExternalLink, Loader2 } from "lucide-react";
 import * as pdfjsLib from "pdfjs-dist";
 import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import type { SupplierDoc } from "@/types";
+import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
@@ -16,7 +17,13 @@ const SCALE_100 = 96 / 72;
  * browser panes that lack a native PDF plugin. View-only; the renewal
  * Accept/Reject flow lives in DocumentLightbox instead.
  */
-export function DocumentViewer({ doc, onClose }: { doc: SupplierDoc; onClose: () => void }) {
+export function DocumentViewer(props: { doc: SupplierDoc; onClose: () => void }) {
+  // Keyed by file: a different document starts from "loading, no error" instead
+  // of resetting that state inside the render effect.
+  return <DocumentViewerBody key={props.doc.fileUrl ?? ""} {...props} />;
+}
+
+function DocumentViewerBody({ doc, onClose }: { doc: SupplierDoc; onClose: () => void }) {
   const { t } = useI18n();
   const pagesRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
@@ -35,8 +42,6 @@ export function DocumentViewer({ doc, onClose }: { doc: SupplierDoc; onClose: ()
   useEffect(() => {
     if (!doc.fileUrl) return;
     let cancelled = false;
-    setLoading(true);
-    setError(null);
     const task = pdfjsLib.getDocument({ url: doc.fileUrl });
 
     (async () => {
@@ -112,13 +117,14 @@ export function DocumentViewer({ doc, onClose }: { doc: SupplierDoc; onClose: ()
           >
             <ExternalLink size={16} />
           </a>
-          <button
+          <Button
+            variant="ghost"
             onClick={onClose}
             aria-label={t("Close")}
-            className="text-muted-foreground hover:text-foreground shrink-0"
+            className="h-auto shrink-0 border-0 p-0 text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
           >
-            <X size={18} />
-          </button>
+            <X size={18} className="size-[18px]" />
+          </Button>
         </div>
 
         <div className="relative flex-1 overflow-auto bg-secondary/40 p-4 sm:p-6">

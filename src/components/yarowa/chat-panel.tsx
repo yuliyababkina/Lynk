@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { FileText, Lock, Send, SlidersHorizontal, ClipboardList, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import type { ChatContext, ChatMessage, ChatSide } from "@/types";
@@ -100,20 +101,21 @@ function ContextChip({
         : t("Open application");
 
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
       onClick={() => onOpen?.(context)}
       disabled={!onOpen}
       className={cn(
-        "mt-2 inline-flex max-w-full items-center gap-1.5 rounded-lg border border-border bg-background px-2 py-1 text-xs",
-        onOpen && "hover:bg-secondary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        "mt-2 h-auto max-w-full justify-start gap-1.5 rounded-lg border-border bg-background px-2 py-1 text-xs font-normal whitespace-normal disabled:opacity-100",
+        onOpen ? "hover:bg-secondary/60 dark:hover:bg-secondary/60" : "hover:bg-background"
       )}
       title={onOpen ? label : undefined}
     >
-      <Icon className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+      <Icon className="size-3.5 shrink-0 text-muted-foreground" />
       <span className="truncate font-medium">{context.label}</span>
       {onOpen && <span className="shrink-0 text-muted-foreground">· {label}</span>}
-    </button>
+    </Button>
   );
 }
 
@@ -181,7 +183,16 @@ function MessageRow({
   );
 }
 
-export function ChatPanel({
+/* Keyed by the draft and the context it carries. Opening from a different
+   ticket replaces whatever was half-typed for the previous one rather than
+   silently keeping the old draft and its link — by being a new panel, not by an
+   effect that overwrites state. Anything else leaves what the user typed. */
+export function ChatPanel(props: ChatPanelProps) {
+  const { draft = "", draftContext } = props;
+  return <ChatPanelBody key={`${draft}|${draftContext?.type ?? ""}:${draftContext?.id ?? ""}`} {...props} />;
+}
+
+function ChatPanelBody({
   messages,
   side,
   title,
@@ -201,13 +212,6 @@ export function ChatPanel({
   const endRef = useRef<HTMLDivElement>(null);
   const seenIds = useRef(new Set(messages.map((m) => m.id)));
   const [announcement, setAnnouncement] = useState("");
-
-  // Opening from a different ticket replaces whatever was half-typed for the
-  // previous one, rather than silently keeping the old draft and its link.
-  useEffect(() => {
-    setBody(draft);
-    setContext(draftContext);
-  }, [draft, draftContext]);
 
   /* Screen readers get told about messages that arrive from the other side.
      Your own send is not announced — you already know what you just wrote. */
@@ -260,14 +264,15 @@ export function ChatPanel({
           {subtitle && <p className="truncate text-xs text-muted-foreground">{subtitle}</p>}
         </div>
         {onClose && (
-          <button
+          <Button
             type="button"
+            variant="ghost"
             onClick={onClose}
             aria-label={t("Close")}
-            className="shrink-0 rounded-md text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-auto shrink-0 rounded-md border-0 p-0 text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
           >
-            <X className="h-[18px] w-[18px]" />
-          </button>
+            <X className="size-[18px]" />
+          </Button>
         )}
       </header>
 
@@ -323,17 +328,18 @@ export function ChatPanel({
                   <FileText className="h-3 w-3 shrink-0" />
                   <span className="truncate">{context.label}</span>
                 </Badge>
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
                   onClick={() => setContext(undefined)}
-                  className="text-xs text-muted-foreground hover:text-foreground"
+                  className="h-auto shrink border-0 p-0 text-xs font-normal whitespace-normal text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
                 >
                   {t("Remove link")}
-                </button>
+                </Button>
               </div>
             )}
             <div className="flex items-end gap-2">
-              <textarea
+              <Textarea
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
                 onKeyDown={(e) => {
@@ -347,7 +353,7 @@ export function ChatPanel({
                 rows={2}
                 aria-label={t("Write a message")}
                 placeholder={t("Write a message…")}
-                className="min-h-[2.5rem] flex-1 resize-none rounded-lg border border-border bg-background p-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="field-sizing-fixed min-h-[2.5rem] flex-1 rounded-lg border-border bg-background p-2 text-sm"
               />
               <Button variant="default" size="sm" disabled={!canSend} onClick={submit}>
                 <Send className="h-4 w-4" />
