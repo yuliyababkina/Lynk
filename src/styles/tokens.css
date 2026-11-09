@@ -95,6 +95,14 @@
   --brand-navy-foreground: #ffffff;
 
   /*
+   * SVG luminance-mask values, not theme colours. In a <mask>, white keeps the
+   * shape and black cuts it out (the status-icon glyphs). They must stay
+   * white/black in both themes, so .dark does not override them.
+   */
+  --mask-reveal: #ffffff;
+  --mask-hole: #000000;
+
+  /*
    * Secondary brand — the green secondary button and the secondary badge.
    * A pale tint of the brand with brand-green text, on the brand's OKLCH hue
    * (134, the hue of --yarowa-green-solid). Separate from the preset's
@@ -149,7 +157,9 @@
   --color-chart-orange: var(--chart-orange);
   --color-brand-navy: var(--brand-navy);
   --color-brand-navy-foreground: var(--brand-navy-foreground);
-  --color-secondary-brand: var(--secondary-brand);
+  --color-mask-reveal: var(--mask-reveal);
+  --color-mask-hole: var(--mask-hole);
+  --color-secondary-brand:var(--secondary-brand);
   --color-secondary-brand-hover: var(--secondary-brand-hover);
   --color-secondary-brand-active: var(--secondary-brand-active);
   --color-secondary-brand-foreground: var(--secondary-brand-foreground);
