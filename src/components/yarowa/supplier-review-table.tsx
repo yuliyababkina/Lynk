@@ -1,6 +1,7 @@
 import { Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useI18n } from "@/lib/i18n";
 
 export interface ReviewSupplier {
@@ -51,30 +52,30 @@ export function SupplierReviewTable({
         </Button>
       </div>
       <div className="bg-card border border-border rounded-lg overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-xs text-muted-foreground border-b border-border">
-              <th className="px-4 py-2 font-medium w-10"></th>
-              <th className="px-4 py-2 font-medium">{t("SUPPLIER")}</th>
-              <th className="px-4 py-2 font-medium">{t("REGION")}</th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table>
+          <TableHeader>
+            <TableRow className="text-xs text-muted-foreground border-border hover:bg-transparent">
+              <TableHead className="h-auto w-10 px-4 py-2 text-muted-foreground"></TableHead>
+              <TableHead className="h-auto px-4 py-2 text-muted-foreground">{t("SUPPLIER")}</TableHead>
+              <TableHead className="h-auto px-4 py-2 text-muted-foreground">{t("REGION")}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {suppliers.map((s) => (
-              <tr key={s.id} className="border-b border-border last:border-0">
-                <td className="px-4 py-2.5">
+              <TableRow key={s.id} className="border-border hover:bg-transparent">
+                <TableCell className="px-4 py-2.5 whitespace-normal [&:has([role=checkbox])]:pr-4">
                   <Checkbox
                     checked={selected.has(s.id)}
                     onCheckedChange={() => onToggle(s.id)}
                     aria-label={t("Include {supplier}", { supplier: s.name })}
                   />
-                </td>
-                <td className="px-4 py-2.5 font-medium">{s.name}</td>
-                <td className="px-4 py-2.5">{t(s.region)}</td>
-              </tr>
+                </TableCell>
+                <TableCell className="px-4 py-2.5 whitespace-normal font-medium">{s.name}</TableCell>
+                <TableCell className="px-4 py-2.5 whitespace-normal">{t(s.region)}</TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );
