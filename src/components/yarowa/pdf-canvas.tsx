@@ -70,7 +70,7 @@ export function PdfCanvas({
           const canvas = document.createElement("canvas");
           // No max-width: the page must stay at true 100% scale. The wrapper
           // scrolls if the pane is narrower than the document.
-          canvas.className = "bg-white shadow-md mx-auto";
+          canvas.className = "bg-paper shadow-md mx-auto";
           canvas.width = Math.floor(viewport.width * dpr);
           canvas.height = Math.floor(viewport.height * dpr);
           // Both dimensions in CSS pixels: the backing store is dpr-scaled for

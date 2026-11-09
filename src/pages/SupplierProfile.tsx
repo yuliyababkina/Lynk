@@ -119,7 +119,7 @@ export function SupplierProfile({
           <Button variant={unread > 0 ? "default" : "outline"} onClick={openChat}>
             <MessageSquare size={14} /> {t("Chat")}
             {unread > 0 && (
-              <span className="ml-1 rounded-full bg-critical px-1.5 text-[10px] font-semibold text-white">
+              <span className="ml-1 rounded-full bg-critical px-1.5 text-[10px] font-semibold text-critical-foreground">
                 {unread}
               </span>
             )}

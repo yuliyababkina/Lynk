@@ -16,7 +16,7 @@ export function LanguageToggle({ tone = "light" }: { tone?: "light" | "dark" }) 
       aria-label={t("Language")}
       className={cn(
         "inline-flex items-center rounded-full p-0.5 text-[11px] font-semibold",
-        tone === "dark" ? "bg-white/10" : "bg-secondary"
+        tone === "dark" ? "bg-brand-navy-foreground/10" : "bg-secondary"
       )}
     >
       {LANGS.map((l) => {
@@ -31,10 +31,10 @@ export function LanguageToggle({ tone = "light" }: { tone?: "light" | "dark" }) 
               "px-2 py-0.5 rounded-full uppercase tracking-wide transition-colors",
               active
                 ? tone === "dark"
-                  ? "bg-white text-brand-navy"
+                  ? "bg-brand-navy-foreground text-brand-navy"
                   : "bg-card text-foreground shadow-sm"
                 : tone === "dark"
-                  ? "text-white/60 hover:text-white"
+                  ? "text-brand-navy-foreground/60 hover:text-brand-navy-foreground"
                   : "text-muted-foreground hover:text-foreground"
             )}
           >

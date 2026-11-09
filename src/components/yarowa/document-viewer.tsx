@@ -52,7 +52,7 @@ export function DocumentViewer({ doc, onClose }: { doc: SupplierDoc; onClose: ()
           if (cancelled) return;
           const viewport = page.getViewport({ scale: SCALE_100 });
           const canvas = document.createElement("canvas");
-          canvas.className = "bg-white shadow-md mx-auto max-w-full h-auto";
+          canvas.className = "bg-paper shadow-md mx-auto max-w-full h-auto";
           canvas.width = Math.floor(viewport.width * dpr);
           canvas.height = Math.floor(viewport.height * dpr);
           canvas.style.width = `${Math.floor(viewport.width)}px`;
@@ -84,7 +84,7 @@ export function DocumentViewer({ doc, onClose }: { doc: SupplierDoc; onClose: ()
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/60 animate-in fade-in duration-150"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-scrim/60 animate-in fade-in duration-150"
       onClick={onClose}
     >
       <div

@@ -114,7 +114,7 @@ function CurrentFile({ supplierId, docName }: { supplierId: string; docName: str
  * a landscape strip showed a sliver of the top edge and read as broken.
  */
 const THUMB_FRAME =
-  "mx-auto block w-[136px] aspect-[1/1.414] rounded-md overflow-hidden border border-border bg-white hover:border-accent transition-colors";
+  "mx-auto block w-[136px] aspect-[1/1.414] rounded-md overflow-hidden border border-border bg-paper hover:border-accent transition-colors";
 
 function DocumentThumbnail({
   fileUrl,

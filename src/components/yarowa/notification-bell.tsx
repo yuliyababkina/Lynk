@@ -71,7 +71,7 @@ export function NotificationBell({
         {total > 0 && (
           <span
             aria-hidden="true"
-            className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-critical px-1 text-[10px] font-semibold text-white"
+            className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-critical px-1 text-[10px] font-semibold text-critical-foreground"
           >
             {total > 9 ? "9+" : total}
           </span>
@@ -104,7 +104,7 @@ export function NotificationBell({
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="truncate text-sm font-medium">{entry.title}</span>
-                      <span className="shrink-0 rounded-full bg-critical px-1.5 text-[10px] font-semibold text-white">
+                      <span className="shrink-0 rounded-full bg-critical px-1.5 text-[10px] font-semibold text-critical-foreground">
                         {entry.count}
                       </span>
                     </div>
