@@ -31,7 +31,6 @@ import { DocumentMetadataForm } from "@/components/yarowa/document-metadata-form
 import { DocumentBrowser, type DocumentBrowserRow } from "@/components/yarowa/document-browser";
 import { useLynkData } from "@/lib/LynkDataContext";
 import { recogniseDocumentMetadata, type DocumentMetadata } from "@/lib/onboarding-documents";
-import { docStatusMeta } from "@/lib/document-status";
 import { validityToISODate, type ParsedDocumentInfo } from "@/lib/pdf-metadata";
 import {
   PRINCIPAL_COMPANY,
@@ -49,7 +48,7 @@ import { useI18n } from "@/lib/i18n";
 import { translateContent } from "@/lib/content-i18n";
 import { cn } from "@/lib/utils";
 import { TERMS_SECTIONS, TERMS_VERSION, TERMS_EFFECTIVE_DATE } from "@/lib/terms";
-import type { DocStatus, SupplierDoc } from "@/types";
+import type { SupplierDoc } from "@/types";
 import { getPortalProfile } from "./portal/portal-data";
 
 export interface ProspectOnboardingProps {
@@ -417,19 +416,16 @@ export function ProspectOnboarding({
           <MessageSquare className="w-4 h-4" />
           {t("Chat")}
           {chatUnread > 0 && (
-            <span className="ml-1 rounded-full bg-critical px-1.5 text-[10px] font-semibold text-white">
+            <span className="ml-1 rounded-full bg-critical px-1.5 text-[10px] font-semibold text-critical-foreground">
               {chatUnread}
             </span>
           )}
         </Button>
         <LanguageToggle />
         {onSwitchAccount && (
-          <button
-            onClick={onSwitchAccount}
-            className="ml-3 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-          >
+          <Button variant="ghost" size="xs" onClick={onSwitchAccount} className="ml-3 text-muted-foreground">
             {t("Roles board")}
-          </button>
+          </Button>
         )}
       </header>
 
@@ -620,7 +616,7 @@ export function ProspectOnboarding({
                 }}
               />
               {/* Single hidden picker, targeted at whichever document is selected. */}
-              <input
+              <Input
                 ref={docInputRef}
                 type="file"
                 accept="application/pdf"
@@ -778,7 +774,7 @@ function WelcomeStep({
           ))}
         </div>
 
-        <label className="mt-3 flex items-start gap-2.5 cursor-pointer">
+        <Label className="mt-3 items-start gap-2.5 cursor-pointer font-normal leading-normal">
           <Checkbox
             checked={termsAccepted}
             disabled={termsAccepted || savingTerms}
@@ -812,7 +808,7 @@ function WelcomeStep({
               );
             })()}
           </span>
-        </label>
+        </Label>
 
         {savingTerms && (
           <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1.5">
@@ -964,70 +960,6 @@ function FormField({
   );
 }
 
-/* ── Document rows ────────────────────────────────────────────────────── */
-function UploadRow({
-  row,
-  status,
-  statusNote,
-  uploading,
-  onFile,
-}: {
-  row: DocRowDef;
-  /** Live status from the shared data (undefined = not uploaded yet). */
-  status?: DocStatus;
-  statusNote?: string;
-  uploading: boolean;
-  onFile: (file: File) => void;
-}) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const meta = status ? docStatusMeta(status) : null;
-  // A declined document has to be replaced, so keep the upload affordance.
-  const canUpload = !status || status === "rejected-resubmit";
-  return (
-    <Card className="rounded-xl border border-border ring-0 shadow-none [--card-spacing:1rem] px-(--card-spacing)">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-start gap-3 min-w-0">
-          <FileText className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
-          <div className="min-w-0">
-            <p className="text-sm font-semibold truncate">
-              {row.name}
-              {row.required && <span className="text-destructive"> *</span>}
-            </p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {status === "rejected-resubmit" && statusNote ? `Declined — “${statusNote}”` : row.hint}
-            </p>
-          </div>
-        </div>
-        <input
-          ref={inputRef}
-          type="file"
-          accept="application/pdf"
-          className="hidden"
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            e.target.value = "";
-            if (f) onFile(f);
-          }}
-        />
-        <div className="flex items-center gap-2 shrink-0">
-          {meta && (
-            <Badge variant={meta.variant as any}>
-              <meta.Icon className="w-3 h-3" />
-              {meta.label}
-            </Badge>
-          )}
-          {canUpload && (
-            <Button variant="outline" size="xs" disabled={uploading} onClick={() => inputRef.current?.click()}>
-              {uploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
-              {status === "rejected-resubmit" ? "Replace" : "Upload"}
-            </Button>
-          )}
-        </div>
-      </div>
-    </Card>
-  );
-}
-
 /* ── Step 5: Done ─────────────────────────────────────────────────────── */
 function DoneStep() {
   const { t } = useI18n();
@@ -1140,13 +1072,16 @@ function ContractsStep({
               const rowSigned = signed.has(c.id);
               const active = c.id === selected.id;
               return (
-                <button
+                <Button
                   key={c.id}
                   type="button"
+                  variant="ghost"
                   onClick={() => select(c.id)}
                   className={cn(
-                    "w-full text-left flex items-start gap-3 rounded-xl border p-3 transition-colors",
-                    active ? "border-primary bg-secondary/50" : "border-border hover:bg-secondary/40"
+                    "h-auto w-full items-start justify-start gap-3 rounded-xl border p-3 text-left font-normal whitespace-normal",
+                    active
+                      ? "border-primary bg-secondary/50 hover:bg-secondary/50 dark:hover:bg-secondary/50"
+                      : "border-border hover:bg-secondary/40 dark:hover:bg-secondary/40"
                   )}
                 >
                   <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-secondary">
@@ -1163,7 +1098,7 @@ function ContractsStep({
                   ) : (
                     <span className="mt-1.5 w-2 h-2 rounded-full bg-warning shrink-0" aria-label={t("Awaiting signature")} />
                   )}
-                </button>
+                </Button>
               );
             })}
           </div>
@@ -1200,14 +1135,14 @@ function ContractsStep({
               </div>
             ) : (
               <div className="space-y-3">
-                <label className="flex items-start gap-2.5 cursor-pointer">
+                <Label className="items-start gap-2.5 cursor-pointer font-normal leading-normal">
                   <Checkbox checked={agreed} onCheckedChange={(v) => setAgreed(v === true)} className="mt-0.5" />
                   <span className="text-sm">
                     {selected.kind === "catalogue"
                       ? t("I have read and agree to this pricing catalogue, and I am authorised to sign on behalf of my company.")
                       : t("I have read and agree to this agreement, and I am authorised to sign on behalf of my company.")}
                   </span>
-                </label>
+                </Label>
                 <div className="flex justify-end">
                   <Button variant="default" disabled={!agreed} onClick={sign}>
                     <PenLine className="w-4 h-4" />
@@ -1249,33 +1184,36 @@ function SupplierActivatedStep({ company }: { company: string }) {
 
 // Faux paper document shown big in the Contracts pane — a stand-in for the real
 // PDF the Principal would send.
+// Static width classes, not a style prop: Tailwind needs to see each one in source.
+const LINE_WIDTHS = ["w-full", "w-[94%]", "w-[97%]", "w-[88%]", "w-[72%]", "w-[96%]", "w-[80%]"];
+
 function ContractPreview({ contract }: { contract: PrincipalContract }) {
   const isCatalogue = contract.kind === "catalogue";
   return (
-    <div className="mx-auto w-full max-w-[620px] bg-white text-slate-900 shadow-md rounded-sm p-10">
-      <div className="flex items-start justify-between border-b border-slate-200 pb-4">
+    <div className="mx-auto w-full max-w-[620px] bg-paper text-paper-foreground shadow-md rounded-sm p-10">
+      <div className="flex items-start justify-between border-b border-paper-border pb-4">
         <div>
           <div className="text-lg font-bold tracking-tight">{PRINCIPAL}</div>
-          <div className="text-[11px] text-slate-500">Procurement</div>
+          <div className="text-[11px] text-paper-muted">Procurement</div>
         </div>
-        <div className="text-right text-[10px] uppercase tracking-wide text-slate-500 font-semibold">
+        <div className="text-right text-[10px] uppercase tracking-wide text-paper-muted font-semibold">
           {isCatalogue ? "Price List" : "Agreement"}
         </div>
       </div>
 
       <div className="mt-7 text-xl font-bold leading-tight">{contract.name}</div>
-      <div className="text-xs text-slate-500 mt-1">{contract.meta}</div>
-      <p className="text-sm text-slate-600 mt-4 leading-relaxed">{contract.summary}</p>
+      <div className="text-xs text-paper-muted mt-1">{contract.meta}</div>
+      <p className="text-sm text-paper-secondary mt-4 leading-relaxed">{contract.summary}</p>
 
       <div className="mt-6 space-y-2.5">
-        {[100, 94, 97, 88, 72, 96, 80].map((w, i) => (
-          <div key={i} className="h-2.5 rounded bg-slate-100" style={{ width: `${w}%` }} />
+        {LINE_WIDTHS.map((w, i) => (
+          <div key={i} className={`h-2.5 rounded bg-paper-tint ${w}`} />
         ))}
       </div>
 
       {isCatalogue && (
-        <div className="mt-6 border border-slate-200 rounded overflow-hidden text-xs">
-          <div className="grid grid-cols-[1fr_auto] gap-4 bg-slate-50 font-semibold text-slate-600 px-3 py-2">
+        <div className="mt-6 border border-paper-border rounded overflow-hidden text-xs">
+          <div className="grid grid-cols-[1fr_auto] gap-4 bg-paper-header font-semibold text-paper-secondary px-3 py-2">
             <span>Service</span>
             <span>Rate (applied to work orders)</span>
           </div>
@@ -1285,20 +1223,20 @@ function ContractPreview({ contract }: { contract: PrincipalContract }) {
             ["Emergency response", "€ 120 / h"],
             ["Weekend surcharge", "+ 25 %"],
           ].map(([service, rate]) => (
-            <div key={service} className="grid grid-cols-[1fr_auto] gap-4 px-3 py-2 border-t border-slate-100">
-              <span className="text-slate-700">{service}</span>
-              <span className="text-slate-700 font-medium">{rate}</span>
+            <div key={service} className="grid grid-cols-[1fr_auto] gap-4 px-3 py-2 border-t border-paper-tint">
+              <span className="text-paper-value">{service}</span>
+              <span className="text-paper-value font-medium">{rate}</span>
             </div>
           ))}
         </div>
       )}
 
-      <div className="mt-8 border-t border-dashed border-slate-200 pt-5 flex items-end justify-between">
+      <div className="mt-8 border-t border-dashed border-paper-border pt-5 flex items-end justify-between">
         <div>
-          <div className="h-px w-36 bg-slate-300" />
-          <div className="text-[11px] text-slate-500 mt-1">Supplier signature</div>
+          <div className="h-px w-36 bg-paper-rule" />
+          <div className="text-[11px] text-paper-muted mt-1">Supplier signature</div>
         </div>
-        <div className="text-[10px] text-slate-400 max-w-[45%] text-right">
+        <div className="text-[10px] text-paper-subtle max-w-[45%] text-right">
           Mock document — for UI/UX prototype only
         </div>
       </div>

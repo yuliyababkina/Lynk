@@ -71,6 +71,7 @@
 
   /* Ticket criticality */
   --critical: #dc2626;
+  --critical-foreground: #ffffff; /* text on a solid --critical surface (e.g. unread count) */
   --high: #a16207; /* same as --warning — see the note there */
   --medium: #2563eb;
   --low: #64748b;
@@ -176,6 +177,7 @@
   --color-warning-foreground: var(--warning-foreground);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-critical: var(--critical);
+  --color-critical-foreground: var(--critical-foreground);
   --color-high: var(--high);
   --color-medium: var(--medium);
   --color-low: var(--low);
