@@ -3,6 +3,8 @@ import { Search, Plus, Star, MessageSquare } from "lucide-react";
 import { useLynkData } from "../lib/LynkDataContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Pill } from "@/components/yarowa/pill";
 import { useI18n } from "@/lib/i18n";
 import { relationshipId } from "@/lib/db";
@@ -50,7 +52,7 @@ export function SuppliersOverview({
       if (query && !s.name.toLowerCase().includes(query.toLowerCase())) return false;
       return true;
     });
-  }, [stage, query]);
+  }, [stage, query, SUPPLIERS]);
 
   const counts: Record<StageFilter, number> = {
     all: SUPPLIERS.length,
@@ -81,11 +83,11 @@ export function SuppliersOverview({
         </div>
         <div className="relative">
           <Search size={14} className="absolute left-2.5 top-2.5 text-muted-foreground" />
-          <input
+          <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t("Search...")}
-            className="pl-8 pr-3 py-1.5 text-sm rounded-md border border-border bg-background w-56"
+            className="h-auto w-56 rounded-md border-border bg-background py-1.5 pl-8 pr-3 text-sm"
           />
         </div>
       </div>
@@ -93,28 +95,28 @@ export function SuppliersOverview({
       {/* Scrolls inside its own box rather than pushing the page sideways, so
           the table stays usable when the chat dock takes 380px off the width. */}
       <div className="bg-card border border-border rounded-lg overflow-x-auto">
-        <table className="w-full min-w-[720px] text-sm">
-          <thead>
-            <tr className="text-left text-xs text-muted-foreground border-b border-border">
-              <th className="px-4 py-2 font-medium">{t("COMPANY")}</th>
-              <th className="px-4 py-2 font-medium">{t("STAGE")}</th>
-              <th className="px-4 py-2 font-medium">{t("TRADE")}</th>
-              <th className="px-4 py-2 font-medium">{t("REGION")}</th>
-              <th className="px-4 py-2 font-medium">{t("TICKETS")}</th>
-              <th className="px-4 py-2 font-medium">{t("COMPLIANCE")}</th>
-              <th className="px-4 py-2 font-medium">{t("RATING")}</th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table className="min-w-[720px]">
+          <TableHeader>
+            <TableRow className="text-xs border-border hover:bg-transparent">
+              <TableHead className="h-auto px-4 py-2 text-muted-foreground">{t("COMPANY")}</TableHead>
+              <TableHead className="h-auto px-4 py-2 text-muted-foreground">{t("STAGE")}</TableHead>
+              <TableHead className="h-auto px-4 py-2 text-muted-foreground">{t("TRADE")}</TableHead>
+              <TableHead className="h-auto px-4 py-2 text-muted-foreground">{t("REGION")}</TableHead>
+              <TableHead className="h-auto px-4 py-2 text-muted-foreground">{t("TICKETS")}</TableHead>
+              <TableHead className="h-auto px-4 py-2 text-muted-foreground">{t("COMPLIANCE")}</TableHead>
+              <TableHead className="h-auto px-4 py-2 text-muted-foreground">{t("RATING")}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {filtered.map((s: Supplier) => (
-              <tr
+              <TableRow
                 key={s.id}
                 onClick={() => onOpenProfile(s.id)}
-                className={`border-b border-border last:border-0 cursor-pointer hover:bg-secondary/50 ${
+                className={`border-border cursor-pointer hover:bg-secondary/50 ${
                   initialSelectedId === s.id ? "bg-secondary/50" : ""
                 }`}
               >
-                <td className="px-4 py-3">
+                <TableCell className="px-4 py-3 whitespace-normal">
                   <div className="flex items-center gap-1.5">
                     <span className="font-medium">{s.name}</span>
                     {/* Unread messages from this supplier, so the PM can see
@@ -127,13 +129,13 @@ export function SuppliersOverview({
                     )}
                   </div>
                   <div className="text-xs text-muted-foreground">{s.contacts[0]?.name}</div>
-                </td>
-                <td className="px-4 py-3">
+                </TableCell>
+                <TableCell className="px-4 py-3 whitespace-normal">
                   <Badge variant="neutral">{t(formatStageLabel(s.stage))}</Badge>
-                </td>
-                <td className="px-4 py-3">{t(s.trade)}</td>
-                <td className="px-4 py-3">{t(s.region)}</td>
-                <td className="px-4 py-3">
+                </TableCell>
+                <TableCell className="px-4 py-3 whitespace-normal">{t(s.trade)}</TableCell>
+                <TableCell className="px-4 py-3 whitespace-normal">{t(s.region)}</TableCell>
+                <TableCell className="px-4 py-3 whitespace-normal">
                   {s.openTickets > 0 ? (
                     <Badge variant="warning">
                       {s.openTickets > 1
@@ -143,15 +145,15 @@ export function SuppliersOverview({
                   ) : (
                     <span className="text-muted-foreground">—</span>
                   )}
-                </td>
-                <td className="px-4 py-3">
+                </TableCell>
+                <TableCell className="px-4 py-3 whitespace-normal">
                   {s.compliance === "—" ? (
                     <span className="text-muted-foreground">—</span>
                   ) : (
                     <Badge variant={complianceTone[s.compliance]}>{t(s.compliance)}</Badge>
                   )}
-                </td>
-                <td className="px-4 py-3">
+                </TableCell>
+                <TableCell className="px-4 py-3 whitespace-normal">
                   {s.rating ? (
                     <span className="inline-flex items-center gap-1 font-medium">
                       <Star size={12} className="fill-warning text-warning" />
@@ -160,11 +162,11 @@ export function SuppliersOverview({
                   ) : (
                     <span className="text-muted-foreground">—</span>
                   )}
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
       <div className="text-xs text-muted-foreground mt-2">
         Showing {filtered.length} of {SUPPLIERS.length} contacts
