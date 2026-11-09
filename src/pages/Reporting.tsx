@@ -53,7 +53,7 @@ export function Reporting() {
           <div className="text-xs text-muted-foreground mb-3">{tr("Across all suppliers · {period}", { period: tr(period) })}</div>
           <div className="h-40 flex items-end gap-3 px-2">
             {["h-[81%]", "h-[79%]", "h-[83%]", "h-[80%]"].map((h, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-1">
+              <div key={i} className="h-full flex-1 flex flex-col items-center justify-end gap-1">
                 <div className={`w-full bg-accent/20 rounded-t ${h}`} />
                 <span className="text-[10px] text-muted-foreground">{["Q2 25", "Q3 25", "Q4 25", "Q1 26"][i]}</span>
               </div>
@@ -71,7 +71,7 @@ export function Reporting() {
               { band: "60-69", h: "h-1/4", color: "bg-chart-orange" },
               { band: "<60", h: "h-1/4", color: "bg-critical" },
             ].map((b) => (
-              <div key={b.band} className="flex-1 flex flex-col items-center gap-1">
+              <div key={b.band} className="h-full flex-1 flex flex-col items-center justify-end gap-1">
                 <div className={`w-full ${b.color} rounded-t ${b.h}`} />
                 <span className="text-[10px] text-muted-foreground">{b.band}</span>
               </div>
