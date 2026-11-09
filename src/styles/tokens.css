@@ -103,6 +103,32 @@
   --mask-hole: #000000;
 
   /*
+   * Faux paper — the mock documents (compliance certificate, contract preview)
+   * that stand in for a real PDF. A page is white and dark-inked in BOTH themes,
+   * like a physical sheet on a dark desk, so .dark does not override these.
+   * Values are the slate scale the mocks were first drawn with.
+   */
+  --paper: #ffffff;
+  --paper-foreground: #0f172a;           /* slate-900 — body ink */
+  --paper-value: #334155;                /* slate-700 — table values */
+  --paper-secondary: #475569;            /* slate-600 — column heads, paragraphs */
+  --paper-muted: #64748b;                /* slate-500 — captions, labels */
+  --paper-subtle: #94a3b8;               /* slate-400 — footnotes */
+  --paper-border: #e2e8f0;               /* slate-200 — rules and table frame */
+  --paper-tint: #f1f5f9;                 /* slate-100 — placeholder lines, row dividers */
+  --paper-header: #f8fafc;               /* slate-50 — table header row */
+  --paper-rule: #cbd5e1;                 /* slate-300 — signature line */
+  --paper-stamp: #65a30d;                /* lime-600 — "RENEWED" stamp ring */
+  --paper-stamp-ink: #4d7c0f;            /* lime-700 — stamp text */
+
+  /*
+   * Overlay scrim behind modals and lightboxes: black in both themes. Use it
+   * with an opacity step (bg-scrim/50). bg-foreground would flip to a light
+   * wash in dark mode.
+   */
+  --scrim: #000000;
+
+  /*
    * Secondary brand — the green secondary button and the secondary badge.
    * A pale tint of the brand with brand-green text, on the brand's OKLCH hue
    * (134, the hue of --yarowa-green-solid). Separate from the preset's
@@ -159,6 +185,19 @@
   --color-brand-navy-foreground: var(--brand-navy-foreground);
   --color-mask-reveal: var(--mask-reveal);
   --color-mask-hole: var(--mask-hole);
+  --color-paper: var(--paper);
+  --color-paper-foreground: var(--paper-foreground);
+  --color-paper-value: var(--paper-value);
+  --color-paper-secondary: var(--paper-secondary);
+  --color-paper-muted: var(--paper-muted);
+  --color-paper-subtle: var(--paper-subtle);
+  --color-paper-border: var(--paper-border);
+  --color-paper-tint: var(--paper-tint);
+  --color-paper-header: var(--paper-header);
+  --color-paper-rule: var(--paper-rule);
+  --color-paper-stamp: var(--paper-stamp);
+  --color-paper-stamp-ink: var(--paper-stamp-ink);
+  --color-scrim: var(--scrim);
   --color-secondary-brand:var(--secondary-brand);
   --color-secondary-brand-hover: var(--secondary-brand-hover);
   --color-secondary-brand-active: var(--secondary-brand-active);

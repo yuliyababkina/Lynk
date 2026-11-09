@@ -32,7 +32,7 @@ export function DocumentLightbox({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/50 animate-in fade-in duration-150"
+      className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-scrim/50 animate-in fade-in duration-150"
       onClick={onClose}
     >
       <div
@@ -52,9 +52,15 @@ export function DocumentLightbox({
               {doc.renewal.uploadedBy}
             </div>
           </div>
-          <button onClick={onClose} aria-label={t("Close")} className="text-muted-foreground hover:text-foreground shrink-0">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={onClose}
+            aria-label={t("Close")}
+            className="text-muted-foreground shrink-0"
+          >
             <X size={18} />
-          </button>
+          </Button>
         </div>
 
         {/* Preview */}
@@ -93,49 +99,52 @@ export function DocumentLightbox({
  * was issued in. The chrome around it — header, hint, decision buttons —
  * translates.
  */
+// Static width classes, not a style prop: Tailwind needs to see each one in source.
+const LINE_WIDTHS = ["w-full", "w-[94%]", "w-[97%]", "w-[68%]", "w-[90%]", "w-[62%]", "w-[84%]"];
+
 function DocumentPreview({ doc }: { doc: SupplierDoc }) {
   const ref = doc.id.replace(/[^0-9]/g, "").padStart(4, "0");
   return (
-    <div className="mx-auto w-full max-w-[540px] aspect-[1/1.3] bg-white text-slate-900 shadow-md rounded-sm p-10 flex flex-col">
-      <div className="flex items-start justify-between border-b border-slate-200 pb-4">
+    <div className="mx-auto w-full max-w-[540px] aspect-[1/1.3] bg-paper text-paper-foreground shadow-md rounded-sm p-10 flex flex-col">
+      <div className="flex items-start justify-between border-b border-paper-border pb-4">
         <div>
           <div className="text-lg font-bold tracking-tight">{doc.supplierName}</div>
-          <div className="text-xs text-slate-500">{doc.trade}</div>
+          <div className="text-xs text-paper-muted">{doc.trade}</div>
         </div>
         <div className="text-right text-[11px]">
-          <div className="font-semibold text-slate-600 uppercase tracking-wide">Certificate</div>
-          <div className="text-slate-400">{doc.documentCategory}</div>
+          <div className="font-semibold text-paper-secondary uppercase tracking-wide">Certificate</div>
+          <div className="text-paper-subtle">{doc.documentCategory}</div>
         </div>
       </div>
 
       <div className="mt-8">
         <div className="text-xl font-bold leading-tight">{doc.documentName}</div>
-        <div className="text-sm text-slate-500 mt-1">Renewal — valid from {doc.expiryDate}</div>
+        <div className="text-sm text-paper-muted mt-1">Renewal — valid from {doc.expiryDate}</div>
       </div>
 
       <div className="mt-8 space-y-2.5">
-        {[100, 94, 97, 68, 90, 62, 84].map((w, i) => (
-          <div key={i} className="h-2.5 rounded bg-slate-100" style={{ width: `${w}%` }} />
+        {LINE_WIDTHS.map((w, i) => (
+          <div key={i} className={`h-2.5 rounded bg-paper-tint ${w}`} />
         ))}
       </div>
 
       <div className="mt-7 grid grid-cols-2 gap-4 text-xs">
         <div>
-          <div className="text-slate-400">Reference no.</div>
+          <div className="text-paper-subtle">Reference no.</div>
           <div className="font-medium">DOC-2026-{ref}</div>
         </div>
         <div>
-          <div className="text-slate-400">Coverage</div>
+          <div className="text-paper-subtle">Coverage</div>
           <div className="font-medium">€5,000,000</div>
         </div>
       </div>
 
       <div className="mt-auto flex items-end justify-between pt-8">
         <div>
-          <div className="h-px w-32 bg-slate-300" />
-          <div className="text-xs text-slate-500 mt-1">Authorised signature</div>
+          <div className="h-px w-32 bg-paper-rule" />
+          <div className="text-xs text-paper-muted mt-1">Authorised signature</div>
         </div>
-        <div className="size-16 rounded-full border-2 border-lime-600/40 text-lime-700/70 grid place-items-center text-[9px] font-bold text-center leading-tight rotate-[-8deg]">
+        <div className="size-16 rounded-full border-2 border-paper-stamp/40 text-paper-stamp-ink/70 grid place-items-center text-[9px] font-bold text-center leading-tight rotate-[-8deg]">
           RENEWED
           <br />
           2026
