@@ -4,6 +4,7 @@ import { useI18n } from "@/lib/i18n";
 import type { PortalView } from "@/pages/SupplierPortal";
 import { getPortalNavCounts, getPortalProfile, initialsOf } from "@/pages/portal/portal-data";
 import { LayoutDashboard, AlertCircle, FileText, DollarSign, Building, Users, PanelLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export interface PortalSidebarProps {
   view: PortalView;
@@ -62,18 +63,19 @@ export function PortalSidebar({
           </div>
         ) : null}
         {onToggleCollapse ? (
-          <button
+          <Button
             type="button"
+            variant="ghost"
             onClick={onToggleCollapse}
             className={cn(
-              "shrink-0 rounded p-1 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors",
+              "h-auto shrink-0 rounded border-0 p-1 text-muted-foreground hover:bg-secondary hover:text-foreground dark:hover:bg-secondary",
               collapsed ? "" : "ml-auto"
             )}
             aria-label={collapsed ? t("Expand menu") : t("Collapse menu")}
             title={collapsed ? t("Expand menu") : t("Collapse menu")}
           >
             <PanelLeft className="w-4 h-4" />
-          </button>
+          </Button>
         ) : null}
       </div>
 
@@ -82,16 +84,19 @@ export function PortalSidebar({
         {navItems.map((item) => {
           const active = view === item.view;
           return (
-            <button
+            <Button
               key={item.view}
+              variant="ghost"
               onClick={() => onNavigate(item.view)}
               title={t(item.label)}
               className={cn(
-                "w-full rounded-md text-sm transition-colors h-9",
+                "h-9 w-full rounded-md border-0 text-sm whitespace-normal",
                 collapsed
                   ? "flex items-center justify-center px-3 py-2"
-                  : "grid grid-cols-[1.25rem_minmax(0,1fr)_auto] items-center gap-3 px-3 py-2",
-                active ? "bg-muted font-medium text-foreground" : "text-muted-foreground hover:bg-muted/60"
+                  : "grid grid-cols-[1.25rem_minmax(0,1fr)_auto] items-center justify-normal gap-3 px-3 py-2",
+                active
+                  ? "bg-muted font-medium text-foreground hover:bg-muted dark:hover:bg-muted"
+                  : "font-normal text-muted-foreground hover:bg-muted/60 hover:text-muted-foreground dark:hover:bg-muted/60"
               )}
             >
               <span
@@ -108,7 +113,7 @@ export function PortalSidebar({
                   {item.count}
                 </Badge>
               ) : null}
-            </button>
+            </Button>
           );
         })}
       </nav>

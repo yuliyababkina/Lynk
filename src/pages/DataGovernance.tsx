@@ -69,9 +69,10 @@ export function DataGovernance({ initialSelectedId }: { initialSelectedId?: stri
           const isOpen = expanded === r.id;
           return (
             <div key={r.id} className="bg-card border border-border rounded-lg">
-              <button
+              <Button
+                variant="ghost"
                 onClick={() => setExpanded(isOpen ? null : r.id)}
-                className="w-full flex items-center justify-between px-4 py-3"
+                className="flex h-auto w-full justify-between gap-0 rounded-none border-0 px-4 py-3 font-normal leading-normal whitespace-normal hover:bg-transparent dark:hover:bg-transparent"
               >
                 <div className="flex items-center gap-2 text-left">
                   <span className="font-medium">{r.supplierName}</span>
@@ -85,7 +86,7 @@ export function DataGovernance({ initialSelectedId }: { initialSelectedId?: stri
                   <Badge variant="warning">{tr(r.status)}</Badge>
                   {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </div>
-              </button>
+              </Button>
 
               {isOpen && (
                 <div className="px-4 pb-4 space-y-3 text-sm border-t border-border pt-3">

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { useI18n } from "@/lib/i18n";
 import { LanguageToggle } from "@/components/yarowa/language-toggle";
+import { Button } from "@/components/ui/button";
 
 export interface TopHeaderProps {
   currentLabel: string;
@@ -33,20 +34,22 @@ export function TopHeader({
       {showLanguage ? <LanguageToggle /> : null}
       {onSwitchAccount ? (
         <>
-          <button
+          <Button
+            variant="ghost"
             onClick={onSwitchAccount}
-            className="mx-3 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+            className="mx-3 h-auto border-0 p-0 text-xs font-medium text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
             title={t("Switch account")}
           >
             {t("Switch")}
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="ghost"
             onClick={onSwitchAccount}
-            className="w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs font-semibold flex items-center justify-center cursor-pointer hover:opacity-80"
+            className="size-7 cursor-pointer rounded-full border-0 bg-primary p-0 text-xs font-semibold text-primary-foreground hover:bg-primary hover:text-primary-foreground hover:opacity-80 dark:hover:bg-primary"
             title={t("Switch account")}
           >
             {accountInitials}
-          </button>
+          </Button>
         </>
       ) : null}
     </header>

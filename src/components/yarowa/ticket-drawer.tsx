@@ -109,12 +109,13 @@ export function TicketDrawer({
         <div className="grid grid-cols-2 gap-3 text-xs mb-4">
           <div>
             <div className="text-muted-foreground mb-0.5">{t("ENTITY")}</div>
-            <button
-              className="text-accent underline font-medium text-left"
+            <Button
+              variant="ghost"
+              className="h-auto justify-start border-0 p-0 text-left text-xs font-medium whitespace-normal text-accent underline hover:bg-transparent hover:text-accent dark:hover:bg-transparent"
               onClick={() => onOpenSupplier(ticket.entityName)}
             >
               {ticket.entityName}
-            </button>
+            </Button>
           </div>
           <div>
             <div className="text-muted-foreground mb-0.5">{t("TYPE")}</div>
@@ -229,13 +230,14 @@ export function TicketDrawer({
         )}
 
         {targetView && (
-          <button
+          <Button
+            variant="ghost"
             onClick={() => onNavigate(targetView, ticket.targetId)}
-            className="w-full flex items-center justify-center gap-1.5 text-sm text-accent font-medium py-2 border-t border-border pt-3"
+            className="h-auto w-full gap-1.5 rounded-none border-0 border-t border-border px-0 pb-2 pt-3 text-sm font-medium text-accent hover:bg-transparent hover:text-accent dark:hover:bg-transparent"
           >
             {t("Open in {view}", { view: t(sourceLabel[ticket.source]) })}
-            <ArrowUpRight size={14} />
-          </button>
+            <ArrowUpRight size={14} className="size-3.5" />
+          </Button>
         )}
     </DetailDrawer>
   );

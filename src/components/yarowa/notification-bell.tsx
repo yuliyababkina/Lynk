@@ -3,6 +3,7 @@ import { Bell } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import type { ChatMessage } from "@/types";
+import { Button } from "@/components/ui/button";
 
 /**
  * New-message bell for the top header, used by every role.
@@ -52,7 +53,9 @@ export function NotificationBell({
 
   return (
     <div className="relative" ref={ref}>
-      <button
+      <Button
+        variant="ghost"
+        size="icon-sm"
         onClick={() => setOpen((v) => !v)}
         aria-label={
           total > 0 ? t("{count} new messages", { count: total }) : t("No new messages")
@@ -61,10 +64,10 @@ export function NotificationBell({
         aria-haspopup="menu"
         title={t("Notifications")}
         className={cn(
-          "relative flex h-7 w-7 items-center justify-center rounded-full transition-colors",
+          "relative rounded-full border-0 p-0 hover:bg-transparent aria-expanded:bg-transparent dark:hover:bg-transparent",
           tone === "dark"
-            ? "text-brand-navy-foreground/70 hover:text-brand-navy-foreground"
-            : "text-muted-foreground hover:text-foreground"
+            ? "text-brand-navy-foreground/70 hover:text-brand-navy-foreground aria-expanded:text-brand-navy-foreground/70"
+            : "text-muted-foreground hover:text-foreground aria-expanded:text-muted-foreground"
         )}
       >
         <Bell className="h-4 w-4" />
@@ -76,7 +79,7 @@ export function NotificationBell({
             {total > 9 ? "9+" : total}
           </span>
         )}
-      </button>
+      </Button>
 
       {open && (
         <div
@@ -94,13 +97,14 @@ export function NotificationBell({
             <ul className="max-h-80 overflow-y-auto divide-y divide-border">
               {entries.map((entry) => (
                 <li key={entry.relationship}>
-                  <button
+                  <Button
+                    variant="ghost"
                     role="menuitem"
                     onClick={() => {
                       setOpen(false);
                       onOpen(entry.relationship);
                     }}
-                    className="w-full px-3 py-2.5 text-left hover:bg-secondary/60 focus-visible:outline-none focus-visible:bg-secondary/60"
+                    className="h-auto w-full flex-col items-stretch justify-start gap-0 rounded-none border-0 px-3 py-2.5 text-left font-normal whitespace-normal hover:bg-secondary/60 focus-visible:bg-secondary/60 focus-visible:ring-0 dark:hover:bg-secondary/60"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="truncate text-sm font-medium">{entry.title}</span>
@@ -118,7 +122,7 @@ export function NotificationBell({
                         · {entry.latest.context.label}
                       </p>
                     )}
-                  </button>
+                  </Button>
                 </li>
               ))}
             </ul>

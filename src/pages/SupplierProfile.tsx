@@ -84,9 +84,13 @@ export function SupplierProfile({
 
   return (
     <div className="p-6">
-      <button onClick={onBack} className="flex items-center gap-1 text-sm text-muted-foreground mb-3 hover:text-foreground">
-        <ArrowLeft size={14} /> {t("Suppliers Overview")} <span className="mx-1">/</span> <span className="text-foreground font-medium">{supplier.name}</span>
-      </button>
+      <Button
+        variant="ghost"
+        onClick={onBack}
+        className="mb-3 flex h-auto justify-start gap-1 border-0 p-0 text-sm font-normal whitespace-normal text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
+      >
+        <ArrowLeft size={14} className="size-3.5" /> {t("Suppliers Overview")} <span className="mx-1">/</span> <span className="text-foreground font-medium">{supplier.name}</span>
+      </Button>
 
       <div className="flex items-start justify-between mb-5">
         <div className="flex items-center gap-3">
@@ -163,10 +167,11 @@ export function SupplierProfile({
             <div className="p-4 text-sm text-muted-foreground">{t("No open tickets.")}</div>
           )}
           {tickets.map((ticket) => (
-            <button
+            <Button
               key={ticket.id}
+              variant="ghost"
               onClick={() => onSelectTicket(ticket)}
-              className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-secondary/50"
+              className="flex h-auto w-full justify-between gap-3 rounded-none border-0 px-4 py-3 text-left font-normal leading-normal whitespace-normal hover:bg-secondary/50 dark:hover:bg-secondary/50"
             >
               <div className="min-w-0">
                 {/* Same treatment the Task Queue gives a ticket: the title is a
@@ -183,7 +188,7 @@ export function SupplierProfile({
                 </Badge>
                 <Button variant="outline">{t(ticket.primaryAction)}</Button>
               </div>
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -247,14 +252,15 @@ export function SupplierProfile({
                 <div key={d.id} className="flex items-center justify-between gap-3 py-2 first:pt-0 last:pb-0">
                   <div className="min-w-0">
                     {d.fileUrl ? (
-                      <button
+                      <Button
+                        variant="ghost"
                         onClick={() => setPreviewDoc(d)}
-                        className="flex items-center gap-1.5 text-sm font-medium truncate hover:underline hover:text-accent"
+                        className="flex h-auto justify-start gap-1.5 border-0 p-0 text-sm font-medium truncate hover:bg-transparent hover:text-accent hover:underline dark:hover:bg-transparent"
                         title={t("Preview attached document")}
                       >
-                        <FileText size={14} className="text-muted-foreground shrink-0" />
+                        <FileText size={14} className="size-3.5 text-muted-foreground shrink-0" />
                         {t(d.documentName)}
-                      </button>
+                      </Button>
                     ) : (
                       <span className="flex items-center gap-1.5 text-sm font-medium truncate">
                         <FileText size={14} className="text-muted-foreground shrink-0" />
