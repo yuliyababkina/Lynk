@@ -48,44 +48,50 @@ export const ShellBoundaries: Story = {
   args: { initialRole: "procurement", initialApp: "lynk", initialInspector: true },
 };
 
+/* Named components, not inline render functions: both hold state, and hooks are
+   only legal inside components. */
+function GlobalAppSwitcherDemo() {
+  const [active, setActive] = React.useState("lynk");
+  return React.createElement(
+    TooltipProvider,
+    null,
+    React.createElement(
+      "div",
+      { className: "flex justify-end p-4" },
+      React.createElement(AppSwitcher, { apps: appsForRole("admin"), activeId: active, onSelect: setActive })
+    )
+  );
+}
+
+function InnerMenuDemo() {
+  const app = getApp("work-orders")!;
+  const [active, setActive] = React.useState(app.nav[0].id);
+  return React.createElement(
+    TooltipProvider,
+    null,
+    React.createElement(
+      SidebarProvider,
+      { className: "h-[480px] min-h-0" },
+      React.createElement(MfeSidebar, {
+        appName: app.name,
+        appIcon: app.icon,
+        items: app.nav,
+        activeId: active,
+        onSelect: setActive,
+      })
+    )
+  );
+}
+
 /** The global switcher on its own (top right in the header). */
 export const GlobalAppSwitcher: StoryObj<typeof AppSwitcher> = {
-  render: () => {
-    const [active, setActive] = React.useState("lynk");
-    return React.createElement(
-      TooltipProvider,
-      null,
-      React.createElement(
-        "div",
-        { className: "flex justify-end p-4" },
-        React.createElement(AppSwitcher, { apps: appsForRole("admin"), activeId: active, onSelect: setActive })
-      )
-    );
-  },
+  render: () => React.createElement(GlobalAppSwitcherDemo),
   parameters: { layout: "padded" },
 };
 
 /** The inner menu contract every app renders on the left. */
 export const InnerMenu: StoryObj<typeof MfeSidebar> = {
-  render: () => {
-    const app = getApp("work-orders")!;
-    const [active, setActive] = React.useState(app.nav[0].id);
-    return React.createElement(
-      TooltipProvider,
-      null,
-      React.createElement(
-        SidebarProvider,
-        { className: "h-[480px] min-h-0" },
-        React.createElement(MfeSidebar, {
-          appName: app.name,
-          appIcon: app.icon,
-          items: app.nav,
-          activeId: active,
-          onSelect: setActive,
-        })
-      )
-    );
-  },
+  render: () => React.createElement(InnerMenuDemo),
   parameters: { layout: "padded" },
 };
 
