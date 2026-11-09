@@ -1,4 +1,4 @@
-import type { Supplier, Ticket, SupplierDoc, Contract, DataGovernanceRequest, OnboardingCase, Catalogue, CatalogueSupplier, Principal, SupplierPrincipalRelationship, DirectoryCompany, CatalogueLineDiff, ChatMessage } from "./types";
+import type { Supplier, Ticket, SupplierDoc, Contract, DataGovernanceRequest, OnboardingCase, Catalogue, Principal, SupplierPrincipalRelationship, DirectoryCompany, CatalogueLineDiff, ChatMessage } from "./types";
 import { PRINCIPAL_COMPANY, PRINCIPAL_SHORT, PRINCIPAL_PROFILE, PROCUREMENT_MANAGER, PROCUREMENT_MANAGER_ROLE } from "./lib/principal";
 
 export const PRINCIPAL_ID = "principal_urban_habitat";
