@@ -423,7 +423,11 @@ export function ProspectOnboarding({
         </Button>
         <LanguageToggle />
         {onSwitchAccount && (
-          <Button variant="ghost" size="xs" onClick={onSwitchAccount} className="ml-3 text-muted-foreground">
+          <Button
+            variant="ghost"
+            onClick={onSwitchAccount}
+            className="ml-3 h-auto border-0 p-0 text-xs font-medium text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
+          >
             {t("Roles board")}
           </Button>
         )}
