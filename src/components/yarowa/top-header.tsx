@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 import { LanguageToggle } from "@/components/yarowa/language-toggle";
 import { Button } from "@/components/ui/button";
 

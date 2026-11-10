@@ -4,7 +4,7 @@ import * as pdfjsLib from "pdfjs-dist";
 import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import type { SupplierDoc } from "@/types";
 import { Button } from "@/components/ui/button";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
 

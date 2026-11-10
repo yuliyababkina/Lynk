@@ -2,7 +2,7 @@ import { Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 
 export interface ReviewSupplier {
   id: string;

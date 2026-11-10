@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 
 /*
  * Wizard footer. Left: Back. Right: optional "Save as draft" + primary publish.

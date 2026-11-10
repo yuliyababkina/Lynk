@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "../lib/utils";
 import type { Catalogue } from "../types";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 import { translateCatalogueName } from "@/lib/ticket-i18n";
 
 export function ServiceCatalogueDetail({

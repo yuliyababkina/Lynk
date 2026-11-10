@@ -1,7 +1,7 @@
 import { useEffect, type ReactNode } from "react";
 import { X } from "lucide-react";
 import { PdfCanvas } from "@/components/yarowa/pdf-canvas";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 import { Button } from "@/components/ui/button";
 
 /*

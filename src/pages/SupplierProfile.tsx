@@ -1,6 +1,6 @@
 import { useState, lazy, Suspense } from "react";
 import { ArrowLeft, Building2, Edit, Mail, MoreHorizontal, FileText, MessageSquare } from "lucide-react";
-import { useLynkData } from "../lib/LynkDataContext";
+import { useLynkData } from "../lib/lynk-data-context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertBanner } from "@/components/yarowa/alert-banner";
@@ -9,7 +9,7 @@ import { criticalityLabel } from "@/lib/theme";
 import { docStatusMeta } from "@/lib/document-status";
 import { translateAgeLabel, translateTicketTitle } from "@/lib/ticket-i18n";
 import { relationshipId } from "@/lib/db";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 import { PRINCIPAL_ID } from "@/data";
 import type { Ticket, SupplierDoc, ChatContext } from "../types";
 

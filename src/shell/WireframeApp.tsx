@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 import { cn } from "@/lib/utils";
 import type { PlatformApp, WireframeBlock } from "./apps";
 import { Region } from "./inspector";

@@ -1,12 +1,11 @@
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from "react";
+import { LynkDataCtx } from "@/lib/lynk-data-context";
 import {
   fetchAllData,
   setTicketStatusDb,
@@ -37,7 +36,7 @@ import {
   type ProspectDecision,
 } from "./db";
 import { isSupabaseConfigured } from "./supabase";
-import { useI18n } from "./i18n";
+import { useI18n } from "./i18n-context";
 import { PRINCIPAL_COMPANY, PROCUREMENT_MANAGER, PROCUREMENT_MANAGER_ROLE } from "./principal";
 import { PRINCIPAL_ID } from "../data";
 import type {
@@ -61,7 +60,7 @@ export interface ChatAuthor {
   role?: string;
 }
 
-interface LynkDataValue extends LynkDataset {
+export interface LynkDataValue extends LynkDataset {
   loading: boolean;
   error: string | null;
   /** True when actions are actually being written to Supabase. */
@@ -165,7 +164,6 @@ interface LynkDataValue extends LynkDataset {
   markChatRead: (relationship: string, side: ChatSide) => void;
 }
 
-const LynkDataCtx = createContext<LynkDataValue | null>(null);
 
 export function LynkDataProvider({ children }: { children: ReactNode }) {
   const { t } = useI18n();
@@ -979,10 +977,4 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
   }
 
   return <LynkDataCtx.Provider value={value}>{children}</LynkDataCtx.Provider>;
-}
-
-export function useLynkData(): LynkDataValue {
-  const ctx = useContext(LynkDataCtx);
-  if (!ctx) throw new Error("useLynkData must be used within LynkDataProvider");
-  return ctx;
 }

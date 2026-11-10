@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 import type { PortalView } from "@/pages/SupplierPortal";
 import { getPortalNavCounts, getPortalProfile, initialsOf } from "@/pages/portal/portal-data";
 import { LayoutDashboard, AlertCircle, FileText, DollarSign, Building, Users, PanelLeft } from "lucide-react";

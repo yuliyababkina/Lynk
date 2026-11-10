@@ -1,6 +1,6 @@
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 import { Button } from "@/components/ui/button";
 
 /*

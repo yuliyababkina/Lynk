@@ -2,7 +2,7 @@ import { useId, useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { TicketStatus } from "@/types";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 
 const STATUS_ORDER: TicketStatus[] = ["To do", "In progress", "Resolved"];
 

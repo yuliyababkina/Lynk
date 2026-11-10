@@ -3,7 +3,7 @@ import { Loader2, FileText } from "lucide-react";
 import * as pdfjsLib from "pdfjs-dist";
 import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import { cn } from "@/lib/utils";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
 

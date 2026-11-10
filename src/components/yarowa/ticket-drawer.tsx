@@ -1,6 +1,6 @@
 import { ArrowUpRight, AlertTriangle, MessageSquare } from "lucide-react";
 import type { Ticket, SupplierDoc, TicketStatus } from "@/types";
-import { useLynkData } from "@/lib/LynkDataContext";
+import { useLynkData } from "@/lib/lynk-data-context";
 import { ACTION_ICON } from "@/lib/action-icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { DetailDrawer } from "@/components/yarowa/detail-drawer";
 import { RenewalReviewCard } from "@/components/yarowa/renewal-review-card";
 import { TicketStatusMenu } from "@/components/yarowa/ticket-status-menu";
 import { CriticalityIcon } from "@/components/yarowa/criticality-icon";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 import { translateTicketTitle, translateAgeLabel } from "@/lib/ticket-i18n";
 import { relationshipId } from "@/lib/db";
 import { PRINCIPAL_ID } from "@/data";

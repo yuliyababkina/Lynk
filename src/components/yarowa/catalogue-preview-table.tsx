@@ -2,7 +2,7 @@ import { FileSpreadsheet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { diffRow, diffLabel } from "@/lib/theme";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 import type { CatalogueLineDiff } from "@/types";
 
 /* TableRow tints on hover by default; these keep each row's own diff colour

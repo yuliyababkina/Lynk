@@ -1,6 +1,6 @@
 import { ReceiptText } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 
 export interface PortalPriceAgreementsProps {
   supplierId: string;

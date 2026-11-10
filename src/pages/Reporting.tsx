@@ -2,7 +2,7 @@ import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Pill } from "@/components/yarowa/pill";
 import { useState } from "react";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 
 export function Reporting() {
   const [period, setPeriod] = useState<"Q1 2026" | "Q4 2025" | "Last 12 months">("Q1 2026");

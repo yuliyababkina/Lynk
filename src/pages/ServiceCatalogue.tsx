@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { PARSED_LINES, DIFF_LINES } from "../data";
-import { useLynkData } from "../lib/LynkDataContext";
+import { useLynkData } from "../lib/lynk-data-context";
 import { ServiceCatalogueList } from "./ServiceCatalogueList";
 import { ServiceCatalogueDetail } from "./ServiceCatalogueDetail";
 import { ServiceCatalogueWizard, type WizardResult } from "./ServiceCatalogueWizard";

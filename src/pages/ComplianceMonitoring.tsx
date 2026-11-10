@@ -1,11 +1,11 @@
 import { Fragment, useMemo, useState } from "react";
 import { Upload, ChevronRight } from "lucide-react";
-import { useLynkData } from "../lib/LynkDataContext";
+import { useLynkData } from "../lib/lynk-data-context";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Pill } from "@/components/yarowa/pill";
 import { AlertBanner } from "@/components/yarowa/alert-banner";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 import type { SupplierDoc, DocStatus } from "../types";
 
 const STATUS_META: Record<DocStatus, { label: string; tone: "success" | "warning" | "orange" | "danger" | "info" | "neutral" }> = {

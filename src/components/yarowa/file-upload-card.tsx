@@ -1,6 +1,6 @@
 import { Upload, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 
 /*
  * Drag-and-drop file upload card for the catalogue wizard. When `loading` is

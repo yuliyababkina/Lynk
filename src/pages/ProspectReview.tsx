@@ -38,8 +38,8 @@ import { parseDocumentInfo, type ParsedDocumentInfo } from "@/lib/pdf-metadata";
 import { FromFileHint } from "@/components/yarowa/document-browser";
 import { relationshipId } from "@/lib/db";
 import { PRINCIPAL_ID } from "@/data";
-import { useLynkData } from "../lib/LynkDataContext";
-import { useI18n } from "@/lib/i18n";
+import { useLynkData } from "../lib/lynk-data-context";
+import { useI18n } from "@/lib/i18n-context";
 import {
   CONTRACT_TEMPLATES,
 } from "@/lib/principal";

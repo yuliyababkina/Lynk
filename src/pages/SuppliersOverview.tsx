@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react";
 import { Search, Plus, Star, MessageSquare } from "lucide-react";
-import { useLynkData } from "../lib/LynkDataContext";
+import { useLynkData } from "../lib/lynk-data-context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Pill } from "@/components/yarowa/pill";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 import { relationshipId } from "@/lib/db";
 import { PRINCIPAL_ID } from "@/data";
 import type { Supplier } from "../types";

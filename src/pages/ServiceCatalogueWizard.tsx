@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { WizardStepper } from "@/components/yarowa/wizard-stepper";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 import { FileUploadCard } from "@/components/yarowa/file-upload-card";
 import { CataloguePreviewTable } from "@/components/yarowa/catalogue-preview-table";
 import { SupplierReviewTable } from "@/components/yarowa/supplier-review-table";

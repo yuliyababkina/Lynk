@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { X, FileText } from "lucide-react";
 import type { SupplierDoc } from "@/types";
 import { Button } from "@/components/ui/button";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 
 /*
  * Full-screen lightbox that previews an uploaded renewal document at large size

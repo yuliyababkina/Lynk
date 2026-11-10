@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import type { Catalogue, CatalogueStatus } from "../types";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 import { translateCatalogueName } from "@/lib/ticket-i18n";
 
 const STATUS_TONE: Record<CatalogueStatus, "success" | "neutral" | "info"> = {

@@ -22,8 +22,8 @@ import {
   PROCUREMENT_MANAGER,
   PROCUREMENT_MANAGER_ROLE,
 } from "@/lib/principal";
-import { useI18n } from "@/lib/i18n";
-import { useLynkData } from "./lib/LynkDataContext";
+import { useI18n } from "@/lib/i18n-context";
+import { useLynkData } from "./lib/lynk-data-context";
 import { Landing } from "./pages/Landing";
 import type { Ticket, SupplierDoc, Contract, ChatContext } from "./types";
 import type { LandingRole } from "./pages/Landing";

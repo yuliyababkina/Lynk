@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
-import { useLynkData, type ChatAuthor } from "@/lib/LynkDataContext";
+import { useLynkData } from "@/lib/lynk-data-context";
+import type { ChatAuthor } from "@/lib/LynkDataContext";
 import type { ChatContext, ChatSide } from "@/types";
 
 /**

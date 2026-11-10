@@ -1,6 +1,6 @@
 import { ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 import { LanguageToggle } from "@/components/yarowa/language-toggle";
 
 export type LandingRole = "pm" | "supplier" | "prospect";

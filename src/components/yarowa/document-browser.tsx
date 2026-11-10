@@ -6,7 +6,7 @@ import { PdfCanvas } from "@/components/yarowa/pdf-canvas";
 import { docStatusMeta } from "@/lib/document-status";
 import { parseDocumentInfo, type ParsedDocumentInfo } from "@/lib/pdf-metadata";
 import type { DocStatus } from "@/types";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 
 /** Marks a value that was read from the file, not confirmed by a person. */
 export function FromFileHint() {

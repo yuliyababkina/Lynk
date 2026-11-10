@@ -29,7 +29,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import { WizardStepper } from "@/components/yarowa/wizard-stepper";
 import { DocumentMetadataForm } from "@/components/yarowa/document-metadata-form";
 import { DocumentBrowser, type DocumentBrowserRow } from "@/components/yarowa/document-browser";
-import { useLynkData } from "@/lib/LynkDataContext";
+import { useLynkData } from "@/lib/lynk-data-context";
 import { recogniseDocumentMetadata, type DocumentMetadata } from "@/lib/onboarding-documents";
 import { validityToISODate, type ParsedDocumentInfo } from "@/lib/pdf-metadata";
 import {
@@ -45,7 +45,7 @@ import { PRINCIPAL_ID } from "@/data";
 import { toast } from "@/lib/toast";
 import { LanguageToggle } from "@/components/yarowa/language-toggle";
 import { MachineTranslatedTag } from "@/components/yarowa/machine-translated-tag";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 import { translateContent } from "@/lib/content-i18n";
 import { cn } from "@/lib/utils";
 import { TERMS_SECTIONS, TERMS_VERSION, TERMS_EFFECTIVE_DATE } from "@/lib/terms";

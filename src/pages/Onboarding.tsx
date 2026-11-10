@@ -1,6 +1,6 @@
 import { useMemo, useState, type ComponentProps } from "react";
 import { FileText, ExternalLink, Building2, MapPin, Mail, Phone, CheckCircle2, AlertTriangle, XCircle, Trash2, Loader2, Bell, Ban, ArrowRight, MessageSquare } from "lucide-react";
-import { useLynkData } from "../lib/LynkDataContext";
+import { useLynkData } from "../lib/lynk-data-context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -26,7 +26,7 @@ import { PRINCIPAL_ID } from "@/data";
 import { ProspectReview, type ProspectReviewProps } from "./ProspectReview";
 import type { DocStatus, OnboardingStatus, OnboardingCase } from "../types";
 import type { ProspectDecision } from "../lib/db";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 
 // Uploaded-document status → badge (mirrors the supplier portal).
 type BadgeVariant = NonNullable<ComponentProps<typeof Badge>["variant"]>;

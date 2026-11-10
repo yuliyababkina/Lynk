@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import LynkApp from "@/App";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 import { appsForRole, getApp, type PlatformApp, type RoleId } from "./apps";
 import { InspectorProvider, Region } from "./inspector";
 import { ShellHeader } from "./ShellHeader";

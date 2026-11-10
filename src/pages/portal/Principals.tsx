@@ -2,9 +2,9 @@ import { MessageSquare } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useLynkData } from "@/lib/LynkDataContext";
+import { useLynkData } from "@/lib/lynk-data-context";
 import { relationshipId } from "@/lib/db";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 import { SUPPLIER_RELATIONSHIPS_MARTIN, SUPPLIER_RELATIONSHIPS_MEHMET } from "@/data";
 import type { SupplierPrincipalRelationship } from "@/types";
 

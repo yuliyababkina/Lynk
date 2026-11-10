@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { AlertBanner } from "@/components/yarowa/alert-banner";
 import { RequestedUpdatePanel } from "@/components/yarowa/requested-update-panel";
 import { cn } from "@/lib/utils";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 import { getPortalProfile } from "./portal-data";
 
 export interface PortalRequestedUpdatesProps {

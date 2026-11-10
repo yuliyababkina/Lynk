@@ -6,8 +6,8 @@ import { Input } from "@/components/ui/input";
 import { RequestedUpdatePanel } from "@/components/yarowa/requested-update-panel";
 import { DocumentMetadataForm } from "@/components/yarowa/document-metadata-form";
 import { DocumentBrowser } from "@/components/yarowa/document-browser";
-import { useLynkData } from "@/lib/LynkDataContext";
-import { useI18n } from "@/lib/i18n";
+import { useLynkData } from "@/lib/lynk-data-context";
+import { useI18n } from "@/lib/i18n-context";
 import { useDocumentUpload } from "@/lib/use-document-upload";
 import { getPortalProfile } from "./portal-data";
 

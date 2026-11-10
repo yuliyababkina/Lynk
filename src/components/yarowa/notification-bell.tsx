@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Bell } from "lucide-react";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 import { cn } from "@/lib/utils";
 import type { ChatMessage } from "@/types";
 import { Button } from "@/components/ui/button";

@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MAX_UPLOAD_MB } from "@/lib/use-document-upload";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 
 /*
  * Drop target sized for the 380px detail rail. FileUploadCard is the same idea

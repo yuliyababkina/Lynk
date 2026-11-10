@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { NAV } from "@/lib/lynk-nav";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 import type { View } from "@/App";
 
 export function Sidebar({

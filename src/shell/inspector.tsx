@@ -1,5 +1,6 @@
-import { createContext, useContext, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { InspectorContext, useInspector } from "@/shell/inspector-context";
 
 /*
  * Shell inspector — a presentation aid, not product UI.
@@ -10,14 +11,8 @@ import { cn } from "@/lib/utils";
  * show what "the shell only owns the frame" means on a real screen.
  */
 
-const InspectorContext = createContext(false);
-
 export function InspectorProvider({ on, children }: { on: boolean; children: ReactNode }) {
   return <InspectorContext.Provider value={on}>{children}</InspectorContext.Provider>;
-}
-
-export function useInspector() {
-  return useContext(InspectorContext);
 }
 
 export function Region({

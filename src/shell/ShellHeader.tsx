@@ -15,7 +15,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { PRINCIPAL_COMPANY } from "@/lib/principal";
-import { useI18n, type Lang } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
+import type { Lang } from "@/lib/i18n";
 import { AppSwitcher } from "./AppSwitcher";
 import { ROLES, type PlatformApp, type RoleId } from "./apps";
 

@@ -1,7 +1,7 @@
 import { Upload, FileText, Eye } from "lucide-react";
 import type { SupplierDoc } from "@/types";
 import { Button } from "@/components/ui/button";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 
 /*
  * The "renewal awaiting review" block shown wherever a compliance document has an

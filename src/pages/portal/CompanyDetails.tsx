@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RequestedUpdatePanel } from "@/components/yarowa/requested-update-panel";
 import { WizardFooter } from "@/components/yarowa/wizard-footer";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 import { getPortalProfile, type CompanyDetails } from "./portal-data";
 
 export interface PortalCompanyDetailsProps {

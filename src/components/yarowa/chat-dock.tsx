@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { ChatPanel } from "@/components/yarowa/chat-panel";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { useLynkData } from "@/lib/LynkDataContext";
+import { useLynkData } from "@/lib/lynk-data-context";
 import type { ChatConversation } from "@/shared/hooks/use-chat-dock";
 import { useMediaQuery } from "@/lib/use-media-query";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 import { cn } from "@/lib/utils";
 
 /*

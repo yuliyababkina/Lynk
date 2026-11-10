@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp, Lock } from "lucide-react";
-import { useLynkData } from "../lib/LynkDataContext";
+import { useLynkData } from "../lib/lynk-data-context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Pill } from "@/components/yarowa/pill";
 import { AlertBanner } from "@/components/yarowa/alert-banner";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 
 const TABS = ["All Requests", "Awaiting Review", "Endorsed — Awaiting 2nd Approval", "Approved", "Rejected"] as const;
 

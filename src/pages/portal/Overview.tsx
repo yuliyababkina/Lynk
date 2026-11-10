@@ -14,7 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 import { TaskGroupCard, TaskRow } from "@/components/yarowa/task-group-card";
 import type { PortalView } from "@/pages/SupplierPortal";
 import type { PortalActivitySelection } from "@/components/yarowa/portal-activity-drawer";

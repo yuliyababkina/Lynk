@@ -3,7 +3,7 @@ import { FileText, Lock, Send, SlidersHorizontal, ClipboardList, X } from "lucid
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 import { cn } from "@/lib/utils";
 import type { ChatContext, ChatMessage, ChatSide } from "@/types";
 

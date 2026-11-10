@@ -11,7 +11,7 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 import { cn } from "@/lib/utils";
 import { APP_GROUPS, type PlatformApp } from "./apps";
 

@@ -5,14 +5,14 @@ import {
   ChevronDown, CircleCheck, MessageSquare,
   type LucideIcon,
 } from "lucide-react";
-import { useLynkData } from "../lib/LynkDataContext";
+import { useLynkData } from "../lib/lynk-data-context";
 import { Button } from "@/components/ui/button";
 import { TaskGroupCard, TaskRow } from "@/components/yarowa/task-group-card";
 import { TicketStatusMenu } from "@/components/yarowa/ticket-status-menu";
 import { CriticalityIcon } from "@/components/yarowa/criticality-icon";
 import { ACTION_ICON } from "@/lib/action-icons";
 import { criticalityLabel } from "@/lib/theme";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 import { relationshipId } from "@/lib/db";
 import { PRINCIPAL_ID } from "@/data";
 import type { ChatContext } from "@/types";

@@ -18,9 +18,9 @@ import {
 import { ChatDock } from "@/components/yarowa/chat-dock";
 import { useChatDock } from "@/shared/hooks/use-chat-dock";
 import { NotificationBell } from "@/components/yarowa/notification-bell";
-import { useLynkData } from "@/lib/LynkDataContext";
+import { useLynkData } from "@/lib/lynk-data-context";
 import { relationshipId } from "@/lib/db";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 import { PRINCIPAL_ID, SUPPLIER_RELATIONSHIPS_MARTIN, SUPPLIER_RELATIONSHIPS_MEHMET } from "@/data";
 import { PRINCIPAL_SHORT } from "@/lib/principal";
 import type { ChatContext } from "@/types";

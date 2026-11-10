@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { DOCUMENT_TYPE_OPTIONS, type DocumentMetadata } from "@/lib/onboarding-documents";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 
 /*
  * Shown right after a file is picked: the app pre-fills what it recognised from

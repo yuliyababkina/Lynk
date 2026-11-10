@@ -8,7 +8,7 @@ import { AlertBanner, type AlertBannerType } from "@/components/yarowa/alert-ban
 import { ActionCard } from "@/components/yarowa/action-card";
 import { RenewalReviewCard } from "@/components/yarowa/renewal-review-card";
 import { toast } from "@/lib/toast";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 import { translateStatusNote } from "@/lib/ticket-i18n";
 import type { Tone } from "@/lib/tones";
 import { Button } from "@/components/ui/button";

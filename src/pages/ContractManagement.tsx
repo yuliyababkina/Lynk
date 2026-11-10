@@ -1,11 +1,11 @@
 import { useMemo, useState } from "react";
-import { useLynkData } from "../lib/LynkDataContext";
+import { useLynkData } from "../lib/lynk-data-context";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Pill } from "@/components/yarowa/pill";
 import { AlertBanner } from "@/components/yarowa/alert-banner";
 import type { Contract, ContractStatus } from "../types";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 
 const STATUS_TONE: Record<ContractStatus, "success" | "warning" | "danger" | "info" | "neutral"> = {
   Active: "success",
