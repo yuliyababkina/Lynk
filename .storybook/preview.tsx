@@ -2,6 +2,7 @@ import type { Preview } from "@storybook/react-vite";
 import React from "react";
 import { I18nProvider } from "../src/lib/i18n";
 import "../src/index.css";
+import { mswHandlers } from "./msw-handlers";
 
 /** Toolbar toggle for the preset's light / dark themes. */
 export const globalTypes = {
@@ -21,7 +22,17 @@ export const globalTypes = {
 };
 
 const preview: Preview = {
+  /* The language lives in localStorage ("lynk-lang"). A story that flips to
+     German would otherwise leave every later story in German. */
+  beforeEach() {
+    try {
+      localStorage.setItem("lynk-lang", "en");
+    } catch {
+      /* storage unavailable — the provider falls back to English anyway */
+    }
+  },
   parameters: {
+    msw: { handlers: mswHandlers },
     layout: "padded",
     controls: {
       matchers: {

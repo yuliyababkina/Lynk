@@ -41,6 +41,12 @@ export default defineConfig({
       })],
       test: {
         name: 'storybook',
+        // .env.local holds the real Supabase credentials; stories must never reach
+        // that database, so blank them and let db.ts use the static dataset.
+        env: {
+          VITE_SUPABASE_URL: '',
+          VITE_SUPABASE_ANON_KEY: ''
+        },
         browser: {
           enabled: true,
           headless: true,

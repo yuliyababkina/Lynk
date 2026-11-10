@@ -7,7 +7,7 @@ import { defineConfig, globalIgnores } from "eslint/config";
 import { presentationRules } from "./eslint.presentation.js";
 
 export default defineConfig([
-  globalIgnores(["dist", "storybook-static", "node_modules", "supabase", "api"]),
+  globalIgnores(["dist", "storybook-static", "node_modules", "supabase", "api", "public/mockServiceWorker.js"]),
   {
     files: ["**/*.{ts,tsx}"],
     extends: [
