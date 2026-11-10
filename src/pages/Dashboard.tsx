@@ -71,7 +71,8 @@ export function Dashboard({
   const toggleExpanded = (c: Criticality) =>
     setExpanded((prev) => {
       const next = new Set(prev);
-      next.has(c) ? next.delete(c) : next.add(c);
+      if (next.has(c)) next.delete(c);
+      else next.add(c);
       return next;
     });
 
@@ -112,13 +113,14 @@ export function Dashboard({
 
       <div className="flex flex-wrap gap-2 mb-6">
         {(["All tickets", ...CATEGORIES] as const).map((f) => (
-          <button
+          <Button
             key={f}
+            variant="ghost"
             onClick={() => setFilter(f)}
-            className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-full text-sm font-medium border transition-colors ${
+            className={`h-auto gap-2 rounded-full px-3.5 py-2 text-sm font-medium ${
               filter === f
-                ? "bg-primary text-primary-foreground border-primary"
-                : "bg-card text-foreground border-border hover:bg-secondary/50"
+                ? "border-primary bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground dark:hover:bg-primary"
+                : "border-border bg-card text-foreground hover:bg-secondary/50 dark:hover:bg-secondary/50"
             }`}
           >
             {tr(f)}
@@ -129,7 +131,7 @@ export function Dashboard({
             >
               {counts[f]}
             </span>
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -178,15 +180,16 @@ export function Dashboard({
                     subline={
                       <>
                         {tr(t.entityType)} ·{" "}
-                        <button
+                        <Button
+                          variant="ghost"
                           onClick={(e) => {
                             e.stopPropagation();
                             onOpenSupplier(t.entityName);
                           }}
-                          className="hover:text-accent hover:underline transition-colors"
+                          className="inline-block h-auto border-0 p-0 text-xs font-normal whitespace-normal text-muted-foreground hover:bg-transparent hover:text-accent hover:underline dark:hover:bg-transparent"
                         >
                           {t.entityName}
-                        </button>{" "}
+                        </Button>{" "}
                         · {translateAgeLabel(t.ageLabel, tr)}
                       </>
                     }
@@ -237,16 +240,17 @@ export function Dashboard({
                 );
               })}
               {hasOverflow && (
-                <button
+                <Button
+                  variant="ghost"
                   onClick={() => toggleExpanded(group.criticality)}
-                  className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-medium text-muted-foreground hover:bg-secondary/40 transition-colors"
+                  className="flex h-auto w-full gap-1.5 rounded-none border-0 px-4 py-2.5 text-xs font-medium text-muted-foreground hover:bg-secondary/40 hover:text-muted-foreground dark:hover:bg-secondary/40"
                 >
                   <ChevronDown
                     size={14}
-                    className={`transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                    className={`size-3.5 transition-transform ${isExpanded ? "rotate-180" : ""}`}
                   />
                   {isExpanded ? "Show less" : `Show ${group.tickets.length - COLLAPSED_ROWS} more`}
-                </button>
+                </Button>
               )}
             </TaskGroupCard>
           );
@@ -275,15 +279,16 @@ export function Dashboard({
                     <CriticalityIcon criticality={t.criticality} size={14} />
                     {tr(criticalityLabel[t.criticality])}
                     <span>·</span>
-                    <button
+                    <Button
+                      variant="ghost"
                       onClick={(e) => {
                         e.stopPropagation();
                         onOpenSupplier(t.entityName);
                       }}
-                      className="hover:text-accent hover:underline transition-colors"
+                      className="inline-block h-auto border-0 p-0 text-xs font-normal whitespace-normal text-muted-foreground hover:bg-transparent hover:text-accent hover:underline dark:hover:bg-transparent"
                     >
                       {t.entityName}
-                    </button>
+                    </Button>
                   </span>
                 }
                 status={<TicketStatusMenu status={statusOf(t)} onChange={(s) => changeStatus(t, s)} align="end" />}
@@ -291,16 +296,17 @@ export function Dashboard({
             );
           })}
           {resolvedFiltered.length > COLLAPSED_ROWS && (
-            <button
+            <Button
+              variant="ghost"
               onClick={() => setResolvedExpanded((v) => !v)}
-              className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-medium text-muted-foreground hover:bg-secondary/40 transition-colors"
+              className="flex h-auto w-full gap-1.5 rounded-none border-0 px-4 py-2.5 text-xs font-medium text-muted-foreground hover:bg-secondary/40 hover:text-muted-foreground dark:hover:bg-secondary/40"
             >
               <ChevronDown
                 size={14}
-                className={`transition-transform ${resolvedExpanded ? "rotate-180" : ""}`}
+                className={`size-3.5 transition-transform ${resolvedExpanded ? "rotate-180" : ""}`}
               />
               {resolvedExpanded ? "Show less" : `Show ${resolvedFiltered.length - COLLAPSED_ROWS} more`}
-            </button>
+            </Button>
           )}
         </TaskGroupCard>
       )}

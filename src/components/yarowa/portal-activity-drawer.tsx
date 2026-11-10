@@ -10,7 +10,7 @@ import { CompactDropzone } from "@/components/yarowa/compact-dropzone";
 import { FilePreviewLightbox } from "@/components/yarowa/file-preview-lightbox";
 import { MockDocumentPage } from "@/components/yarowa/mock-document-page";
 import { PdfCanvas } from "@/components/yarowa/pdf-canvas";
-import { toast } from "@/components/yarowa/toast";
+import { toast } from "@/lib/toast";
 import { useLynkData } from "@/lib/LynkDataContext";
 import { useI18n } from "@/lib/i18n";
 import { useDocumentUpload, formatFileSize } from "@/lib/use-document-upload";
@@ -114,7 +114,7 @@ function CurrentFile({ supplierId, docName }: { supplierId: string; docName: str
  * a landscape strip showed a sliver of the top edge and read as broken.
  */
 const THUMB_FRAME =
-  "mx-auto block w-[136px] aspect-[1/1.414] rounded-md overflow-hidden border border-border bg-paper hover:border-accent transition-colors";
+  "mx-auto block h-auto w-[136px] aspect-[1/1.414] rounded-md overflow-hidden border-border bg-paper p-0 font-normal leading-normal whitespace-normal hover:border-accent hover:bg-paper dark:hover:bg-paper";
 
 function DocumentThumbnail({
   fileUrl,
@@ -128,7 +128,7 @@ function DocumentThumbnail({
   onClick: () => void;
 }) {
   return (
-    <button onClick={onClick} aria-label={`Preview ${label} full size`} className={THUMB_FRAME}>
+    <Button variant="ghost" onClick={onClick} aria-label={`Preview ${label} full size`} className={THUMB_FRAME}>
       {fileUrl ? (
         /* PdfCanvas sizes its canvas to the PDF's own page width and scrolls;
            inside the frame it has to fit instead. */
@@ -139,7 +139,7 @@ function DocumentThumbnail({
       ) : (
         <div className="origin-top-left scale-[0.22] w-[455%] pointer-events-none">{mock}</div>
       )}
-    </button>
+    </Button>
   );
 }
 

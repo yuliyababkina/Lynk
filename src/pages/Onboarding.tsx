@@ -19,7 +19,7 @@ import {
   formatLastChange,
   type Cell,
 } from "@/lib/onboarding-columns";
-import { toast } from "@/components/yarowa/toast";
+import { toast } from "@/lib/toast";
 import { PRINCIPAL_COMPANY, PROCUREMENT_MANAGER, PROCUREMENT_MANAGER_ROLE } from "@/lib/principal";
 import { relationshipId, onboardingSupplierId } from "@/lib/db";
 import { PRINCIPAL_ID } from "@/data";

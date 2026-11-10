@@ -1,4 +1,4 @@
-import type { ToastTone } from "@/components/yarowa/toast";
+import type { ToastTone } from "@/lib/toast";
 
 /*
  * Maps a ticket's primary action verb to the confirmation shown once it's

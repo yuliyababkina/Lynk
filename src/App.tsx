@@ -1,5 +1,6 @@
 import { useState, useMemo, lazy, Suspense } from "react";
-import { Sidebar, NAV as LYNK_NAV } from "@/components/yarowa/sidebar";
+import { Sidebar } from "@/components/yarowa/sidebar";
+import { NAV as LYNK_NAV } from "@/lib/lynk-nav";
 import { Plus, ShieldCheck } from "lucide-react";
 import { SidebarProvider, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
 import { MfeSidebar } from "@/shell/MfeSidebar";
@@ -10,7 +11,8 @@ import { TopHeader } from "@/components/yarowa/top-header";
 import { TicketDrawer } from "@/components/yarowa/ticket-drawer";
 import { ComplianceDrawer } from "@/components/yarowa/compliance-drawer";
 import { DocumentLightbox } from "@/components/yarowa/document-lightbox";
-import { Toaster, toast } from "@/components/yarowa/toast";
+import { Toaster } from "@/components/yarowa/toast";
+import { toast } from "@/lib/toast";
 import { actionResult } from "@/lib/ticket-actions";
 import { onboardingSupplierId, relationshipId } from "@/lib/db";
 import { NotificationBell } from "@/components/yarowa/notification-bell";

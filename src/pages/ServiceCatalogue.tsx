@@ -4,7 +4,7 @@ import { useLynkData } from "../lib/LynkDataContext";
 import { ServiceCatalogueList } from "./ServiceCatalogueList";
 import { ServiceCatalogueDetail } from "./ServiceCatalogueDetail";
 import { ServiceCatalogueWizard, type WizardResult } from "./ServiceCatalogueWizard";
-import { toast } from "@/components/yarowa/toast";
+import { toast } from "@/lib/toast";
 import type { Catalogue, CatalogueLine, CatalogueLineDiff } from "../types";
 
 type Mode =

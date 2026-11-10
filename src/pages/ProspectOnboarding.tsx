@@ -42,7 +42,7 @@ import { ChatDock } from "@/components/yarowa/chat-dock";
 import { useChatDock } from "@/shared/hooks/use-chat-dock";
 import { relationshipId } from "@/lib/db";
 import { PRINCIPAL_ID } from "@/data";
-import { toast } from "@/components/yarowa/toast";
+import { toast } from "@/lib/toast";
 import { LanguageToggle } from "@/components/yarowa/language-toggle";
 import { MachineTranslatedTag } from "@/components/yarowa/machine-translated-tag";
 import { useI18n } from "@/lib/i18n";
