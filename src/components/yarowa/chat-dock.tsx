@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChatPanel } from "@/components/yarowa/chat-panel";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { useLynkData, type ChatAuthor } from "@/lib/LynkDataContext";
+import { useLynkData } from "@/lib/LynkDataContext";
+import type { ChatConversation } from "@/shared/hooks/use-chat-dock";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
-import type { ChatContext, ChatSide } from "@/types";
 
 /*
  * The one chat surface, used by all three shells (PM app, supplier portal,
@@ -22,55 +22,10 @@ import type { ChatContext, ChatSide } from "@/types";
  */
 
 /** Where the push layout stops being usable: the codebase's classical `lg`. */
-export const CHAT_DOCK_BREAKPOINT = "(min-width: 1024px)";
+const CHAT_DOCK_BREAKPOINT = "(min-width: 1024px)";
 
 /** The fixed rail width, matching the DetailDrawer the drawers already use. */
 const DOCK_WIDTH = "w-[380px]";
-
-/**
- * One open conversation. Whoever opens the chat describes it in full — the
- * dock itself knows nothing about roles, which is what keeps one principal's
- * thread out of another's: the caller passes the already-scoped relationship.
- */
-export interface ChatConversation {
-  /** `relationshipId(principalId, supplierId)` — scopes the thread. */
-  relationship: string;
-  /** Which side is reading, so the panel knows what counts as "mine". */
-  side: ChatSide;
-  /** Who a message sent from here is from. */
-  author: ChatAuthor;
-  /** The context line: the supplier, the principal, the application. */
-  title: string;
-  subtitle?: string;
-  /** Set when the relationship takes no new messages but stays readable. */
-  readOnlyReason?: string;
-  draft?: string;
-  draftContext?: ChatContext;
-  /** Navigation only — opening the thing a message links to. */
-  onOpenContext?: (context: ChatContext) => void;
-}
-
-/**
- * Holds the shell's single open conversation. Opening another one while the
- * dock is up simply replaces it, so there is never a second panel.
- */
-export function useChatDock() {
-  const { markChatRead } = useLynkData();
-  const [conversation, setConversation] = useState<ChatConversation | null>(null);
-
-  const open = useCallback(
-    (next: ChatConversation) => {
-      setConversation(next);
-      // Opening is what marks it read — and re-arms the unread notification.
-      markChatRead(next.relationship, next.side);
-    },
-    [markChatRead]
-  );
-
-  const close = useCallback(() => setConversation(null), []);
-
-  return { conversation, open, close };
-}
 
 export function ChatDock({
   conversation,
@@ -88,9 +43,9 @@ export function ChatDock({
      with its content still in it rather than emptying first. While closed the
      element is inert and aria-hidden, so nothing in there can be tabbed into
      and the thread's live region can't announce into a shut panel. */
-  const previous = useRef<ChatConversation | null>(null);
-  if (conversation) previous.current = conversation;
-  const shown = conversation ?? previous.current;
+  const [last, setLast] = useState<ChatConversation | null>(conversation);
+  if (conversation && conversation !== last) setLast(conversation);
+  const shown = conversation ?? last;
 
   const railRef = useRef<HTMLElement>(null);
   useEffect(() => {

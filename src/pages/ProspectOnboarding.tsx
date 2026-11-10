@@ -38,7 +38,8 @@ import {
   PROCUREMENT_MANAGER,
   type PrincipalContract,
 } from "@/lib/principal";
-import { ChatDock, useChatDock } from "@/components/yarowa/chat-dock";
+import { ChatDock } from "@/components/yarowa/chat-dock";
+import { useChatDock } from "@/shared/hooks/use-chat-dock";
 import { relationshipId } from "@/lib/db";
 import { PRINCIPAL_ID } from "@/data";
 import { toast } from "@/components/yarowa/toast";

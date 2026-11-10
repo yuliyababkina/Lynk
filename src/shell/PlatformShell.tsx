@@ -49,9 +49,8 @@ export function PlatformShell({
   // A role that cannot see the open app lands on its first app instead.
   const activeApp: PlatformApp | undefined = apps.find((a) => a.id === appId) ?? apps[0];
 
-  useEffect(() => {
-    if (activeApp && activeApp.id !== appId) setAppId(activeApp.id);
-  }, [activeApp, appId]);
+  // Same fallback as state: adjusted while rendering rather than in an effect.
+  if (activeApp && activeApp.id !== appId) setAppId(activeApp.id);
 
   // Deep link: #<app-id> (plain name, so the link survives being shared). The shell owns the URL space; each app owns what follows.
   useEffect(() => {

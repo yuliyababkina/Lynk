@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { PortalSidebar } from "@/components/yarowa/portal-sidebar";
 import { Toaster } from "@/components/yarowa/toast";
 import { TopHeader } from "@/components/yarowa/top-header";
@@ -15,7 +15,8 @@ import {
   type ChangeRecord,
   type PortalActivitySelection,
 } from "@/components/yarowa/portal-activity-drawer";
-import { ChatDock, useChatDock } from "@/components/yarowa/chat-dock";
+import { ChatDock } from "@/components/yarowa/chat-dock";
+import { useChatDock } from "@/shared/hooks/use-chat-dock";
 import { NotificationBell } from "@/components/yarowa/notification-bell";
 import { useLynkData } from "@/lib/LynkDataContext";
 import { relationshipId } from "@/lib/db";
@@ -50,7 +51,13 @@ const VIEW_LABEL: Record<PortalView, string> = {
   onboarding: "Onboarding",
 };
 
-export function SupplierPortal({ supplierName, supplierId, onSwitchAccount }: PortalProps) {
+/* Keyed by supplier: switching persona starts from that persona's own data
+   again by being a new portal, not by an effect that overwrites state. */
+export function SupplierPortal(props: PortalProps) {
+  return <SupplierPortalBody key={props.supplierId} {...props} />;
+}
+
+function SupplierPortalBody({ supplierName, supplierId, onSwitchAccount }: PortalProps) {
   const [view, setView] = useState<PortalView>("overview");
   const [activity, setActivity] = useState<PortalActivitySelection | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -68,14 +75,6 @@ export function SupplierPortal({ supplierName, supplierId, onSwitchAccount }: Po
   /* What was sent for endorsement, kept so a Pending Approval item can show the
      before/after instead of only saying that something is being reviewed. */
   const [changeRequests, setChangeRequests] = useState<Record<string, ChangeRecord[]>>({});
-
-  useEffect(() => {
-    const profile = getPortalProfile(supplierId);
-    setGroups(profile.overviewGroups);
-    setCompany(profile.company);
-    setChangeRequests({});
-    setActivity(null);
-  }, [supplierId]);
 
   /* Moves a finished ticket out of its group and into the one that now describes
      it — Pending Approval while someone else reviews it, Resolved when the

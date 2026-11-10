@@ -1,10 +1,11 @@
-import { useState, useEffect, useMemo, useRef, lazy, Suspense } from "react";
+import { useState, useMemo, lazy, Suspense } from "react";
 import { Sidebar, NAV as LYNK_NAV } from "@/components/yarowa/sidebar";
 import { Plus, ShieldCheck } from "lucide-react";
 import { SidebarProvider, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
 import { MfeSidebar } from "@/shell/MfeSidebar";
 import { Region } from "@/shell/inspector";
-import { ChatDock, useChatDock, type ChatConversation } from "@/components/yarowa/chat-dock";
+import { ChatDock } from "@/components/yarowa/chat-dock";
+import { useChatDock, type ChatConversation } from "@/shared/hooks/use-chat-dock";
 import { TopHeader } from "@/components/yarowa/top-header";
 import { TicketDrawer } from "@/components/yarowa/ticket-drawer";
 import { ComplianceDrawer } from "@/components/yarowa/compliance-drawer";
@@ -114,32 +115,36 @@ export default function App({ embedded = false }: AppProps = {}) {
   /** The PM shell's single open conversation — see ChatDock. */
   const chat = useChatDock();
 
+  /* Resolved whenever the onboarding cases change (first render included),
+     adjusted while rendering instead of in an effect. The token itself is fixed
+     for the life of the page. */
+  const [inviteToken] = useState(() => new URLSearchParams(window.location.search).get("invite"));
   // Remembers a token we already accepted, so a data refresh can't revoke it.
-  const resolvedInviteRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    const token = new URLSearchParams(window.location.search).get("invite");
-    if (!token) {
-      setInviteProspect(undefined);
-      return;
+  const [acceptedToken, setAcceptedToken] = useState<string | null>(null);
+  const [casesResolved, setCasesResolved] = useState<typeof ONBOARDING_CASES | null>(null);
+  if (casesResolved !== ONBOARDING_CASES) {
+    setCasesResolved(ONBOARDING_CASES);
+    if (!inviteToken) {
+      if (inviteProspect !== undefined) setInviteProspect(undefined);
+    } else {
+      const match = ONBOARDING_CASES.find((c) => c.inviteToken === inviteToken);
+      if (match) {
+        setAcceptedToken(inviteToken);
+        setInviteProspect({
+          id: onboardingSupplierId(match.id),
+          companyName: match.companyName,
+          contactName: match.contactName,
+        });
+        setRole("prospect");
+      } else if (acceptedToken !== inviteToken) {
+        // Only reject a token we never resolved. This re-runs on every change
+        // to the onboarding cases, so without this guard any later update that
+        // touched the prospect's case would eject them from their own
+        // onboarding with "this invitation link isn't valid".
+        setInviteProspect(null);
+      }
     }
-    const match = ONBOARDING_CASES.find((c) => c.inviteToken === token);
-    if (match) {
-      resolvedInviteRef.current = token;
-      setInviteProspect({
-        id: onboardingSupplierId(match.id),
-        companyName: match.companyName,
-        contactName: match.contactName,
-      });
-      setRole("prospect");
-    } else if (resolvedInviteRef.current !== token) {
-      // Only reject a token we never resolved. This effect re-runs on every
-      // change to the onboarding cases, so without this guard any later update
-      // that touched the prospect's case would eject them from their own
-      // onboarding with "this invitation link isn't valid".
-      setInviteProspect(null);
-    }
-  }, [ONBOARDING_CASES]);
+  }
 
   const [view, setView] = useState<View>("dashboard");
   const [activeTicket, setActiveTicket] = useState<Ticket | null>(null);
