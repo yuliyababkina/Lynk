@@ -53,19 +53,18 @@ const GROUPS: { group: string; icons: [string, LucideIcon][] }[] = [
 
 function IconGallery() {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+    <div className="flex flex-col gap-6">
       {GROUPS.map(({ group, icons }) => (
         <div key={group}>
-          <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>{group}</div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 8 }}>
+          <div className="mb-2.5 text-[13px] font-semibold">{group}</div>
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-2">
             {icons.map(([name, Icon]) => (
               <div
                 key={name}
-                className="border border-border rounded-lg bg-card"
-                style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, padding: "16px 8px" }}
+                className="flex flex-col items-center gap-2 rounded-lg border border-border bg-card px-2 py-4"
               >
                 <Icon size={20} className="text-foreground" />
-                <span style={{ fontSize: 11, fontFamily: "monospace", color: "var(--muted-foreground)" }}>
+                <span className="font-mono text-[11px] text-muted-foreground">
                   {name}
                 </span>
               </div>

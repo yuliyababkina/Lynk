@@ -1,15 +1,31 @@
-import { useState, useEffect, useRef, lazy, Suspense } from "react";
+import { useState, useMemo, lazy, Suspense } from "react";
 import { Sidebar } from "@/components/yarowa/sidebar";
+import { NAV as LYNK_NAV } from "@/lib/lynk-nav";
+import { Plus, ShieldCheck } from "lucide-react";
+import { SidebarProvider, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
+import { MfeSidebar } from "@/shell/MfeSidebar";
+import { Region } from "@/shell/inspector";
+import { ChatDock } from "@/components/yarowa/chat-dock";
+import { useChatDock, type ChatConversation } from "@/shared/hooks/use-chat-dock";
 import { TopHeader } from "@/components/yarowa/top-header";
 import { TicketDrawer } from "@/components/yarowa/ticket-drawer";
 import { ComplianceDrawer } from "@/components/yarowa/compliance-drawer";
 import { DocumentLightbox } from "@/components/yarowa/document-lightbox";
-import { Toaster, toast } from "@/components/yarowa/toast";
+import { Toaster } from "@/components/yarowa/toast";
+import { toast } from "@/lib/toast";
 import { actionResult } from "@/lib/ticket-actions";
-import { onboardingSupplierId } from "@/lib/db";
-import { useLynkData } from "./lib/LynkDataContext";
+import { onboardingSupplierId, relationshipId } from "@/lib/db";
+import { NotificationBell } from "@/components/yarowa/notification-bell";
+import { PRINCIPAL_ID } from "@/data";
+import {
+  PRINCIPAL_COMPANY,
+  PROCUREMENT_MANAGER,
+  PROCUREMENT_MANAGER_ROLE,
+} from "@/lib/principal";
+import { useI18n } from "@/lib/i18n-context";
+import { useLynkData } from "./lib/lynk-data-context";
 import { Landing } from "./pages/Landing";
-import type { Ticket, SupplierDoc, Contract } from "./types";
+import type { Ticket, SupplierDoc, Contract, ChatContext } from "./types";
 import type { LandingRole } from "./pages/Landing";
 
 // Route-level code splitting: each view/portal loads its own chunk on demand,
@@ -59,9 +75,19 @@ const VIEW_LABEL: Record<View, string> = {
   "service-catalogue": "Service Catalogue",
 };
 
-export default function App() {
+export interface AppProps {
+  /**
+   * Running as a micro frontend inside the platform shell. The shell owns the
+   * header (app switcher, language, user), so Lynk drops its own account
+   * switcher and language toggle, skips the roles board and renders its inner
+   * menu with the shared MfeSidebar.
+   */
+  embedded?: boolean;
+}
+
+export default function App({ embedded = false }: AppProps = {}) {
   // Role/persona switcher
-  const [role, setRole] = useState<LandingRole | null>(null);
+  const [role, setRole] = useState<LandingRole | null>(embedded ? "pm" : null);
 
   // Real magic-link invitations land here as ?invite=<token>. Once the
   // onboarding cases are loaded we resolve the token to a specific prospect
@@ -84,34 +110,43 @@ export default function App() {
     unresolveTicket,
     decideRenewal: persistDecideRenewal,
     addOnboardingCase,
+    unreadRelationships,
+    messagesFor,
   } = useLynkData();
+  const { t } = useI18n();
+  /** The PM shell's single open conversation — see ChatDock. */
+  const chat = useChatDock();
 
+  /* Resolved whenever the onboarding cases change (first render included),
+     adjusted while rendering instead of in an effect. The token itself is fixed
+     for the life of the page. */
+  const [inviteToken] = useState(() => new URLSearchParams(window.location.search).get("invite"));
   // Remembers a token we already accepted, so a data refresh can't revoke it.
-  const resolvedInviteRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    const token = new URLSearchParams(window.location.search).get("invite");
-    if (!token) {
-      setInviteProspect(undefined);
-      return;
+  const [acceptedToken, setAcceptedToken] = useState<string | null>(null);
+  const [casesResolved, setCasesResolved] = useState<typeof ONBOARDING_CASES | null>(null);
+  if (casesResolved !== ONBOARDING_CASES) {
+    setCasesResolved(ONBOARDING_CASES);
+    if (!inviteToken) {
+      if (inviteProspect !== undefined) setInviteProspect(undefined);
+    } else {
+      const match = ONBOARDING_CASES.find((c) => c.inviteToken === inviteToken);
+      if (match) {
+        setAcceptedToken(inviteToken);
+        setInviteProspect({
+          id: onboardingSupplierId(match.id),
+          companyName: match.companyName,
+          contactName: match.contactName,
+        });
+        setRole("prospect");
+      } else if (acceptedToken !== inviteToken) {
+        // Only reject a token we never resolved. This re-runs on every change
+        // to the onboarding cases, so without this guard any later update that
+        // touched the prospect's case would eject them from their own
+        // onboarding with "this invitation link isn't valid".
+        setInviteProspect(null);
+      }
     }
-    const match = ONBOARDING_CASES.find((c) => c.inviteToken === token);
-    if (match) {
-      resolvedInviteRef.current = token;
-      setInviteProspect({
-        id: onboardingSupplierId(match.id),
-        companyName: match.companyName,
-        contactName: match.contactName,
-      });
-      setRole("prospect");
-    } else if (resolvedInviteRef.current !== token) {
-      // Only reject a token we never resolved. This effect re-runs on every
-      // change to the onboarding cases, so without this guard any later update
-      // that touched the prospect's case would eject them from their own
-      // onboarding with "this invitation link isn't valid".
-      setInviteProspect(null);
-    }
-  }, [ONBOARDING_CASES]);
+  }
 
   const [view, setView] = useState<View>("dashboard");
   const [activeTicket, setActiveTicket] = useState<Ticket | null>(null);
@@ -124,6 +159,33 @@ export default function App() {
 
   const unresolvedTickets = TICKETS.filter(
     (ticket) => !resolvedTicketIds.has(ticket.id) && ticket.status !== "Resolved" && !ticket.resolved
+  );
+
+  /* Every supplier the Principal has a conversation with. The PM sees only its
+     own tenant's relationships — the other principals in the mock data are the
+     supplier's business, not Urban Habitat's. */
+  const chatableSuppliers = useMemo(
+    () =>
+      SUPPLIERS.map((s) => ({
+        id: s.id,
+        name: s.name,
+        conversation: relationshipId(PRINCIPAL_ID, s.id),
+      })),
+    [SUPPLIERS]
+  );
+
+  const bellEntries = useMemo(
+    () =>
+      unreadRelationships(
+        "principal",
+        chatableSuppliers.map((s) => s.conversation)
+      ).map(({ relationship, count }) => ({
+        relationship,
+        title: chatableSuppliers.find((s) => s.conversation === relationship)?.name ?? "",
+        count,
+        latest: messagesFor(relationship).slice(-1)[0],
+      })),
+    [chatableSuppliers, unreadRelationships, messagesFor]
   );
 
   const sidebarBadgeCounts: Partial<Record<View, number>> = {
@@ -153,6 +215,8 @@ export default function App() {
     // document's drawer, not merely highlight its row.
     const doc = v === "compliance" && selectedId ? DOCS.find((d) => d.id === selectedId) : undefined;
     setActiveDoc(doc ?? null);
+    // Opening that drawer takes the rail, so the chat gives it up.
+    if (doc) chat.close();
     setPendingSelected(selectedId ?? null);
     setView(v);
   }
@@ -223,9 +287,63 @@ export default function App() {
     else navigate("suppliers");
   }
 
+  /*
+   * Every PM-side Chat button lands here: the conversation opens beside
+   * whatever the manager is already looking at, rather than sending them to
+   * the supplier profile first. The ticket travels in as the composer's
+   * attached context, so the supplier still sees what it is about.
+   *
+   * The PM writes on behalf of the Principal running this tenant, so the
+   * relationship is always that principal's — never another's.
+   */
+  function openSupplierChat(
+    supplierId: string,
+    draftContext?: ChatContext,
+    /* A page that knows more than the supplier record does — the prospect
+       review knows the application's status and its contact — refines the
+       header and the context handler without owning a panel of its own. */
+    overrides?: Partial<ChatConversation>
+  ) {
+    const supplier = SUPPLIERS.find((s) => s.id === supplierId);
+    if (!supplier) return;
+    /* One rail at a time: at 1280px a ticket drawer and the chat side by side
+       leave the page itself unreadable. The ticket's context travels into the
+       composer anyway, so nothing is lost by closing it. */
+    setActiveTicket(null);
+    setActiveDoc(null);
+    chat.open({
+      relationship: relationshipId(PRINCIPAL_ID, supplierId),
+      side: "principal",
+      author: {
+        side: "principal",
+        name: PROCUREMENT_MANAGER,
+        company: PRINCIPAL_COMPANY,
+        role: PROCUREMENT_MANAGER_ROLE,
+      },
+      title: supplier.name,
+      // Trade and region are reference data, same as everywhere else.
+      subtitle: `${t(supplier.trade)} · ${t(supplier.region)}`,
+      // An inactive supplier keeps its history but takes no new messages.
+      readOnlyReason:
+        supplier.stage === "inactive"
+          ? t("This relationship is inactive, so the conversation is closed. It stays here for your records.")
+          : undefined,
+      draftContext,
+      onOpenContext: (context) => {
+        // Navigation only — go to where the linked thing lives.
+        if (context.type === "document") navigate("compliance", context.id);
+        else if (context.type === "data-change") navigate("data-governance", context.id);
+        else navigate("onboarding", context.id);
+      },
+      ...overrides,
+    });
+  }
+
   function selectTicket(t: Ticket) {
     setActiveDoc(null);
     setActiveTicket(t);
+    // One rail at a time, in both directions — see openSupplierChat.
+    chat.close();
   }
 
   // A magic-link click carried a token that doesn't match any prospect
@@ -235,9 +353,9 @@ export default function App() {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background text-foreground">
         <div className="text-center max-w-sm">
-          <div className="font-semibold mb-1">This invitation link isn't valid</div>
+          <div className="font-semibold mb-1">{t("This invitation link isn't valid")}</div>
           <div className="text-sm text-muted-foreground">
-            It may have expired or already been used. Contact the company that invited you for a new link.
+            {t("It may have expired or already been used. Contact the company that invited you for a new link.")}
           </div>
         </div>
       </div>
@@ -279,18 +397,63 @@ export default function App() {
 
   // Render PM app for PM role
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-background text-foreground">
-      <Sidebar
-        view={view}
-        onNavigate={(v) => navigate(v)}
-        onInvite={() => setInviteOpen(true)}
-        badgeCounts={sidebarBadgeCounts}
-        collapsed={!sidebarOpen}
-        onToggleCollapse={() => setSidebarOpen((open) => !open)}
-      />
+    <div
+      className={
+        embedded
+          ? "flex h-full w-full overflow-hidden bg-background text-foreground"
+          : "flex h-screen w-screen overflow-hidden bg-background text-foreground"
+      }
+    >
+      {embedded ? (
+        <SidebarProvider className="h-full min-h-0 w-auto shrink-0">
+          <Region owner="mfe" label={t("inner menu")} className="h-full">
+            <MfeSidebar
+              appName="Supplier Management"
+              appIcon={ShieldCheck}
+              items={LYNK_NAV.map((n) => ({ ...n, badge: sidebarBadgeCounts[n.id] }))}
+              activeId={view === "supplier-profile" ? "suppliers" : view}
+              onSelect={(id) => navigate(id as View)}
+              footer={
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton onClick={() => setInviteOpen(true)}>
+                      <Plus />
+                      <span>{t("Invite Supplier")}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              }
+            />
+          </Region>
+        </SidebarProvider>
+      ) : (
+        <Sidebar
+          view={view}
+          onNavigate={(v) => navigate(v)}
+          onInvite={() => setInviteOpen(true)}
+          badgeCounts={sidebarBadgeCounts}
+          collapsed={!sidebarOpen}
+          onToggleCollapse={() => setSidebarOpen((open) => !open)}
+        />
+      )}
 
       <div className="flex-1 flex flex-col min-w-0 bg-sidebar">
-        <TopHeader currentLabel={VIEW_LABEL[view]} onSwitchAccount={handleSwitchAccount} accountInitials="SM" />
+        <TopHeader
+          currentLabel={VIEW_LABEL[view]}
+          onSwitchAccount={embedded ? undefined : handleSwitchAccount}
+          showLanguage={!embedded}
+          accountInitials="SM"
+          trailing={
+            <NotificationBell
+              entries={bellEntries}
+              onOpen={(relationship) => {
+                // Opens the conversation itself, wherever the manager is.
+                const match = chatableSuppliers.find((s) => s.conversation === relationship);
+                if (match) openSupplierChat(match.id);
+              }}
+            />
+          }
+        />
 
         <div className="flex-1 flex min-w-0 overflow-hidden">
           <main className="flex-1 overflow-y-auto min-w-0">
@@ -301,6 +464,7 @@ export default function App() {
                 onOpenSupplier={openSupplierByName}
                 resolvedIds={resolvedIds}
                 onResolve={resolveTicket}
+                onOpenChat={openSupplierChat}
               />
             )}
             {view === "suppliers" && (
@@ -311,15 +475,19 @@ export default function App() {
                 supplierId={selectedSupplierId}
                 onBack={() => setView("suppliers")}
                 onSelectTicket={selectTicket}
+                onOpenChat={openSupplierChat}
               />
             )}
             {view === "data-governance" && <DataGovernance initialSelectedId={pendingSelected} />}
-            {view === "onboarding" && <Onboarding initialSelectedId={pendingSelected} />}
+            {view === "onboarding" && (
+              <Onboarding initialSelectedId={pendingSelected} onOpenChat={openSupplierChat} />
+            )}
             {view === "compliance" && (
               <ComplianceMonitoring
                 onSelectDoc={(doc: SupplierDoc) => {
                   setActiveTicket(null);
                   setActiveDoc(doc);
+                  chat.close();
                 }}
                 selectedDocId={activeDoc?.id ?? pendingSelected}
                 initialSelectedId={pendingSelected}
@@ -359,8 +527,11 @@ export default function App() {
               onOpenSupplier={openSupplierByName}
               onResolve={resolveTicket}
               onReview={setReviewDoc}
+              onOpenChat={openSupplierChat}
             />
           ) : null}
+
+          <ChatDock conversation={chat.conversation} onClose={chat.close} />
         </div>
       </div>
 

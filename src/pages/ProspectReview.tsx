@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ComponentProps, type ReactNode } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -19,24 +19,33 @@ import {
   Loader2,
   RotateCcw,
   FileSignature,
+  MessageSquare,
   type LucideIcon,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { Textarea } from "@/components/ui/textarea";
 import { WizardStepper } from "@/components/yarowa/wizard-stepper";
 import { WizardFooter } from "@/components/yarowa/wizard-footer";
 import { PdfCanvas } from "@/components/yarowa/pdf-canvas";
 import { STANDARD_DOCUMENT_TYPES } from "@/lib/onboarding-documents";
-import { DOC_STATUS_META, docStatusMeta } from "@/lib/document-status";
+import { DOC_STATUS_META, docStatusMeta, type DocBadgeVariant } from "@/lib/document-status";
 import { parseDocumentInfo, type ParsedDocumentInfo } from "@/lib/pdf-metadata";
 import { FromFileHint } from "@/components/yarowa/document-browser";
-import { useLynkData } from "../lib/LynkDataContext";
-import { useI18n } from "@/lib/i18n";
-import { CONTRACT_TEMPLATES } from "@/lib/principal";
+import { relationshipId } from "@/lib/db";
+import { PRINCIPAL_ID } from "@/data";
+import { useLynkData } from "../lib/lynk-data-context";
+import { useI18n } from "@/lib/i18n-context";
+import {
+  CONTRACT_TEMPLATES,
+} from "@/lib/principal";
 import { Checkbox } from "@/components/ui/checkbox";
 import { translateCatalogueName } from "@/lib/ticket-i18n";
-import type { Supplier, SupplierDoc, Contact, OnboardingCase } from "../types";
+import type { Supplier, SupplierDoc, Contact, OnboardingCase, ChatContext } from "../types";
 import type { ProspectDecision } from "../lib/db";
 
 // Status presentation comes from the shared definition so the PM, the supplier,
@@ -96,6 +105,16 @@ export interface ProspectReviewProps {
   onReset: (supplierId: string) => Promise<void>;
   onSendContract: (supplierId: string, contractName: string, catalogueNames: string[]) => Promise<void>;
   onReviewDocument: (docId: string, decision: "approve" | "decline", comment?: string) => void;
+  /** Opens the shell's chat dock on this prospect's conversation. */
+  onOpenChat: (
+    supplierId: string,
+    draftContext?: ChatContext,
+    overrides?: {
+      subtitle?: string;
+      readOnlyReason?: string;
+      onOpenContext?: (context: ChatContext) => void;
+    }
+  ) => void;
 }
 
 export function ProspectReview({
@@ -108,6 +127,7 @@ export function ProspectReview({
   onReset,
   onSendContract,
   onReviewDocument,
+  onOpenChat,
 }: ProspectReviewProps) {
   // An already-decided case (Accepted/Rejected) opens on the Summary, where the
   // outcome — and the Reset action for a rejected case — is shown, so the PM
@@ -132,19 +152,42 @@ export function ProspectReview({
   const [selectedKey, setSelectedKey] = useState<string | null>(rows[0]?.key ?? null);
   const decided = caseItem.status === "Accepted" || caseItem.status === "Rejected";
 
+  const { unreadFor } = useLynkData();
+  const conversation = relationshipId(PRINCIPAL_ID, supplier.id);
+  const unread = unreadFor(conversation, "principal");
+
   const editDocument = (key: string) => {
     setSelectedKey(key);
     setStep("Documents");
   };
 
+  function openChat() {
+    onOpenChat(supplier.id, undefined, {
+      subtitle: contact?.name,
+      /* A rejected application closes the conversation but keeps it readable —
+         the correspondence is part of why it was rejected. An accepted one
+         carries on: prospect and supplier are the same relationship. */
+      readOnlyReason:
+        caseItem.status === "Rejected"
+          ? t("This application was not approved, so the conversation is closed. It stays here for your records.")
+          : undefined,
+      onOpenContext: (context) => {
+        // Navigation only — jump to the document in the review stepper.
+        const row = rows.find((r) => r.doc?.id === context.id || r.name === context.id);
+        if (row) editDocument(row.key);
+      },
+    });
+  }
+
   return (
     <div className="p-6">
-      <button
+      <Button
+        variant="ghost"
         onClick={onClose}
-        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4"
+        className="mb-4 flex h-auto justify-start gap-1.5 border-0 p-0 text-sm font-normal text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
       >
         <ArrowLeft className="w-4 h-4" /> Back to onboarding
-      </button>
+      </Button>
 
       <div className="flex items-start justify-between gap-4 mb-5">
         <div>
@@ -153,15 +196,27 @@ export function ProspectReview({
             {contact?.name ? `${contact.name} · ` : ""}Prospect · Onboarding review
           </p>
         </div>
-        {(() => {
-          const meta = CASE_BADGE[caseItem.status] ?? { variant: "info" };
-          return (
-            <Badge variant={meta.variant as never}>
-              {meta.Icon && <meta.Icon className="w-3 h-3" />}
-              {t(caseItem.status)}
-            </Badge>
-          );
-        })()}
+        <div className="flex items-center gap-3">
+          {/* The prospect can write back from their wizard, so the reviewer needs
+              somewhere to see it without leaving the review. */}
+          <Button variant={unread > 0 ? "default" : "outline"} size="sm" onClick={openChat}>
+            <MessageSquare className="w-4 h-4" /> {t("Chat")}
+            {unread > 0 && (
+              <span className="ml-1 rounded-full bg-critical px-1.5 text-[10px] font-semibold text-critical-foreground">
+                {unread}
+              </span>
+            )}
+          </Button>
+          {(() => {
+            const meta = CASE_BADGE[caseItem.status] ?? { variant: "info" };
+            return (
+              <Badge variant={meta.variant as never}>
+                {meta.Icon && <meta.Icon className="w-3 h-3" />}
+                {t(caseItem.status)}
+              </Badge>
+            );
+          })()}
+        </div>
       </div>
 
       <div className="mb-6">
@@ -275,6 +330,7 @@ function DocumentsReviewStep({
   onBack: () => void;
   onNext: () => void;
 }) {
+  const { t } = useI18n();
   const selected = rows.find((r) => r.key === selectedKey) ?? rows[0];
   const idx = selected ? rows.findIndex((r) => r.key === selected.key) : -1;
   const goPrev = () => idx > 0 && onSelect(rows[idx - 1].key);
@@ -283,50 +339,12 @@ function DocumentsReviewStep({
   // Every uploaded document needs a decision before the summary makes sense.
   const pendingCount = rows.filter((r) => r.doc?.status === "pending-review").length;
 
-  const [pageInfo, setPageInfo] = useState<{ current: number; total: number } | null>(null);
-  useEffect(() => setPageInfo(null), [selected?.key]);
-
-  /* Writing a change request takes over the whole footer row: the field needs
-     the width far more than the navigation does for the few seconds it's open,
-     and cancelling brings the buttons straight back. Reset on document change so
-     a half-typed comment can't follow the reviewer to the next document. */
-  const [composing, setComposing] = useState(false);
-  useEffect(() => setComposing(false), [selected?.key]);
-
-  // Read type / issuer / validity out of the PDF; stored (confirmed) values win.
-  const [parsed, setParsed] = useState<ParsedDocumentInfo | null>(null);
-  useEffect(() => {
-    setParsed(null);
-    const url = selected?.doc?.fileUrl;
-    if (!url) return;
-    let cancelled = false;
-    parseDocumentInfo(url).then((i) => !cancelled && setParsed(i));
-    return () => {
-      cancelled = true;
-    };
-  }, [selected?.doc?.fileUrl]);
-
-  const d = selected?.doc;
-  const info = d
-    ? {
-        documentType: d.documentType || parsed?.documentType,
-        issuingInstitution: d.issuingInstitution || parsed?.issuingInstitution,
-        expiryDate: d.expiryDate || parsed?.validity,
-        doesNotExpire: d.doesNotExpire || parsed?.doesNotExpire,
-        fromFile: {
-          type: !d.documentType && Boolean(parsed?.documentType),
-          issuer: !d.issuingInstitution && Boolean(parsed?.issuingInstitution),
-          validity: !d.expiryDate && !d.doesNotExpire && Boolean(parsed?.validity || parsed?.doesNotExpire),
-        },
-      }
-    : null;
-
   return (
     <div>
       <div className="mb-4">
-        <h2 className="text-lg font-semibold">Uploaded documents</h2>
+        <h2 className="text-lg font-semibold">{t("Uploaded documents")}</h2>
         <p className="text-sm text-muted-foreground mt-0.5">
-          Review each document — open the preview, then approve or decline with a comment.
+          {t("Review each document — open the preview, then approve or decline with a comment.")}
         </p>
       </div>
 
@@ -337,142 +355,45 @@ function DocumentsReviewStep({
             const meta = DOC_STATUS_META[r.doc?.status ?? "missing"];
             const active = selected?.key === r.key;
             return (
-              <button
+              <Button
                 key={r.key}
+                variant="ghost"
                 onClick={() => onSelect(r.key)}
-                className={`w-full flex items-center justify-between gap-2 rounded-lg border px-3 py-2.5 text-left transition-colors ${
-                  active ? "border-primary bg-secondary/60" : "border-border hover:bg-secondary/40"
+                className={`h-auto w-full justify-between gap-2 rounded-lg px-3 py-2.5 text-left font-normal whitespace-normal ${
+                  active
+                    ? "border-primary bg-secondary/60 hover:bg-secondary/60 dark:hover:bg-secondary/60"
+                    : "border-border hover:bg-secondary/40 dark:hover:bg-secondary/40"
                 }`}
               >
                 <span className="flex items-center gap-2 min-w-0">
                   <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
                   <span className="text-sm font-medium truncate">{r.name}</span>
                 </span>
-                <Badge variant={meta.variant as any} className="shrink-0">
-                  <meta.Icon className="w-3 h-3" />
+                <Badge variant={meta.variant} className="shrink-0">
+                  <meta.Icon className="size-3" />
                   {meta.label}
                 </Badge>
-              </button>
+              </Button>
             );
           })}
         </div>
 
-        {/* Right: preview at document width, centered in the remaining space */}
+        {/* Right: preview at document width, centered in the remaining space.
+            Keyed by document (and its file), so the panel's own state — page
+            count, the open change-request field, the parsed PDF info — starts
+            fresh whenever the reviewer moves to another document. */}
         <div className="flex-1 min-w-0 flex justify-center">
           {selected ? (
-            <div className="w-full flex flex-col border border-border rounded-xl overflow-hidden bg-card">
-              <div className="px-4 py-2.5 border-b border-border flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                <p className="text-sm font-semibold truncate">{selected.name}</p>
-                <p className="text-xs text-muted-foreground">{selected.category}</p>
-                {selected.doc && info && (
-                  <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 mt-2 text-xs">
-                    <dt className="text-muted-foreground">Document type</dt>
-                    <dd>
-                      {info.documentType || "—"}
-                      {info.fromFile.type && <FromFileHint />}
-                    </dd>
-                    <dt className="text-muted-foreground">Issued by</dt>
-                    <dd>
-                      {info.issuingInstitution || "—"}
-                      {info.fromFile.issuer && <FromFileHint />}
-                    </dd>
-                    <dt className="text-muted-foreground">Validity</dt>
-                    <dd>
-                      {info.doesNotExpire ? (
-                        <span className="inline-flex items-center gap-1.5 text-success-ink">
-                          <ShieldCheck className="w-3 h-3" /> This certificate does not expire
-                        </span>
-                      ) : info.expiryDate ? (
-                        `Expires ${info.expiryDate}`
-                      ) : (
-                        "—"
-                      )}
-                      {info.fromFile.validity && <FromFileHint />}
-                    </dd>
-                  </dl>
-                )}
-                </div>
-                {/* Status, same badge style as the list on the left */}
-                {(() => {
-                  const m = docStatusMeta(selected.doc?.status);
-                  return (
-                    <Badge variant={m.variant as any} className="shrink-0">
-                      <m.Icon className="w-3 h-3" />
-                      {m.label}
-                    </Badge>
-                  );
-                })()}
-              </div>
-
-              <PdfCanvas
-                key={selected.key}
-                fileUrl={selected.doc?.fileUrl}
-                className="flex-1 min-h-0"
-                onPageInfo={setPageInfo}
-              />
-
-              {/* Pages within the open document */}
-              <div className="flex items-center justify-center py-2 border-t border-border text-xs text-muted-foreground tabular-nums">
-                {selected.doc?.fileUrl && pageInfo
-                  ? `${pageInfo.current} of ${pageInfo.total} page${pageInfo.total === 1 ? "" : "s"}`
-                  : "—"}
-              </div>
-
-              {/* Document navigation sits on the same level as the review actions */}
-              <div className="border-t border-border p-3">
-                {composing && selected.doc ? (
-                  <ChangeRequestComposer
-                    key={selected.doc.id}
-                    doc={selected.doc}
-                    onCancel={() => setComposing(false)}
-                    onSend={(comment) => {
-                      onReviewDocument(selected.doc!.id, "decline", comment);
-                      setComposing(false);
-                    }}
-                  />
-                ) : (
-                  <div className="flex items-center justify-between gap-3">
-                    {/* Boundary buttons are hidden, not disabled — works for any
-                        number of documents, including a single one. */}
-                    {idx > 0 ? (
-                      <Button variant="outline" size="sm" className="shrink-0" title="Previous document" onClick={goPrev}>
-                        <ChevronLeft className="w-4 h-4" /> Previous
-                      </Button>
-                    ) : (
-                      <span />
-                    )}
-                    {/* Review actions, with "Next document" always furthest right. */}
-                    <div className="flex items-center gap-2 min-w-0">
-                      {selected.doc ? (
-                        <DocActionBar
-                          doc={selected.doc}
-                          disabled={disabled}
-                          onApprove={() => onReviewDocument(selected.doc!.id, "approve")}
-                          onRequestChange={() => setComposing(true)}
-                        />
-                      ) : (
-                        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <FileX className="w-3.5 h-3.5" /> Not yet uploaded by the supplier.
-                        </span>
-                      )}
-                      {idx < rows.length - 1 && (
-                        /* Once a document is approved, moving on is the primary action. */
-                        <Button
-                          variant={selected.doc?.status === "valid" ? "default" : "outline"}
-                          size="sm"
-                          className="shrink-0"
-                          title="Next document"
-                          onClick={goNext}
-                        >
-                          Next <ChevronRight className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+            <DocumentPreviewPanel
+              key={`${selected.key}:${selected.doc?.fileUrl ?? ""}`}
+              selected={selected}
+              idx={idx}
+              count={rows.length}
+              disabled={disabled}
+              onReviewDocument={onReviewDocument}
+              goPrev={goPrev}
+              goNext={goNext}
+            />
           ) : (
             <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">
               Select a document to preview.
@@ -489,6 +410,186 @@ function DocumentsReviewStep({
         nextHint={`${pendingCount} document${pendingCount === 1 ? "" : "s"} still awaiting your review`}
       />
     </div>
+  );
+}
+
+/* The right-hand side of the review: header, PDF, page count and actions for
+   ONE document. Mounted with a key per document, so its state resets by being
+   new rather than by effects that set state when the selection changes. */
+function DocumentPreviewPanel({
+  selected,
+  idx,
+  count,
+  disabled,
+  onReviewDocument,
+  goPrev,
+  goNext,
+}: {
+  selected: DocRow;
+  idx: number;
+  count: number;
+  disabled: boolean;
+  onReviewDocument: (docId: string, decision: "approve" | "decline", comment?: string) => void;
+  goPrev: () => void;
+  goNext: () => void;
+}) {
+  const { t } = useI18n();
+  const [pageInfo, setPageInfo] = useState<{ current: number; total: number } | null>(null);
+
+  /* Writing a change request takes over the whole footer row: the field needs
+     the width far more than the navigation does for the few seconds it's open,
+     and cancelling brings the buttons straight back. */
+  const [composing, setComposing] = useState(false);
+
+  // Read type / issuer / validity out of the PDF; stored (confirmed) values win.
+  const [parsed, setParsed] = useState<ParsedDocumentInfo | null>(null);
+  const url = selected.doc?.fileUrl;
+  useEffect(() => {
+    if (!url) return;
+    let cancelled = false;
+    parseDocumentInfo(url).then((i) => {
+      if (!cancelled) setParsed(i);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [url]);
+
+  const d = selected.doc;
+  const info = d
+    ? {
+        documentType: d.documentType || parsed?.documentType,
+        issuingInstitution: d.issuingInstitution || parsed?.issuingInstitution,
+        expiryDate: d.expiryDate || parsed?.validity,
+        doesNotExpire: d.doesNotExpire || parsed?.doesNotExpire,
+        fromFile: {
+          type: !d.documentType && Boolean(parsed?.documentType),
+          issuer: !d.issuingInstitution && Boolean(parsed?.issuingInstitution),
+          validity: !d.expiryDate && !d.doesNotExpire && Boolean(parsed?.validity || parsed?.doesNotExpire),
+        },
+      }
+    : null;
+
+  return (
+      <div className="w-full flex flex-col border border-border rounded-xl overflow-hidden bg-card">
+        <div className="px-4 py-2.5 border-b border-border flex items-start justify-between gap-3">
+          <div className="min-w-0">
+          <p className="text-sm font-semibold truncate">{t(selected.name)}</p>
+          <p className="text-xs text-muted-foreground">{t(selected.category)}</p>
+          {selected.doc && info && (
+            <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 mt-2 text-xs">
+              <dt className="text-muted-foreground">{t("Document type")}</dt>
+              <dd>
+                {info.documentType || "—"}
+                {info.fromFile.type && <FromFileHint />}
+              </dd>
+              <dt className="text-muted-foreground">{t("Issued by")}</dt>
+              <dd>
+                {info.issuingInstitution || "—"}
+                {info.fromFile.issuer && <FromFileHint />}
+              </dd>
+              <dt className="text-muted-foreground">{t("Validity")}</dt>
+              <dd>
+                {info.doesNotExpire ? (
+                  <span className="inline-flex items-center gap-1.5 text-success-ink">
+                    <ShieldCheck className="w-3 h-3" /> {t("This certificate does not expire")}
+                  </span>
+                ) : info.expiryDate ? (
+                  `Expires ${info.expiryDate}`
+                ) : (
+                  "—"
+                )}
+                {info.fromFile.validity && <FromFileHint />}
+              </dd>
+            </dl>
+          )}
+          </div>
+          {/* Status, same badge style as the list on the left */}
+          {(() => {
+            const m = docStatusMeta(selected.doc?.status);
+            return (
+              <Badge variant={m.variant} className="shrink-0">
+                <m.Icon className="w-3 h-3" />
+                {m.label}
+              </Badge>
+            );
+          })()}
+        </div>
+
+        <PdfCanvas
+          key={selected.key}
+          fileUrl={selected.doc?.fileUrl}
+          className="flex-1 min-h-0"
+          onPageInfo={setPageInfo}
+        />
+
+        {/* Pages within the open document */}
+        <div className="flex items-center justify-center py-2 border-t border-border text-xs text-muted-foreground tabular-nums">
+          {selected.doc?.fileUrl && pageInfo
+            ? `${pageInfo.current} of ${pageInfo.total} page${pageInfo.total === 1 ? "" : "s"}`
+            : "—"}
+        </div>
+
+        {/* Document navigation sits on the same level as the review actions */}
+        <div className="border-t border-border p-3">
+          {composing && selected.doc ? (
+            <ChangeRequestComposer
+              key={selected.doc.id}
+              doc={selected.doc}
+              onCancel={() => setComposing(false)}
+              onSend={(comment) => {
+                onReviewDocument(selected.doc!.id, "decline", comment);
+                setComposing(false);
+              }}
+            />
+          ) : (
+            <div className="flex items-center justify-between gap-3">
+              {/* Boundary buttons are hidden, not disabled — works for any
+                  number of documents, including a single one. */}
+              {idx > 0 ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0"
+                  title={t("Previous document")}
+                  onClick={goPrev}
+                >
+                  <ChevronLeft className="w-4 h-4" /> {t("Previous")}
+                </Button>
+              ) : (
+                <span />
+              )}
+              {/* Review actions, with "Next document" always furthest right. */}
+              <div className="flex items-center gap-2 min-w-0">
+                {selected.doc ? (
+                  <DocActionBar
+                    doc={selected.doc}
+                    disabled={disabled}
+                    onApprove={() => onReviewDocument(selected.doc!.id, "approve")}
+                    onRequestChange={() => setComposing(true)}
+                  />
+                ) : (
+                  <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <FileX className="w-3.5 h-3.5" /> Not yet uploaded by the supplier.
+                  </span>
+                )}
+                {idx < count - 1 && (
+                  /* Once a document is approved, moving on is the primary action. */
+                  <Button
+                    variant={selected.doc?.status === "valid" ? "default" : "outline"}
+                    size="sm"
+                    className="shrink-0"
+                    title={t("Next document")}
+                    onClick={goNext}
+                  >
+                    {t("Next")} <ChevronRight className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
   );
 }
 
@@ -515,7 +616,7 @@ function ChangeRequestComposer({
   return (
     <div className="flex items-center gap-2">
       <AlertTriangle className="w-4 h-4 shrink-0 text-warning-ink" />
-      <input
+      <Input
         autoFocus
         value={comment}
         onChange={(e) => setComment(e.target.value)}
@@ -532,7 +633,7 @@ function ChangeRequestComposer({
             ? t("What should the supplier update? (shared with the supplier)")
             : t("Why is this document being declined? (shared with the supplier)")
         }
-        className="flex-1 min-w-0 h-9 rounded-lg border border-border bg-background px-3 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="h-9 flex-1 rounded-lg border-border bg-background px-3 py-0 text-sm"
       />
       <Button variant="ghost" size="sm" className="shrink-0" onClick={onCancel}>
         {t("Cancel")}
@@ -583,12 +684,15 @@ function DocActionBar({
 }
 
 /* ── Building blocks ─────────────────────────────────────────────────────── */
+/* Title, subtitle and row label arrive as the English source; these two
+   translate them, so each call site stays a plain string. */
 function StepShell({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
+  const { t } = useI18n();
   return (
     <Card className="rounded-2xl border border-border ring-0 shadow-none [--card-spacing:1.5rem] px-(--card-spacing)">
       <div className="mb-4">
-        <h2 className="text-lg font-semibold">{title}</h2>
-        <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
+        <h2 className="text-lg font-semibold">{t(title)}</h2>
+        <p className="text-sm text-muted-foreground mt-0.5">{t(subtitle)}</p>
       </div>
       {children}
     </Card>
@@ -596,11 +700,12 @@ function StepShell({ title, subtitle, children }: { title: string; subtitle: str
 }
 
 function Row({ icon, label, value }: { icon?: React.ReactNode; label: string; value: string }) {
+  const { t } = useI18n();
   return (
     <div className="flex items-baseline justify-between gap-4 border-b border-border/60 pb-2 last:border-0">
       <dt className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0">
         {icon}
-        {label}
+        {t(label)}
       </dt>
       <dd className="text-sm text-right">{value}</dd>
     </div>
@@ -621,6 +726,7 @@ function SectionReviewControl({
   fixing?: boolean;
   onFixingChange?: (v: boolean) => void;
 }) {
+  const { t } = useI18n();
   const [localFixing, setLocalFixing] = useState(false);
   const [draft, setDraft] = useState("");
 
@@ -636,7 +742,7 @@ function SectionReviewControl({
     if (section.status === "confirmed") {
       return (
         <div className="mt-5 flex items-center gap-2 rounded-lg border border-success/30 bg-success-soft/40 px-3 py-2 text-sm text-success-ink">
-          <CheckCircle2 className="w-4 h-4 shrink-0" /> Verified and accepted
+          <CheckCircle2 className="w-4 h-4 shrink-0" /> {t("Verified and accepted")}
         </div>
       );
     }
@@ -644,7 +750,7 @@ function SectionReviewControl({
       return (
         <div className="mt-5 rounded-lg border border-warning/40 bg-warning-soft/40 px-3 py-2.5 text-sm text-warning-ink">
           <span className="flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 shrink-0" /> Fix requested
+            <AlertTriangle className="w-4 h-4 shrink-0" /> {t("Fix requested")}
           </span>
           {section.comment && <p className="text-xs text-warning-ink/90 mt-1">“{section.comment}”</p>}
         </div>
@@ -657,10 +763,10 @@ function SectionReviewControl({
     return (
       <div className="mt-5 flex items-center justify-between rounded-lg border border-success/30 bg-success-soft/40 px-3 py-2">
         <span className="flex items-center gap-2 text-sm text-success-ink">
-          <CheckCircle2 className="w-4 h-4" /> Section confirmed
+          <CheckCircle2 className="w-4 h-4" /> {t("Section confirmed")}
         </span>
         <Button variant="ghost" size="xs" onClick={() => onChange({ status: "pending", comment: "" })}>
-          Undo
+          {t("Undo")}
         </Button>
       </div>
     );
@@ -671,10 +777,10 @@ function SectionReviewControl({
       <div className="mt-5 rounded-lg border border-warning/40 bg-warning-soft/40 px-3 py-2.5">
         <div className="flex items-center justify-between">
           <span className="flex items-center gap-2 text-sm text-warning-ink">
-            <AlertTriangle className="w-4 h-4" /> Fix requested
+            <AlertTriangle className="w-4 h-4" /> {t("Fix requested")}
           </span>
           <Button variant="ghost" size="xs" onClick={() => onChange({ status: "pending", comment: "" })}>
-            Undo
+            {t("Undo")}
           </Button>
         </div>
         {section.comment && <p className="text-xs text-warning-ink/90 mt-1">“{section.comment}”</p>}
@@ -685,17 +791,17 @@ function SectionReviewControl({
   if (fixing) {
     return (
       <div className="mt-5 space-y-2">
-        <textarea
+        <Textarea
           autoFocus
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           rows={3}
-          placeholder="What does the supplier need to fix in this section?"
-          className="w-full rounded-lg border border-border bg-background p-2 text-sm resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          placeholder={t("What does the supplier need to fix in this section?")}
+          className="field-sizing-fixed min-h-0 rounded-lg border-border bg-background p-2 text-sm"
         />
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => setFixing(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             variant="default"
@@ -706,7 +812,7 @@ function SectionReviewControl({
               setFixing(false);
             }}
           >
-            Save comment
+            {t("Save comment")}
           </Button>
         </div>
       </div>
@@ -716,10 +822,10 @@ function SectionReviewControl({
   return (
     <div className="mt-5 flex gap-2">
       <Button variant="success" size="sm" className="flex-1" onClick={() => onChange({ status: "confirmed", comment: "" })}>
-        <CheckCircle2 className="w-4 h-4" /> Confirm section
+        <CheckCircle2 className="w-4 h-4" /> {t("Confirm section")}
       </Button>
       <Button variant="outline" size="sm" className="flex-1" onClick={() => setFixing(true)}>
-        Request a fix / comment
+        {t("Request a fix / comment")}
       </Button>
     </div>
   );
@@ -859,7 +965,7 @@ function DecisionStep({
     }
   }
 
-  const companyMeta =
+  const companyMeta: ComponentProps<typeof SummaryItem>["meta"] =
     company.status === "confirmed"
       ? { variant: "success-outline", Icon: CheckCircle2, iconClass: "text-success", label: "Confirmed", note: "" }
       : company.status === "fix"
@@ -909,16 +1015,27 @@ function DecisionStep({
       {isRejected ? (
         resetting ? (
           <div className="space-y-2">
+            {/* Split on the slot so German can place the emphasised status
+                where its own grammar needs it. */}
             <div className="rounded-lg border border-border bg-secondary/40 p-3 text-xs text-muted-foreground">
-              This clears the submitted application and returns the case to{" "}
-              <span className="font-medium text-foreground">Invited</span>. The existing magic link keeps working,
-              so the prospect can start over.
+              {(() => {
+                const [before, after = ""] = t(
+                  "This clears the submitted application and returns the case to {status}. The existing magic link keeps working, so the prospect can start over."
+                ).split("{status}");
+                return (
+                  <>
+                    {before}
+                    <span className="font-medium text-foreground">{t("Invited")}</span>
+                    {after}
+                  </>
+                );
+              })()}
             </div>
             <div className="flex gap-2">
               <Button variant="outline" className="flex-1" disabled={busy} onClick={() => setResetting(false)}>
                 Cancel
               </Button>
-              <Button variant="dark" className="flex-1" disabled={busy} onClick={reset}>
+              <Button variant="default" className="flex-1" disabled={busy} onClick={reset}>
                 {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
                 Reset onboarding
               </Button>
@@ -932,13 +1049,13 @@ function DecisionStep({
         )
       ) : rejecting ? (
         <div className="space-y-2">
-          <textarea
+          <Textarea
             autoFocus
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             rows={3}
-            placeholder="Reason for rejection (shared with the supplier)"
-            className="w-full rounded-lg border border-border bg-background p-2 text-sm resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            placeholder={t("Reason for rejection (shared with the supplier)")}
+            className="field-sizing-fixed min-h-0 rounded-lg border-border bg-background p-2 text-sm"
           />
           <div className="flex gap-2">
             <Button variant="outline" className="flex-1" disabled={busy} onClick={() => setRejecting(false)}>
@@ -964,7 +1081,7 @@ function DecisionStep({
               {t("Reject application")}
             </Button>
             {hasIssues ? (
-              <Button variant="dark" disabled={busy} onClick={() => decide("changes", combinedFeedback)}>
+              <Button variant="default" disabled={busy} onClick={() => decide("changes", combinedFeedback)}>
                 {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                 Request update ({feedbackParts.length})
               </Button>
@@ -998,9 +1115,10 @@ function SummaryItem({
   onEdit,
 }: {
   label: string;
-  meta: { variant: string; Icon: LucideIcon; iconClass: string; label: string; note?: string };
+  meta: { variant: DocBadgeVariant; Icon: LucideIcon; iconClass: string; label: string; note?: string };
   onEdit?: () => void;
 }) {
+  const { t } = useI18n();
   return (
     <div className="flex items-start justify-between gap-3 px-3 py-2.5">
       <div className="min-w-0">
@@ -1008,19 +1126,20 @@ function SummaryItem({
           <meta.Icon className={`w-4 h-4 shrink-0 ${meta.iconClass}`} />
           <span className="text-sm font-medium truncate">{label}</span>
           {onEdit && (
-            <button
+            <Button
+              variant="ghost"
               onClick={onEdit}
-              title="Review / edit"
-              aria-label={`Edit ${label}`}
-              className="text-muted-foreground hover:text-foreground shrink-0"
+              title={t("Review / edit")}
+              aria-label={t("Edit {section}", { section: t(label) })}
+              className="h-auto shrink-0 border-0 p-0 text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
             >
-              <Pencil className="w-3.5 h-3.5" />
-            </button>
+              <Pencil className="size-3.5" />
+            </Button>
           )}
         </div>
         {meta.note && <p className="text-xs text-muted-foreground mt-0.5 ml-6">“{meta.note}”</p>}
       </div>
-      <Badge variant={meta.variant as any} className="shrink-0">
+      <Badge variant={meta.variant} className="shrink-0">
         {meta.label}
       </Badge>
     </div>
@@ -1054,7 +1173,8 @@ function SendContractStep({
   const toggle = (name: string) =>
     setPicked((prev) => {
       const next = new Set(prev);
-      next.has(name) ? next.delete(name) : next.add(name);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
       return next;
     });
 
@@ -1077,36 +1197,37 @@ function SendContractStep({
     >
       <div className="space-y-5">
         <div>
-          <label className="text-xs font-medium text-muted-foreground block mb-1">
+          <Label className="block text-xs font-medium leading-4 text-muted-foreground mb-1">
             {t("Contract template")}
-          </label>
-          <select
+          </Label>
+          <NativeSelect
             value={template}
             onChange={(e) => setTemplate(e.target.value)}
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+            className="w-full [&_select]:h-auto [&_select]:rounded-lg [&_select]:border-border [&_select]:bg-background [&_select]:py-2 [&_select]:pl-3"
           >
             {CONTRACT_TEMPLATES.map((c) => (
-              <option key={c} value={c}>
+              <NativeSelectOption key={c} value={c}>
                 {c}
-              </option>
+              </NativeSelectOption>
             ))}
-          </select>
+          </NativeSelect>
         </div>
 
         <div>
-          <label className="text-xs font-medium text-muted-foreground block mb-1">
+          <Label className="block text-xs font-medium leading-4 text-muted-foreground mb-1">
             {t("Service catalogues")}
-          </label>
+          </Label>
           <p className="text-xs text-muted-foreground mb-2">
             {t("Select the price lists that apply to this supplier's work orders.")}
           </p>
-          <div className="rounded-lg border border-border divide-y divide-border/60 overflow-hidden">
+          <div className="rounded-lg border border-border overflow-hidden">
             {catalogues.map((c) => (
-              <button
+              <Button
                 key={c.id}
                 type="button"
+                variant="ghost"
                 onClick={() => toggle(c.name)}
-                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-sm hover:bg-secondary/50"
+                className="flex h-auto w-full justify-start gap-2.5 rounded-none border-0 border-b border-border/60 px-3 py-2.5 text-left text-sm font-normal whitespace-normal last:border-b-0 hover:bg-secondary/50 dark:hover:bg-secondary/50"
               >
                 <Checkbox checked={picked.has(c.name)} tabIndex={-1} className="pointer-events-none" />
                 <span className="min-w-0 flex-1">
@@ -1115,7 +1236,7 @@ function SendContractStep({
                     {c.versionLabel} · {t(c.region)} · {t(c.trade)}
                   </span>
                 </span>
-              </button>
+              </Button>
             ))}
           </div>
           {picked.size === 0 && (

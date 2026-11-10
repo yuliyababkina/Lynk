@@ -1,6 +1,6 @@
-import { ArrowUpRight, AlertTriangle } from "lucide-react";
+import { ArrowUpRight, AlertTriangle, MessageSquare } from "lucide-react";
 import type { Ticket, SupplierDoc, TicketStatus } from "@/types";
-import { useLynkData } from "@/lib/LynkDataContext";
+import { useLynkData } from "@/lib/lynk-data-context";
 import { ACTION_ICON } from "@/lib/action-icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,8 +8,11 @@ import { DetailDrawer } from "@/components/yarowa/detail-drawer";
 import { RenewalReviewCard } from "@/components/yarowa/renewal-review-card";
 import { TicketStatusMenu } from "@/components/yarowa/ticket-status-menu";
 import { CriticalityIcon } from "@/components/yarowa/criticality-icon";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 import { translateTicketTitle, translateAgeLabel } from "@/lib/ticket-i18n";
+import { relationshipId } from "@/lib/db";
+import { PRINCIPAL_ID } from "@/data";
+import type { ChatContext } from "@/types";
 import type { View } from "@/App";
 
 const sourceToView: Record<string, View> = {
@@ -35,6 +38,7 @@ export function TicketDrawer({
   onOpenSupplier,
   onResolve,
   onReview,
+  onOpenChat,
 }: {
   ticket: Ticket;
   onClose: () => void;
@@ -42,6 +46,8 @@ export function TicketDrawer({
   onOpenSupplier: (entityName: string) => void;
   onResolve: (ticket: Ticket, action: string) => void;
   onReview: (doc: SupplierDoc) => void;
+  /** Opens the supplier's conversation with this ticket attached. */
+  onOpenChat?: (supplierId: string, context: ChatContext) => void;
 }) {
   const {
     docs: DOCS,
@@ -50,10 +56,31 @@ export function TicketDrawer({
     onboardingCases: ONBOARDING_CASES,
     ticketStatusById,
     setTicketStatus,
+    suppliers: SUPPLIERS,
+    unreadFor,
   } = useLynkData();
   const { t } = useI18n();
   const status: TicketStatus = ticketStatusById.get(ticket.id) ?? "To do";
   const PrimaryActionIcon = ACTION_ICON[ticket.primaryAction];
+
+  /* A ticket names its entity by display name, so the conversation is found
+     the same way "Open supplier" already finds the profile. A ticket about
+     something that is not a supplier we hold a relationship with — a stale
+     name, a deleted prospect — simply gets no Chat button. */
+  const chatSupplier = SUPPLIERS.find((s) => s.name === ticket.entityName);
+  const chatUnread = chatSupplier
+    ? unreadFor(relationshipId(PRINCIPAL_ID, chatSupplier.id), "principal")
+    : 0;
+  const openChat = () => {
+    if (!chatSupplier) return;
+    // The ticket travels as the message's context, so the supplier sees what
+    // it is about without the manager retyping it.
+    onOpenChat?.(chatSupplier.id, {
+      type: doc ? "document" : "data-change",
+      id: ticket.targetId ?? ticket.id,
+      label: doc?.documentName ?? translateTicketTitle(ticket.title, t),
+    });
+  };
   const doc = ticket.source === "compliance-monitoring" ? DOCS.find((d) => d.id === ticket.targetId) : undefined;
   const contract = ticket.source === "contracts" ? CONTRACTS.find((c) => c.id === ticket.targetId) : undefined;
   const dgr = ticket.source === "data-governance" ? DATA_GOVERNANCE_REQUESTS.find((r) => r.id === ticket.targetId) : undefined;
@@ -82,12 +109,13 @@ export function TicketDrawer({
         <div className="grid grid-cols-2 gap-3 text-xs mb-4">
           <div>
             <div className="text-muted-foreground mb-0.5">{t("ENTITY")}</div>
-            <button
-              className="text-accent underline font-medium text-left"
+            <Button
+              variant="ghost"
+              className="h-auto justify-start border-0 p-0 text-left text-xs font-medium whitespace-normal text-accent underline hover:bg-transparent hover:text-accent dark:hover:bg-transparent"
               onClick={() => onOpenSupplier(ticket.entityName)}
             >
               {ticket.entityName}
-            </button>
+            </Button>
           </div>
           <div>
             <div className="text-muted-foreground mb-0.5">{t("TYPE")}</div>
@@ -123,11 +151,11 @@ export function TicketDrawer({
             </div>
             <div className="grid grid-cols-2 gap-2 pt-1">
               <div>
-                <div className="text-muted-foreground">End date</div>
+                <div className="text-muted-foreground">{t("End date")}</div>
                 <div className="font-medium">{contract.endDate}</div>
               </div>
               <div>
-                <div className="text-muted-foreground">Renewal by</div>
+                <div className="text-muted-foreground">{t("Renewal by")}</div>
                 <div className="font-medium">{contract.renewalBy}</div>
               </div>
             </div>
@@ -182,18 +210,34 @@ export function TicketDrawer({
                   {t("Escalate")}
                 </Button>
               )}
+              {/* The supplier portal puts a Chat button on its own tickets, so
+                  the same ticket has to be answerable from this side too —
+                  otherwise the conversation only ever runs one way. Resolved
+                  only for entities we actually hold a relationship with. */}
+              {chatSupplier && (
+                <Button variant="outline" className="w-full" onClick={openChat}>
+                  <MessageSquare size={14} />
+                  {t("Chat")}
+                  {chatUnread > 0 && (
+                    <span className="ml-1 rounded-full bg-critical px-1.5 text-[10px] font-semibold text-critical-foreground">
+                      {chatUnread}
+                    </span>
+                  )}
+                </Button>
+              )}
             </div>
           </>
         )}
 
         {targetView && (
-          <button
+          <Button
+            variant="ghost"
             onClick={() => onNavigate(targetView, ticket.targetId)}
-            className="w-full flex items-center justify-center gap-1.5 text-sm text-accent font-medium py-2 border-t border-border pt-3"
+            className="h-auto w-full gap-1.5 rounded-none border-0 border-t border-border px-0 pb-2 pt-3 text-sm font-medium text-accent hover:bg-transparent hover:text-accent dark:hover:bg-transparent"
           >
             {t("Open in {view}", { view: t(sourceLabel[ticket.source]) })}
-            <ArrowUpRight size={14} />
-          </button>
+            <ArrowUpRight size={14} className="size-3.5" />
+          </Button>
         )}
     </DetailDrawer>
   );

@@ -2,17 +2,20 @@ import { useMemo, useState } from "react";
 import {
   Check,
   ShieldCheck, Shield, FileText, ClipboardList, Rocket,
-  ChevronDown, CircleCheck,
+  ChevronDown, CircleCheck, MessageSquare,
   type LucideIcon,
 } from "lucide-react";
-import { useLynkData } from "../lib/LynkDataContext";
+import { useLynkData } from "../lib/lynk-data-context";
 import { Button } from "@/components/ui/button";
 import { TaskGroupCard, TaskRow } from "@/components/yarowa/task-group-card";
 import { TicketStatusMenu } from "@/components/yarowa/ticket-status-menu";
 import { CriticalityIcon } from "@/components/yarowa/criticality-icon";
 import { ACTION_ICON } from "@/lib/action-icons";
 import { criticalityLabel } from "@/lib/theme";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
+import { relationshipId } from "@/lib/db";
+import { PRINCIPAL_ID } from "@/data";
+import type { ChatContext } from "@/types";
 import { translateTicketTitle, translateAgeLabel } from "@/lib/ticket-i18n";
 import type { Ticket, Criticality, TicketCategory, TicketStatus } from "../types";
 
@@ -41,13 +44,22 @@ export function Dashboard({
   onOpenSupplier,
   resolvedIds,
   onResolve,
+  onOpenChat,
 }: {
   onSelectTicket: (t: Ticket) => void;
   onOpenSupplier: (entityName: string) => void;
   resolvedIds: Set<string>;
   onResolve: (t: Ticket, action: string) => void;
+  /** Opens the supplier's conversation with this ticket attached. */
+  onOpenChat?: (supplierId: string, context: ChatContext) => void;
 }) {
-  const { tickets: TICKETS, ticketStatusById, setTicketStatus } = useLynkData();
+  const {
+    tickets: TICKETS,
+    ticketStatusById,
+    setTicketStatus,
+    suppliers: SUPPLIERS,
+    unreadFor,
+  } = useLynkData();
   const { t: tr } = useI18n();
   const [filter, setFilter] = useState<"All tickets" | TicketCategory>("All tickets");
   const [expanded, setExpanded] = useState<Set<Criticality>>(new Set());
@@ -59,7 +71,8 @@ export function Dashboard({
   const toggleExpanded = (c: Criticality) =>
     setExpanded((prev) => {
       const next = new Set(prev);
-      next.has(c) ? next.delete(c) : next.add(c);
+      if (next.has(c)) next.delete(c);
+      else next.add(c);
       return next;
     });
 
@@ -94,19 +107,20 @@ export function Dashboard({
   const resolvedVisible = resolvedExpanded ? resolvedFiltered : resolvedFiltered.slice(0, COLLAPSED_ROWS);
 
   return (
-    <div className="p-6">
+    <div className="@container p-6">
       <h1 className="text-2xl font-bold mb-1">{tr("Task Queue")}</h1>
       <p className="text-sm text-muted-foreground mb-4">{tr("Sorted by criticality. Click a ticket to open it.")}</p>
 
       <div className="flex flex-wrap gap-2 mb-6">
         {(["All tickets", ...CATEGORIES] as const).map((f) => (
-          <button
+          <Button
             key={f}
+            variant="ghost"
             onClick={() => setFilter(f)}
-            className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-full text-sm font-medium border transition-colors ${
+            className={`h-auto gap-2 rounded-full px-3.5 py-2 text-sm font-medium ${
               filter === f
-                ? "bg-primary text-primary-foreground border-primary"
-                : "bg-card text-foreground border-border hover:bg-secondary/50"
+                ? "border-primary bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground dark:hover:bg-primary"
+                : "border-border bg-card text-foreground hover:bg-secondary/50 dark:hover:bg-secondary/50"
             }`}
           >
             {tr(f)}
@@ -117,7 +131,7 @@ export function Dashboard({
             >
               {counts[f]}
             </span>
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -131,7 +145,10 @@ export function Dashboard({
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-4">
+      {/* Two columns only while both stay wide enough to hold a full ticket
+          row; below that one wide column beats two cramped ones. Measured on
+          this page's own width, which the chat dock changes. */}
+      <div className="grid grid-cols-1 @min-[60rem]:grid-cols-2 gap-4">
         {grouped.map((group) => {
           const isExpanded = expanded.has(group.criticality);
           const hasOverflow = group.tickets.length > COLLAPSED_ROWS;
@@ -146,6 +163,14 @@ export function Dashboard({
               {visible.map((t) => {
                 const ActionIcon = ACTION_ICON[t.primaryAction];
                 const CategoryIcon = CATEGORY_ICON[t.category];
+                /* Same inline pairing the supplier portal uses: the action, then
+                   Chat beside it. Resolved by display name like the subline's
+                   supplier link, so a ticket about a company we hold no
+                   relationship with simply gets no Chat button. */
+                const chatSupplier = SUPPLIERS.find((s) => s.name === t.entityName);
+                const chatUnread = chatSupplier
+                  ? unreadFor(relationshipId(PRINCIPAL_ID, chatSupplier.id), "principal")
+                  : 0;
                 return (
                   <TaskRow
                     key={t.id}
@@ -155,15 +180,16 @@ export function Dashboard({
                     subline={
                       <>
                         {tr(t.entityType)} ·{" "}
-                        <button
+                        <Button
+                          variant="ghost"
                           onClick={(e) => {
                             e.stopPropagation();
                             onOpenSupplier(t.entityName);
                           }}
-                          className="hover:text-accent hover:underline transition-colors"
+                          className="inline-block h-auto border-0 p-0 text-xs font-normal whitespace-normal text-muted-foreground hover:bg-transparent hover:text-accent hover:underline dark:hover:bg-transparent"
                         >
                           {t.entityName}
-                        </button>{" "}
+                        </Button>{" "}
                         · {translateAgeLabel(t.ageLabel, tr)}
                       </>
                     }
@@ -171,34 +197,60 @@ export function Dashboard({
                       <TicketStatusMenu status={statusOf(t)} onChange={(s) => changeStatus(t, s)} align="start" />
                     }
                     action={
-                      <Button
-                        variant={t.criticality === "critical" || t.criticality === "high" ? "default" : "outline"}
-                        // The action opens the ticket in the drawer rather than
-                        // resolving straight from the row, so the action is always
-                        // taken with the ticket's full context in view.
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSelectTicket(t);
-                        }}
-                      >
-                        {ActionIcon && <ActionIcon size={14} />}
-                        {tr(t.primaryAction)}
-                      </Button>
+                      <div className="flex items-center gap-1.5">
+                        <Button
+                          variant={t.criticality === "critical" || t.criticality === "high" ? "default" : "outline"}
+                          // The action opens the ticket in the drawer rather than
+                          // resolving straight from the row, so the action is always
+                          // taken with the ticket's full context in view.
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelectTicket(t);
+                          }}
+                        >
+                          {ActionIcon && <ActionIcon size={14} />}
+                          {tr(t.primaryAction)}
+                        </Button>
+                        {chatSupplier && (
+                          <Button
+                            variant="secondary"
+                            // The row itself opens the drawer, so the button has
+                            // to stop the click bubbling — same guard as above.
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onOpenChat?.(chatSupplier.id, {
+                                type: "data-change",
+                                id: t.targetId ?? t.id,
+                                label: translateTicketTitle(t.title, tr),
+                              });
+                            }}
+                          >
+                            <MessageSquare size={14} />
+                            {tr("Chat")}
+                            {chatUnread > 0 && (
+                              <span className="ml-1 rounded-full bg-critical px-1.5 text-[10px] font-semibold text-critical-foreground">
+                                {chatUnread}
+                              </span>
+                            )}
+                          </Button>
+                        )}
+                      </div>
                     }
                   />
                 );
               })}
               {hasOverflow && (
-                <button
+                <Button
+                  variant="ghost"
                   onClick={() => toggleExpanded(group.criticality)}
-                  className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-medium text-muted-foreground hover:bg-secondary/40 transition-colors"
+                  className="flex h-auto w-full gap-1.5 rounded-none border-0 px-4 py-2.5 text-xs font-medium text-muted-foreground hover:bg-secondary/40 hover:text-muted-foreground dark:hover:bg-secondary/40"
                 >
                   <ChevronDown
                     size={14}
-                    className={`transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                    className={`size-3.5 transition-transform ${isExpanded ? "rotate-180" : ""}`}
                   />
                   {isExpanded ? "Show less" : `Show ${group.tickets.length - COLLAPSED_ROWS} more`}
-                </button>
+                </Button>
               )}
             </TaskGroupCard>
           );
@@ -209,7 +261,7 @@ export function Dashboard({
         <TaskGroupCard
           className="mt-4"
           icon={<CircleCheck size={17} strokeWidth={2.25} className="text-success" />}
-          label="Resolved"
+          label={tr("Resolved")}
           count={resolvedFiltered.length}
         >
           {resolvedVisible.map((t) => {
@@ -227,15 +279,16 @@ export function Dashboard({
                     <CriticalityIcon criticality={t.criticality} size={14} />
                     {tr(criticalityLabel[t.criticality])}
                     <span>·</span>
-                    <button
+                    <Button
+                      variant="ghost"
                       onClick={(e) => {
                         e.stopPropagation();
                         onOpenSupplier(t.entityName);
                       }}
-                      className="hover:text-accent hover:underline transition-colors"
+                      className="inline-block h-auto border-0 p-0 text-xs font-normal whitespace-normal text-muted-foreground hover:bg-transparent hover:text-accent hover:underline dark:hover:bg-transparent"
                     >
                       {t.entityName}
-                    </button>
+                    </Button>
                   </span>
                 }
                 status={<TicketStatusMenu status={statusOf(t)} onChange={(s) => changeStatus(t, s)} align="end" />}
@@ -243,16 +296,17 @@ export function Dashboard({
             );
           })}
           {resolvedFiltered.length > COLLAPSED_ROWS && (
-            <button
+            <Button
+              variant="ghost"
               onClick={() => setResolvedExpanded((v) => !v)}
-              className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-medium text-muted-foreground hover:bg-secondary/40 transition-colors"
+              className="flex h-auto w-full gap-1.5 rounded-none border-0 px-4 py-2.5 text-xs font-medium text-muted-foreground hover:bg-secondary/40 hover:text-muted-foreground dark:hover:bg-secondary/40"
             >
               <ChevronDown
                 size={14}
-                className={`transition-transform ${resolvedExpanded ? "rotate-180" : ""}`}
+                className={`size-3.5 transition-transform ${resolvedExpanded ? "rotate-180" : ""}`}
               />
               {resolvedExpanded ? "Show less" : `Show ${resolvedFiltered.length - COLLAPSED_ROWS} more`}
-            </button>
+            </Button>
           )}
         </TaskGroupCard>
       )}

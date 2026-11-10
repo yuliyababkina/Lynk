@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 
 function Type() {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+    <div className="flex flex-col gap-3">
       <div className="text-2xl font-bold">Heading — Task Queue (text-2xl / bold)</div>
       <div className="text-lg font-semibold">Subheading (text-lg / semibold)</div>
       <div className="text-sm">Body text — the default 14px reading size (text-sm).</div>

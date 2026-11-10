@@ -168,6 +168,41 @@ create table if not exists activity_log (
   detail text
 );
 
+-- ── Principal ↔ Supplier chat ────────────────────────────────────────────────
+-- One flat conversation per principal–supplier relationship. relationship_id is
+-- the derived key `rel_<principalId>_<supplierId>` (relationshipId() in
+-- src/lib/db.ts), plain text because this prototype has no relationships table.
+-- Author company/person/role are denormalised at insert time on purpose: a
+-- message records who said it *then*, so renaming someone later must not
+-- rewrite history. See supabase/migrations/2026-10-08_add_chat.sql for the full
+-- rationale and the production RLS this deliberately does not use.
+create table if not exists chat_messages (
+  id uuid primary key default gen_random_uuid(),
+  relationship_id text not null,
+  author_side text not null check (author_side in ('principal', 'supplier', 'system')),
+  author_name text not null,
+  author_company text not null,
+  author_role text,
+  body text not null,
+  context_type text check (context_type in ('document', 'data-change', 'onboarding-case')),
+  context_id text,
+  context_label text,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists chat_messages_relationship_idx
+  on chat_messages (relationship_id, created_at);
+
+-- One row per (relationship, side). Unread = the other side's messages newer
+-- than last_read_at; notified_at backs the one-email-per-unread-streak rule.
+create table if not exists chat_reads (
+  relationship_id text not null,
+  side text not null check (side in ('principal', 'supplier')),
+  last_read_at timestamptz not null default now(),
+  notified_at timestamptz,
+  primary key (relationship_id, side)
+);
+
 -- ── Row Level Security ───────────────────────────────────────────────────────
 alter table suppliers enable row level security;
 alter table tickets enable row level security;
@@ -178,6 +213,8 @@ alter table onboarding_cases enable row level security;
 alter table catalogues enable row level security;
 alter table catalogue_suppliers enable row level security;
 alter table activity_log enable row level security;
+alter table chat_messages enable row level security;
+alter table chat_reads enable row level security;
 
 create policy "anon full access" on suppliers for all using (true) with check (true);
 create policy "anon full access" on tickets for all using (true) with check (true);
@@ -188,6 +225,8 @@ create policy "anon full access" on onboarding_cases for all using (true) with c
 create policy "anon full access" on catalogues for all using (true) with check (true);
 create policy "anon full access" on catalogue_suppliers for all using (true) with check (true);
 create policy "anon full access" on activity_log for all using (true) with check (true);
+create policy "anon full access" on chat_messages for all using (true) with check (true);
+create policy "anon full access" on chat_reads for all using (true) with check (true);
 
 -- ── Backward-compatible column additions ────────────────────────────────────
 -- Safe to re-run even if you already executed an earlier version of this file.

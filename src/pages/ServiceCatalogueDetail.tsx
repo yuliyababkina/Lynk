@@ -2,9 +2,10 @@ import { useState } from "react";
 import { AlertTriangle, Upload, Bell, CheckCircle2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "../lib/utils";
 import type { Catalogue } from "../types";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 import { translateCatalogueName } from "@/lib/ticket-i18n";
 
 export function ServiceCatalogueDetail({
@@ -28,9 +29,13 @@ export function ServiceCatalogueDetail({
 
   return (
     <div className="p-6">
-      <button onClick={onBack} className="text-sm text-muted-foreground hover:text-foreground mb-3">
+      <Button
+        variant="ghost"
+        onClick={onBack}
+        className="mb-3 h-auto border-0 p-0 text-sm font-normal text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
+      >
         ← All catalogues
-      </button>
+      </Button>
 
       <div className="flex items-start justify-between mb-5">
         <div>
@@ -45,12 +50,13 @@ export function ServiceCatalogueDetail({
               <p className="text-sm text-muted-foreground">
                 Viewing {viewingVersion} (read-only) · {catalogue.region} · {catalogue.trade}
               </p>
-              <button
+              <Button
+                variant="ghost"
                 onClick={() => setViewingVersion(catalogue.currentVersion)}
-                className="text-sm text-accent font-medium hover:underline"
+                className="h-auto border-0 p-0 text-sm font-medium text-accent hover:bg-transparent hover:text-accent hover:underline dark:hover:bg-transparent"
               >
                 ← Back to current version
-              </button>
+              </Button>
             </div>
           )}
         </div>
@@ -63,38 +69,38 @@ export function ServiceCatalogueDetail({
 
       <div className="grid grid-cols-[1fr_320px] gap-4 items-start">
         <div className="bg-card border border-border rounded-lg overflow-hidden">
-          <div className="px-4 py-3 border-b border-border font-semibold text-sm">Services</div>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs text-muted-foreground border-b border-border">
-                <th className="px-4 py-2 font-medium">SERVICE</th>
-                <th className="px-4 py-2 font-medium">CATEGORY</th>
-                <th className="px-4 py-2 font-medium">UNIT</th>
-                <th className="px-4 py-2 font-medium">RATE</th>
-              </tr>
-            </thead>
-            <tbody>
+          <div className="px-4 py-3 border-b border-border font-semibold text-sm">{t("Services")}</div>
+          <Table>
+            <TableHeader>
+              <TableRow className="text-xs border-border hover:bg-transparent">
+                <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{t("SERVICE")}</TableHead>
+                <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{t("CATEGORY")}</TableHead>
+                <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{t("UNIT")}</TableHead>
+                <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{t("RATE")}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {services.map((s) => (
-                <tr key={s.id} className="border-b border-border last:border-0">
-                  <td className="px-4 py-2.5 font-medium">{s.service}</td>
-                  <td className="px-4 py-2.5">{s.category}</td>
-                  <td className="px-4 py-2.5">{s.unit}</td>
-                  <td className="px-4 py-2.5">€{s.rate.toFixed(2)}</td>
-                </tr>
+                <TableRow key={s.id} className="border-border hover:bg-transparent">
+                  <TableCell className="px-4 py-2.5 whitespace-normal font-medium">{s.service}</TableCell>
+                  <TableCell className="px-4 py-2.5 whitespace-normal">{s.category}</TableCell>
+                  <TableCell className="px-4 py-2.5 whitespace-normal">{s.unit}</TableCell>
+                  <TableCell className="px-4 py-2.5 whitespace-normal">€{s.rate.toFixed(2)}</TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
 
         <div className="space-y-4">
           <div className="bg-card border border-border rounded-lg overflow-hidden">
             <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-              <span className="font-semibold text-sm">Service catalogue alerts</span>
+              <span className="font-semibold text-sm">{t("Service catalogue alerts")}</span>
               <Badge variant={nonCompliant.length > 0 ? "danger" : "success"}>{nonCompliant.length}</Badge>
             </div>
             {nonCompliant.length === 0 ? (
               <div className="px-4 py-4 text-sm text-muted-foreground flex items-center gap-2">
-                <CheckCircle2 size={15} className="text-success" /> All suppliers compliant
+                <CheckCircle2 size={15} className="text-success" /> {t("All suppliers compliant")}
               </div>
             ) : (
               <>
@@ -102,7 +108,7 @@ export function ServiceCatalogueDetail({
                   <div key={s.id} className="px-4 py-2.5 border-b border-border flex items-center gap-2 text-sm">
                     <AlertTriangle size={14} className="text-warning shrink-0" />
                     <span className="font-medium truncate">{s.name}</span>
-                    <span className="text-xs text-muted-foreground ml-auto shrink-0">Not confirmed</span>
+                    <span className="text-xs text-muted-foreground ml-auto shrink-0">{t("Not confirmed")}</span>
                   </div>
                 ))}
                 <div className="px-4 py-3">
@@ -121,24 +127,25 @@ export function ServiceCatalogueDetail({
           </div>
 
           <div className="bg-card border border-border rounded-lg overflow-hidden">
-            <div className="px-4 py-3 border-b border-border font-semibold text-sm">History log</div>
+            <div className="px-4 py-3 border-b border-border font-semibold text-sm">{t("History log")}</div>
             {catalogue.versions.map((v) => (
-              <button
+              <Button
                 key={v.version}
+                variant="ghost"
                 onClick={() => setViewingVersion(v.version)}
                 className={cn(
-                  "w-full text-left px-4 py-2.5 border-b border-border last:border-0 hover:bg-secondary/40 transition-colors",
+                  "h-auto w-full flex-col items-stretch justify-start gap-0 rounded-none border-0 border-b border-border px-4 py-2.5 text-left font-normal whitespace-normal last:border-0 hover:bg-secondary/40 dark:hover:bg-secondary/40",
                   viewingVersion === v.version && "bg-secondary/60"
                 )}
               >
                 <div className="flex items-center gap-2 text-sm">
                   <span className="font-medium">{v.version}</span>
-                  {v.version === catalogue.currentVersion && <Badge variant="success">Current</Badge>}
+                  {v.version === catalogue.currentVersion && <Badge variant="success">{t("Current")}</Badge>}
                 </div>
                 <div className="text-xs text-muted-foreground mt-0.5">
                   {v.publishedAt} · {v.note}
                 </div>
-              </button>
+              </Button>
             ))}
           </div>
         </div>

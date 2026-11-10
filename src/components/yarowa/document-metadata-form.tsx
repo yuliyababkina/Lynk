@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { DOCUMENT_TYPE_OPTIONS, type DocumentMetadata } from "@/lib/onboarding-documents";
+import { useI18n } from "@/lib/i18n-context";
 
 /*
  * Shown right after a file is picked: the app pre-fills what it recognised from
@@ -38,6 +40,7 @@ export function DocumentMetadataForm({
   onConfirm: (metadata: DocumentMetadata) => void;
 }) {
   const editing = mode === "edit";
+  const { t } = useI18n();
   const [meta, setMeta] = useState<DocumentMetadata>(initial);
   const set = <K extends keyof DocumentMetadata>(k: K, v: DocumentMetadata[K]) =>
     setMeta((m) => ({ ...m, [k]: v }));
@@ -78,19 +81,19 @@ export function DocumentMetadataForm({
         <Label htmlFor="doc-type" className="text-xs text-muted-foreground">
           Document type
         </Label>
-        <select
+        <NativeSelect
           id="doc-type"
           value={meta.documentType}
           onChange={(e) => set("documentType", e.target.value)}
-          className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="w-full [&_select]:h-10 [&_select]:rounded-lg [&_select]:border-border [&_select]:bg-background [&_select]:pl-3"
         >
-          <option value="">Select a type…</option>
+          <NativeSelectOption value="">Select a type…</NativeSelectOption>
           {DOCUMENT_TYPE_OPTIONS.map((t) => (
-            <option key={t} value={t}>
+            <NativeSelectOption key={t} value={t}>
               {t}
-            </option>
+            </NativeSelectOption>
           ))}
-        </select>
+        </NativeSelect>
       </div>
 
       <div className="space-y-1">
@@ -101,7 +104,7 @@ export function DocumentMetadataForm({
           id="doc-issuer"
           value={meta.issuingInstitution}
           onChange={(e) => set("issuingInstitution", e.target.value)}
-          placeholder="e.g. TÜV Süd, Chamber of Commerce, Allianz"
+          placeholder={t("e.g. TÜV Süd, Chamber of Commerce, Allianz")}
           className="h-10 rounded-lg border-border bg-background"
         />
       </div>
@@ -123,7 +126,7 @@ export function DocumentMetadataForm({
             Your document says “{expiryHint}” — please give the exact date.
           </p>
         )}
-        <label className="flex items-center gap-2 text-sm cursor-pointer">
+        <Label className="cursor-pointer font-normal leading-5">
           <Checkbox
             checked={meta.doesNotExpire}
             onCheckedChange={(c) => {
@@ -133,14 +136,14 @@ export function DocumentMetadataForm({
             }}
           />
           This certificate does not expire
-        </label>
+        </Label>
       </div>
 
       <div className="flex gap-2 pt-1">
         <Button variant="outline" className="flex-1" disabled={busy} onClick={onCancel}>
           Cancel
         </Button>
-        <Button variant="dark" className="flex-1" disabled={busy || !valid} onClick={() => onConfirm(meta)}>
+        <Button variant="default" className="flex-1" disabled={busy || !valid} onClick={() => onConfirm(meta)}>
           {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
           {editing ? "Save details" : "Confirm & upload"}
         </Button>

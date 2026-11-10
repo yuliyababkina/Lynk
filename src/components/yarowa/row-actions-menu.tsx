@@ -1,7 +1,8 @@
 import { useState, type ReactNode } from "react";
 import { MoreVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
+import { Button } from "@/components/ui/button";
 
 export interface RowAction {
   label: string;
@@ -23,20 +24,21 @@ export function RowActionsMenu({ actions }: { actions: RowAction[] }) {
 
   return (
     <div className="relative shrink-0" onClick={(e) => e.stopPropagation()}>
-      <button
+      <Button
         type="button"
+        variant="ghost"
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={t("Row actions")}
         onClick={() => setOpen((o) => !o)}
         className={cn(
-          "rounded-md p-1 text-muted-foreground transition-opacity hover:bg-secondary hover:text-foreground focus-visible:opacity-100",
+          "h-auto rounded-md border-0 p-1 text-muted-foreground transition-opacity hover:bg-secondary hover:text-foreground focus-visible:opacity-100 aria-expanded:bg-transparent dark:hover:bg-secondary",
           // Hidden at rest, revealed on row hover — but always visible while open.
           open ? "opacity-100" : "opacity-0 group-hover:opacity-100"
         )}
       >
         <MoreVertical className="w-4 h-4" />
-      </button>
+      </Button>
 
       {open && (
         <>
@@ -46,23 +48,24 @@ export function RowActionsMenu({ actions }: { actions: RowAction[] }) {
             className="absolute right-0 z-50 mt-1 min-w-[200px] rounded-xl border border-border bg-card p-1 shadow-lg"
           >
             {actions.map((a) => (
-              <button
+              <Button
                 key={a.label}
+                variant="ghost"
                 role="menuitem"
                 onClick={() => {
                   setOpen(false);
                   a.onSelect();
                 }}
                 className={cn(
-                  "w-full flex items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm transition-colors",
+                  "h-auto w-full justify-start gap-2 rounded-lg border-0 px-2.5 py-2 text-left text-sm font-normal whitespace-normal",
                   a.destructive
-                    ? "text-destructive hover:bg-destructive/10"
-                    : "text-foreground hover:bg-secondary"
+                    ? "text-destructive hover:bg-destructive/10 hover:text-destructive dark:hover:bg-destructive/10"
+                    : "text-foreground hover:bg-secondary hover:text-foreground dark:hover:bg-secondary"
                 )}
               >
                 {a.icon}
                 {t(a.label)}
-              </button>
+              </Button>
             ))}
           </div>
         </>

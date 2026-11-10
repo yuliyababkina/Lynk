@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useLynkData } from "@/lib/LynkDataContext";
+import { useLynkData } from "@/lib/lynk-data-context";
 import { recogniseDocumentMetadata, type DocumentMetadata } from "@/lib/onboarding-documents";
 
 /*

@@ -1,17 +1,24 @@
 import { useState } from "react";
 import { PARSED_LINES, DIFF_LINES } from "../data";
-import { useLynkData } from "../lib/LynkDataContext";
+import { useLynkData } from "../lib/lynk-data-context";
 import { ServiceCatalogueList } from "./ServiceCatalogueList";
 import { ServiceCatalogueDetail } from "./ServiceCatalogueDetail";
 import { ServiceCatalogueWizard, type WizardResult } from "./ServiceCatalogueWizard";
-import { toast } from "@/components/yarowa/toast";
-import type { Catalogue } from "../types";
+import { toast } from "@/lib/toast";
+import type { Catalogue, CatalogueLine, CatalogueLineDiff } from "../types";
 
 type Mode =
   | { kind: "list" }
   | { kind: "detail"; catalogueId: string }
   | { kind: "create" }
   | { kind: "update"; catalogueId: string };
+
+/** A preview diff line as stored on a catalogue: without the change markers. */
+function toCatalogueLine(line: CatalogueLineDiff): CatalogueLine {
+  return Object.fromEntries(
+    Object.entries(line).filter(([key]) => key !== "change" && key !== "previousRate")
+  ) as unknown as CatalogueLine;
+}
 
 function nextVersionOf(current: string): string {
   const match = current.match(/(\d+)(?:\.(\d+))?/);
@@ -43,7 +50,7 @@ export function ServiceCatalogue({ initialSelectedId }: { initialSelectedId?: st
       validFrom: result.validFrom,
       validTo: result.validTo,
       responseModel: result.responseModel,
-      services: PARSED_LINES.map(({ change: _change, previousRate: _prev, ...line }) => line),
+      services: PARSED_LINES.map(toCatalogueLine),
       versions: [
         {
           version: "Version 1",
@@ -76,9 +83,7 @@ export function ServiceCatalogue({ initialSelectedId }: { initialSelectedId?: st
       awaitingFirstResponse: false,
       versions: [{ version: next, publishedAt: "Today", note: "New version published" }, ...current.versions],
       suppliers: current.suppliers.map((s) => ({ ...s, confirmed: false })),
-      services: DIFF_LINES.filter((l) => l.change !== "removed").map(
-        ({ change: _change, previousRate: _prev, ...line }) => line
-      ),
+      services: DIFF_LINES.filter((l) => l.change !== "removed").map(toCatalogueLine),
     };
     setCatalogues((prev) => prev.map((c) => (c.id === catalogueId ? updated : c)));
     persistCatalogue(updated);

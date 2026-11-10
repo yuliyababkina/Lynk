@@ -7,6 +7,8 @@ import {
   FileX,
   type LucideIcon,
 } from "lucide-react";
+import type { VariantProps } from "class-variance-authority";
+import type { badgeVariants } from "@/components/ui/badge";
 import type { DocStatus } from "../types";
 
 /**
@@ -20,9 +22,12 @@ import type { DocStatus } from "../types";
  */
 export type DocDisplayStatus = DocStatus | "missing";
 
+/** The Badge variants a document status can map to. */
+export type DocBadgeVariant = NonNullable<VariantProps<typeof badgeVariants>["variant"]>;
+
 export interface DocStatusMeta {
   label: string;
-  variant: string;
+  variant: DocBadgeVariant;
   Icon: LucideIcon;
   iconClass: string;
 }

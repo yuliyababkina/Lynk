@@ -1,4 +1,5 @@
-import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
+import { useCallback, useState, type ReactNode } from "react";
+import { I18nContext } from "@/lib/i18n-context";
 
 /*
  * Lightweight UI-chrome i18n for the EN/DE language switcher.
@@ -49,6 +50,34 @@ const DE: Record<string, string> = {
   "Company info": "Firmendaten",
   "Principal Docs": "Auftraggeber-Dokumente",
   Complete: "Abgeschlossen",
+
+  // ── Chat ────────────────────────────────────────────────────────────────
+  Chat: "Chat",
+  Conversation: "Unterhaltung",
+  Messages: "Nachrichten",
+  "Write a message": "Nachricht schreiben",
+  "Write a message…": "Nachricht schreiben…",
+  Send: "Senden",
+  "No messages yet. Start the conversation below.":
+    "Noch keine Nachrichten. Beginnen Sie die Unterhaltung unten.",
+  "Open document": "Dokument öffnen",
+  "Open request": "Anfrage öffnen",
+  "Open application": "Bewerbung öffnen",
+  "Remove link": "Verknüpfung entfernen",
+  Yesterday: "Gestern",
+  inactive: "inaktiv",
+  "New message from {sender}: {body}": "Neue Nachricht von {sender}: {body}",
+  "{count} unread": "{count} ungelesen",
+  "{count} new messages": "{count} neue Nachrichten",
+  "No new messages": "Keine neuen Nachrichten",
+  "Notifications": "Benachrichtigungen",
+  "Message {company}": "{company} eine Nachricht senden",
+  "This application was not approved, so the conversation is closed. It stays here for your records.":
+    "Diese Bewerbung wurde nicht genehmigt, daher ist die Unterhaltung geschlossen. Sie bleibt für Ihre Unterlagen erhalten.",
+  "This relationship is inactive, so the conversation is closed. It stays here for your records.":
+    "Diese Geschäftsbeziehung ist inaktiv, daher ist die Unterhaltung geschlossen. Sie bleibt für Ihre Unterlagen erhalten.",
+  "Chat with {principal}": "Chat mit {principal}",
+  "Your conversation with {company}": "Ihre Unterhaltung mit {company}",
 
   // Machine-translation marker (free-form content)
   "Machine translated": "Maschinell übersetzt",
@@ -122,6 +151,8 @@ const DE: Record<string, string> = {
   Escalate: "Eskalieren",
   Renew: "Verlängern",
   Remind: "Erinnern",
+  Update: "Aktualisieren",
+  Upload: "Hochladen",
   Approve: "Genehmigen",
   Request: "Anfordern",
 
@@ -326,6 +357,7 @@ const DE: Record<string, string> = {
   "{count} tickets": "{count} Tickets",
   // Trades (reference data)
   Plumbing: "Sanitärinstallation",
+  "Heating & Plumbing": "Heizung & Sanitär",
   Drywall: "Trockenbau",
   "Building Components": "Bauteile",
   HVAC: "Heizung/Klima",
@@ -484,6 +516,675 @@ const DE: Record<string, string> = {
   "You're now a supplier 🎉": "Sie sind jetzt Lieferant 🎉",
   "Contracts signed. {company} is active for {principal} and can now receive work orders. Manage your documents, contracts and details anytime from your supplier portal.":
     "Verträge unterzeichnet. {company} ist für {principal} aktiv und kann nun Aufträge erhalten. Verwalten Sie Ihre Dokumente, Verträge und Daten jederzeit über Ihr Lieferantenportal.",
+
+  // ── Supplier portal ─────────────────────────────────────────────────────
+  // The view labels this portal's nav and breadcrumb use are already defined
+  // above; what follows is the page chrome inside them.
+  "Expand menu": "Menü ausklappen",
+  "Collapse menu": "Menü einklappen",
+  Close: "Schließen",
+  You: "Sie",
+
+  // Overview
+  "Good morning, {name}": "Guten Morgen, {name}",
+  "Here's the current status of your supplier account with Lynk.":
+    "Hier ist der aktuelle Stand Ihres Lieferantenkontos bei Lynk.",
+  "Nothing here right now.": "Hier ist derzeit nichts.",
+  "You're all caught up": "Sie sind auf dem aktuellen Stand",
+  "Open Requests": "Offene Anfragen",
+  "Compliance by principal": "Compliance nach Auftraggeber",
+  "1 expiring soon": "1 läuft bald ab",
+  "1 pending review": "1 wartet auf Prüfung",
+  "data change requests": "Datenänderungsanträge",
+  "onboarding task": "Onboarding-Aufgabe",
+  "Pending Approval": "Warten auf Freigabe",
+  "Upload Document": "Dokument hochladen",
+  "Renew expiring documents": "Ablaufende Dokumente erneuern",
+  "Request Data Change": "Datenänderung beantragen",
+  "IBAN, address updates": "IBAN- und Adressänderungen",
+
+  // Activity items (prototype fixtures — a real build sends these translated)
+  "Complete company profile": "Firmenprofil vervollständigen",
+  "Framework Contract": "Rahmenvertrag",
+  "IBAN change request": "IBAN-Änderungsantrag",
+  "Profile completeness 61%": "Profilvollständigkeit 61 %",
+  "expired 8 days ago": "vor 8 Tagen abgelaufen",
+  "expiring in 30 days": "läuft in 30 Tagen ab",
+  "12 days to expiry": "12 Tage bis zum Ablauf",
+  "below 65% threshold": "unter dem Schwellenwert von 65 %",
+  "3 required fields missing": "3 Pflichtfelder fehlen",
+  "not yet uploaded": "noch nicht hochgeladen",
+  "awaiting principal review": "wartet auf Prüfung durch den Auftraggeber",
+  "awaiting first-eye endorsement": "wartet auf Erstprüfung",
+  // ("1 day ago" and "Today" are already defined with the relative age labels.)
+  "2 days ago": "vor 2 Tagen",
+  "3 days ago": "vor 3 Tagen",
+  "5 days ago": "vor 5 Tagen",
+  "8 days ago": "vor 8 Tagen",
+  "Today, 09:14": "Heute, 09:14",
+  "Yesterday, 14:02": "Gestern, 14:02",
+
+  // Documents
+  "Compliance files shared with your principals, with expiry status and actions.":
+    "Compliance-Dokumente, die Sie mit Ihren Auftraggebern teilen — mit Ablaufstatus und Aktionen.",
+  "Upload document": "Dokument hochladen",
+  "Uploading…": "Wird hochgeladen…",
+  "All Documents": "Alle Dokumente",
+  "No documents yet — upload your first PDF above.":
+    "Noch keine Dokumente — laden Sie oben Ihr erstes PDF hoch.",
+
+  // Company details
+  "Legal profile, registered address, and payment data shared with principals.":
+    "Rechtliche Angaben, eingetragene Adresse und Zahlungsdaten, die mit Auftraggebern geteilt werden.",
+  "Read only": "Nur lesen",
+  "Associate: {name}": "Niederlassung: {name}",
+  "Update My Details →": "Meine Daten aktualisieren →",
+  // Field labels come in as props (see portal-fields.ts), so they never appear
+  // as a literal t("…") — the rest of this profile's labels are defined above.
+  "Primary Contact": "Hauptansprechpartner",
+  "Contact person": "Ansprechpartner",
+  "Contact email": "E-Mail des Ansprechpartners",
+  "Contact phone": "Telefon des Ansprechpartners",
+
+  // Requested updates
+  "Review principal requests, update company data, and confirm changes.":
+    "Anfragen der Auftraggeber prüfen, Firmendaten aktualisieren und Änderungen bestätigen.",
+  "No pending updates": "Keine offenen Anfragen",
+  "All information your principals need is up to date.":
+    "Alle Angaben, die Ihre Auftraggeber benötigen, sind aktuell.",
+  "Action required": "Handlung erforderlich",
+  "Review & update my details →": "Meine Daten prüfen & aktualisieren →",
+  "Nothing has changed — confirm current details":
+    "Nichts hat sich geändert — aktuelle Daten bestätigen",
+  "Requested by 30 Jun 2026": "Angefordert bis 30. Juni 2026",
+  "Requested by 22 Jul 2026": "Angefordert bis 22. Juli 2026",
+  "Requested by 25 Jul 2026": "Angefordert bis 25. Juli 2026",
+
+  // Price agreements
+  "Rate cards and framework pricing agreed with your principals.":
+    "Preislisten und Rahmenkonditionen, die mit Ihren Auftraggebern vereinbart wurden.",
+  "No price agreements yet": "Noch keine Preisvereinbarungen",
+  "When a principal shares a rate card or framework agreement with you, it will appear here for review.":
+    "Sobald ein Auftraggeber eine Preisliste oder einen Rahmenvertrag mit Ihnen teilt, erscheint sie hier zur Prüfung.",
+
+  // Principals
+  "My Principals": "Meine Auftraggeber",
+  "Companies you work with or are onboarding with":
+    "Unternehmen, mit denen Sie zusammenarbeiten oder im Onboarding sind",
+  "Changes Requested": "Änderungen angefordert",
+
+  // Portal onboarding placeholder
+  "Onboarding Coming Soon": "Onboarding folgt in Kürze",
+  "The onboarding wizard for prospect relationships will be built here.":
+    "Der Onboarding-Assistent für Interessenten-Beziehungen entsteht hier.",
+
+  // ── Invite Supplier wizard ──────────────────────────────────────────────
+  // ("Invite Supplier" itself is defined above with the PM sidebar nav.)
+  "Send an onboarding invitation to a new supplier":
+    "Senden Sie eine Onboarding-Einladung an einen neuen Lieferanten",
+  "Search the platform or invite a new supplier by email":
+    "Durchsuchen Sie die Plattform oder laden Sie einen neuen Lieferanten per E-Mail ein",
+  // Stepper ("Review" is already defined with the ticket actions)
+  Contact: "Kontakt",
+  Details: "Angaben",
+  Settings: "Einstellungen",
+  // Contact step
+  "Who are you inviting?": "Wen möchten Sie einladen?",
+  "Company name": "Firmenname",
+  "Search or enter company name…": "Firmenname suchen oder eingeben…",
+  "Full name": "Vollständiger Name",
+  "Email address": "E-Mail-Adresse",
+  // Platform match card
+  "{company} is already on Lynk": "{company} ist bereits auf Lynk",
+  "{company} is already connected": "{company} ist bereits verbunden",
+  "This supplier has a verified profile. Sending a connection request will notify their account manager — no email invite needed.":
+    "Dieser Lieferant hat ein verifiziertes Profil. Eine Verbindungsanfrage benachrichtigt seinen Kundenbetreuer — eine E-Mail-Einladung ist nicht nötig.",
+  "This supplier is active in your network. You can manage them in the Suppliers Catalogue.":
+    "Dieser Lieferant ist in Ihrem Netzwerk aktiv. Sie können ihn im Lieferantenkatalog verwalten.",
+  "On Lynk": "Auf Lynk",
+  Connected: "Verbunden",
+  // Cities (reference data, from the company directory)
+  Munich: "München",
+  Berlin: "Berlin",
+  Stuttgart: "Stuttgart",
+  // Details step (the trades themselves are defined with the overview filters)
+  "What trades does this supplier cover?": "Welche Gewerke deckt dieser Lieferant ab?",
+  Trade: "Gewerk",
+  "Search trades…": "Gewerke suchen…",
+  "Remove {trade}": "{trade} entfernen",
+  "{count} selected": "{count} ausgewählt",
+  "Clear all": "Alle entfernen",
+  "Select at least one trade to continue":
+    "Wählen Sie mindestens ein Gewerk aus, um fortzufahren",
+  // Settings step
+  "Invitation settings": "Einladungseinstellungen",
+  "Send welcome email": "Willkommens-E-Mail senden",
+  "The supplier receives a branded onboarding email with a portal link.":
+    "Der Lieferant erhält eine gebrandete Onboarding-E-Mail mit einem Portal-Link.",
+  "Require onboarding checklist": "Onboarding-Checkliste verlangen",
+  "Supplier must complete profile, upload documents, and sign agreements.":
+    "Der Lieferant muss sein Profil vervollständigen, Dokumente hochladen und Vereinbarungen unterzeichnen.",
+  "Personal note (optional)": "Persönliche Nachricht (optional)",
+  "Add a short message for their account manager…":
+    "Fügen Sie eine kurze Nachricht für seinen Kundenbetreuer hinzu…",
+  "Add a short message that will appear in the invitation email…":
+    "Fügen Sie eine kurze Nachricht hinzu, die in der Einladungs-E-Mail erscheint…",
+  // Review step ("Prospect" is already defined with the stage badges)
+  Company: "Unternehmen",
+  Action: "Aktion",
+  "Invitation email": "Einladungs-E-Mail",
+  Trades: "Gewerke",
+  "Welcome email": "Willkommens-E-Mail",
+  "Onboarding checklist": "Onboarding-Checkliste",
+  "Connection request": "Verbindungsanfrage",
+  Yes: "Ja",
+  No: "Nein",
+  Required: "Erforderlich",
+  Optional: "Optional",
+  "A connection request will be sent to {company}'s account manager.":
+    "Eine Verbindungsanfrage wird an den Kundenbetreuer von {company} gesendet.",
+  "An invitation will be sent to {email}. The company will appear as a {prospect} until they complete onboarding.":
+    "Eine Einladung wird an {email} gesendet. Das Unternehmen erscheint als {prospect}, bis das Onboarding abgeschlossen ist.",
+  // Sending + result toasts
+  "Sending connection request…": "Verbindungsanfrage wird gesendet…",
+  "Sending invitation…": "Einladung wird gesendet…",
+  "Send connection request": "Verbindungsanfrage senden",
+  "Send Invitation": "Einladung senden",
+  "Connection request sent": "Verbindungsanfrage gesendet",
+  "{company}'s account manager was notified.":
+    "Der Kundenbetreuer von {company} wurde benachrichtigt.",
+  "Invitation sent": "Einladung gesendet",
+  "Prospect added": "Interessent hinzugefügt",
+  "{company} added as a Prospect — invite emailed to {email}.":
+    "{company} als Interessent hinzugefügt — Einladung an {email} gesendet.",
+  "{company} added as a Prospect — awaiting onboarding.":
+    "{company} als Interessent hinzugefügt — Onboarding steht aus.",
+  "Couldn't send invitation": "Einladung konnte nicht gesendet werden",
+  "Please try again.": "Bitte versuchen Sie es erneut.",
+  "Failed to send invitation email": "Einladungs-E-Mail konnte nicht gesendet werden",
+
+  // ── Document browser + renewal review ───────────────────────────────────
+  // Shared by the PM review, the portal and the onboarding wizard, so these
+  // belong to every role's vocabulary rather than one screen's.
+  "No documents.": "Keine Dokumente.",
+  Document: "Dokument",
+  "Select a document to preview.": "Wählen Sie ein Dokument zur Vorschau aus.",
+  "This certificate does not expire": "Dieses Zertifikat läuft nicht ab",
+  // (The "Expires" line is already defined above with the document statuses.)
+  "(from file)": "(aus Datei)",
+  "Read from the document — not yet confirmed":
+    "Aus dem Dokument gelesen — noch nicht bestätigt",
+  // Pages within the open document
+  "{current} of {total} page": "Seite {current} von {total}",
+  "{current} of {total} pages": "Seite {current} von {total}",
+  // Moving between documents. The buttons borrow the generic words, the way
+  // the English does — the wizard's own footer says "Next" too, and one key
+  // cannot hold both "Nächstes (Dokument)" and "Weiter". The tooltips carry
+  // the precise wording.
+  Previous: "Zurück",
+  Next: "Weiter",
+  "Previous document": "Vorheriges Dokument",
+  "Next document": "Nächstes Dokument",
+  "Not yet uploaded.": "Noch nicht hochgeladen.",
+  // Renewal review card + lightbox
+  "Renewal Uploaded — Awaiting Review": "Verlängerung hochgeladen — wartet auf Prüfung",
+  "Uploaded {date}": "Hochgeladen am {date}",
+  "Review document": "Dokument prüfen",
+  "Review {file}": "{file} prüfen",
+  "Review the uploaded renewal, then accept or reject it.":
+    "Prüfen Sie die hochgeladene Verlängerung und nehmen Sie sie an oder lehnen Sie sie ab.",
+  Reject: "Ablehnen",
+  "Accept & Replace": "Annehmen & ersetzen",
+  "Accept & Reactivate Supplier": "Annehmen & Lieferant reaktivieren",
+
+  // ── Catalogue preview table ─────────────────────────────────────────────
+  "No rows parsed": "Keine Zeilen erkannt",
+  "The uploaded file contained no service lines.":
+    "Die hochgeladene Datei enthielt keine Leistungszeilen.",
+  SERVICE: "LEISTUNG",
+  UNIT: "EINHEIT",
+  RATE: "SATZ",
+  CHANGE: "ÄNDERUNG",
+  // ("Added" is already defined with the data-governance change log.)
+  Changed: "Geändert",
+  Removed: "Entfernt",
+
+  // ── Compliance drawer ───────────────────────────────────────────────────
+  // (The status badges, "Expired …d ago" and "…d remaining" are defined above
+  // with the Compliance Monitoring page.)
+  "Expiry date": "Ablaufdatum",
+  "Days remaining": "Verbleibende Tage",
+  "Auto-notified": "Automatisch benachrichtigt",
+  "View attached document": "Angehängtes Dokument ansehen",
+  "Document history": "Dokumentenverlauf",
+  // Status callout headings
+  "Supplier blocked from work orders": "Lieferant für Aufträge gesperrt",
+  "Resubmission required": "Erneute Einreichung erforderlich",
+  "Awaiting your review": "Wartet auf Ihre Prüfung",
+  "Expiring soon": "Läuft bald ab",
+  "30-day auto-notification sent": "30-Tage-Benachrichtigung gesendet",
+  "Document valid": "Dokument gültig",
+  // Status notes. The three with a supplier name in them are matched as
+  // patterns in ticket-i18n.ts, like the ticket titles.
+  "{supplier} cannot be assigned new work orders until this document is renewed and accepted. A renewal has been uploaded and is awaiting your review.":
+    "{supplier} können keine neuen Aufträge zugewiesen werden, bis dieses Dokument verlängert und angenommen wurde. Eine Verlängerung wurde hochgeladen und wartet auf Ihre Prüfung.",
+  "{supplier} cannot be assigned new work orders until this document is renewed and accepted.":
+    "{supplier} können keine neuen Aufträge zugewiesen werden, bis dieses Dokument verlängert und angenommen wurde.",
+  "The submitted declaration was rejected during review. {supplier} has been asked to correct and resubmit the document.":
+    "Die eingereichte Erklärung wurde bei der Prüfung abgelehnt. {supplier} wurde gebeten, das Dokument zu korrigieren und erneut einzureichen.",
+  "A renewed certificate has been uploaded ahead of expiry and is awaiting your review before it replaces the current version.":
+    "Ein erneuertes Zertifikat wurde vor Ablauf hochgeladen und wartet auf Ihre Prüfung, bevor es die aktuelle Version ersetzt.",
+  "A renewed licence has been uploaded and is awaiting your review before it replaces the current version.":
+    "Eine erneuerte Lizenz wurde hochgeladen und wartet auf Ihre Prüfung, bevor sie die aktuelle Version ersetzt.",
+  "This document expires within 30 days. The 30-day auto-notification has been sent to the supplier portal.":
+    "Dieses Dokument läuft innerhalb von 30 Tagen ab. Die 30-Tage-Benachrichtigung wurde an das Lieferantenportal gesendet.",
+  "This document expires within 60 days. The supplier has been notified to upload a renewal.":
+    "Dieses Dokument läuft innerhalb von 60 Tagen ab. Der Lieferant wurde aufgefordert, eine Verlängerung hochzuladen.",
+  "This document is valid and no action is required.":
+    "Dieses Dokument ist gültig, es ist keine Handlung erforderlich.",
+  // Recommendation banner
+  "60-day window — action recommended": "60-Tage-Fenster — Handlung empfohlen",
+  "Send a manual reminder now to give the supplier time to prepare their renewal.":
+    "Senden Sie jetzt eine manuelle Erinnerung, damit der Lieferant Zeit für die Verlängerung hat.",
+  "30-day window — action recommended": "30-Tage-Fenster — Handlung empfohlen",
+  "The 30-day auto-notification has been sent. A manual reminder can prompt a faster response.":
+    "Die 30-Tage-Benachrichtigung wurde gesendet. Eine manuelle Erinnerung kann eine schnellere Antwort bewirken.",
+  "Expired — supplier blocked": "Abgelaufen — Lieferant gesperrt",
+  "This document has expired and the supplier is blocked from new work orders until a renewal is uploaded and accepted.":
+    "Dieses Dokument ist abgelaufen und der Lieferant ist für neue Aufträge gesperrt, bis eine Verlängerung hochgeladen und angenommen wurde.",
+  "The last upload was rejected in review. Ask the supplier to correct and re-submit the document.":
+    "Der letzte Upload wurde bei der Prüfung abgelehnt. Bitten Sie den Lieferanten, das Dokument zu korrigieren und erneut einzureichen.",
+  // Action cards + their toasts
+  "Send Manual Reminder": "Manuelle Erinnerung senden",
+  "Notify {supplier} to upload their renewal":
+    "{supplier} auffordern, die Verlängerung hochzuladen",
+  "Ask {supplier} to correct and re-upload":
+    "{supplier} bitten, zu korrigieren und erneut hochzuladen",
+  "Escalate to Manager": "An die Leitung eskalieren",
+  "Flag this blocked supplier for management review":
+    "Diesen gesperrten Lieferanten zur Prüfung durch die Leitung melden",
+  "Revoke Supplier Access": "Lieferantenzugang entziehen",
+  "Block immediately — re-enable when document is renewed":
+    "Sofort sperren — nach Verlängerung des Dokuments wieder freigeben",
+  "{supplier} was reminded to renew {document}.":
+    "{supplier} wurde an die Verlängerung von {document} erinnert.",
+  "Supplier access revoked": "Lieferantenzugang entzogen",
+  "{supplier} is blocked from new work orders until {document} is renewed.":
+    "{supplier} ist für neue Aufträge gesperrt, bis {document} verlängert wurde.",
+  "Escalated to manager": "An die Leitung eskaliert",
+  "{document} — {supplier} flagged for review.":
+    "{document} — {supplier} zur Prüfung gemeldet.",
+  // Document-history timeline (the fixed set the backend writes)
+  "Document verified — valid": "Dokument geprüft — gültig",
+  "60-day expiry warning triggered": "60-Tage-Ablaufwarnung ausgelöst",
+  "30-day auto-notification sent to supplier portal":
+    "30-Tage-Benachrichtigung an das Lieferantenportal gesendet",
+  "Document expired — supplier blocked from work orders":
+    "Dokument abgelaufen — Lieferant für Aufträge gesperrt",
+  "Document uploaded by supplier": "Dokument vom Lieferanten hochgeladen",
+  "Renewal document uploaded by supplier":
+    "Verlängerungsdokument vom Lieferanten hochgeladen",
+  "Manual reminder sent": "Manuelle Erinnerung gesendet",
+  "Rejected — incomplete smelter list": "Abgelehnt — unvollständige Schmelzhüttenliste",
+  "Rejected — missing signature page": "Abgelehnt — fehlende Unterschriftenseite",
+
+  // ── Service-catalogue wizard ────────────────────────────────────────────
+  "Cancel and go back": "Abbrechen und zurück",
+  "Create a Service catalogue": "Leistungskatalog erstellen",
+  "Upload new version — {catalogue}": "Neue Version hochladen — {catalogue}",
+  // Stepper ("Upload" and "Details" are defined above)
+  Preview: "Vorschau",
+  Distribution: "Verteilung",
+  // Upload step
+  "Drag an XLS file here, or choose one from your computer.":
+    "Ziehen Sie eine XLS-Datei hierher oder wählen Sie eine von Ihrem Computer.",
+  "Upload the updated price list. It will be compared against the current active version.":
+    "Laden Sie die aktualisierte Preisliste hoch. Sie wird mit der aktuellen aktiven Version verglichen.",
+  "Upload updated file": "Aktualisierte Datei hochladen",
+  "Parsing file…": "Datei wird eingelesen…",
+  "Comparing with current version…": "Vergleich mit der aktuellen Version…",
+  // Preview step summary tiles
+  "Rows added": "Zeilen hinzugefügt",
+  "Rows changed": "Zeilen geändert",
+  "Rows removed": "Zeilen entfernt",
+  "Total rows": "Zeilen gesamt",
+  Categories: "Kategorien",
+  "Trades detected": "Erkannte Gewerke",
+  "Regions detected": "Erkannte Regionen",
+  // Details step
+  Name: "Name",
+  "e.g. Catalog 5 Painting South": "z. B. Katalog 5 Malerarbeiten Süd",
+  "New version": "Neue Version",
+  Region: "Region",
+  "Validity period": "Gültigkeitszeitraum",
+  "Supplier response model": "Antwortmodell der Lieferanten",
+  "Actively agree": "Aktiv zustimmen",
+  "Suppliers must explicitly confirm the catalogue before it applies to them.":
+    "Lieferanten müssen den Katalog ausdrücklich bestätigen, bevor er für sie gilt.",
+  "Actively disagree": "Aktiv widersprechen",
+  "Silence counts as acceptance; suppliers must explicitly opt out.":
+    "Schweigen gilt als Zustimmung; Lieferanten müssen ausdrücklich widersprechen.",
+  // Distribution step
+  "Suppliers matched automatically by {region} + {trade}. Untick any you want to exclude.":
+    "Lieferanten wurden automatisch nach {region} + {trade} zugeordnet. Entfernen Sie den Haken bei allen, die Sie ausschließen möchten.",
+  "Suppliers linked to this catalogue will be notified to re-confirm {version}.":
+    "Mit diesem Katalog verknüpfte Lieferanten werden aufgefordert, {version} erneut zu bestätigen.",
+  "the new version": "die neue Version",
+  "No matching suppliers": "Keine passenden Lieferanten",
+  "No suppliers match this catalogue's region and trade yet.":
+    "Noch keine Lieferanten passen zu Region und Gewerk dieses Katalogs.",
+  "Select all": "Alle auswählen",
+  "Deselect all": "Auswahl aufheben",
+  SUPPLIER: "LIEFERANT",
+  "Include {supplier}": "{supplier} einbeziehen",
+  // Wizard footer
+  "Save as draft": "Als Entwurf speichern",
+  "Publish & share with suppliers": "Veröffentlichen & mit Lieferanten teilen",
+  "Publish & notify suppliers": "Veröffentlichen & Lieferanten benachrichtigen",
+
+  // ── App shell, boot and preview chrome ──────────────────────────────────
+  "Couldn't load Lynk data": "Lynk-Daten konnten nicht geladen werden",
+  "Loading Lynk…": "Lynk wird geladen…",
+  "This invitation link isn't valid": "Dieser Einladungslink ist ungültig",
+  "It may have expired or already been used. Contact the company that invited you for a new link.":
+    "Er ist möglicherweise abgelaufen oder wurde bereits verwendet. Wenden Sie sich für einen neuen Link an das Unternehmen, das Sie eingeladen hat.",
+  Language: "Sprache",
+  "Switch account": "Konto wechseln",
+  Dismiss: "Schließen",
+  "Loading document…": "Dokument wird geladen…",
+  "Couldn't render the preview.": "Die Vorschau konnte nicht dargestellt werden.",
+  "Open in a new tab": "In neuem Tab öffnen",
+  "Open in new tab": "In neuem Tab öffnen",
+  "not submitted yet": "noch nicht eingereicht",
+  "Preview attached document": "Angehängtes Dokument ansehen",
+  "e.g. TÜV Süd, Chamber of Commerce, Allianz": "z. B. TÜV Süd, Handelskammer, Allianz",
+
+  // ── Supplier profile ────────────────────────────────────────────────────
+  "Health Score": "Health-Score",
+  "Open Tickets": "Offene Tickets",
+  "No open tickets.": "Keine offenen Tickets.",
+  Contacts: "Kontakte",
+  Primary: "Hauptkontakt",
+  Services: "Leistungen",
+  "Trade Categories": "Gewerkekategorien",
+  "Regions Served": "Betreute Regionen",
+  Capabilities: "Fähigkeiten",
+  "{count} on file": "{count} hinterlegt",
+  "No documents on file.": "Keine Dokumente hinterlegt.",
+  "View all": "Alle anzeigen",
+  "Activity Timeline": "Aktivitätsverlauf",
+  Edit: "Bearbeiten",
+  // ("Contracts", "Documents" and "Suppliers Overview" are defined above.)
+
+  // ── Ticket drawer ───────────────────────────────────────────────────────
+  "End date": "Enddatum",
+  "Renewal by": "Verlängerung bis",
+
+  // ── Portal activity panel ───────────────────────────────────────────────
+  "CURRENT FILE": "AKTUELLE DATEI",
+  "Not uploaded yet": "Noch nicht hochgeladen",
+  "Expired {days} days ago": "Vor {days} Tagen abgelaufen",
+  "Expires today": "Läuft heute ab",
+  "Expiring in {days} days": "Läuft in {days} Tagen ab",
+  "SUBMITTED FOR REVIEW": "ZUR PRÜFUNG EINGEREICHT",
+  "Not on file": "Nicht hinterlegt",
+  "Does not expire": "Läuft nicht ab",
+  "Stand-in page — this document isn't in the document store yet, so there is no file to render.":
+    "Platzhalterseite — dieses Dokument liegt noch nicht im Dokumentenspeicher, es gibt also keine Datei zum Anzeigen.",
+  "SUBMITTED FOR APPROVAL": "ZUR FREIGABE EINGEREICHT",
+  "WHAT YOU CHANGED": "WAS SIE GEÄNDERT HABEN",
+  "Your current details stay active until this is endorsed.":
+    "Ihre aktuellen Daten bleiben aktiv, bis dies bestätigt wurde.",
+  "Applied to your profile and shared with your principals.":
+    "In Ihr Profil übernommen und mit Ihren Auftraggebern geteilt.",
+  "Request a data change": "Datenänderung beantragen",
+  "Upload a document": "Dokument hochladen",
+  "Correct your company profile": "Firmenprofil korrigieren",
+  "Add or renew a compliance file": "Compliance-Dokument hinzufügen oder erneuern",
+  PRINCIPAL: "AUFTRAGGEBER",
+  UPDATED: "AKTUALISIERT",
+  "Saved together with the file.": "Wird zusammen mit der Datei gespeichert.",
+  "Submit for approval": "Zur Freigabe einreichen",
+  "Save changes": "Änderungen speichern",
+  "Waiting on your principal. Here is exactly what they received.":
+    "Wartet auf Ihren Auftraggeber. Das hier hat er genau erhalten.",
+  "Closed — kept here so you can see what was submitted.":
+    "Abgeschlossen — hier aufbewahrt, damit Sie sehen, was eingereicht wurde.",
+  "Nothing recorded for this item.": "Zu diesem Eintrag ist nichts erfasst.",
+  "Discard your changes?": "Änderungen verwerfen?",
+  "The file you picked hasn't been submitted.": "Die gewählte Datei wurde nicht eingereicht.",
+  "Your edits haven't been saved.": "Ihre Änderungen wurden nicht gespeichert.",
+  "Keep editing": "Weiter bearbeiten",
+  Discard: "Verwerfen",
+  "Choose a file to continue.": "Wählen Sie eine Datei, um fortzufahren.",
+  "Document submitted": "Dokument eingereicht",
+  "{document} is now awaiting review.": "{document} wartet nun auf Prüfung.",
+  "Your document": "Ihr Dokument",
+  "Submitted for approval": "Zur Freigabe eingereicht",
+  "{count} change sent for endorsement.": "{count} Änderung zur Bestätigung gesendet.",
+  "{count} changes sent for endorsement.": "{count} Änderungen zur Bestätigung gesendet.",
+
+  // ── Onboarding (PM side) ────────────────────────────────────────────────
+  "Company details": "Firmendaten",
+  "Registered address": "Eingetragene Adresse",
+  "Primary contact": "Hauptansprechpartner",
+  "No documents submitted yet.": "Noch keine Dokumente eingereicht.",
+  "PM Review": "Prüfung durch den Einkauf",
+  "Invitation timeline": "Verlauf der Einladung",
+  "Invitation sent, {days} days ago. No response from contact yet.":
+    "Einladung vor {days} Tagen gesendet. Noch keine Antwort des Kontakts.",
+  "Delete {company}?": "{company} löschen?",
+  "The onboarding case is removed. The supplier profile stays, because it is already active in Lynk. This can't be undone.":
+    "Der Onboarding-Fall wird entfernt. Das Lieferantenprofil bleibt bestehen, da es in Lynk bereits aktiv ist. Dies kann nicht rückgängig gemacht werden.",
+  "The case and the prospect's profile are removed. This can't be undone — reject the application instead if the supplier should be told the outcome.":
+    "Der Fall und das Profil des Interessenten werden entfernt. Dies kann nicht rückgängig gemacht werden — lehnen Sie die Bewerbung stattdessen ab, wenn der Lieferant das Ergebnis erfahren soll.",
+  "The case, the prospect's profile and {count} uploaded document are removed. This can't be undone — reject the application instead if the supplier should be told the outcome.":
+    "Der Fall, das Profil des Interessenten und {count} hochgeladenes Dokument werden entfernt. Dies kann nicht rückgängig gemacht werden — lehnen Sie die Bewerbung stattdessen ab, wenn der Lieferant das Ergebnis erfahren soll.",
+  "The case, the prospect's profile and {count} uploaded documents are removed. This can't be undone — reject the application instead if the supplier should be told the outcome.":
+    "Der Fall, das Profil des Interessenten und {count} hochgeladene Dokumente werden entfernt. Dies kann nicht rückgängig gemacht werden — lehnen Sie die Bewerbung stattdessen ab, wenn der Lieferant das Ergebnis erfahren soll.",
+  "Reason for deleting": "Grund für die Löschung",
+  "e.g. duplicate invitation, company no longer trading, invited in error":
+    "z. B. doppelte Einladung, Unternehmen nicht mehr tätig, versehentlich eingeladen",
+  "Kept in the activity log — the only record left once the case is gone.":
+    "Wird im Aktivitätsprotokoll festgehalten — der einzige Nachweis, der nach dem Löschen bleibt.",
+  "Keep case": "Fall behalten",
+  "Delete case": "Fall löschen",
+  "Give a reason to enable deletion.": "Geben Sie einen Grund an, um das Löschen freizugeben.",
+  "Could not delete the case.": "Der Fall konnte nicht gelöscht werden.",
+
+  // ── Prospect onboarding (supplier side) ─────────────────────────────────
+  "Review document details": "Dokumentdetails prüfen",
+  "Confirm the details below so your principals can verify this document.":
+    "Bestätigen Sie die folgenden Angaben, damit Ihre Auftraggeber dieses Dokument verifizieren können.",
+  "Edit document details": "Dokumentdetails bearbeiten",
+  "Correct what this document says. The uploaded file itself isn't changed.":
+    "Korrigieren Sie die Angaben zu diesem Dokument. Die hochgeladene Datei selbst wird nicht verändert.",
+  "Correct what this document says. The uploaded file itself isn't changed — because procurement already approved these details, the document goes back for review.":
+    "Korrigieren Sie die Angaben zu diesem Dokument. Die hochgeladene Datei selbst wird nicht verändert — da der Einkauf diese Angaben bereits freigegeben hat, geht das Dokument erneut in die Prüfung.",
+  "Edit details": "Details bearbeiten",
+  "Edit the details of {document}": "Details von {document} bearbeiten",
+  "Delete document": "Dokument löschen",
+  "Delete {document}": "{document} löschen",
+  "Terms and Conditions": "Allgemeine Geschäftsbedingungen",
+  // ("Signed" is already defined above with the contract signing step.)
+  "Awaiting signature": "Wartet auf Unterschrift",
+  "You're all done!": "Sie sind fertig!",
+  "Your profile and all required documents have been submitted. {manager} at Lynk will now complete the qualification review. You'll receive an email once a decision has been made.":
+    "Ihr Profil und alle erforderlichen Dokumente wurden eingereicht. {manager} bei Lynk schließt nun die Qualifizierungsprüfung ab. Sie erhalten eine E-Mail, sobald eine Entscheidung getroffen wurde.",
+  "What happens next": "Wie es weitergeht",
+  "Procurement team reviews your qualification score":
+    "Der Einkauf prüft Ihren Qualifizierungs-Score",
+  "You'll be notified by email of the outcome":
+    "Sie werden per E-Mail über das Ergebnis informiert",
+  "If approved, {principal} will send you the main contract and pricing catalogues to review and sign":
+    "Bei Freigabe sendet Ihnen {principal} den Hauptvertrag und die Preiskataloge zur Prüfung und Unterzeichnung",
+  "Signing the contracts activates your supplier account":
+    "Mit der Unterzeichnung der Verträge wird Ihr Lieferantenkonto aktiviert",
+  "Your data is protected under GDPR. You can request deletion at any time.":
+    "Ihre Daten sind nach DSGVO geschützt. Sie können jederzeit deren Löschung verlangen.",
+
+  // ── Prospect review (PM side) ───────────────────────────────────────────
+  "Uploaded documents": "Hochgeladene Dokumente",
+  "Review each document — open the preview, then approve or decline with a comment.":
+    "Prüfen Sie jedes Dokument — öffnen Sie die Vorschau und geben Sie es dann frei oder lehnen Sie es mit einem Kommentar ab.",
+  "Verified and accepted": "Geprüft und angenommen",
+  "Fix requested": "Korrektur angefordert",
+  "Section confirmed": "Abschnitt bestätigt",
+  Undo: "Rückgängig",
+  "Save comment": "Kommentar speichern",
+  "Confirm section": "Abschnitt bestätigen",
+  "Request a fix / comment": "Korrektur anfordern / kommentieren",
+  "What does the supplier need to fix in this section?":
+    "Was muss der Lieferant in diesem Abschnitt korrigieren?",
+  "This clears the submitted application and returns the case to {status}. The existing magic link keeps working, so the prospect can start over.":
+    "Dies löscht die eingereichte Bewerbung und setzt den Fall zurück auf {status}. Der bestehende Magic Link funktioniert weiter, sodass der Interessent neu beginnen kann.",
+  Invited: "Eingeladen",
+  "Reason for rejection (shared with the supplier)":
+    "Ablehnungsgrund (wird dem Lieferanten mitgeteilt)",
+  "Review / edit": "Prüfen / bearbeiten",
+  "Edit {section}": "{section} bearbeiten",
+
+  // ── Service catalogue list + detail ─────────────────────────────────────
+  "Upload a price list of services scoped by Region and Trade, then share it with your suppliers for confirmation.":
+    "Laden Sie eine Preisliste für Leistungen nach Region und Gewerk hoch und teilen Sie sie dann zur Bestätigung mit Ihren Lieferanten.",
+  "Service catalogue alerts": "Hinweise zum Leistungskatalog",
+  "All suppliers compliant": "Alle Lieferanten konform",
+  "Not confirmed": "Nicht bestätigt",
+  "History log": "Versionsverlauf",
+  Current: "Aktuell",
+
+  // ── Supplier profile: metrics, master data and reference values ─────────
+  "Last active {when}": "Zuletzt aktiv {when}",
+  "{valid}/{total} valid": "{valid}/{total} gültig",
+  Good: "Gut",
+  Warning: "Warnung",
+  Expired: "Abgelaufen",
+  "Valid to {date}": "Gültig bis {date}",
+  "No contracts on file.": "Keine Verträge hinterlegt.",
+  "Master Data": "Stammdaten",
+  // ("VAT ID" is already defined with the company-details fields; "IBAN" and
+  //  "Address" read the same in German, so the fallback covers them.)
+  "IBAN change request pending four-eyes approval":
+    "IBAN-Änderungsantrag wartet auf Vier-Augen-Freigabe",
+  "Request Renewal": "Verlängerung anfordern",
+  "2 hours ago": "vor 2 Stunden",
+  // Reference data the profile renders (regions, capabilities)
+  Saxony: "Sachsen",
+  "Precision manufacturing": "Präzisionsfertigung",
+  "Site Safety": "Arbeitssicherheit",
+  // Contact roles. Neutral forms: these describe whoever holds the role, not
+  // one particular person (unlike "Procurement Manager" above, which is
+  // Sabine's own title).
+  Owner: "Inhaber/in",
+  "Finance Director": "Leitung Finanzen",
+  "Procurement Lead": "Leitung Einkauf",
+  // The third completeness wording the ticket titles use
+  "Profile completeness {pct}% — below {target}% threshold":
+    "Profilvollständigkeit {pct}% — unter Schwellenwert {target}%",
+
+  // ── Compact upload dropzone (the 380px detail rail) ─────────────────────
+  "Drop a PDF here": "PDF hierher ziehen",
+  "Browse files": "Dateien durchsuchen",
+  "PDF only · up to {max} MB": "Nur PDF · bis {max} MB",
+  // Document category as the portal prints it
+  "Insurance Policy": "Versicherungspolice",
+
+  // ── Onboarding review pane and its decision buttons ─────────────────────
+  "Legal name": "Firmenname",
+  "Documents ({count})": "Dokumente ({count})",
+  "Accept application": "Bewerbung annehmen",
+  "Request changes": "Änderungen anfordern",
+  // ("Reject" is already defined with the renewal decision buttons.)
+  "What does the supplier need to change?": "Was muss der Lieferant ändern?",
+  "Reason for rejection": "Ablehnungsgrund",
+  "Send feedback": "Rückmeldung senden",
+  "Confirm rejection": "Ablehnung bestätigen",
+  "Accepted — supplier profile is now active in Lynk. A confirmation email was sent.":
+    "Angenommen — das Lieferantenprofil ist jetzt in Lynk aktiv. Eine Bestätigungs-E-Mail wurde gesendet.",
+  "Application rejected.": "Bewerbung abgelehnt.",
+  "Changes requested — awaiting the supplier's resubmission.":
+    "Änderungen angefordert — wartet auf die erneute Einreichung des Lieferanten.",
+
+  // ── Platform shell (concept) ─────────────────────────────────────────────
+  "Switch app": "App wechseln",
+  "Apps": "Apps",
+  "Choose an app": "App wählen",
+  "Search apps…": "Apps suchen…",
+  "No app found.": "Keine App gefunden.",
+  "Operations": "Betrieb",
+  "Network & Growth": "Netzwerk & Wachstum",
+  "Administration": "Administration",
+  "Account": "Konto",
+  "Work Orders": "Aufträge",
+  "Create, assign and track work orders": "Aufträge erstellen, vergeben und verfolgen",
+  "Tickets": "Tickets",
+  "Process tickets and workflows": "Tickets und Abläufe bearbeiten",
+  "Document Requests": "Dokumentenanfragen",
+  "Request and collect documents": "Dokumente anfordern und einsammeln",
+  "Bill Check": "Rechnungsprüfung",
+  "Validate invoices line by line": "Rechnungen Position für Position prüfen",
+  "Reporting & Analytics": "Berichte & Analysen",
+  "Dashboards across all apps": "Dashboards über alle Apps",
+  "Supplier Management": "Lieferantenmanagement",
+  "Lynk — the full supplier lifecycle": "Lynk — der gesamte Lieferantenlebenszyklus",
+  "Tenant Portal": "Mieterportal",
+  "Partner front end, embedded": "Partner-Frontend, eingebettet",
+  "User Management": "Benutzerverwaltung",
+  "Users, roles and permissions": "Benutzer, Rollen und Berechtigungen",
+  "Account Management": "Kontoverwaltung",
+  "Company, associates and settings": "Firma, Niederlassungen und Einstellungen",
+  "Work orders": "Aufträge",
+  "Inbox": "Posteingang",
+  "Service providers": "Dienstleister",
+  "My queue": "Meine Warteschlange",
+  "Processes": "Prozesse",
+  "Requests": "Anfragen",
+  "Templates": "Vorlagen",
+  "To validate": "Zu prüfen",
+  "Validated": "Geprüft",
+  "Dashboards": "Dashboards",
+  "Exports": "Exporte",
+  "Tenant requests": "Mieteranfragen",
+  "Units": "Einheiten",
+  "Users": "Benutzer",
+  "Roles & permissions": "Rollen & Berechtigungen",
+  "Associates": "Niederlassungen",
+  "Open · Overdue · Due this week · Completed": "Offen · Überfällig · Diese Woche fällig · Erledigt",
+  "Work orders needing action": "Aufträge mit Handlungsbedarf",
+  "All work orders — filters, status, provider, due date": "Alle Aufträge — Filter, Status, Dienstleister, Fälligkeit",
+  "Messages and offers from providers": "Nachrichten und Angebote von Dienstleistern",
+  "Providers on the marketplace": "Dienstleister auf dem Marktplatz",
+  "Assigned to me · Waiting · Escalated": "Mir zugewiesen · Wartend · Eskaliert",
+  "Ticket queue": "Ticket-Warteschlange",
+  "Process definitions": "Prozessdefinitionen",
+  "Open document requests": "Offene Dokumentenanfragen",
+  "Request templates": "Anfragevorlagen",
+  "Invoice preview  |  Line items and AI findings": "Rechnungsvorschau  |  Positionen und KI-Befunde",
+  "Validated invoices": "Geprüfte Rechnungen",
+  "Headline figures": "Kennzahlen",
+  "Trend": "Verlauf",
+  "Scheduled exports": "Geplante Exporte",
+  "Requests from tenants": "Anfragen von Mietern",
+  "Units and tenants": "Einheiten und Mieter",
+  "Role matrix": "Rollenmatrix",
+  "Company profile": "Firmenprofil",
+  "Account settings": "Kontoeinstellungen",
+  "Notifications from all apps": "Benachrichtigungen aus allen Apps",
+  "Profile and password": "Profil und Passwort",
+  "Demo: view as": "Demo: ansehen als",
+  "Property Manager": "Liegenschaftsverwalter",
+  "Platform Admin": "Plattform-Admin",
+  "Show shell boundaries": "Shell-Grenzen anzeigen",
+  "Hide shell boundaries": "Shell-Grenzen ausblenden",
+  "Sign out": "Abmelden",
+  "inner menu": "inneres Menü",
+  "header · app switcher · user · language": "Kopfzeile · App-Wechsel · Benutzer · Sprache",
+  "footer": "Fußzeile",
+  "Imprint": "Impressum",
+  "Privacy": "Datenschutz",
+  "Platform shell · concept": "Plattform-Shell · Konzept",
+  "Wireframe": "Wireframe",
+  "External front end": "Externes Frontend",
 };
 
 const STORAGE_KEY = "lynk-lang";
@@ -491,7 +1192,7 @@ const STORAGE_KEY = "lynk-lang";
 /** Values substituted into `{placeholder}` slots in a string. */
 export type TVars = Record<string, string | number>;
 
-interface I18nValue {
+export interface I18nValue {
   lang: Lang;
   setLang: (l: Lang) => void;
   /**
@@ -501,8 +1202,6 @@ interface I18nValue {
    */
   t: (source: string, vars?: TVars) => string;
 }
-
-const I18nContext = createContext<I18nValue | null>(null);
 
 function readStoredLang(): Lang {
   try {
@@ -538,10 +1237,4 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   );
 
   return <I18nContext.Provider value={{ lang, setLang, t }}>{children}</I18nContext.Provider>;
-}
-
-export function useI18n(): I18nValue {
-  const ctx = useContext(I18nContext);
-  if (!ctx) throw new Error("useI18n must be used within an I18nProvider");
-  return ctx;
 }

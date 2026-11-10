@@ -1,8 +1,11 @@
-import { useMemo, useState } from "react";
-import { FileText, ExternalLink, Building2, MapPin, Mail, Phone, CheckCircle2, AlertTriangle, XCircle, Trash2, Loader2, Bell, Ban, ArrowRight } from "lucide-react";
-import { useLynkData } from "../lib/LynkDataContext";
+import { useMemo, useState, type ComponentProps } from "react";
+import { FileText, ExternalLink, Building2, MapPin, Mail, Phone, CheckCircle2, AlertTriangle, XCircle, Trash2, Loader2, Bell, Ban, ArrowRight, MessageSquare } from "lucide-react";
+import { useLynkData } from "../lib/lynk-data-context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Pill } from "@/components/yarowa/pill";
 import { RowActionsMenu, type RowAction } from "@/components/yarowa/row-actions-menu";
@@ -16,15 +19,18 @@ import {
   formatLastChange,
   type Cell,
 } from "@/lib/onboarding-columns";
-import { toast } from "@/components/yarowa/toast";
+import { toast } from "@/lib/toast";
 import { PRINCIPAL_COMPANY, PROCUREMENT_MANAGER, PROCUREMENT_MANAGER_ROLE } from "@/lib/principal";
-import { ProspectReview } from "./ProspectReview";
+import { relationshipId, onboardingSupplierId } from "@/lib/db";
+import { PRINCIPAL_ID } from "@/data";
+import { ProspectReview, type ProspectReviewProps } from "./ProspectReview";
 import type { DocStatus, OnboardingStatus, OnboardingCase } from "../types";
 import type { ProspectDecision } from "../lib/db";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 
 // Uploaded-document status → badge (mirrors the supplier portal).
-const DOC_STATUS_META: Record<DocStatus, { label: string; variant: string }> = {
+type BadgeVariant = NonNullable<ComponentProps<typeof Badge>["variant"]>;
+const DOC_STATUS_META: Record<DocStatus, { label: string; variant: BadgeVariant }> = {
   valid: { label: "Valid", variant: "success-outline" },
   "warning-60": { label: "Expiring", variant: "orange-outline" },
   "warning-30": { label: "Expiring", variant: "warning-outline" },
@@ -101,8 +107,11 @@ const URGENCY_RANK: Record<OnboardingStatus, number> = {
 
 export function Onboarding({
   initialSelectedId,
+  onOpenChat,
 }: {
   initialSelectedId?: string | null;
+  /** Passed through to the prospect review, which opens the shell's chat dock. */
+  onOpenChat: ProspectReviewProps["onOpenChat"];
 }) {
   const {
     onboardingCases: ONBOARDING_CASES,
@@ -114,6 +123,7 @@ export function Onboarding({
     reviewDocument,
     deleteOnboardingCase,
     revokeInvitation,
+    unreadFor,
   } = useLynkData();
   const [tab, setTab] = useState<OnbTab>("All");
   const { t: tr, lang } = useI18n();
@@ -248,6 +258,7 @@ export function Onboarding({
         onReset={resetProspect}
         onSendContract={sendContract}
         onReviewDocument={reviewDocument}
+        onOpenChat={onOpenChat}
       />
     );
   }
@@ -287,20 +298,20 @@ export function Onboarding({
         </div>
 
         <div className="bg-card border border-border rounded-lg overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs text-muted-foreground border-b border-border">
-                <th className="px-4 py-2 font-medium">{tr("COMPANY")}</th>
-                <th className="px-4 py-2 font-medium">{tr("INVITATION")}</th>
-                <th className="px-4 py-2 font-medium">{tr("COMPANY INFO")}</th>
-                <th className="px-4 py-2 font-medium">{tr("DOCUMENTS")}</th>
-                <th className="px-4 py-2 font-medium">{tr("CONTRACT")}</th>
-                <th className="px-4 py-2 font-medium">{tr("PRICE AGREEMENTS")}</th>
-                <th className="px-4 py-2 font-medium">{tr("LAST CHANGE")}</th>
-                <th className="px-4 py-2 w-10" />
-              </tr>
-            </thead>
-            <tbody>
+          <Table>
+            <TableHeader>
+              <TableRow className="text-xs border-border hover:bg-transparent">
+                <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("COMPANY")}</TableHead>
+                <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("INVITATION")}</TableHead>
+                <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("COMPANY INFO")}</TableHead>
+                <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("DOCUMENTS")}</TableHead>
+                <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("CONTRACT")}</TableHead>
+                <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("PRICE AGREEMENTS")}</TableHead>
+                <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("LAST CHANGE")}</TableHead>
+                <TableHead className="h-auto w-10 px-4 py-2 whitespace-normal" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {filtered.map((c) => {
                 // Each stage column reads from the linked profile + documents,
                 // so a row shows where the case actually stands per stage.
@@ -317,53 +328,63 @@ export function Onboarding({
                   signableCell(c),
                 ];
                 return (
-                  <tr
+                  <TableRow
                     key={c.id}
                     onClick={() => openCase(c)}
-                    className={`group border-b border-border last:border-0 cursor-pointer hover:bg-secondary/50 ${
+                    className={`group border-border cursor-pointer hover:bg-secondary/50 ${
                       selected === c.id ? "bg-secondary/50" : ""
                     }`}
                   >
-                    <td className="px-4 py-3">
+                    <TableCell className="px-4 py-3 whitespace-normal">
                       {/* Only a case with a submitted profile has an overview to
                           open, so invitation-only rows keep a plain name rather
                           than a link that would go nowhere. */}
                       {linked ? (
-                        <button
+                        <Button
+                          variant="ghost"
                           /* Plain until pointed at: 14 blue names at rest read as
                              noise, and the row is clickable anyway. */
-                          className="font-medium text-left hover:text-accent hover:underline transition-colors"
+                          className="h-auto justify-start border-0 p-0 text-left font-medium whitespace-normal hover:bg-transparent hover:text-accent hover:underline dark:hover:bg-transparent"
                           onClick={(e) => {
                             e.stopPropagation();
                             openFullReview(c);
                           }}
                         >
                           {c.companyName}
-                        </button>
+                        </Button>
                       ) : (
                         <div className="font-medium">{c.companyName}</div>
                       )}
-                      <div className="text-xs text-muted-foreground">{c.contactName}</div>
-                    </td>
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        {c.contactName}
+                        {/* A prospect who has written and is waiting on a reply. */}
+                        {unreadFor(relationshipId(PRINCIPAL_ID, onboardingSupplierId(c.id)), "principal") > 0 && (
+                          <Badge variant="critical" title={tr("Messages")}>
+                            <MessageSquare className="w-3 h-3" />
+                            {unreadFor(relationshipId(PRINCIPAL_ID, onboardingSupplierId(c.id)), "principal")}
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
                     {cells.map((cell, i) => (
-                      <td key={i} className="px-4 py-3">
+                      <TableCell key={i} className="px-4 py-3 whitespace-normal">
                         <StageCell cell={cell} tr={tr} />
-                      </td>
+                      </TableCell>
                     ))}
-                    <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
+                    <TableCell className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
                       {formatLastChange(lastChange(caseDocs), lang)}
-                    </td>
+                    </TableCell>
                     {/* Right-aligned row actions, revealed on hover. */}
-                    <td className="px-4 py-3 w-10">
+                    <TableCell className="px-4 py-3 w-10 whitespace-normal">
                       <div className="flex justify-end">
                         <RowActionsMenu actions={actionsFor(c)} />
                       </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 );
               })}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
         <div className="text-xs text-muted-foreground mt-2">{tr("{count} cases", { count: filtered.length })}</div>
       </div>
@@ -381,7 +402,7 @@ export function Onboarding({
           }
         >
           {linkedSupplier && (
-            <Button variant="dark" className="w-full mb-4" onClick={() => setReviewing(true)}>
+            <Button variant="default" className="w-full mb-4" onClick={() => setReviewing(true)}>
               {tr("Open full review")}
               <ArrowRight className="w-4 h-4" />
             </Button>
@@ -390,20 +411,20 @@ export function Onboarding({
           {linkedSupplier ? (
             <>
               {/* Submitted profile — the data the prospect filled in the wizard */}
-              <SectionLabel icon={<Building2 className="w-3.5 h-3.5" />}>Company details</SectionLabel>
+              <SectionLabel icon={<Building2 className="w-3.5 h-3.5" />}>{tr("Company details")}</SectionLabel>
               <dl className="space-y-2 mb-4">
                 <ReviewField label="Legal name" value={linkedSupplier.name} />
                 <ReviewField label="VAT ID" value={linkedSupplier.vatId || "—"} />
-                <ReviewField label="Trade" value={linkedSupplier.trade || "—"} />
-                <ReviewField label="Region" value={linkedSupplier.region || "—"} />
+                <ReviewField label="Trade" value={linkedSupplier.trade ? tr(linkedSupplier.trade) : "—"} />
+                <ReviewField label="Region" value={linkedSupplier.region ? tr(linkedSupplier.region) : "—"} />
               </dl>
 
-              <SectionLabel icon={<MapPin className="w-3.5 h-3.5" />}>Registered address</SectionLabel>
+              <SectionLabel icon={<MapPin className="w-3.5 h-3.5" />}>{tr("Registered address")}</SectionLabel>
               <p className="text-sm mb-4">{linkedSupplier.address || "—"}</p>
 
               {primaryContact && (
                 <>
-                  <SectionLabel>Primary contact</SectionLabel>
+                  <SectionLabel>{tr("Primary contact")}</SectionLabel>
                   <div className="text-sm mb-1">{primaryContact.name}</div>
                   {primaryContact.email && (
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -420,39 +441,42 @@ export function Onboarding({
 
               {/* Uploaded documents */}
               <SectionLabel icon={<FileText className="w-3.5 h-3.5" />}>
-                Documents ({submittedDocs.length})
+                {tr("Documents ({count})", { count: submittedDocs.length })}
               </SectionLabel>
               <div className="space-y-1.5 mb-4">
                 {submittedDocs.length === 0 && (
-                  <p className="text-xs text-muted-foreground">No documents submitted yet.</p>
+                  <p className="text-xs text-muted-foreground">{tr("No documents submitted yet.")}</p>
                 )}
                 {submittedDocs.map((doc) => {
                   const meta = DOC_STATUS_META[doc.status] ?? { label: doc.status, variant: "warning-outline" };
                   const openable = Boolean(doc.fileUrl);
                   return (
-                    <button
+                    <Button
                       key={doc.id}
                       type="button"
+                      variant="ghost"
                       disabled={!openable}
                       onClick={() => openable && window.open(doc.fileUrl, "_blank", "noopener")}
-                      className={`w-full flex items-center justify-between gap-2 rounded-md border border-border px-2.5 py-2 text-left ${
-                        openable ? "hover:bg-secondary/50 cursor-pointer" : "cursor-default"
+                      className={`h-auto w-full justify-between gap-2 rounded-md border-border px-2.5 py-2 text-left font-normal whitespace-normal disabled:pointer-events-auto disabled:opacity-100 ${
+                        openable
+                          ? "cursor-pointer hover:bg-secondary/50 dark:hover:bg-secondary/50"
+                          : "cursor-default hover:bg-transparent dark:hover:bg-transparent"
                       }`}
                     >
                       <span className="flex items-center gap-2 min-w-0">
-                        <FileText className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                        <span className="text-xs font-medium truncate">{doc.documentName}</span>
-                        {openable && <ExternalLink className="w-3 h-3 text-muted-foreground shrink-0" />}
+                        <FileText className="size-3.5 text-muted-foreground shrink-0" />
+                        <span className="text-xs font-medium truncate">{tr(doc.documentName)}</span>
+                        {openable && <ExternalLink className="size-3 text-muted-foreground shrink-0" />}
                       </span>
-                      <Badge variant={meta.variant as any} className="shrink-0">
-                        {meta.label}
+                      <Badge variant={meta.variant} className="shrink-0">
+                        {tr(meta.label)}
                       </Badge>
-                    </button>
+                    </Button>
                   );
                 })}
               </div>
 
-              <SectionLabel>PM Review</SectionLabel>
+              <SectionLabel>{tr("PM Review")}</SectionLabel>
               <ReviewActions
                 key={selectedCase.id}
                 caseItem={selectedCase}
@@ -463,9 +487,13 @@ export function Onboarding({
             </>
           ) : (
             <>
-              <div className="text-xs font-semibold uppercase text-muted-foreground mb-2">Invitation timeline</div>
+              <div className="text-xs font-semibold uppercase text-muted-foreground mb-2">
+                {tr("Invitation timeline")}
+              </div>
               <div className="text-sm mb-4">
-                Invitation sent, {selectedCase.daysNoResponse} days ago. No response from contact yet.
+                {tr("Invitation sent, {days} days ago. No response from contact yet.", {
+                  days: selectedCase.daysNoResponse,
+                })}
               </div>
               {/* Same actions as the row menu, so both entry points agree. */}
               <div className="space-y-2">
@@ -561,6 +589,7 @@ function DeleteCaseDialog({
   onClose: () => void;
   onConfirm: (reason: string) => Promise<void>;
 }) {
+  const { t } = useI18n();
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -571,7 +600,7 @@ function DeleteCaseDialog({
     try {
       await onConfirm(reason);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not delete the case.");
+      setError(e instanceof Error ? e.message : t("Could not delete the case."));
     } finally {
       setBusy(false);
     }
@@ -580,38 +609,43 @@ function DeleteCaseDialog({
   return (
     <Dialog open onOpenChange={(o) => !o && !busy && onClose()}>
       <DialogContent showCloseButton={false} className="sm:max-w-[460px] rounded-2xl">
-        <DialogTitle className="text-base font-semibold">Delete {caseItem.companyName}?</DialogTitle>
+        <DialogTitle className="text-base font-semibold">
+          {t("Delete {company}?", { company: caseItem.companyName })}
+        </DialogTitle>
+        {/* Whole sentences rather than a stitched-in document count: German puts
+            the verb at the end, so the fragments cannot be assembled in order. */}
         <DialogDescription className="text-sm text-muted-foreground">
-          {removesProspect ? (
-            <>
-              The case, the prospect's profile
-              {docCount > 0 && <> and {docCount} uploaded document{docCount === 1 ? "" : "s"}</>} are
-              removed. This can't be undone — reject the application instead if the supplier should be
-              told the outcome.
-            </>
-          ) : (
-            <>
-              The onboarding case is removed. The supplier profile stays, because it is already active in
-              Lynk. This can't be undone.
-            </>
-          )}
+          {!removesProspect
+            ? t(
+                "The onboarding case is removed. The supplier profile stays, because it is already active in Lynk. This can't be undone."
+              )
+            : docCount === 0
+              ? t(
+                  "The case and the prospect's profile are removed. This can't be undone — reject the application instead if the supplier should be told the outcome."
+                )
+              : t(
+                  docCount === 1
+                    ? "The case, the prospect's profile and {count} uploaded document are removed. This can't be undone — reject the application instead if the supplier should be told the outcome."
+                    : "The case, the prospect's profile and {count} uploaded documents are removed. This can't be undone — reject the application instead if the supplier should be told the outcome.",
+                  { count: docCount }
+                )}
         </DialogDescription>
 
         <div className="space-y-1.5">
-          <label htmlFor="delete-reason" className="text-xs text-muted-foreground">
-            Reason for deleting <span className="text-destructive">*</span>
-          </label>
-          <textarea
+          <Label htmlFor="delete-reason" className="block text-xs font-normal leading-4 text-muted-foreground">
+            {t("Reason for deleting")} <span className="text-destructive">*</span>
+          </Label>
+          <Textarea
             id="delete-reason"
             autoFocus
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             rows={3}
-            placeholder="e.g. duplicate invitation, company no longer trading, invited in error"
-            className="w-full rounded-lg border border-border bg-background p-2 text-sm resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            placeholder={t("e.g. duplicate invitation, company no longer trading, invited in error")}
+            className="field-sizing-fixed min-h-0 rounded-lg border-border bg-background p-2 text-sm"
           />
           <p className="text-xs text-muted-foreground">
-            Kept in the activity log — the only record left once the case is gone.
+            {t("Kept in the activity log — the only record left once the case is gone.")}
           </p>
         </div>
 
@@ -619,21 +653,23 @@ function DeleteCaseDialog({
 
         <div className="flex gap-2 pt-1">
           <Button variant="outline" className="flex-1" disabled={busy} onClick={onClose}>
-            Keep case
+            {t("Keep case")}
           </Button>
           <Button variant="danger" className="flex-1" disabled={busy || !reason.trim()} onClick={confirm}>
             {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-            Delete case
+            {t("Delete case")}
           </Button>
         </div>
         {!reason.trim() && (
-          <p className="text-xs text-muted-foreground text-center">Give a reason to enable deletion.</p>
+          <p className="text-xs text-muted-foreground text-center">{t("Give a reason to enable deletion.")}</p>
         )}
       </DialogContent>
     </Dialog>
   );
 }
 
+/* `children` is the English source where these are called; the label and the
+   field below translate what they are handed, like the portal's own Field. */
 function SectionLabel({ icon, children }: { icon?: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
@@ -644,9 +680,10 @@ function SectionLabel({ icon, children }: { icon?: React.ReactNode; children: Re
 }
 
 function ReviewField({ label, value }: { label: string; value: string }) {
+  const { t } = useI18n();
   return (
     <div className="flex items-baseline justify-between gap-3">
-      <dt className="text-xs text-muted-foreground shrink-0">{label}</dt>
+      <dt className="text-xs text-muted-foreground shrink-0">{t(label)}</dt>
       <dd className="text-sm text-right truncate">{value}</dd>
     </div>
   );
@@ -685,6 +722,7 @@ function ReviewActions({
   supplierName: string;
   onReview: (id: string, name: string, decision: ProspectDecision, note?: string) => Promise<void>;
 }) {
+  const { t } = useI18n();
   const [mode, setMode] = useState<"idle" | "changes" | "reject">("idle");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
@@ -702,14 +740,14 @@ function ReviewActions({
   if (caseItem.status === "Accepted") {
     return (
       <StatusNote tone="success" icon={<CheckCircle2 className="w-4 h-4" />}>
-        Accepted — supplier profile is now active in Lynk. A confirmation email was sent.
+        {t("Accepted — supplier profile is now active in Lynk. A confirmation email was sent.")}
       </StatusNote>
     );
   }
   if (caseItem.status === "Rejected") {
     return (
       <StatusNote tone="danger" icon={<XCircle className="w-4 h-4" />}>
-        Application rejected.
+        {t("Application rejected.")}
         {caseItem.reviewNote && <div className="mt-1 text-xs opacity-90">“{caseItem.reviewNote}”</div>}
       </StatusNote>
     );
@@ -717,7 +755,7 @@ function ReviewActions({
   if (caseItem.status === "Changes Requested") {
     return (
       <StatusNote tone="warning" icon={<AlertTriangle className="w-4 h-4" />}>
-        Changes requested — awaiting the supplier's resubmission.
+        {t("Changes requested — awaiting the supplier's resubmission.")}
         {caseItem.reviewNote && <div className="mt-1 text-xs opacity-90">“{caseItem.reviewNote}”</div>}
       </StatusNote>
     );
@@ -727,14 +765,14 @@ function ReviewActions({
     return (
       <div className="space-y-2">
         <Button variant="success" className="w-full" disabled={busy} onClick={() => decide("accept")}>
-          Accept application
+          {t("Accept application")}
         </Button>
         <div className="flex gap-2">
           <Button variant="outline" className="flex-1" disabled={busy} onClick={() => setMode("changes")}>
-            Request changes
+            {t("Request changes")}
           </Button>
           <Button variant="danger" className="flex-1" disabled={busy} onClick={() => setMode("reject")}>
-            Reject
+            {t("Reject")}
           </Button>
         </div>
       </div>
@@ -743,12 +781,14 @@ function ReviewActions({
 
   return (
     <div className="space-y-2">
-      <textarea
+      <Textarea
         value={note}
         onChange={(e) => setNote(e.target.value)}
         rows={3}
-        placeholder={mode === "changes" ? "What does the supplier need to change?" : "Reason for rejection"}
-        className="w-full rounded-lg border border-border bg-background p-2 text-sm resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        placeholder={
+          mode === "changes" ? t("What does the supplier need to change?") : t("Reason for rejection")
+        }
+        className="field-sizing-fixed min-h-0 rounded-lg border-border bg-background p-2 text-sm"
       />
       <div className="flex gap-2">
         <Button
@@ -760,7 +800,7 @@ function ReviewActions({
             setNote("");
           }}
         >
-          Cancel
+          {t("Cancel")}
         </Button>
         <Button
           variant={mode === "reject" ? "danger" : "default"}
@@ -768,7 +808,7 @@ function ReviewActions({
           disabled={busy || !note.trim()}
           onClick={() => decide(mode === "changes" ? "changes" : "reject", note.trim())}
         >
-          {mode === "changes" ? "Send feedback" : "Confirm rejection"}
+          {mode === "changes" ? t("Send feedback") : t("Confirm rejection")}
         </Button>
       </div>
     </div>

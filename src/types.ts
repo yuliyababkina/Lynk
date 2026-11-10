@@ -45,18 +45,6 @@ export interface Contact {
   primary?: boolean;
 }
 
-export interface SupplierRelationship {
-  id: string;
-  principal_id: string;
-  supplier_id: string;
-  status: SupplierStage;
-  invited_by?: string;
-  invited_at?: string;
-  onboarded_at?: string;
-  created_at: string;
-  updated_at: string;
-}
-
 export interface Supplier {
   id: string;
   name: string;
@@ -281,8 +269,52 @@ export interface SupplierPrincipalRelationship {
   principalId: string;
   principalName: string;
   status: RelationshipStatus;
+  /** @deprecated Derived from chat_messages now — see useLynkData().unreadFor(). */
   unreadCount: number;
   pendingCount: number;
   rejectedCount: number;
+  /** @deprecated Derived from chat_messages now — see useLynkData().lastMessageFor(). */
   lastMessage?: { from: string; text: string; at: string };
+}
+
+/* Chat ------------------------------------------------------------------- */
+
+/** Which end of a relationship acted. `system` is the app itself, narrating a
+ * lifecycle event (invited / changes requested / accepted / rejected / new
+ * application) into the conversation. */
+export type ChatSide = "principal" | "supplier";
+export type ChatAuthorSide = ChatSide | "system";
+
+/** What a message points at. Chat holds no files — a document message links to
+ * the normal upload flow instead of carrying an attachment. */
+export type ChatContextType = "document" | "data-change" | "onboarding-case";
+
+export interface ChatContext {
+  type: ChatContextType;
+  id: string;
+  /** Stored on the message so the chip still reads correctly if the target goes. */
+  label: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  relationshipId: string;
+  authorSide: ChatAuthorSide;
+  /** Denormalised at insert time: a message records who said it *then*. */
+  authorName: string;
+  authorCompany: string;
+  authorRole?: string;
+  body: string;
+  context?: ChatContext;
+  createdAt: string;
+  /** True once the author is no longer active — rendered as "(inactive)". */
+  authorInactive?: boolean;
+}
+
+/** Per-side read marker. Unread = the other side's messages after `lastReadAt`. */
+export interface ChatRead {
+  relationshipId: string;
+  side: ChatSide;
+  lastReadAt: string;
+  notifiedAt?: string;
 }

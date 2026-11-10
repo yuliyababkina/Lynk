@@ -92,40 +92,45 @@ export const StepPreview: Story = {
   ),
 };
 
+/* A named component, not an inline render function: the selection state is a
+   hook, and hooks are only legal inside components. */
+function DistributionStep() {
+  const [sel, setSel] = useState<Set<string>>(new Set(SUPPLIERS.map((s) => s.id)));
+  return (
+    <StepFrame current="Distribution">
+      <p className="text-sm text-muted-foreground mb-3">
+        Suppliers matched automatically by Bavaria + Painting. Untick any you want to exclude.
+      </p>
+      <div className="mb-6">
+        <SupplierReviewTable
+          suppliers={SUPPLIERS}
+          selected={sel}
+          onToggle={(id) =>
+            setSel((p) => {
+              const n = new Set(p);
+              if (n.has(id)) n.delete(id);
+              else n.add(id);
+              return n;
+            })
+          }
+          onSelectAll={() => setSel(new Set(SUPPLIERS.map((s) => s.id)))}
+          onDeselectAll={() => setSel(new Set())}
+        />
+      </div>
+      <BottomActionBar
+        onBack={fn()}
+        showSaveDraft
+        onSaveDraft={fn()}
+        onPrimary={fn()}
+        primaryLabel="Publish & share with suppliers"
+      />
+    </StepFrame>
+  );
+}
+
 /** Step 4 — Distribution: review + exclude auto-matched suppliers. */
 export const StepDistribution: Story = {
-  render: () => {
-    const [sel, setSel] = useState<Set<string>>(new Set(SUPPLIERS.map((s) => s.id)));
-    return (
-      <StepFrame current="Distribution">
-        <p className="text-sm text-muted-foreground mb-3">
-          Suppliers matched automatically by Bavaria + Painting. Untick any you want to exclude.
-        </p>
-        <div className="mb-6">
-          <SupplierReviewTable
-            suppliers={SUPPLIERS}
-            selected={sel}
-            onToggle={(id) =>
-              setSel((p) => {
-                const n = new Set(p);
-                n.has(id) ? n.delete(id) : n.add(id);
-                return n;
-              })
-            }
-            onSelectAll={() => setSel(new Set(SUPPLIERS.map((s) => s.id)))}
-            onDeselectAll={() => setSel(new Set())}
-          />
-        </div>
-        <BottomActionBar
-          onBack={fn()}
-          showSaveDraft
-          onSaveDraft={fn()}
-          onPrimary={fn()}
-          primaryLabel="Publish & share with suppliers"
-        />
-      </StepFrame>
-    );
-  },
+  render: () => <DistributionStep />,
 };
 
 /** The full create wizard, interactive end-to-end (real component). */

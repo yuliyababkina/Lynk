@@ -10,8 +10,9 @@ import { CompactDropzone } from "@/components/yarowa/compact-dropzone";
 import { FilePreviewLightbox } from "@/components/yarowa/file-preview-lightbox";
 import { MockDocumentPage } from "@/components/yarowa/mock-document-page";
 import { PdfCanvas } from "@/components/yarowa/pdf-canvas";
-import { toast } from "@/components/yarowa/toast";
-import { useLynkData } from "@/lib/LynkDataContext";
+import { toast } from "@/lib/toast";
+import { useLynkData } from "@/lib/lynk-data-context";
+import { useI18n } from "@/lib/i18n-context";
 import { useDocumentUpload, formatFileSize } from "@/lib/use-document-upload";
 import { docStatusMeta } from "@/lib/document-status";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,7 @@ import {
 } from "@/pages/portal/portal-data";
 import { PORTAL_FIELDS, fieldError, hasSensitiveField } from "@/pages/portal/portal-fields";
 import type { DocumentMetadata } from "@/lib/onboarding-documents";
+import type { ChatContext } from "@/types";
 
 export interface PortalActivitySelection {
   /** The ticket being fixed; absent when opened from a quick-action card. */
@@ -61,15 +63,16 @@ function secondaryVariant(label: string): "secondary" | "outline" {
 /* ── The document a ticket is about, as it stands today ───────────────────── */
 
 function CurrentFile({ supplierId, docName }: { supplierId: string; docName: string }) {
+  const { t } = useI18n();
   const { docs } = useLynkData();
   const doc = docs.find((d) => d.supplierId === supplierId && d.documentName === docName);
 
   if (!doc) {
     return (
       <div className="rounded-lg border border-border bg-background p-3 mb-3">
-        <div className="text-xs text-muted-foreground mb-1">CURRENT FILE</div>
-        <p className="text-sm font-medium">{docName}</p>
-        <p className="text-xs text-muted-foreground mt-0.5">Not uploaded yet</p>
+        <div className="text-xs text-muted-foreground mb-1">{t("CURRENT FILE")}</div>
+        <p className="text-sm font-medium">{t(docName)}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">{t("Not uploaded yet")}</p>
       </div>
     );
   }
@@ -79,19 +82,19 @@ function CurrentFile({ supplierId, docName }: { supplierId: string; docName: str
   // supplier already knows it needs attention, not when.
   const expiry =
     doc.daysUntilExpiry < 0
-      ? `Expired ${Math.abs(doc.daysUntilExpiry)} days ago`
+      ? t("Expired {days} days ago", { days: Math.abs(doc.daysUntilExpiry) })
       : doc.daysUntilExpiry === 0
-        ? "Expires today"
-        : `Expiring in ${doc.daysUntilExpiry} days`;
+        ? t("Expires today")
+        : t("Expiring in {days} days", { days: doc.daysUntilExpiry });
 
   return (
     <div className="rounded-lg border border-border bg-background p-3 mb-3">
-      <div className="text-xs text-muted-foreground mb-1">CURRENT FILE</div>
+      <div className="text-xs text-muted-foreground mb-1">{t("CURRENT FILE")}</div>
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-sm font-medium truncate">{doc.documentName}</p>
+          <p className="text-sm font-medium truncate">{t(doc.documentName)}</p>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {doc.documentCategory} · {doc.expiryDate}
+            {t(doc.documentCategory)} · {doc.expiryDate}
           </p>
         </div>
         <Badge variant={meta.variant as never} className="shrink-0">
@@ -111,7 +114,7 @@ function CurrentFile({ supplierId, docName }: { supplierId: string; docName: str
  * a landscape strip showed a sliver of the top edge and read as broken.
  */
 const THUMB_FRAME =
-  "mx-auto block w-[136px] aspect-[1/1.414] rounded-md overflow-hidden border border-border bg-white hover:border-accent transition-colors";
+  "mx-auto block h-auto w-[136px] aspect-[1/1.414] rounded-md overflow-hidden border-border bg-paper p-0 font-normal leading-normal whitespace-normal hover:border-accent hover:bg-paper dark:hover:bg-paper";
 
 function DocumentThumbnail({
   fileUrl,
@@ -125,7 +128,7 @@ function DocumentThumbnail({
   onClick: () => void;
 }) {
   return (
-    <button onClick={onClick} aria-label={`Preview ${label} full size`} className={THUMB_FRAME}>
+    <Button variant="ghost" onClick={onClick} aria-label={`Preview ${label} full size`} className={THUMB_FRAME}>
       {fileUrl ? (
         /* PdfCanvas sizes its canvas to the PDF's own page width and scrolls;
            inside the frame it has to fit instead. */
@@ -136,17 +139,18 @@ function DocumentThumbnail({
       ) : (
         <div className="origin-top-left scale-[0.22] w-[455%] pointer-events-none">{mock}</div>
       )}
-    </button>
+    </Button>
   );
 }
 
 /* ── What was already submitted, for an item nobody can act on any more ───── */
 
 function MetaRow({ label, value }: { label: string; value?: string }) {
+  const { t } = useI18n();
   if (!value) return null;
   return (
     <div className="flex items-baseline justify-between gap-3 text-xs">
-      <span className="text-muted-foreground shrink-0">{label}</span>
+      <span className="text-muted-foreground shrink-0">{t(label)}</span>
       <span className="font-medium text-right break-words">{value}</span>
     </div>
   );
@@ -159,6 +163,7 @@ function MetaRow({ label, value }: { label: string; value?: string }) {
  * something is being reviewed but not what.
  */
 function SubmittedDocument({ supplierId, docName }: { supplierId: string; docName: string }) {
+  const { t } = useI18n();
   const { docs } = useLynkData();
   const [zoomed, setZoomed] = useState(false);
   const doc = docs.find((d) => d.supplierId === supplierId && d.documentName === docName);
@@ -170,10 +175,10 @@ function SubmittedDocument({ supplierId, docName }: { supplierId: string; docNam
             different features — only the badge and the note differ. */}
         <div className="rounded-lg border border-border bg-background p-3 mb-4">
           <div className="flex items-center justify-between gap-2 mb-2">
-            <div className="text-xs text-muted-foreground">SUBMITTED FOR REVIEW</div>
+            <div className="text-xs text-muted-foreground">{t("SUBMITTED FOR REVIEW")}</div>
             <Badge variant="neutral" className="shrink-0">
               <FileText className="w-3 h-3" />
-              Not on file
+              {t("Not on file")}
             </Badge>
           </div>
 
@@ -190,7 +195,7 @@ function SubmittedDocument({ supplierId, docName }: { supplierId: string; docNam
           </div>
 
           <p className="text-xs text-muted-foreground mt-2 border-t border-border pt-2">
-            Stand-in page — this document isn't in the document store yet, so there is no file to render.
+            {t("Stand-in page — this document isn't in the document store yet, so there is no file to render.")}
           </p>
 
           <Button variant="outline" size="sm" className="w-full mt-3" onClick={() => setZoomed(true)}>
@@ -219,10 +224,10 @@ function SubmittedDocument({ supplierId, docName }: { supplierId: string; docNam
     <>
       <div className="rounded-lg border border-border bg-background p-3 mb-4">
         <div className="flex items-center justify-between gap-2 mb-2">
-          <div className="text-xs text-muted-foreground">SUBMITTED FOR REVIEW</div>
+          <div className="text-xs text-muted-foreground">{t("SUBMITTED FOR REVIEW")}</div>
           <Badge variant={meta.variant as never} className="shrink-0">
             <meta.Icon className="w-3 h-3" />
-            {meta.label}
+            {t(meta.label)}
           </Badge>
         </div>
 
@@ -249,7 +254,7 @@ function SubmittedDocument({ supplierId, docName }: { supplierId: string; docNam
           <MetaRow label="Document" value={doc.documentName} />
           <MetaRow label="Type" value={doc.documentType} />
           <MetaRow label="Issued by" value={doc.issuingInstitution} />
-          <MetaRow label="Expiry" value={doc.doesNotExpire ? "Does not expire" : doc.expiryDate} />
+          <MetaRow label="Expiry" value={doc.doesNotExpire ? t("Does not expire") : doc.expiryDate} />
           <MetaRow label="Submitted" value={submitted} />
         </div>
 
@@ -282,15 +287,16 @@ function SubmittedDocument({ supplierId, docName }: { supplierId: string; docNam
 
 /** An edit the supplier made, as before → after. */
 function SubmittedChanges({ changes, pending }: { changes: ChangeRecord[]; pending: boolean }) {
+  const { t } = useI18n();
   return (
     <div className="rounded-lg border border-border bg-background p-3 mb-4">
       <div className="text-xs text-muted-foreground mb-2">
-        {pending ? "SUBMITTED FOR APPROVAL" : "WHAT YOU CHANGED"}
+        {pending ? t("SUBMITTED FOR APPROVAL") : t("WHAT YOU CHANGED")}
       </div>
       <div className="space-y-2.5">
         {changes.map((c) => (
           <div key={c.key}>
-            <div className="text-xs text-muted-foreground">{c.label}</div>
+            <div className="text-xs text-muted-foreground">{t(c.label)}</div>
             <div className="text-xs line-through text-muted-foreground break-words">{c.before || "—"}</div>
             <div className="text-sm font-medium break-words">{c.after}</div>
           </div>
@@ -298,8 +304,8 @@ function SubmittedChanges({ changes, pending }: { changes: ChangeRecord[]; pendi
       </div>
       <p className="text-xs text-muted-foreground mt-3 border-t border-border pt-2">
         {pending
-          ? "Your current details stay active until this is endorsed."
-          : "Applied to your profile and shared with your principals."}
+          ? t("Your current details stay active until this is endorsed.")
+          : t("Applied to your profile and shared with your principals.")}
       </p>
     </div>
   );
@@ -407,6 +413,7 @@ export function PortalActivityDrawer({
   onCompanyChange,
   onItemDone,
   changeRequests,
+  onOpenChat,
 }: {
   selection: PortalActivitySelection;
   supplierId: string;
@@ -417,8 +424,11 @@ export function PortalActivityDrawer({
   onItemDone: (itemId: string, outcome: ActivityOutcome, changes?: ChangeRecord[]) => void;
   /** Change requests already submitted, keyed by item id. */
   changeRequests?: Record<string, ChangeRecord[]>;
+  /** Opens the principal's conversation with this ticket already attached. */
+  onOpenChat?: (draft: string, context?: ChatContext) => void;
 }) {
   const { item, sectionLabel, tone, quick } = selection;
+  const { t } = useI18n();
 
   // A quick-action card opens the same panel with nothing preselected, so the
   // supplier never meets a second, differently-shaped upload screen.
@@ -477,8 +487,10 @@ export function PortalActivityDrawer({
     if (!ok) return;
     if (item) onItemDone(item.id, "pending-approval");
     toast({
-      title: "Document submitted",
-      description: `${item?.docName ?? upload.pending?.name ?? "Your document"} is now awaiting review.`,
+      title: t("Document submitted"),
+      description: t("{document} is now awaiting review.", {
+        document: item?.docName ? t(item.docName) : (upload.pending?.name ?? t("Your document")),
+      }),
       tone: "success",
     });
     onClose();
@@ -498,8 +510,13 @@ export function PortalActivityDrawer({
       }));
       if (item) onItemDone(item.id, "pending-approval", record);
       toast({
-        title: "Submitted for approval",
-        description: `${changedKeys.length} change${changedKeys.length === 1 ? "" : "s"} sent for endorsement.`,
+        title: t("Submitted for approval"),
+        description: t(
+          changedKeys.length === 1
+            ? "{count} change sent for endorsement."
+            : "{count} changes sent for endorsement.",
+          { count: changedKeys.length }
+        ),
         tone: "success",
       });
     } else {
@@ -523,26 +540,33 @@ export function PortalActivityDrawer({
   const canSubmitFields = changedKeys.length > 0 && allValid;
 
   return (
+    /* The section label arrives as the English source — the panel keys its own
+       behaviour off it — so it is translated here, matching the card the
+       supplier came from. */
     <DetailDrawer
       onClose={attemptClose}
-      header={<Badge variant={tone as never}>{sectionLabel}</Badge>}
+      header={<Badge variant={tone as never}>{t(sectionLabel)}</Badge>}
     >
       <h3 className="font-semibold text-base mb-1">
-        {item?.title ?? (kind === "data" ? "Request a data change" : "Upload a document")}
+        {item ? t(item.title) : kind === "data" ? t("Request a data change") : t("Upload a document")}
       </h3>
       <p className="text-sm text-muted-foreground mb-4">
-        {item?.detail ?? (kind === "data" ? "Correct your company profile" : "Add or renew a compliance file")}
+        {item
+          ? t(item.detail)
+          : kind === "data"
+            ? t("Correct your company profile")
+            : t("Add or renew a compliance file")}
       </p>
 
       {item && (
         <div className="grid grid-cols-2 gap-3 text-xs mb-4">
           <div>
-            <div className="text-muted-foreground mb-0.5">PRINCIPAL</div>
+            <div className="text-muted-foreground mb-0.5">{t("PRINCIPAL")}</div>
             <div className="font-medium">{item.principal}</div>
           </div>
           <div>
-            <div className="text-muted-foreground mb-0.5">UPDATED</div>
-            <div className="font-medium">{item.ageLabel}</div>
+            <div className="text-muted-foreground mb-0.5">{t("UPDATED")}</div>
+            <div className="font-medium">{t(item.ageLabel)}</div>
           </div>
         </div>
       )}
@@ -597,7 +621,7 @@ export function PortalActivityDrawer({
               }}
             />
           ))}
-          <p className="text-xs text-muted-foreground">Saved together with the file.</p>
+          <p className="text-xs text-muted-foreground">{t("Saved together with the file.")}</p>
         </div>
       )}
 
@@ -630,13 +654,13 @@ export function PortalActivityDrawer({
           )}
           {fieldKeys.length > 0 && (
             <Button
-              variant="dark"
+              variant="default"
               className="w-full"
               disabled={!canSubmitFields || saving}
               onClick={submitFields}
             >
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-              {sensitive ? "Submit for approval" : "Save changes"}
+              {sensitive ? t("Submit for approval") : t("Save changes")}
             </Button>
           )}
         </div>
@@ -647,15 +671,15 @@ export function PortalActivityDrawer({
         <>
           <p className="text-xs text-muted-foreground mb-3">
             {sectionLabel === "Pending Approval"
-              ? "Waiting on your principal. Here is exactly what they received."
-              : "Closed — kept here so you can see what was submitted."}
+              ? t("Waiting on your principal. Here is exactly what they received.")
+              : t("Closed — kept here so you can see what was submitted.")}
           </p>
           {submittedChanges ? (
             <SubmittedChanges changes={submittedChanges} pending={sectionLabel === "Pending Approval"} />
           ) : item?.docName ? (
             <SubmittedDocument supplierId={supplierId} docName={item.docName} />
           ) : (
-            <p className="text-xs text-muted-foreground mb-4">Nothing recorded for this item.</p>
+            <p className="text-xs text-muted-foreground mb-4">{t("Nothing recorded for this item.")}</p>
           )}
         </>
       )}
@@ -665,7 +689,24 @@ export function PortalActivityDrawer({
           {secondaryActions(item).map((a) => {
             const Icon = ACTION_ICON[a];
             return (
-              <Button key={a} variant={secondaryVariant(a)} className="w-full">
+              <Button
+                key={a}
+                variant={secondaryVariant(a)}
+                className="w-full"
+                onClick={
+                  a === "Chat"
+                    ? () =>
+                        /* The ticket travels into the composer as a link, so the
+                           supplier doesn't have to re-type what it is about. */
+                        onOpenChat?.(
+                          "",
+                          item.docName
+                            ? { type: "document", id: item.docName, label: item.docName }
+                            : { type: "data-change", id: item.id, label: item.title }
+                        )
+                    : undefined
+                }
+              >
                 {Icon && <Icon size={14} />}
                 {a}
               </Button>
@@ -676,16 +717,18 @@ export function PortalActivityDrawer({
 
       {confirmingClose && (
         <div className="mt-4 rounded-lg border border-border bg-secondary/50 p-3">
-          <p className="text-sm font-medium">Discard your changes?</p>
+          <p className="text-sm font-medium">{t("Discard your changes?")}</p>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {upload.pending ? "The file you picked hasn't been submitted." : "Your edits haven't been saved."}
+            {upload.pending
+              ? t("The file you picked hasn't been submitted.")
+              : t("Your edits haven't been saved.")}
           </p>
           <div className="flex gap-2 mt-3">
             <Button variant="outline" size="sm" className="flex-1" onClick={() => setConfirmingClose(false)}>
-              Keep editing
+              {t("Keep editing")}
             </Button>
             <Button variant="danger" size="sm" className="flex-1" onClick={onClose}>
-              Discard
+              {t("Discard")}
             </Button>
           </div>
         </div>
@@ -694,7 +737,7 @@ export function PortalActivityDrawer({
       {/* Document submit lives inside the metadata form; this says why it's absent */}
       {editable && kind !== "data" && !canSubmitDocument && (
         <p className="text-xs text-muted-foreground mt-3 text-center">
-          Choose a file to continue.
+          {t("Choose a file to continue.")}
         </p>
       )}
     </DetailDrawer>

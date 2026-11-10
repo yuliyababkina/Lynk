@@ -1,31 +1,10 @@
-import {
-  LayoutGrid,
-  Users,
-  Shield,
-  ShieldCheck,
-  FileText,
-  BarChart3,
-  ClipboardList,
-  Rocket,
-  Plus,
-  PanelLeft,
-  type LucideIcon,
-} from "lucide-react";
+import { Plus, PanelLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { useI18n } from "@/lib/i18n";
+import { Button } from "@/components/ui/button";
+import { NAV } from "@/lib/lynk-nav";
+import { useI18n } from "@/lib/i18n-context";
 import type { View } from "@/App";
-
-const NAV: { id: View; label: string; icon: LucideIcon }[] = [
-  { id: "dashboard", label: "Dashboard", icon: LayoutGrid },
-  { id: "suppliers", label: "Suppliers", icon: Users },
-  { id: "data-governance", label: "Data Governance", icon: Shield },
-  { id: "onboarding", label: "Onboarding", icon: Rocket },
-  { id: "compliance", label: "Compliance", icon: ShieldCheck },
-  { id: "contracts", label: "Contracts", icon: FileText },
-  { id: "reporting", label: "Reporting", icon: BarChart3 },
-  { id: "service-catalogue", label: "Service Catalogue", icon: ClipboardList },
-];
 
 export function Sidebar({
   view,
@@ -53,7 +32,9 @@ export function Sidebar({
     >
       <div
         className={cn(
-          "h-12 border-b border-brand-navy-foreground/10 bg-brand-navy text-brand-navy-foreground",
+          // Light, matching the top bar beside it: the two together read as one
+          // continuous strip rather than a navy block abutting a white one.
+          "h-12 border-b border-border bg-card text-foreground",
           collapsed ? "flex items-center justify-center px-2" : "flex items-center gap-2 px-4"
         )}
       >
@@ -62,23 +43,24 @@ export function Sidebar({
         </div>
         {!collapsed ? (
           <div>
-            <div className="text-sm font-semibold text-brand-navy-foreground leading-none">Lynk</div>
-            <div className="text-[10px] text-brand-navy-foreground/60 leading-none mt-0.5">{t("Procurement Platform")}</div>
+            <div className="text-sm font-semibold leading-none">Lynk</div>
+            <div className="text-[10px] text-muted-foreground leading-none mt-0.5">{t("Procurement Platform")}</div>
           </div>
         ) : null}
         {onToggleCollapse ? (
-          <button
+          <Button
             type="button"
+            variant="ghost"
             onClick={onToggleCollapse}
             className={cn(
-              "shrink-0 rounded p-1 text-brand-navy-foreground/70 hover:text-brand-navy-foreground hover:bg-brand-navy-foreground/10 transition-colors",
+              "h-auto shrink-0 rounded border-0 p-1 text-muted-foreground hover:bg-secondary hover:text-foreground dark:hover:bg-secondary",
               collapsed ? "" : "ml-auto"
             )}
             aria-label={collapsed ? "Expand menu" : "Collapse menu"}
             title={collapsed ? "Expand menu" : "Collapse menu"}
           >
             <PanelLeft className="w-4 h-4" />
-          </button>
+          </Button>
         ) : null}
       </div>
       <nav className="flex-1 p-3 space-y-0.5">
@@ -87,16 +69,17 @@ export function Sidebar({
           const isActive = view === item.id;
           const badge = badgeCounts?.[item.id];
           return (
-            <button
+            <Button
               key={item.id}
+              variant="ghost"
               onClick={() => onNavigate(item.id)}
               title={t(item.label)}
               className={cn(
-                "w-full rounded-md text-sm transition-colors h-9",
-                collapsed ? "flex items-center justify-center px-3 py-2" : "flex items-center gap-3 px-3 py-2",
+                "h-9 w-full rounded-md border-0 text-sm whitespace-normal",
+                collapsed ? "flex items-center justify-center px-3 py-2" : "flex items-center justify-start gap-3 px-3 py-2",
                 isActive
-                  ? "bg-muted font-medium text-foreground"
-                  : "text-muted-foreground hover:bg-muted/60"
+                  ? "bg-muted font-medium text-foreground hover:bg-muted dark:hover:bg-muted"
+                  : "font-normal text-muted-foreground hover:bg-muted/60 hover:text-muted-foreground dark:hover:bg-muted/60"
               )}
             >
               <Icon className={cn("w-4 h-4", isActive ? "text-success" : "text-muted-foreground")} />
@@ -106,20 +89,21 @@ export function Sidebar({
                   {badge}
                 </Badge>
               )}
-            </button>
+            </Button>
           );
         })}
-        <button
+        <Button
+          variant="ghost"
           onClick={onInvite}
           title={t("Invite Supplier")}
           className={cn(
-            "w-full rounded-md text-sm text-muted-foreground hover:bg-muted/60 mt-2 h-9",
-            collapsed ? "flex items-center justify-center px-3 py-2" : "flex items-center gap-3 px-3 py-2"
+            "mt-2 h-9 w-full rounded-md border-0 text-sm font-normal whitespace-normal text-muted-foreground hover:bg-muted/60 hover:text-muted-foreground dark:hover:bg-muted/60",
+            collapsed ? "flex items-center justify-center px-3 py-2" : "flex items-center justify-start gap-3 px-3 py-2"
           )}
         >
           <Plus className="w-4 h-4" />
           {!collapsed ? <span>{t("Invite Supplier")}</span> : null}
-        </button>
+        </Button>
       </nav>
 
       <div className={cn("p-3 border-t border-border flex items-center h-16", collapsed ? "justify-center" : "gap-3")}>

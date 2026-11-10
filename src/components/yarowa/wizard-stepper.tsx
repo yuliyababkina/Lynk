@@ -1,6 +1,7 @@
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
+import { Button } from "@/components/ui/button";
 
 /*
  * Horizontal numbered stepper for multi-step wizards (Create / Update Catalogue).
@@ -25,12 +26,13 @@ export function WizardStepper({
         const active = i === currentIdx;
         return (
           <div key={s} className="flex items-center gap-2">
-            <button
+            <Button
               type="button"
+              variant="ghost"
               disabled={!onStepClick}
               onClick={() => onStepClick?.(s)}
               className={cn(
-                "flex items-center gap-2 rounded-md px-1 -mx-1 transition-opacity",
+                "-mx-1 h-auto gap-2 rounded-md border-0 px-1 py-0 font-normal whitespace-normal hover:bg-transparent dark:hover:bg-transparent disabled:opacity-100",
                 onStepClick ? "hover:opacity-70" : "cursor-default"
               )}
             >
@@ -44,12 +46,12 @@ export function WizardStepper({
                       : "bg-card border-border text-muted-foreground"
                 )}
               >
-                {done ? <Check size={14} /> : i + 1}
+                {done ? <Check size={14} className="size-3.5" /> : i + 1}
               </span>
               <span className={cn("text-sm", active ? "font-semibold" : "text-muted-foreground")}>
                 {t(s)}
               </span>
-            </button>
+            </Button>
             {i < steps.length - 1 && <div className="w-8 h-px bg-border" />}
           </div>
         );

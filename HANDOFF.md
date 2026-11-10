@@ -141,6 +141,12 @@ migration — see below.
 | `2026-07-15_add_ticket_status.sql` | ticket workflow status | yes |
 | `2026-07-30_add_document_metadata.sql` | `supplier_docs`: document_type, issuing_institution, does_not_expire, metadata_confirmed | **no** — verified 3 Aug 2026 |
 | `2026-07-31_add_terms_acceptance.sql` | `suppliers`: terms_accepted_at/version/by + backfill of non-prospects | yes |
+| `2026-10-08_add_chat.sql` | `chat_messages`, `chat_reads` + the production RLS policy as a commented block | **no** — pending |
+
+**The chat migration is outstanding.** Until it is applied, `fetchAllData`'s two
+chat queries 404, the app logs a warning and falls back to the seed threads in
+`src/data.ts` — chat works for a demo but nothing a persona writes survives a
+reload. Paste `2026-10-08_add_chat.sql` into the SQL Editor to close it.
 
 **The document-metadata migration is still outstanding.** Both the upload and the
 edit path fall back to writing only the columns that exist, so nothing breaks —
@@ -208,9 +214,16 @@ Anything new that a *supplier* triggers should pass it too.
 
 ## 10. Agent-session constraints
 
-- **Cannot push.** No SSH key, no `gh`, and the osxkeychain has no github.com
-  credential. The repo is public, so *reads* (`git ls-remote`) work but writes
-  don't. Commits are made locally; push from GitHub Desktop.
-- Cannot run DDL, create accounts, verify domains, or set Vercel env vars.
+- **Can push.** The remote is SSH (`git@github.com:yuliyababkina/Lynk.git`) and
+  the key works — `git push -u origin <branch>` succeeds. This reverses what
+  this section said until 8 Oct 2026; the old note described the state on
+  3 Aug 2026, before the key was set up. Verify with `git ls-remote origin HEAD`
+  rather than trusting either claim. Merges into `main` are still the owner's
+  step, so push the branch and open a PR.
+- **Cannot run DDL.** Only the anon key is available and the project exposes no
+  SQL RPC, so `create table` has to be pasted into the Supabase SQL editor by
+  hand. Plain DML is a different matter: with the prototype's permissive
+  "anon full access" RLS, inserts and updates DO go through from a session.
+- Cannot create accounts, verify domains, or set Vercel env vars.
 - The in-app browser preview has no native PDF plugin, which is why previews
   render through pdf.js to canvas rather than an `<iframe>`.

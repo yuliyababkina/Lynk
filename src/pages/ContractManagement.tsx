@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
-import { useLynkData } from "../lib/LynkDataContext";
+import { useLynkData } from "../lib/lynk-data-context";
 import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Pill } from "@/components/yarowa/pill";
 import { AlertBanner } from "@/components/yarowa/alert-banner";
 import type { Contract, ContractStatus } from "../types";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 
 const STATUS_TONE: Record<ContractStatus, "success" | "warning" | "danger" | "info" | "neutral"> = {
   Active: "success",
@@ -42,7 +43,7 @@ export function ContractManagement({
       default:
         return CONTRACTS;
     }
-  }, [tab]);
+  }, [tab, CONTRACTS]);
 
   const urgent = CONTRACTS.filter((c) => c.status === "Renewal Urgent").length;
 
@@ -82,46 +83,46 @@ export function ContractManagement({
       </div>
 
       <div className="bg-card border border-border rounded-lg overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-xs text-muted-foreground border-b border-border">
-              <th className="px-4 py-2 font-medium">{tr("SUPPLIER / CONTRACT")}</th>
-              <th className="px-4 py-2 font-medium">{tr("ANNUAL VALUE")}</th>
-              <th className="px-4 py-2 font-medium">{tr("END DATE")}</th>
-              <th className="px-4 py-2 font-medium">{tr("TIME LEFT")}</th>
-              <th className="px-4 py-2 font-medium">{tr("STATUS")}</th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table>
+          <TableHeader>
+            <TableRow className="text-xs border-border hover:bg-transparent">
+              <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("SUPPLIER / CONTRACT")}</TableHead>
+              <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("ANNUAL VALUE")}</TableHead>
+              <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("END DATE")}</TableHead>
+              <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("TIME LEFT")}</TableHead>
+              <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("STATUS")}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {filtered.map((c) => (
-              <tr
+              <TableRow
                 key={c.id}
                 onClick={() => onSelectContract(c)}
-                className={`border-b border-border last:border-0 cursor-pointer hover:bg-secondary/50 ${
+                className={`border-border cursor-pointer hover:bg-secondary/50 ${
                   initialSelectedId === c.id ? "bg-secondary/50" : ""
                 }`}
               >
-                <td className="px-4 py-3">
+                <TableCell className="px-4 py-3 whitespace-normal">
                   <div className="font-medium">{c.supplierName}</div>
                   <div className="text-xs text-muted-foreground">
                     {c.ref} · {tr(c.type)}
                   </div>
-                </td>
-                <td className="px-4 py-3">{tr("€{value} per year", { value: c.annualValue.toLocaleString() })}</td>
-                <td className="px-4 py-3">
+                </TableCell>
+                <TableCell className="px-4 py-3 whitespace-normal">{tr("€{value} per year", { value: c.annualValue.toLocaleString() })}</TableCell>
+                <TableCell className="px-4 py-3 whitespace-normal">
                   <div>{c.endDate}</div>
                   <div className="text-xs text-muted-foreground">
                     {tr("Renewal by {date} · {notice} notice req.", { date: c.renewalBy, notice: c.noticePeriod })}
                   </div>
-                </td>
-                <td className="px-4 py-3">{c.timeLeftLabel}</td>
-                <td className="px-4 py-3">
+                </TableCell>
+                <TableCell className="px-4 py-3 whitespace-normal">{c.timeLeftLabel}</TableCell>
+                <TableCell className="px-4 py-3 whitespace-normal">
                   <Badge variant={STATUS_TONE[c.status]}>{c.status}</Badge>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

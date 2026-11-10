@@ -1,8 +1,10 @@
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { useI18n } from "@/lib/i18n-context";
 import type { PortalView } from "@/pages/SupplierPortal";
 import { getPortalNavCounts, getPortalProfile, initialsOf } from "@/pages/portal/portal-data";
 import { LayoutDashboard, AlertCircle, FileText, DollarSign, Building, Users, PanelLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export interface PortalSidebarProps {
   view: PortalView;
@@ -19,15 +21,19 @@ export function PortalSidebar({
   collapsed = false,
   onToggleCollapse,
 }: PortalSidebarProps) {
+  const { t } = useI18n();
   const profile = getPortalProfile(supplierId);
   const counts = getPortalNavCounts(profile);
 
+  /* Labels stay in English here and are translated where they render — the
+     English string is the dictionary key. Title Case throughout, matching the
+     page headings these items lead to and the keys in i18n.tsx. */
   const navItems: { label: string; view: PortalView; icon: React.ReactNode; count?: number }[] = [
     { label: "Overview", view: "overview", icon: <LayoutDashboard className="w-4 h-4" />, count: counts.overview },
     { label: "Requested Updates", view: "requested-updates", icon: <AlertCircle className="w-4 h-4" />, count: counts["requested-updates"] },
     { label: "Documents", view: "documents", icon: <FileText className="w-4 h-4" />, count: counts.documents },
-    { label: "Price agreements", view: "price-agreements", icon: <DollarSign className="w-4 h-4" />, count: counts["price-agreements"] },
-    { label: "Company details", view: "company-details", icon: <Building className="w-4 h-4" />, count: counts["company-details"] },
+    { label: "Price Agreements", view: "price-agreements", icon: <DollarSign className="w-4 h-4" />, count: counts["price-agreements"] },
+    { label: "Company Details", view: "company-details", icon: <Building className="w-4 h-4" />, count: counts["company-details"] },
     { label: "Principals", view: "principals", icon: <Users className="w-4 h-4" /> },
   ];
 
@@ -41,7 +47,9 @@ export function PortalSidebar({
     >
       <div
         className={cn(
-          "h-12 border-b border-brand-navy-foreground/10 bg-brand-navy text-brand-navy-foreground",
+          // Light, matching the top bar beside it: the two together read as one
+          // continuous strip rather than a navy block abutting a white one.
+          "h-12 border-b border-border bg-card text-foreground",
           collapsed ? "flex items-center justify-center px-2" : "flex items-center gap-2 px-4"
         )}
       >
@@ -50,23 +58,24 @@ export function PortalSidebar({
         </div>
         {!collapsed ? (
           <div>
-            <div className="text-sm font-semibold text-brand-navy-foreground leading-none">Lynk</div>
-            <div className="text-[10px] text-brand-navy-foreground/60 leading-none mt-0.5">Procurement Platform</div>
+            <div className="text-sm font-semibold leading-none">Lynk</div>
+            <div className="text-[10px] text-muted-foreground leading-none mt-0.5">{t("Procurement Platform")}</div>
           </div>
         ) : null}
         {onToggleCollapse ? (
-          <button
+          <Button
             type="button"
+            variant="ghost"
             onClick={onToggleCollapse}
             className={cn(
-              "shrink-0 rounded p-1 text-brand-navy-foreground/70 hover:text-brand-navy-foreground hover:bg-brand-navy-foreground/10 transition-colors",
+              "h-auto shrink-0 rounded border-0 p-1 text-muted-foreground hover:bg-secondary hover:text-foreground dark:hover:bg-secondary",
               collapsed ? "" : "ml-auto"
             )}
-            aria-label={collapsed ? "Expand menu" : "Collapse menu"}
-            title={collapsed ? "Expand menu" : "Collapse menu"}
+            aria-label={collapsed ? t("Expand menu") : t("Collapse menu")}
+            title={collapsed ? t("Expand menu") : t("Collapse menu")}
           >
             <PanelLeft className="w-4 h-4" />
-          </button>
+          </Button>
         ) : null}
       </div>
 
@@ -75,16 +84,19 @@ export function PortalSidebar({
         {navItems.map((item) => {
           const active = view === item.view;
           return (
-            <button
+            <Button
               key={item.view}
+              variant="ghost"
               onClick={() => onNavigate(item.view)}
-              title={item.label}
+              title={t(item.label)}
               className={cn(
-                "w-full rounded-md text-sm transition-colors h-9",
+                "h-9 w-full rounded-md border-0 text-sm whitespace-normal",
                 collapsed
                   ? "flex items-center justify-center px-3 py-2"
-                  : "grid grid-cols-[1.25rem_minmax(0,1fr)_auto] items-center gap-3 px-3 py-2",
-                active ? "bg-muted font-medium text-foreground" : "text-muted-foreground hover:bg-muted/60"
+                  : "grid grid-cols-[1.25rem_minmax(0,1fr)_auto] items-center justify-normal gap-3 px-3 py-2",
+                active
+                  ? "bg-muted font-medium text-foreground hover:bg-muted dark:hover:bg-muted"
+                  : "font-normal text-muted-foreground hover:bg-muted/60 hover:text-muted-foreground dark:hover:bg-muted/60"
               )}
             >
               <span
@@ -95,13 +107,13 @@ export function PortalSidebar({
               >
                 {item.icon}
               </span>
-              {!collapsed ? <span className="text-left leading-none">{item.label}</span> : null}
+              {!collapsed ? <span className="text-left leading-none">{t(item.label)}</span> : null}
               {!collapsed && item.count ? (
                 <Badge variant="success" className="rounded-full px-1.5">
                   {item.count}
                 </Badge>
               ) : null}
-            </button>
+            </Button>
           );
         })}
       </nav>

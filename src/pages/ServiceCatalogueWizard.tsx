@@ -1,15 +1,20 @@
 import { useEffect, useState } from "react";
 import { CATALOGUE_REGIONS, CATALOGUE_TRADES, PARSED_LINES, DIFF_LINES } from "../data";
 import { cn } from "../lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { WizardStepper } from "@/components/yarowa/wizard-stepper";
+import { useI18n } from "@/lib/i18n-context";
 import { FileUploadCard } from "@/components/yarowa/file-upload-card";
 import { CataloguePreviewTable } from "@/components/yarowa/catalogue-preview-table";
 import { SupplierReviewTable } from "@/components/yarowa/supplier-review-table";
 import { BottomActionBar } from "@/components/yarowa/bottom-action-bar";
 import type { Catalogue, ResponseModel } from "../types";
 
-const STEPS = ["Upload", "Parsing", "Preview", "Details", "Distribution"] as const;
-type Step = (typeof STEPS)[number];
+type Step = "Upload" | "Parsing" | "Preview" | "Details" | "Distribution";
 
 // Parsing is a transient loading state, not a numbered step in the header.
 const VISIBLE_STEPS = ["Upload", "Preview", "Details", "Distribution"] as const;
@@ -33,10 +38,13 @@ function nextVersionOf(current: string): string {
     : `Version ${Number(match[1]) + 1}`;
 }
 
+/* `label` is the English source; the value beside it is a count or a piece of
+   reference data the caller has already translated. */
 function SummaryTile({ label, value, tone }: { label: string; value: string; tone?: string }) {
+  const { t } = useI18n();
   return (
     <div className="bg-card border border-border rounded-lg p-3 flex-1">
-      <div className="text-xs text-muted-foreground mb-1">{label}</div>
+      <div className="text-xs text-muted-foreground mb-1">{t(label)}</div>
       <div className={cn("text-xl font-bold", tone)}>{value}</div>
     </div>
   );
@@ -53,6 +61,7 @@ export function ServiceCatalogueWizard({
   onCancel: () => void;
   onFinish: (result: WizardResult) => void;
 }) {
+  const { t } = useI18n();
   const isUpdate = mode === "update";
   const [step, setStep] = useState<Step>("Upload");
   const [name, setName] = useState(isUpdate ? (catalogue?.name ?? "") : "");
@@ -85,8 +94,14 @@ export function ServiceCatalogueWizard({
 
   const nextVersion = isUpdate && catalogue ? nextVersionOf(catalogue.currentVersion) : null;
 
-  const inputCls = "bg-card border border-border rounded-md px-3 py-1.5 text-sm w-full";
-  const title = isUpdate ? `Upload new version — ${catalogue?.name}` : "Create a Service catalogue";
+  // Overrides that keep the compact field look on shadcn Input / NativeSelect.
+  const inputCls = "h-auto rounded-md border-border bg-card px-3 py-1.5 text-sm";
+  const selectCls =
+    "w-full [&_select]:h-auto [&_select]:rounded-md [&_select]:border-border [&_select]:bg-card [&_select]:py-1.5 [&_select]:pl-3";
+  const labelCls = "block text-xs font-medium leading-4 text-muted-foreground mb-1";
+  const title = isUpdate
+    ? t("Upload new version — {catalogue}", { catalogue: catalogue?.name ?? "" })
+    : t("Create a Service catalogue");
 
   function toggleSupplier(id: string) {
     setSelectedSuppliers((prev) => {
@@ -114,9 +129,13 @@ export function ServiceCatalogueWizard({
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <button onClick={onCancel} className="text-sm text-muted-foreground hover:text-foreground mb-3">
-        ← Cancel and go back
-      </button>
+      <Button
+        variant="ghost"
+        onClick={onCancel}
+        className="mb-3 h-auto border-0 p-0 text-sm font-normal text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
+      >
+        ← {t("Cancel and go back")}
+      </Button>
       <h1 className="text-2xl font-bold mb-6 text-center">{title}</h1>
       <div className="mb-8">
         <WizardStepper
@@ -129,6 +148,8 @@ export function ServiceCatalogueWizard({
       {step === "Upload" && (
         <div className="max-w-lg mx-auto">
           <FileUploadCard
+            /* FileUploadCard translates what it is given, so the English
+               source travels down as the key. */
             description={
               isUpdate
                 ? "Upload the updated price list. It will be compared against the current active version."
@@ -162,8 +183,8 @@ export function ServiceCatalogueWizard({
               <>
                 <SummaryTile label="Total rows" value={String(lines.length)} />
                 <SummaryTile label="Categories" value={String(categories)} />
-                <SummaryTile label="Trades detected" value="1 · Painting" />
-                <SummaryTile label="Regions detected" value="1 · Bavaria" />
+                <SummaryTile label="Trades detected" value={`1 · ${t("Painting")}`} />
+                <SummaryTile label="Regions detected" value={`1 · ${t("Bavaria")}`} />
               </>
             )}
           </div>
@@ -182,82 +203,78 @@ export function ServiceCatalogueWizard({
         <div>
           <div className="bg-card border border-border rounded-2xl p-5 mb-6 space-y-4 max-w-lg mx-auto">
             <div>
-              <label className="text-xs font-medium text-muted-foreground block mb-1">Name</label>
-              <input
+              <Label className={labelCls}>{t("Name")}</Label>
+              <Input
                 className={inputCls}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Catalog 5 Painting South"
+                placeholder={t("e.g. Catalog 5 Painting South")}
                 disabled={isUpdate}
               />
             </div>
             {nextVersion && (
               <div>
-                <label className="text-xs font-medium text-muted-foreground block mb-1">New version</label>
-                <input className={cn(inputCls, "bg-secondary/50")} value={nextVersion} readOnly />
+                <Label className={labelCls}>{t("New version")}</Label>
+                <Input className={`${inputCls} bg-secondary/50`} value={nextVersion} readOnly />
               </div>
             )}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-medium text-muted-foreground block mb-1">Region</label>
-                <select className={inputCls} value={region} onChange={(e) => setRegion(e.target.value)}>
+                <Label className={labelCls}>{t("Region")}</Label>
+                <NativeSelect className={selectCls} value={region} onChange={(e) => setRegion(e.target.value)}>
                   {CATALOGUE_REGIONS.map((r) => (
-                    <option key={r}>{r}</option>
+                    <NativeSelectOption key={r} value={r}>
+                      {t(r)}
+                    </NativeSelectOption>
                   ))}
-                </select>
+                </NativeSelect>
               </div>
               <div>
-                <label className="text-xs font-medium text-muted-foreground block mb-1">Trade</label>
-                <select className={inputCls} value={trade} onChange={(e) => setTrade(e.target.value)}>
-                  {CATALOGUE_TRADES.map((t) => (
-                    <option key={t}>{t}</option>
+                <Label className={labelCls}>{t("Trade")}</Label>
+                <NativeSelect className={selectCls} value={trade} onChange={(e) => setTrade(e.target.value)}>
+                  {CATALOGUE_TRADES.map((tradeOption) => (
+                    <NativeSelectOption key={tradeOption} value={tradeOption}>
+                      {t(tradeOption)}
+                    </NativeSelectOption>
                   ))}
-                </select>
+                </NativeSelect>
               </div>
             </div>
             <div>
-              <label className="text-xs font-medium text-muted-foreground block mb-1">Validity period</label>
+              <Label className={labelCls}>{t("Validity period")}</Label>
               <div className="grid grid-cols-2 gap-3">
-                <input type="date" className={inputCls} value={validFrom} onChange={(e) => setValidFrom(e.target.value)} />
-                <input type="date" className={inputCls} value={validTo} onChange={(e) => setValidTo(e.target.value)} />
+                <Input type="date" className={inputCls} value={validFrom} onChange={(e) => setValidFrom(e.target.value)} />
+                <Input type="date" className={inputCls} value={validTo} onChange={(e) => setValidTo(e.target.value)} />
               </div>
             </div>
             <div>
-              <label className="text-xs font-medium text-muted-foreground block mb-2">
-                Supplier response model
-              </label>
-              <div className="space-y-2">
-                <label className="flex items-start gap-2 text-sm cursor-pointer">
-                  <input
-                    type="radio"
-                    name="response-model"
-                    className="mt-0.5 accent-primary"
-                    checked={responseModel === "actively-agree"}
-                    onChange={() => setResponseModel("actively-agree")}
-                  />
+              <Label className="block text-xs font-medium leading-4 text-muted-foreground mb-2">
+                {t("Supplier response model")}
+              </Label>
+              <RadioGroup
+                value={responseModel}
+                onValueChange={(v) => setResponseModel(v as ResponseModel)}
+                className="gap-2"
+              >
+                <Label htmlFor="response-model-agree" className="cursor-pointer items-start gap-2 text-sm font-normal leading-5">
+                  <RadioGroupItem id="response-model-agree" value="actively-agree" className="mt-0.5" />
                   <span>
-                    <span className="font-medium">Actively agree</span>
+                    <span className="font-medium">{t("Actively agree")}</span>
                     <span className="block text-xs text-muted-foreground">
-                      Suppliers must explicitly confirm the catalogue before it applies to them.
+                      {t("Suppliers must explicitly confirm the catalogue before it applies to them.")}
                     </span>
                   </span>
-                </label>
-                <label className="flex items-start gap-2 text-sm cursor-pointer">
-                  <input
-                    type="radio"
-                    name="response-model"
-                    className="mt-0.5 accent-primary"
-                    checked={responseModel === "actively-disagree"}
-                    onChange={() => setResponseModel("actively-disagree")}
-                  />
+                </Label>
+                <Label htmlFor="response-model-disagree" className="cursor-pointer items-start gap-2 text-sm font-normal leading-5">
+                  <RadioGroupItem id="response-model-disagree" value="actively-disagree" className="mt-0.5" />
                   <span>
-                    <span className="font-medium">Actively disagree</span>
+                    <span className="font-medium">{t("Actively disagree")}</span>
                     <span className="block text-xs text-muted-foreground">
-                      Silence counts as acceptance; suppliers must explicitly opt out.
+                      {t("Silence counts as acceptance; suppliers must explicitly opt out.")}
                     </span>
                   </span>
-                </label>
-              </div>
+                </Label>
+              </RadioGroup>
             </div>
           </div>
           <div className="max-w-lg mx-auto">
@@ -274,8 +291,13 @@ export function ServiceCatalogueWizard({
         <div>
           <p className="text-sm text-muted-foreground mb-3">
             {isUpdate
-              ? `Suppliers linked to this catalogue will be notified to re-confirm ${nextVersion ?? "the new version"}.`
-              : `Suppliers matched automatically by ${region} + ${trade}. Untick any you want to exclude.`}
+              ? t("Suppliers linked to this catalogue will be notified to re-confirm {version}.", {
+                  version: nextVersion ?? t("the new version"),
+                })
+              : t("Suppliers matched automatically by {region} + {trade}. Untick any you want to exclude.", {
+                  region: t(region),
+                  trade: t(trade),
+                })}
           </p>
           <div className="mb-6">
             <SupplierReviewTable

@@ -1,14 +1,14 @@
 import { useRef, useState } from "react";
-import { FileText, Upload, Loader2, ExternalLink } from "lucide-react";
+import { Upload, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { RequestedUpdatePanel } from "@/components/yarowa/requested-update-panel";
 import { DocumentMetadataForm } from "@/components/yarowa/document-metadata-form";
 import { DocumentBrowser } from "@/components/yarowa/document-browser";
-import { useLynkData } from "@/lib/LynkDataContext";
+import { useLynkData } from "@/lib/lynk-data-context";
+import { useI18n } from "@/lib/i18n-context";
 import { useDocumentUpload } from "@/lib/use-document-upload";
-import { docStatusMeta } from "@/lib/document-status";
 import { getPortalProfile } from "./portal-data";
 
 export interface PortalDocumentsProps {
@@ -17,6 +17,7 @@ export interface PortalDocumentsProps {
 
 export function PortalDocuments({ supplierId }: PortalDocumentsProps) {
   const { docs: allDocs } = useLynkData();
+  const { t } = useI18n();
   const profile = getPortalProfile(supplierId);
   const supplierName = profile.company.legalName;
   const activeUpdate = profile.requestedUpdates[0];
@@ -39,13 +40,13 @@ export function PortalDocuments({ supplierId }: PortalDocumentsProps) {
       <section className="flex-1 min-w-0 p-6 space-y-3 bg-sidebar">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold">Documents</h1>
+            <h1 className="text-2xl font-bold">{t("Documents")}</h1>
             <p className="text-muted-foreground mt-1">
-              Compliance files shared with your principals, with expiry status and actions.
+              {t("Compliance files shared with your principals, with expiry status and actions.")}
             </p>
           </div>
           <div className="shrink-0">
-            <input
+            <Input
               ref={fileInputRef}
               type="file"
               accept="application/pdf"
@@ -56,9 +57,9 @@ export function PortalDocuments({ supplierId }: PortalDocumentsProps) {
                 selectFile(file);
               }}
             />
-            <Button variant="dark" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+            <Button variant="default" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
               {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-              {uploading ? "Uploading…" : "Upload document"}
+              {uploading ? t("Uploading…") : t("Upload document")}
             </Button>
           </div>
         </div>
@@ -79,10 +80,10 @@ export function PortalDocuments({ supplierId }: PortalDocumentsProps) {
         )}
 
         <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          All Documents
+          {t("All Documents")}
         </h2>
         {docs.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No documents yet — upload your first PDF above.</p>
+          <p className="text-sm text-muted-foreground">{t("No documents yet — upload your first PDF above.")}</p>
         ) : (
           <DocumentBrowser
             rows={docs.map((d) => ({

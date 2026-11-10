@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { X, FileText } from "lucide-react";
 import type { SupplierDoc } from "@/types";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n-context";
 
 /*
  * Full-screen lightbox that previews an uploaded renewal document at large size
@@ -18,6 +19,7 @@ export function DocumentLightbox({
   onClose: () => void;
   onDecision: (decision: "accept" | "reject") => void;
 }) {
+  const { t } = useI18n();
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
@@ -25,17 +27,18 @@ export function DocumentLightbox({
   }, [onClose]);
 
   if (!doc.renewal) return null;
-  const acceptLabel = doc.status === "blocked" ? "Accept & Reactivate Supplier" : "Accept & Replace";
+  const acceptLabel =
+    doc.status === "blocked" ? t("Accept & Reactivate Supplier") : t("Accept & Replace");
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/50 animate-in fade-in duration-150"
+      className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-scrim/50 animate-in fade-in duration-150"
       onClick={onClose}
     >
       <div
         role="dialog"
         aria-modal="true"
-        aria-label={`Review ${doc.renewal.fileName}`}
+        aria-label={t("Review {file}", { file: doc.renewal.fileName })}
         className="bg-card rounded-2xl shadow-2xl w-full max-w-3xl max-h-[88vh] flex flex-col overflow-hidden animate-in zoom-in-95 fade-in duration-150"
         onClick={(e) => e.stopPropagation()}
       >
@@ -45,12 +48,19 @@ export function DocumentLightbox({
           <div className="min-w-0 flex-1">
             <div className="text-sm font-semibold truncate">{doc.renewal.fileName}</div>
             <div className="text-xs text-muted-foreground truncate">
-              {doc.renewal.fileSize} · Uploaded {doc.renewal.uploadedAt} · {doc.renewal.uploadedBy}
+              {doc.renewal.fileSize} · {t("Uploaded {date}", { date: doc.renewal.uploadedAt })} ·{" "}
+              {doc.renewal.uploadedBy}
             </div>
           </div>
-          <button onClick={onClose} aria-label="Close" className="text-muted-foreground hover:text-foreground shrink-0">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={onClose}
+            aria-label={t("Close")}
+            className="text-muted-foreground shrink-0"
+          >
             <X size={18} />
-          </button>
+          </Button>
         </div>
 
         {/* Preview */}
@@ -61,7 +71,7 @@ export function DocumentLightbox({
         {/* Actions */}
         <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-3 shrink-0">
           <div className="text-xs text-muted-foreground hidden sm:block">
-            Review the uploaded renewal, then accept or reject it.
+            {t("Review the uploaded renewal, then accept or reject it.")}
           </div>
           <div className="flex gap-2">
             <Button
@@ -69,7 +79,7 @@ export function DocumentLightbox({
               className="text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
               onClick={() => onDecision("reject")}
             >
-              Reject
+              {t("Reject")}
             </Button>
             <Button variant="success" onClick={() => onDecision("accept")}>
               {acceptLabel}
@@ -81,50 +91,60 @@ export function DocumentLightbox({
   );
 }
 
-// A faux paper document so the lightbox reads like a real PDF preview.
+/*
+ * A faux paper document so the lightbox reads like a real PDF preview.
+ *
+ * Its wording stays as authored, like the names of uploaded files: this stands
+ * in for the supplier's own certificate, which arrives in whatever language it
+ * was issued in. The chrome around it — header, hint, decision buttons —
+ * translates.
+ */
+// Static width classes, not a style prop: Tailwind needs to see each one in source.
+const LINE_WIDTHS = ["w-full", "w-[94%]", "w-[97%]", "w-[68%]", "w-[90%]", "w-[62%]", "w-[84%]"];
+
 function DocumentPreview({ doc }: { doc: SupplierDoc }) {
   const ref = doc.id.replace(/[^0-9]/g, "").padStart(4, "0");
   return (
-    <div className="mx-auto w-full max-w-[540px] aspect-[1/1.3] bg-white text-slate-900 shadow-md rounded-sm p-10 flex flex-col">
-      <div className="flex items-start justify-between border-b border-slate-200 pb-4">
+    <div className="mx-auto w-full max-w-[540px] aspect-[1/1.3] bg-paper text-paper-foreground shadow-md rounded-sm p-10 flex flex-col">
+      <div className="flex items-start justify-between border-b border-paper-border pb-4">
         <div>
           <div className="text-lg font-bold tracking-tight">{doc.supplierName}</div>
-          <div className="text-xs text-slate-500">{doc.trade}</div>
+          <div className="text-xs text-paper-muted">{doc.trade}</div>
         </div>
         <div className="text-right text-[11px]">
-          <div className="font-semibold text-slate-600 uppercase tracking-wide">Certificate</div>
-          <div className="text-slate-400">{doc.documentCategory}</div>
+          <div className="font-semibold text-paper-secondary uppercase tracking-wide">Certificate</div>
+          <div className="text-paper-subtle">{doc.documentCategory}</div>
         </div>
       </div>
 
       <div className="mt-8">
         <div className="text-xl font-bold leading-tight">{doc.documentName}</div>
-        <div className="text-sm text-slate-500 mt-1">Renewal — valid from {doc.expiryDate}</div>
+        <div className="text-sm text-paper-muted mt-1">Renewal — valid from {doc.expiryDate}</div>
       </div>
 
       <div className="mt-8 space-y-2.5">
-        {[100, 94, 97, 68, 90, 62, 84].map((w, i) => (
-          <div key={i} className="h-2.5 rounded bg-slate-100" style={{ width: `${w}%` }} />
+        {LINE_WIDTHS.map((w, i) => (
+          <div key={i} className={`h-2.5 rounded bg-paper-tint ${w}`} />
         ))}
       </div>
 
       <div className="mt-7 grid grid-cols-2 gap-4 text-xs">
         <div>
-          <div className="text-slate-400">Reference no.</div>
+          <div className="text-paper-subtle">Reference no.</div>
           <div className="font-medium">DOC-2026-{ref}</div>
         </div>
         <div>
-          <div className="text-slate-400">Coverage</div>
+          <div className="text-paper-subtle">Coverage</div>
           <div className="font-medium">€5,000,000</div>
         </div>
       </div>
 
       <div className="mt-auto flex items-end justify-between pt-8">
         <div>
-          <div className="h-px w-32 bg-slate-300" />
-          <div className="text-xs text-slate-500 mt-1">Authorised signature</div>
+          <div className="h-px w-32 bg-paper-rule" />
+          <div className="text-xs text-paper-muted mt-1">Authorised signature</div>
         </div>
-        <div className="size-16 rounded-full border-2 border-emerald-500/40 text-emerald-600/70 grid place-items-center text-[9px] font-bold text-center leading-tight rotate-[-8deg]">
+        <div className="size-16 rounded-full border-2 border-paper-stamp/40 text-paper-stamp-ink/70 grid place-items-center text-[9px] font-bold text-center leading-tight rotate-[-8deg]">
           RENEWED
           <br />
           2026

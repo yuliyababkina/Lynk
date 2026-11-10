@@ -16,6 +16,7 @@ import {
   FileSignature,
   ClipboardList,
   PenLine,
+  MessageSquare,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -28,19 +29,27 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import { WizardStepper } from "@/components/yarowa/wizard-stepper";
 import { DocumentMetadataForm } from "@/components/yarowa/document-metadata-form";
 import { DocumentBrowser, type DocumentBrowserRow } from "@/components/yarowa/document-browser";
-import { useLynkData } from "@/lib/LynkDataContext";
+import { useLynkData } from "@/lib/lynk-data-context";
 import { recogniseDocumentMetadata, type DocumentMetadata } from "@/lib/onboarding-documents";
-import { docStatusMeta } from "@/lib/document-status";
 import { validityToISODate, type ParsedDocumentInfo } from "@/lib/pdf-metadata";
-import { PRINCIPAL_COMPANY, PRINCIPAL_CONTRACTS, type PrincipalContract } from "@/lib/principal";
-import { toast } from "@/components/yarowa/toast";
+import {
+  PRINCIPAL_COMPANY,
+  PRINCIPAL_CONTRACTS,
+  PROCUREMENT_MANAGER,
+  type PrincipalContract,
+} from "@/lib/principal";
+import { ChatDock } from "@/components/yarowa/chat-dock";
+import { useChatDock } from "@/shared/hooks/use-chat-dock";
+import { relationshipId } from "@/lib/db";
+import { PRINCIPAL_ID } from "@/data";
+import { toast } from "@/lib/toast";
 import { LanguageToggle } from "@/components/yarowa/language-toggle";
 import { MachineTranslatedTag } from "@/components/yarowa/machine-translated-tag";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
 import { translateContent } from "@/lib/content-i18n";
 import { cn } from "@/lib/utils";
 import { TERMS_SECTIONS, TERMS_VERSION, TERMS_EFFECTIVE_DATE } from "@/lib/terms";
-import type { DocStatus, SupplierDoc } from "@/types";
+import type { SupplierDoc } from "@/types";
 import { getPortalProfile } from "./portal/portal-data";
 
 export interface ProspectOnboardingProps {
@@ -99,6 +108,7 @@ export function ProspectOnboarding({
     reviewProspect,
     acceptTerms,
     companyApprovedIds,
+    unreadFor,
   } = useLynkData();
   // Live status per document type — the same values the Procurement Manager sees.
   const statusByName = new Map(
@@ -353,6 +363,39 @@ export function ProspectOnboarding({
 
   const { t } = useI18n();
 
+  /* Messaging is available on every step and — deliberately — before the terms
+     are accepted. A prospect may well want to ask about the terms themselves,
+     and chat stores no company data, so the gate that blocks data writes
+     (assertTermsAccepted) has nothing to protect here. */
+  const conversation = relationshipId(PRINCIPAL_ID, supplierId);
+  const chatUnread = unreadFor(conversation, "supplier");
+  const chat = useChatDock();
+
+  function openChat() {
+    chat.open({
+      relationship: conversation,
+      side: "supplier",
+      author: {
+        side: "supplier",
+        name: actingAs,
+        company: prospectCompany,
+        role: profile.role,
+      },
+      title: PRINCIPAL,
+      subtitle: t("Your conversation with {company}", { company: PRINCIPAL }),
+      // A rejected application closes the thread but keeps it readable.
+      readOnlyReason:
+        reviewStatus === "Rejected"
+          ? t("This application was not approved, so the conversation is closed. It stays here for your records.")
+          : undefined,
+      onOpenContext: () => {
+        // The wizard is the whole surface here, so a link just sends the
+        // prospect to the documents step rather than anywhere new.
+        setStep("documents");
+      },
+    });
+  }
+
   // The approved (contracts) state has no `step`; drive the stepper from it.
   const showStepper = step !== "welcome" || approved;
   const activated = isActiveSupplier || justActivated;
@@ -368,14 +411,26 @@ export function ProspectOnboarding({
         <span className="ml-2 text-sm font-semibold">Lynk</span>
         <span className="ml-1.5 text-sm text-muted-foreground">· {t("Supplier Portal")}</span>
         <div className="flex-1" />
+        {/* Present on every step of the wizard, including the welcome/consent
+            screen — asking a question must never require finishing onboarding. */}
+        <Button variant={chatUnread > 0 ? "default" : "outline"} size="sm" className="mr-3" onClick={openChat}>
+          <MessageSquare className="w-4 h-4" />
+          {t("Chat")}
+          {chatUnread > 0 && (
+            <span className="ml-1 rounded-full bg-critical px-1.5 text-[10px] font-semibold text-critical-foreground">
+              {chatUnread}
+            </span>
+          )}
+        </Button>
         <LanguageToggle />
         {onSwitchAccount && (
-          <button
+          <Button
+            variant="ghost"
             onClick={onSwitchAccount}
-            className="ml-3 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+            className="ml-3 h-auto border-0 p-0 text-xs font-medium text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
           >
             {t("Roles board")}
-          </button>
+          </Button>
         )}
       </header>
 
@@ -386,8 +441,10 @@ export function ProspectOnboarding({
         </div>
       )}
 
-      {/* Body */}
-      <div className="flex-1 overflow-y-auto">
+      {/* Body. The wizard and the chat are siblings in a flex row, so opening a
+          conversation pushes the wizard aside rather than covering it. */}
+      <div className="flex flex-1 min-h-0">
+        <div className="flex-1 min-w-0 overflow-y-auto">
         {/* The documents step needs the full width so the preview can show the
             page at 100% scale; the form/summary steps read better in a column. */}
         <div
@@ -439,9 +496,9 @@ export function ProspectOnboarding({
           {step === "documents" && pending && (
             <section className="space-y-5">
               <div>
-                <h1 className="text-xl font-bold">Review document details</h1>
+                <h1 className="text-xl font-bold">{t("Review document details")}</h1>
                 <p className="text-muted-foreground mt-1 text-sm">
-                  Confirm the details below so your principals can verify this document.
+                  {t("Confirm the details below so your principals can verify this document.")}
                 </p>
               </div>
               {error && <p className="text-sm text-destructive">{error}</p>}
@@ -461,12 +518,15 @@ export function ProspectOnboarding({
           {step === "documents" && !pending && editing && (
             <section className="space-y-5">
               <div>
-                <h1 className="text-xl font-bold">Edit document details</h1>
+                <h1 className="text-xl font-bold">{t("Edit document details")}</h1>
+                {/* One sentence per case: the tail is a clause, and German would
+                    not hang it off the end the way English does. */}
                 <p className="text-muted-foreground mt-1 text-sm">
-                  Correct what this document says. The uploaded file itself isn't changed
                   {editing.doc.status === "valid"
-                    ? " — because procurement already approved these details, the document goes back for review."
-                    : "."}
+                    ? t(
+                        "Correct what this document says. The uploaded file itself isn't changed — because procurement already approved these details, the document goes back for review."
+                      )
+                    : t("Correct what this document says. The uploaded file itself isn't changed.")}
                 </p>
               </div>
               {error && <p className="text-sm text-destructive">{error}</p>}
@@ -512,8 +572,8 @@ export function ProspectOnboarding({
                       <Button
                         variant="outline"
                         size="icon-sm"
-                        title="Edit details"
-                        aria-label={`Edit the details of ${r.name}`}
+                        title={t("Edit details")}
+                        aria-label={t("Edit the details of {document}", { document: t(r.name) })}
                         onClick={() => startEdit(def.key)}
                       >
                         <Pencil className="w-3.5 h-3.5" />
@@ -521,8 +581,8 @@ export function ProspectOnboarding({
                       <Button
                         variant="destructive"
                         size="icon-sm"
-                        title="Delete document"
-                        aria-label={`Delete ${r.name}`}
+                        title={t("Delete document")}
+                        aria-label={t("Delete {document}", { document: t(r.name) })}
                         onClick={() => setConfirmDelete(live)}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -543,7 +603,7 @@ export function ProspectOnboarding({
                       {/* Uploading a file again supersedes the stored one and sends
                           the new version back for review. */}
                       <Button
-                        variant={!r.status || declined ? "dark" : "outline"}
+                        variant={!r.status || declined ? "default" : "outline"}
                         size="sm"
                         className="shrink-0"
                         disabled={uploading}
@@ -561,7 +621,7 @@ export function ProspectOnboarding({
                 }}
               />
               {/* Single hidden picker, targeted at whichever document is selected. */}
-              <input
+              <Input
                 ref={docInputRef}
                 type="file"
                 accept="application/pdf"
@@ -579,7 +639,7 @@ export function ProspectOnboarding({
                 </p>
               )}
               <WizardFooter onBack={() => setStep("company")}>
-                <Button variant="dark" disabled={!requiredStandardDone || submitting} onClick={submitForReview}>
+                <Button variant="default" disabled={!requiredStandardDone || submitting} onClick={submitForReview}>
                   {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                   {t("Submit for Review")} <ArrowRight className="w-4 h-4" />
                 </Button>
@@ -618,6 +678,9 @@ export function ProspectOnboarding({
           </>
           )}
         </div>
+        </div>
+
+        <ChatDock conversation={chat.conversation} onClose={chat.close} />
       </div>
     </div>
   );
@@ -706,7 +769,7 @@ function WelcomeStep({
         <div
           className="mt-3 max-h-64 overflow-y-auto rounded-lg border border-border bg-secondary/30 p-3 space-y-3"
           tabIndex={0}
-          aria-label="Terms and Conditions"
+          aria-label={t("Terms and Conditions")}
         >
           {TERMS_SECTIONS.map((sec) => (
             <div key={sec.heading}>
@@ -716,7 +779,7 @@ function WelcomeStep({
           ))}
         </div>
 
-        <label className="mt-3 flex items-start gap-2.5 cursor-pointer">
+        <Label className="mt-3 items-start gap-2.5 cursor-pointer font-normal leading-normal">
           <Checkbox
             checked={termsAccepted}
             disabled={termsAccepted || savingTerms}
@@ -750,7 +813,7 @@ function WelcomeStep({
               );
             })()}
           </span>
-        </label>
+        </Label>
 
         {savingTerms && (
           <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1.5">
@@ -777,7 +840,7 @@ function WelcomeStep({
 
       {!rejected && (
         <>
-          <Button variant="dark" className="w-full mt-6" disabled={!termsAccepted} onClick={onNext}>
+          <Button variant="default" className="w-full mt-6" disabled={!termsAccepted} onClick={onNext}>
             {changesRequested ? t("Update & Resubmit My Details") : t("Review & Confirm My Details")}{" "}
             <ArrowRight className="w-4 h-4" />
           </Button>
@@ -866,7 +929,7 @@ function CompanyStep({
       </div>
 
       <WizardFooter onBack={onBack}>
-        <Button variant="dark" disabled={saving} onClick={onSubmit}>
+        <Button variant="default" disabled={saving} onClick={onSubmit}>
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
           {approved ? t("Continue") : t("Submit My Details")} <ArrowRight className="w-4 h-4" />
         </Button>
@@ -902,97 +965,38 @@ function FormField({
   );
 }
 
-/* ── Document rows ────────────────────────────────────────────────────── */
-function UploadRow({
-  row,
-  status,
-  statusNote,
-  uploading,
-  onFile,
-}: {
-  row: DocRowDef;
-  /** Live status from the shared data (undefined = not uploaded yet). */
-  status?: DocStatus;
-  statusNote?: string;
-  uploading: boolean;
-  onFile: (file: File) => void;
-}) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const meta = status ? docStatusMeta(status) : null;
-  // A declined document has to be replaced, so keep the upload affordance.
-  const canUpload = !status || status === "rejected-resubmit";
-  return (
-    <Card className="rounded-xl border border-border ring-0 shadow-none [--card-spacing:1rem] px-(--card-spacing)">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-start gap-3 min-w-0">
-          <FileText className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
-          <div className="min-w-0">
-            <p className="text-sm font-semibold truncate">
-              {row.name}
-              {row.required && <span className="text-destructive"> *</span>}
-            </p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {status === "rejected-resubmit" && statusNote ? `Declined — “${statusNote}”` : row.hint}
-            </p>
-          </div>
-        </div>
-        <input
-          ref={inputRef}
-          type="file"
-          accept="application/pdf"
-          className="hidden"
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            e.target.value = "";
-            if (f) onFile(f);
-          }}
-        />
-        <div className="flex items-center gap-2 shrink-0">
-          {meta && (
-            <Badge variant={meta.variant as any}>
-              <meta.Icon className="w-3 h-3" />
-              {meta.label}
-            </Badge>
-          )}
-          {canUpload && (
-            <Button variant="outline" size="xs" disabled={uploading} onClick={() => inputRef.current?.click()}>
-              {uploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
-              {status === "rejected-resubmit" ? "Replace" : "Upload"}
-            </Button>
-          )}
-        </div>
-      </div>
-    </Card>
-  );
-}
-
 /* ── Step 5: Done ─────────────────────────────────────────────────────── */
 function DoneStep() {
+  const { t } = useI18n();
   return (
     <section className="text-center pt-6">
       <div className="w-12 h-12 rounded-full bg-success-soft mx-auto flex items-center justify-center">
         <CheckCircle2 className="w-6 h-6 text-success" />
       </div>
-      <h1 className="text-2xl font-bold mt-4">You're all done!</h1>
+      <h1 className="text-2xl font-bold mt-4">{t("You're all done!")}</h1>
       <p className="text-muted-foreground mt-2 text-sm max-w-md mx-auto">
-        Your profile and all required documents have been submitted. Sabine Müller at Lynk will now complete
-        the qualification review. You'll receive an email once a decision has been made.
+        {t(
+          "Your profile and all required documents have been submitted. {manager} at Lynk will now complete the qualification review. You'll receive an email once a decision has been made.",
+          { manager: PROCUREMENT_MANAGER }
+        )}
       </p>
 
       <Card className="rounded-2xl border border-border ring-0 shadow-none text-left mt-6 [--card-spacing:1.25rem] px-(--card-spacing)">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">
-          What happens next
+          {t("What happens next")}
         </p>
         <ol className="space-y-2">
           {[
-            "Procurement team reviews your qualification score",
-            "You'll be notified by email of the outcome",
-            `If approved, ${PRINCIPAL} will send you the main contract and pricing catalogues to review and sign`,
-            "Signing the contracts activates your supplier account",
-          ].map((t, i) => (
+            t("Procurement team reviews your qualification score"),
+            t("You'll be notified by email of the outcome"),
+            t("If approved, {principal} will send you the main contract and pricing catalogues to review and sign", {
+              principal: PRINCIPAL,
+            }),
+            t("Signing the contracts activates your supplier account"),
+          ].map((line, i) => (
             <li key={i} className="flex gap-2 text-sm">
               <span className="text-primary font-semibold">{i + 1}</span>
-              <span className="text-muted-foreground">{t}</span>
+              <span className="text-muted-foreground">{line}</span>
             </li>
           ))}
         </ol>
@@ -1001,7 +1005,7 @@ function DoneStep() {
       <div className="mt-4 flex items-start gap-2 rounded-lg border border-border bg-accent/5 p-3 text-left">
         <ShieldCheck className="w-4 h-4 text-accent shrink-0 mt-0.5" />
         <p className="text-xs text-muted-foreground">
-          Your data is protected under GDPR. You can request deletion at any time.
+          {t("Your data is protected under GDPR. You can request deletion at any time.")}
         </p>
       </div>
     </section>
@@ -1073,13 +1077,16 @@ function ContractsStep({
               const rowSigned = signed.has(c.id);
               const active = c.id === selected.id;
               return (
-                <button
+                <Button
                   key={c.id}
                   type="button"
+                  variant="ghost"
                   onClick={() => select(c.id)}
                   className={cn(
-                    "w-full text-left flex items-start gap-3 rounded-xl border p-3 transition-colors",
-                    active ? "border-primary bg-secondary/50" : "border-border hover:bg-secondary/40"
+                    "h-auto w-full items-start justify-start gap-3 rounded-xl border p-3 text-left font-normal whitespace-normal",
+                    active
+                      ? "border-primary bg-secondary/50 hover:bg-secondary/50 dark:hover:bg-secondary/50"
+                      : "border-border hover:bg-secondary/40 dark:hover:bg-secondary/40"
                   )}
                 >
                   <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-secondary">
@@ -1092,11 +1099,11 @@ function ContractsStep({
                     </span>
                   </span>
                   {rowSigned ? (
-                    <CheckCircle2 className="w-4 h-4 text-success-ink shrink-0 mt-0.5" aria-label="Signed" />
+                    <CheckCircle2 className="w-4 h-4 text-success-ink shrink-0 mt-0.5" aria-label={t("Signed")} />
                   ) : (
-                    <span className="mt-1.5 w-2 h-2 rounded-full bg-warning shrink-0" aria-label="Awaiting signature" />
+                    <span className="mt-1.5 w-2 h-2 rounded-full bg-warning shrink-0" aria-label={t("Awaiting signature")} />
                   )}
-                </button>
+                </Button>
               );
             })}
           </div>
@@ -1133,16 +1140,16 @@ function ContractsStep({
               </div>
             ) : (
               <div className="space-y-3">
-                <label className="flex items-start gap-2.5 cursor-pointer">
+                <Label className="items-start gap-2.5 cursor-pointer font-normal leading-normal">
                   <Checkbox checked={agreed} onCheckedChange={(v) => setAgreed(v === true)} className="mt-0.5" />
                   <span className="text-sm">
                     {selected.kind === "catalogue"
                       ? t("I have read and agree to this pricing catalogue, and I am authorised to sign on behalf of my company.")
                       : t("I have read and agree to this agreement, and I am authorised to sign on behalf of my company.")}
                   </span>
-                </label>
+                </Label>
                 <div className="flex justify-end">
-                  <Button variant="dark" disabled={!agreed} onClick={sign}>
+                  <Button variant="default" disabled={!agreed} onClick={sign}>
                     <PenLine className="w-4 h-4" />
                     {t("Sign as {name}", { name: signerName })}
                   </Button>
@@ -1154,7 +1161,7 @@ function ContractsStep({
       </div>
 
       <WizardFooter>
-        <Button variant="dark" disabled={!allSigned} onClick={onActivate}>
+        <Button variant="default" disabled={!allSigned} onClick={onActivate}>
           {t("Activate supplier account")} <ArrowRight className="w-4 h-4" />
         </Button>
       </WizardFooter>
@@ -1182,33 +1189,36 @@ function SupplierActivatedStep({ company }: { company: string }) {
 
 // Faux paper document shown big in the Contracts pane — a stand-in for the real
 // PDF the Principal would send.
+// Static width classes, not a style prop: Tailwind needs to see each one in source.
+const LINE_WIDTHS = ["w-full", "w-[94%]", "w-[97%]", "w-[88%]", "w-[72%]", "w-[96%]", "w-[80%]"];
+
 function ContractPreview({ contract }: { contract: PrincipalContract }) {
   const isCatalogue = contract.kind === "catalogue";
   return (
-    <div className="mx-auto w-full max-w-[620px] bg-white text-slate-900 shadow-md rounded-sm p-10">
-      <div className="flex items-start justify-between border-b border-slate-200 pb-4">
+    <div className="mx-auto w-full max-w-[620px] bg-paper text-paper-foreground shadow-md rounded-sm p-10">
+      <div className="flex items-start justify-between border-b border-paper-border pb-4">
         <div>
           <div className="text-lg font-bold tracking-tight">{PRINCIPAL}</div>
-          <div className="text-[11px] text-slate-500">Procurement</div>
+          <div className="text-[11px] text-paper-muted">Procurement</div>
         </div>
-        <div className="text-right text-[10px] uppercase tracking-wide text-slate-500 font-semibold">
+        <div className="text-right text-[10px] uppercase tracking-wide text-paper-muted font-semibold">
           {isCatalogue ? "Price List" : "Agreement"}
         </div>
       </div>
 
       <div className="mt-7 text-xl font-bold leading-tight">{contract.name}</div>
-      <div className="text-xs text-slate-500 mt-1">{contract.meta}</div>
-      <p className="text-sm text-slate-600 mt-4 leading-relaxed">{contract.summary}</p>
+      <div className="text-xs text-paper-muted mt-1">{contract.meta}</div>
+      <p className="text-sm text-paper-secondary mt-4 leading-relaxed">{contract.summary}</p>
 
       <div className="mt-6 space-y-2.5">
-        {[100, 94, 97, 88, 72, 96, 80].map((w, i) => (
-          <div key={i} className="h-2.5 rounded bg-slate-100" style={{ width: `${w}%` }} />
+        {LINE_WIDTHS.map((w, i) => (
+          <div key={i} className={`h-2.5 rounded bg-paper-tint ${w}`} />
         ))}
       </div>
 
       {isCatalogue && (
-        <div className="mt-6 border border-slate-200 rounded overflow-hidden text-xs">
-          <div className="grid grid-cols-[1fr_auto] gap-4 bg-slate-50 font-semibold text-slate-600 px-3 py-2">
+        <div className="mt-6 border border-paper-border rounded overflow-hidden text-xs">
+          <div className="grid grid-cols-[1fr_auto] gap-4 bg-paper-header font-semibold text-paper-secondary px-3 py-2">
             <span>Service</span>
             <span>Rate (applied to work orders)</span>
           </div>
@@ -1218,20 +1228,20 @@ function ContractPreview({ contract }: { contract: PrincipalContract }) {
             ["Emergency response", "€ 120 / h"],
             ["Weekend surcharge", "+ 25 %"],
           ].map(([service, rate]) => (
-            <div key={service} className="grid grid-cols-[1fr_auto] gap-4 px-3 py-2 border-t border-slate-100">
-              <span className="text-slate-700">{service}</span>
-              <span className="text-slate-700 font-medium">{rate}</span>
+            <div key={service} className="grid grid-cols-[1fr_auto] gap-4 px-3 py-2 border-t border-paper-tint">
+              <span className="text-paper-value">{service}</span>
+              <span className="text-paper-value font-medium">{rate}</span>
             </div>
           ))}
         </div>
       )}
 
-      <div className="mt-8 border-t border-dashed border-slate-200 pt-5 flex items-end justify-between">
+      <div className="mt-8 border-t border-dashed border-paper-border pt-5 flex items-end justify-between">
         <div>
-          <div className="h-px w-36 bg-slate-300" />
-          <div className="text-[11px] text-slate-500 mt-1">Supplier signature</div>
+          <div className="h-px w-36 bg-paper-rule" />
+          <div className="text-[11px] text-paper-muted mt-1">Supplier signature</div>
         </div>
-        <div className="text-[10px] text-slate-400 max-w-[45%] text-right">
+        <div className="text-[10px] text-paper-subtle max-w-[45%] text-right">
           Mock document — for UI/UX prototype only
         </div>
       </div>

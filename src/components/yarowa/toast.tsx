@@ -1,83 +1,7 @@
-import { useSyncExternalStore } from "react";
 import { CheckCircle2, AlertTriangle, Info, X, Undo2 } from "lucide-react";
-
-/*
- * Lightweight, dependency-free toast system.
- *
- * A module-level store lets `toast(...)` be called from anywhere (pages,
- * drawers, event handlers) without threading a context through props.
- * Mount a single <Toaster /> near the app root to render them.
- */
-
-export type ToastTone = "default" | "success" | "warning" | "critical";
-
-export interface ToastAction {
-  label: string;
-  onClick: () => void;
-}
-
-export interface Toast {
-  id: number;
-  title: string;
-  description?: string;
-  tone: ToastTone;
-  action?: ToastAction;
-  duration: number;
-}
-
-type Listener = () => void;
-
-let toasts: Toast[] = [];
-let nextId = 1;
-const listeners = new Set<Listener>();
-const timers = new Map<number, ReturnType<typeof setTimeout>>();
-
-function emit() {
-  // New array identity so useSyncExternalStore detects the change.
-  toasts = [...toasts];
-  listeners.forEach((l) => l());
-}
-
-function subscribe(l: Listener) {
-  listeners.add(l);
-  return () => listeners.delete(l);
-}
-
-export function dismissToast(id: number) {
-  const timer = timers.get(id);
-  if (timer) {
-    clearTimeout(timer);
-    timers.delete(id);
-  }
-  toasts = toasts.filter((t) => t.id !== id);
-  emit();
-}
-
-export function toast(input: {
-  title: string;
-  description?: string;
-  tone?: ToastTone;
-  action?: ToastAction;
-  duration?: number;
-}) {
-  const id = nextId++;
-  const duration = input.duration ?? 4500;
-  const t: Toast = {
-    id,
-    title: input.title,
-    description: input.description,
-    tone: input.tone ?? "default",
-    action: input.action,
-    duration,
-  };
-  toasts = [...toasts, t];
-  emit();
-  timers.set(
-    id,
-    setTimeout(() => dismissToast(id), duration)
-  );
-  return id;
-}
+import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n-context";
+import { dismissToast, useToasts, type ToastTone } from "@/lib/toast";
 
 const TONE_ICON = {
   default: Info,
@@ -94,7 +18,9 @@ const TONE_ICON_COLOR: Record<ToastTone, string> = {
 };
 
 export function Toaster() {
-  const items = useSyncExternalStore(subscribe, () => toasts, () => toasts);
+  // `t` is the toast in this scope, so the translator takes the pages' alias.
+  const { t: tr } = useI18n();
+  const items = useToasts();
 
   if (items.length === 0) return null;
 
@@ -116,24 +42,26 @@ export function Toaster() {
               )}
             </div>
             {t.action && (
-              <button
+              <Button
+                variant="ghost"
                 onClick={() => {
                   t.action!.onClick();
                   dismissToast(t.id);
                 }}
-                className="shrink-0 inline-flex items-center gap-1 text-xs font-semibold text-accent hover:underline"
+                className="h-auto shrink-0 gap-1 border-0 p-0 text-xs font-semibold text-accent hover:bg-transparent hover:text-accent hover:underline dark:hover:bg-transparent"
               >
-                <Undo2 size={13} />
+                <Undo2 size={13} className="size-[13px]" />
                 {t.action.label}
-              </button>
+              </Button>
             )}
-            <button
+            <Button
+              variant="ghost"
               onClick={() => dismissToast(t.id)}
-              className="shrink-0 text-muted-foreground hover:text-foreground"
-              aria-label="Dismiss"
+              className="h-auto shrink-0 border-0 p-0 text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
+              aria-label={tr("Dismiss")}
             >
-              <X size={15} />
-            </button>
+              <X size={15} className="size-[15px]" />
+            </Button>
           </div>
         );
       })}

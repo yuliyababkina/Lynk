@@ -1,5 +1,7 @@
-import { useI18n, type Lang } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n-context";
+import type { Lang } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 /*
  * Compact EN | DE segmented toggle for the header. One click flips language,
@@ -9,37 +11,38 @@ import { cn } from "@/lib/utils";
 const LANGS: Lang[] = ["en", "de"];
 
 export function LanguageToggle({ tone = "light" }: { tone?: "light" | "dark" }) {
-  const { lang, setLang } = useI18n();
+  const { lang, setLang, t } = useI18n();
   return (
     <div
       role="group"
-      aria-label="Language"
+      aria-label={t("Language")}
       className={cn(
         "inline-flex items-center rounded-full p-0.5 text-[11px] font-semibold",
-        tone === "dark" ? "bg-white/10" : "bg-secondary"
+        tone === "dark" ? "bg-brand-navy-foreground/10" : "bg-secondary"
       )}
     >
       {LANGS.map((l) => {
         const active = lang === l;
         return (
-          <button
+          <Button
             key={l}
             type="button"
+            variant="ghost"
             onClick={() => setLang(l)}
             aria-pressed={active}
             className={cn(
-              "px-2 py-0.5 rounded-full uppercase tracking-wide transition-colors",
+              "h-auto rounded-full border-0 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide hover:bg-transparent dark:hover:bg-transparent",
               active
                 ? tone === "dark"
-                  ? "bg-white text-brand-navy"
-                  : "bg-card text-foreground shadow-sm"
+                  ? "bg-brand-navy-foreground text-brand-navy hover:bg-brand-navy-foreground hover:text-brand-navy dark:hover:bg-brand-navy-foreground"
+                  : "bg-card text-foreground shadow-sm hover:bg-card dark:hover:bg-card"
                 : tone === "dark"
-                  ? "text-white/60 hover:text-white"
+                  ? "text-brand-navy-foreground/60 hover:text-brand-navy-foreground"
                   : "text-muted-foreground hover:text-foreground"
             )}
           >
             {l}
-          </button>
+          </Button>
         );
       })}
     </div>

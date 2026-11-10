@@ -21,8 +21,8 @@ function Checkbox({
         data-slot="checkbox-indicator"
         className="grid place-content-center text-current transition-none [&>svg]:size-3.5"
       >
-        <CheckIcon
-        />
+        {/* Own size class: a parent <Button> forces unsized child SVGs to 16px. */}
+        <CheckIcon className="size-3.5" />
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>
   )

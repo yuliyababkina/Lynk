@@ -29,15 +29,15 @@ const TYPE_KEYWORDS: [RegExp, string][] = [
 
 /** Labelled lines we accept as the issuing body, in order of confidence. */
 const ISSUER_PATTERNS = [
-  /(?:issued\s*by|issuer|issuing\s*(?:authority|institution|body))\s*[:\-]\s*([^\n]+)/i,
-  /(?:authority|registry|chamber)\s*[:\-]\s*([^\n]+)/i,
+  /(?:issued\s*by|issuer|issuing\s*(?:authority|institution|body))\s*[:-]\s*([^\n]+)/i,
+  /(?:authority|registry|chamber)\s*[:-]\s*([^\n]+)/i,
 ];
 /* A "Bank:" line only identifies the issuer on a bank document — on any other
  * document it's the supplier's account details, not who issued the paper. */
-const BANK_ISSUER = /\bbank\s*[:\-]\s*([^\n]+)/i;
+const BANK_ISSUER = /\bbank\s*[:-]\s*([^\n]+)/i;
 
 const EXPIRY_PATTERNS = [
-  /(?:expiry|expires|expiry\s*date|valid\s*until|valid\s*through|expiration)\s*[:\-]?\s*([^\n]+)/i,
+  /(?:expiry|expires|expiry\s*date|valid\s*until|valid\s*through|expiration)\s*[:-]?\s*([^\n]+)/i,
   /valid\s*from[^\n]*?\bto\b\s*([^\n]+)/i,
 ];
 
