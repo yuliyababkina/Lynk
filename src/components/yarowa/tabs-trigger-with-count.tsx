@@ -16,8 +16,10 @@ export function TabsTriggerWithCount({
   ...props
 }: ComponentProps<typeof TabsTrigger> & { count: number }) {
   return (
-    <TabsTrigger {...props}>
-      {children}
+    <TabsTrigger title={typeof children === "string" ? children : undefined} {...props}>
+      {/* The label truncates when the trigger is wider than its row; the
+          badge (shrink-0) stays visible. */}
+      <span className="truncate">{children}</span>
       <Badge variant="count">{count}</Badge>
     </TabsTrigger>
   );
