@@ -3,9 +3,9 @@ import { Badge } from "@/components/ui/badge";
 import { TabsTrigger } from "@/components/ui/tabs";
 
 /**
- * @custom   Onboarding and Suppliers Overview both render a TabsTrigger with a
- *           count Badge after the label. shadcn Tabs has no count slot, and the
- *           markup now repeats on two screens, so it lives here once. It is a
+ * @custom   Dashboard, Onboarding and Suppliers Overview all render a TabsTrigger
+ *           with a count Badge after the label. shadcn Tabs has no count slot, and
+ *           the markup repeats on three screens, so it lives here once. It is a
  *           pure composition of TabsTrigger + Badge (variant="count"): all
  *           styling stays in ui/tabs.tsx and ui/badge.tsx.
  * @approved Yuliya Babkina, 2026-11-12
