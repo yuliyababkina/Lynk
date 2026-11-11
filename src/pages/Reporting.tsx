@@ -1,6 +1,6 @@
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Pill } from "@/components/yarowa/pill";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
 import { useI18n } from "@/lib/i18n-context";
 
@@ -22,105 +22,108 @@ export function Reporting() {
         </Button>
       </div>
 
-      <div className="flex gap-1 mb-4">
-        {(["Q1 2026", "Q4 2025", "Last 12 months"] as const).map((p) => (
-          <Pill key={p} active={period === p} onClick={() => setPeriod(p)}>
-            {tr(p)}
-          </Pill>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-6 gap-3 mb-5">
-        {[
-          { label: "Compliance Rate", value: "76%", delta: "-5pp vs prior period" },
-          { label: "Avg Supplier Score", value: "80", delta: "-1 pts vs prior period" },
-          { label: "Active Suppliers", value: "10", delta: "+2 onboarded this period" },
-          { label: "At Risk", value: "4", delta: "red or warning compliance" },
-          { label: "Critical Flags", value: "1", delta: "require immediate action" },
-          { label: "Prospects Pending", value: "3", delta: "awaiting onboarding completion" },
-        ].map((c) => (
-          <div key={c.label} className="bg-card border border-border rounded-lg p-3">
-            <div className="text-xs text-muted-foreground mb-1">{tr(c.label)}</div>
-            <div className="text-xl font-bold">{c.value}</div>
-            <div className="text-[11px] text-muted-foreground mt-1">{tr(c.delta)}</div>
-          </div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <div className="bg-card border border-border rounded-lg p-4">
-          <div className="font-semibold text-sm mb-1">{tr("Compliance Rate & Avg Score Trend")}</div>
-          <div className="text-xs text-muted-foreground mb-3">{tr("Across all suppliers · {period}", { period: tr(period) })}</div>
-          <div className="h-40 flex items-end gap-3 px-2">
-            {["h-[81%]", "h-[79%]", "h-[83%]", "h-[80%]"].map((h, i) => (
-              <div key={i} className="h-full flex-1 flex flex-col items-center justify-end gap-1">
-                <div className={`w-full bg-accent/20 rounded-t ${h}`} />
-                <span className="text-[10px] text-muted-foreground">{["Q2 25", "Q3 25", "Q4 25", "Q1 26"][i]}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="bg-card border border-border rounded-lg p-4">
-          <div className="font-semibold text-sm mb-1">{tr("Score Distribution")}</div>
-          <div className="text-xs text-muted-foreground mb-3">{tr("Active suppliers by score band")}</div>
-          <div className="h-40 flex items-end gap-3 px-2">
+      <Tabs value={period} onValueChange={(v) => setPeriod(v as typeof period)} className="gap-4">
+        <TabsList>
+          {(["Q1 2026", "Q4 2025", "Last 12 months"] as const).map((p) => (
+            <TabsTrigger key={p} value={p}>
+              {tr(p)}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        <TabsContent value={period}>
+          <div className="grid grid-cols-6 gap-3 mb-5">
             {[
-              { band: "90-100", h: "h-1/2", color: "bg-success" },
-              { band: "80-89", h: "h-3/4", color: "bg-success/70" },
-              { band: "70-79", h: "h-1/2", color: "bg-high" },
-              { band: "60-69", h: "h-1/4", color: "bg-chart-orange" },
-              { band: "<60", h: "h-1/4", color: "bg-critical" },
-            ].map((b) => (
-              <div key={b.band} className="h-full flex-1 flex flex-col items-center justify-end gap-1">
-                <div className={`w-full ${b.color} rounded-t ${b.h}`} />
-                <span className="text-[10px] text-muted-foreground">{b.band}</span>
+              { label: "Compliance Rate", value: "76%", delta: "-5pp vs prior period" },
+              { label: "Avg Supplier Score", value: "80", delta: "-1 pts vs prior period" },
+              { label: "Active Suppliers", value: "10", delta: "+2 onboarded this period" },
+              { label: "At Risk", value: "4", delta: "red or warning compliance" },
+              { label: "Critical Flags", value: "1", delta: "require immediate action" },
+              { label: "Prospects Pending", value: "3", delta: "awaiting onboarding completion" },
+            ].map((c) => (
+              <div key={c.label} className="bg-card border border-border rounded-lg p-3">
+                <div className="text-xs text-muted-foreground mb-1">{tr(c.label)}</div>
+                <div className="text-xl font-bold">{c.value}</div>
+                <div className="text-[11px] text-muted-foreground mt-1">{tr(c.delta)}</div>
               </div>
             ))}
           </div>
-        </div>
-      </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="bg-card border border-border rounded-lg p-4">
-          <div className="font-semibold text-sm mb-1">{tr("Compliance Rate by Trade")}</div>
-          <div className="text-xs text-muted-foreground mb-3">{tr("Percentage of suppliers with no critical flags")}</div>
-          <div className="space-y-2">
-            {[
-              { label: "Consulting", w: "w-full", color: "bg-success" },
-              { label: "HVAC", w: "w-full", color: "bg-success" },
-              { label: "Plumbing", w: "w-full", color: "bg-success" },
-              { label: "IT Services", w: "w-[65%]", color: "bg-critical" },
-              { label: "Manufacturing", w: "w-[40%]", color: "bg-critical" },
-            ].map((r) => (
-              <div key={r.label} className="flex items-center gap-2 text-xs">
-                <span className="w-24 text-muted-foreground">{tr(r.label)}</span>
-                <div className="flex-1 bg-secondary rounded h-2">
-                  <div className={`${r.color} h-2 rounded ${r.w}`} />
-                </div>
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="bg-card border border-border rounded-lg p-4">
+              <div className="font-semibold text-sm mb-1">{tr("Compliance Rate & Avg Score Trend")}</div>
+              <div className="text-xs text-muted-foreground mb-3">{tr("Across all suppliers · {period}", { period: tr(period) })}</div>
+              <div className="h-40 flex items-end gap-3 px-2">
+                {["h-[81%]", "h-[79%]", "h-[83%]", "h-[80%]"].map((h, i) => (
+                  <div key={i} className="h-full flex-1 flex flex-col items-center justify-end gap-1">
+                    <div className={`w-full bg-accent/20 rounded-t ${h}`} />
+                    <span className="text-[10px] text-muted-foreground">{["Q2 25", "Q3 25", "Q4 25", "Q1 26"][i]}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
-        <div className="bg-card border border-border rounded-lg p-4">
-          <div className="font-semibold text-sm mb-1">{tr("Network Composition")}</div>
-          <div className="text-xs text-muted-foreground mb-3">{tr("Contacts by lifecycle stage")}</div>
-          <div className="flex items-center gap-6">
-            <div className="w-28 h-28 rounded-full border-[14px] border-accent border-r-success border-b-purple" />
-            <div className="space-y-1 text-sm">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-medium" /> {tr("{count} Prospects", { count: 3 })}
+            </div>
+            <div className="bg-card border border-border rounded-lg p-4">
+              <div className="font-semibold text-sm mb-1">{tr("Score Distribution")}</div>
+              <div className="text-xs text-muted-foreground mb-3">{tr("Active suppliers by score band")}</div>
+              <div className="h-40 flex items-end gap-3 px-2">
+                {[
+                  { band: "90-100", h: "h-1/2", color: "bg-success" },
+                  { band: "80-89", h: "h-3/4", color: "bg-success/70" },
+                  { band: "70-79", h: "h-1/2", color: "bg-high" },
+                  { band: "60-69", h: "h-1/4", color: "bg-chart-orange" },
+                  { band: "<60", h: "h-1/4", color: "bg-critical" },
+                ].map((b) => (
+                  <div key={b.band} className="h-full flex-1 flex flex-col items-center justify-end gap-1">
+                    <div className={`w-full ${b.color} rounded-t ${b.h}`} />
+                    <span className="text-[10px] text-muted-foreground">{b.band}</span>
+                  </div>
+                ))}
               </div>
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-success" /> {tr("{count} Suppliers", { count: 5 })}
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-purple" /> {tr("{count} Providers", { count: 2 })}
-              </div>
-              <div className="text-xs text-muted-foreground pt-1">{tr("{count} total network contacts", { count: 10 })}</div>
             </div>
           </div>
-        </div>
-      </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-card border border-border rounded-lg p-4">
+              <div className="font-semibold text-sm mb-1">{tr("Compliance Rate by Trade")}</div>
+              <div className="text-xs text-muted-foreground mb-3">{tr("Percentage of suppliers with no critical flags")}</div>
+              <div className="space-y-2">
+                {[
+                  { label: "Consulting", w: "w-full", color: "bg-success" },
+                  { label: "HVAC", w: "w-full", color: "bg-success" },
+                  { label: "Plumbing", w: "w-full", color: "bg-success" },
+                  { label: "IT Services", w: "w-[65%]", color: "bg-critical" },
+                  { label: "Manufacturing", w: "w-[40%]", color: "bg-critical" },
+                ].map((r) => (
+                  <div key={r.label} className="flex items-center gap-2 text-xs">
+                    <span className="w-24 text-muted-foreground">{tr(r.label)}</span>
+                    <div className="flex-1 bg-secondary rounded h-2">
+                      <div className={`${r.color} h-2 rounded ${r.w}`} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="bg-card border border-border rounded-lg p-4">
+              <div className="font-semibold text-sm mb-1">{tr("Network Composition")}</div>
+              <div className="text-xs text-muted-foreground mb-3">{tr("Contacts by lifecycle stage")}</div>
+              <div className="flex items-center gap-6">
+                <div className="w-28 h-28 rounded-full border-[14px] border-accent border-r-success border-b-purple" />
+                <div className="space-y-1 text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-medium" /> {tr("{count} Prospects", { count: 3 })}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-success" /> {tr("{count} Suppliers", { count: 5 })}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-purple" /> {tr("{count} Providers", { count: 2 })}
+                  </div>
+                  <div className="text-xs text-muted-foreground pt-1">{tr("{count} total network contacts", { count: 10 })}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
