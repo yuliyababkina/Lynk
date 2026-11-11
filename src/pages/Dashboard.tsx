@@ -7,6 +7,8 @@ import {
 } from "lucide-react";
 import { useLynkData } from "../lib/lynk-data-context";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
+import { TabsTriggerWithCount } from "@/components/yarowa/tabs-trigger-with-count";
 import { TaskGroupCard, TaskRow } from "@/components/yarowa/task-group-card";
 import { TicketStatusMenu } from "@/components/yarowa/ticket-status-menu";
 import { CriticalityIcon } from "@/components/yarowa/criticality-icon";
@@ -111,75 +113,161 @@ export function Dashboard({
       <h1 className="text-2xl font-bold mb-1">{tr("Task Queue")}</h1>
       <p className="text-sm text-muted-foreground mb-4">{tr("Sorted by criticality. Click a ticket to open it.")}</p>
 
-      <div className="flex flex-wrap gap-2 mb-6">
-        {(["All tickets", ...CATEGORIES] as const).map((f) => (
-          <Button
-            key={f}
-            variant="ghost"
-            onClick={() => setFilter(f)}
-            className={`h-auto gap-2 rounded-full px-3.5 py-2 text-sm font-medium ${
-              filter === f
-                ? "border-primary bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground dark:hover:bg-primary"
-                : "border-border bg-card text-foreground hover:bg-secondary/50 dark:hover:bg-secondary/50"
-            }`}
-          >
-            {tr(f)}
-            <span
-              className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-xs font-bold ${
-                filter === f ? "bg-primary-foreground/20 text-primary-foreground" : "bg-secondary text-secondary-foreground"
-              }`}
-            >
-              {counts[f]}
-            </span>
-          </Button>
-        ))}
-      </div>
-
-      {grouped.length === 0 && (
-        <div className="border border-dashed border-border rounded-2xl py-16 text-center">
-          <Check className="mx-auto mb-3 text-success-ink" size={28} />
-          <p className="text-sm font-medium">{tr("You're all caught up")}</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            No open tickets{filter !== "All tickets" ? ` in ${filter}` : ""}.
-          </p>
+      <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)} className="gap-6">
+        <div className="overflow-x-auto">
+          <TabsList>
+            {(["All tickets", ...CATEGORIES] as const).map((f) => (
+              <TabsTriggerWithCount key={f} value={f} count={counts[f]}>
+                {tr(f)}
+              </TabsTriggerWithCount>
+            ))}
+          </TabsList>
         </div>
-      )}
+        <TabsContent value={filter}>
+          {grouped.length === 0 && (
+            <div className="border border-dashed border-border rounded-2xl py-16 text-center">
+              <Check className="mx-auto mb-3 text-success-ink" size={28} />
+              <p className="text-sm font-medium">{tr("You're all caught up")}</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                No open tickets{filter !== "All tickets" ? ` in ${filter}` : ""}.
+              </p>
+            </div>
+          )}
 
-      {/* Two columns only while both stay wide enough to hold a full ticket
-          row; below that one wide column beats two cramped ones. Measured on
-          this page's own width, which the chat dock changes. */}
-      <div className="grid grid-cols-1 @min-[60rem]:grid-cols-2 gap-4">
-        {grouped.map((group) => {
-          const isExpanded = expanded.has(group.criticality);
-          const hasOverflow = group.tickets.length > COLLAPSED_ROWS;
-          const visible = isExpanded ? group.tickets : group.tickets.slice(0, COLLAPSED_ROWS);
-          return (
+          {/* Two columns only while both stay wide enough to hold a full ticket
+              row; below that one wide column beats two cramped ones. Measured on
+              this page's own width, which the chat dock changes. */}
+          <div className="grid grid-cols-1 @min-[60rem]:grid-cols-2 gap-4">
+            {grouped.map((group) => {
+              const isExpanded = expanded.has(group.criticality);
+              const hasOverflow = group.tickets.length > COLLAPSED_ROWS;
+              const visible = isExpanded ? group.tickets : group.tickets.slice(0, COLLAPSED_ROWS);
+              return (
+                <TaskGroupCard
+                  key={group.criticality}
+                  icon={<CriticalityIcon criticality={group.criticality} size={17} />}
+                  label={tr(criticalityLabel[group.criticality])}
+                  count={group.tickets.length}
+                >
+                  {visible.map((t) => {
+                    const ActionIcon = ACTION_ICON[t.primaryAction];
+                    const CategoryIcon = CATEGORY_ICON[t.category];
+                    /* Same inline pairing the supplier portal uses: the action, then
+                       Chat beside it. Resolved by display name like the subline's
+                       supplier link, so a ticket about a company we hold no
+                       relationship with simply gets no Chat button. */
+                    const chatSupplier = SUPPLIERS.find((s) => s.name === t.entityName);
+                    const chatUnread = chatSupplier
+                      ? unreadFor(relationshipId(PRINCIPAL_ID, chatSupplier.id), "principal")
+                      : 0;
+                    return (
+                      <TaskRow
+                        key={t.id}
+                        onClick={() => onSelectTicket(t)}
+                        icon={CategoryIcon && <CategoryIcon size={16} className="text-muted-foreground" aria-hidden="true" />}
+                        title={translateTicketTitle(t.title, tr)}
+                        subline={
+                          <>
+                            {tr(t.entityType)} ·{" "}
+                            <Button
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onOpenSupplier(t.entityName);
+                              }}
+                              className="inline-block h-auto border-0 p-0 text-xs font-normal whitespace-normal text-muted-foreground hover:bg-transparent hover:text-accent hover:underline dark:hover:bg-transparent"
+                            >
+                              {t.entityName}
+                            </Button>{" "}
+                            · {translateAgeLabel(t.ageLabel, tr)}
+                          </>
+                        }
+                        status={
+                          <TicketStatusMenu status={statusOf(t)} onChange={(s) => changeStatus(t, s)} align="start" />
+                        }
+                        action={
+                          <div className="flex items-center gap-1.5">
+                            <Button
+                              variant={t.criticality === "critical" || t.criticality === "high" ? "default" : "outline"}
+                              // The action opens the ticket in the drawer rather than
+                              // resolving straight from the row, so the action is always
+                              // taken with the ticket's full context in view.
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onSelectTicket(t);
+                              }}
+                            >
+                              {ActionIcon && <ActionIcon size={14} />}
+                              {tr(t.primaryAction)}
+                            </Button>
+                            {chatSupplier && (
+                              <Button
+                                variant="secondary"
+                                // The row itself opens the drawer, so the button has
+                                // to stop the click bubbling — same guard as above.
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onOpenChat?.(chatSupplier.id, {
+                                    type: "data-change",
+                                    id: t.targetId ?? t.id,
+                                    label: translateTicketTitle(t.title, tr),
+                                  });
+                                }}
+                              >
+                                <MessageSquare size={14} />
+                                {tr("Chat")}
+                                {chatUnread > 0 && (
+                                  <span className="ml-1 rounded-full bg-critical px-1.5 text-[10px] font-semibold text-critical-foreground">
+                                    {chatUnread}
+                                  </span>
+                                )}
+                              </Button>
+                            )}
+                          </div>
+                        }
+                      />
+                    );
+                  })}
+                  {hasOverflow && (
+                    <Button
+                      variant="ghost"
+                      onClick={() => toggleExpanded(group.criticality)}
+                      className="flex h-auto w-full gap-1.5 rounded-none border-0 px-4 py-2.5 text-xs font-medium text-muted-foreground hover:bg-secondary/40 hover:text-muted-foreground dark:hover:bg-secondary/40"
+                    >
+                      <ChevronDown
+                        size={14}
+                        className={`size-3.5 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                      />
+                      {isExpanded ? "Show less" : `Show ${group.tickets.length - COLLAPSED_ROWS} more`}
+                    </Button>
+                  )}
+                </TaskGroupCard>
+              );
+            })}
+          </div>
+
+          {resolvedFiltered.length > 0 && (
             <TaskGroupCard
-              key={group.criticality}
-              icon={<CriticalityIcon criticality={group.criticality} size={17} />}
-              label={tr(criticalityLabel[group.criticality])}
-              count={group.tickets.length}
+              className="mt-4"
+              icon={<CircleCheck size={17} strokeWidth={2.25} className="text-success" />}
+              label={tr("Resolved")}
+              count={resolvedFiltered.length}
             >
-              {visible.map((t) => {
-                const ActionIcon = ACTION_ICON[t.primaryAction];
+              {resolvedVisible.map((t) => {
                 const CategoryIcon = CATEGORY_ICON[t.category];
-                /* Same inline pairing the supplier portal uses: the action, then
-                   Chat beside it. Resolved by display name like the subline's
-                   supplier link, so a ticket about a company we hold no
-                   relationship with simply gets no Chat button. */
-                const chatSupplier = SUPPLIERS.find((s) => s.name === t.entityName);
-                const chatUnread = chatSupplier
-                  ? unreadFor(relationshipId(PRINCIPAL_ID, chatSupplier.id), "principal")
-                  : 0;
                 return (
                   <TaskRow
                     key={t.id}
                     onClick={() => onSelectTicket(t)}
+                    muted
                     icon={CategoryIcon && <CategoryIcon size={16} className="text-muted-foreground" aria-hidden="true" />}
                     title={translateTicketTitle(t.title, tr)}
                     subline={
-                      <>
-                        {tr(t.entityType)} ·{" "}
+                      <span className="flex items-center gap-1">
+                        {/* criticality demoted to a secondary tag once resolved */}
+                        <CriticalityIcon criticality={t.criticality} size={14} />
+                        {tr(criticalityLabel[t.criticality])}
+                        <span>·</span>
                         <Button
                           variant="ghost"
                           onClick={(e) => {
@@ -189,127 +277,30 @@ export function Dashboard({
                           className="inline-block h-auto border-0 p-0 text-xs font-normal whitespace-normal text-muted-foreground hover:bg-transparent hover:text-accent hover:underline dark:hover:bg-transparent"
                         >
                           {t.entityName}
-                        </Button>{" "}
-                        · {translateAgeLabel(t.ageLabel, tr)}
-                      </>
-                    }
-                    status={
-                      <TicketStatusMenu status={statusOf(t)} onChange={(s) => changeStatus(t, s)} align="start" />
-                    }
-                    action={
-                      <div className="flex items-center gap-1.5">
-                        <Button
-                          variant={t.criticality === "critical" || t.criticality === "high" ? "default" : "outline"}
-                          // The action opens the ticket in the drawer rather than
-                          // resolving straight from the row, so the action is always
-                          // taken with the ticket's full context in view.
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onSelectTicket(t);
-                          }}
-                        >
-                          {ActionIcon && <ActionIcon size={14} />}
-                          {tr(t.primaryAction)}
                         </Button>
-                        {chatSupplier && (
-                          <Button
-                            variant="secondary"
-                            // The row itself opens the drawer, so the button has
-                            // to stop the click bubbling — same guard as above.
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onOpenChat?.(chatSupplier.id, {
-                                type: "data-change",
-                                id: t.targetId ?? t.id,
-                                label: translateTicketTitle(t.title, tr),
-                              });
-                            }}
-                          >
-                            <MessageSquare size={14} />
-                            {tr("Chat")}
-                            {chatUnread > 0 && (
-                              <span className="ml-1 rounded-full bg-critical px-1.5 text-[10px] font-semibold text-critical-foreground">
-                                {chatUnread}
-                              </span>
-                            )}
-                          </Button>
-                        )}
-                      </div>
+                      </span>
                     }
+                    status={<TicketStatusMenu status={statusOf(t)} onChange={(s) => changeStatus(t, s)} align="end" />}
                   />
                 );
               })}
-              {hasOverflow && (
+              {resolvedFiltered.length > COLLAPSED_ROWS && (
                 <Button
                   variant="ghost"
-                  onClick={() => toggleExpanded(group.criticality)}
+                  onClick={() => setResolvedExpanded((v) => !v)}
                   className="flex h-auto w-full gap-1.5 rounded-none border-0 px-4 py-2.5 text-xs font-medium text-muted-foreground hover:bg-secondary/40 hover:text-muted-foreground dark:hover:bg-secondary/40"
                 >
                   <ChevronDown
                     size={14}
-                    className={`size-3.5 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                    className={`size-3.5 transition-transform ${resolvedExpanded ? "rotate-180" : ""}`}
                   />
-                  {isExpanded ? "Show less" : `Show ${group.tickets.length - COLLAPSED_ROWS} more`}
+                  {resolvedExpanded ? "Show less" : `Show ${resolvedFiltered.length - COLLAPSED_ROWS} more`}
                 </Button>
               )}
             </TaskGroupCard>
-          );
-        })}
-      </div>
-
-      {resolvedFiltered.length > 0 && (
-        <TaskGroupCard
-          className="mt-4"
-          icon={<CircleCheck size={17} strokeWidth={2.25} className="text-success" />}
-          label={tr("Resolved")}
-          count={resolvedFiltered.length}
-        >
-          {resolvedVisible.map((t) => {
-            const CategoryIcon = CATEGORY_ICON[t.category];
-            return (
-              <TaskRow
-                key={t.id}
-                onClick={() => onSelectTicket(t)}
-                muted
-                icon={CategoryIcon && <CategoryIcon size={16} className="text-muted-foreground" aria-hidden="true" />}
-                title={translateTicketTitle(t.title, tr)}
-                subline={
-                  <span className="flex items-center gap-1">
-                    {/* criticality demoted to a secondary tag once resolved */}
-                    <CriticalityIcon criticality={t.criticality} size={14} />
-                    {tr(criticalityLabel[t.criticality])}
-                    <span>·</span>
-                    <Button
-                      variant="ghost"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onOpenSupplier(t.entityName);
-                      }}
-                      className="inline-block h-auto border-0 p-0 text-xs font-normal whitespace-normal text-muted-foreground hover:bg-transparent hover:text-accent hover:underline dark:hover:bg-transparent"
-                    >
-                      {t.entityName}
-                    </Button>
-                  </span>
-                }
-                status={<TicketStatusMenu status={statusOf(t)} onChange={(s) => changeStatus(t, s)} align="end" />}
-              />
-            );
-          })}
-          {resolvedFiltered.length > COLLAPSED_ROWS && (
-            <Button
-              variant="ghost"
-              onClick={() => setResolvedExpanded((v) => !v)}
-              className="flex h-auto w-full gap-1.5 rounded-none border-0 px-4 py-2.5 text-xs font-medium text-muted-foreground hover:bg-secondary/40 hover:text-muted-foreground dark:hover:bg-secondary/40"
-            >
-              <ChevronDown
-                size={14}
-                className={`size-3.5 transition-transform ${resolvedExpanded ? "rotate-180" : ""}`}
-              />
-              {resolvedExpanded ? "Show less" : `Show ${resolvedFiltered.length - COLLAPSED_ROWS} more`}
-            </Button>
           )}
-        </TaskGroupCard>
-      )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
