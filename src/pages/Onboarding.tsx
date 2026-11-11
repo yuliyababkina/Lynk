@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
+import { TabsTriggerWithCount } from "@/components/yarowa/tabs-trigger-with-count";
 import { RowActionsMenu, type RowAction } from "@/components/yarowa/row-actions-menu";
 import { DetailDrawer } from "@/components/yarowa/detail-drawer";
 import {
@@ -287,10 +288,9 @@ export function Onboarding({
         <Tabs value={tab} onValueChange={(v) => setTab(v as OnbTab)} className="gap-4">
           <TabsList>
             {ONB_TABS.map((t) => (
-              <TabsTrigger key={t} value={t}>
+              <TabsTriggerWithCount key={t} value={t} count={cases.filter((c) => inTab(c, t)).length}>
                 {tr(t)}
-                <Badge variant="count">{cases.filter((c) => inTab(c, t)).length}</Badge>
-              </TabsTrigger>
+              </TabsTriggerWithCount>
             ))}
           </TabsList>
           <TabsContent value={tab}>

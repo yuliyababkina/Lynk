@@ -5,7 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
+import { TabsTriggerWithCount } from "@/components/yarowa/tabs-trigger-with-count";
 import { useI18n } from "@/lib/i18n-context";
 import { relationshipId } from "@/lib/db";
 import { PRINCIPAL_ID } from "@/data";
@@ -77,10 +78,9 @@ export function SuppliersOverview({
         <div className="flex items-center justify-between">
           <TabsList>
             {(["all", "prospect", "supplier", "provider"] as const).map((s) => (
-              <TabsTrigger key={s} value={s}>
+              <TabsTriggerWithCount key={s} value={s} count={counts[s]}>
                 {t(stageLabels[s])}
-                <Badge variant="count">{counts[s]}</Badge>
-              </TabsTrigger>
+              </TabsTriggerWithCount>
             ))}
           </TabsList>
           <div className="relative">
