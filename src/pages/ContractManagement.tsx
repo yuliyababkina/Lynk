@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useLynkData } from "../lib/lynk-data-context";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Pill } from "@/components/yarowa/pill";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertBanner } from "@/components/yarowa/alert-banner";
 import type { Contract, ContractStatus } from "../types";
 import { useI18n } from "@/lib/i18n-context";
@@ -74,56 +74,61 @@ export function ContractManagement({
         ))}
       </div>
 
-      <div className="flex gap-1 mb-4 border-b border-border pb-2">
-        {TABS.map((t) => (
-          <Pill key={t} active={tab === t} onClick={() => setTab(t)}>
-            {tr(t)}
-          </Pill>
-        ))}
-      </div>
-
-      <div className="bg-card border border-border rounded-lg overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="text-xs border-border hover:bg-transparent">
-              <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("SUPPLIER / CONTRACT")}</TableHead>
-              <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("ANNUAL VALUE")}</TableHead>
-              <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("END DATE")}</TableHead>
-              <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("TIME LEFT")}</TableHead>
-              <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("STATUS")}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtered.map((c) => (
-              <TableRow
-                key={c.id}
-                onClick={() => onSelectContract(c)}
-                className={`border-border cursor-pointer hover:bg-secondary/50 ${
-                  initialSelectedId === c.id ? "bg-secondary/50" : ""
-                }`}
-              >
-                <TableCell className="px-4 py-3 whitespace-normal">
-                  <div className="font-medium">{c.supplierName}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {c.ref} · {tr(c.type)}
-                  </div>
-                </TableCell>
-                <TableCell className="px-4 py-3 whitespace-normal">{tr("€{value} per year", { value: c.annualValue.toLocaleString() })}</TableCell>
-                <TableCell className="px-4 py-3 whitespace-normal">
-                  <div>{c.endDate}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {tr("Renewal by {date} · {notice} notice req.", { date: c.renewalBy, notice: c.noticePeriod })}
-                  </div>
-                </TableCell>
-                <TableCell className="px-4 py-3 whitespace-normal">{c.timeLeftLabel}</TableCell>
-                <TableCell className="px-4 py-3 whitespace-normal">
-                  <Badge variant={STATUS_TONE[c.status]}>{c.status}</Badge>
-                </TableCell>
-              </TableRow>
+      <Tabs value={tab} onValueChange={(v) => setTab(v as (typeof TABS)[number])} className="gap-4">
+        <div className="overflow-x-auto">
+          <TabsList>
+            {TABS.map((t) => (
+              <TabsTrigger key={t} value={t}>
+                {tr(t)}
+              </TabsTrigger>
             ))}
-          </TableBody>
-        </Table>
-      </div>
+          </TabsList>
+        </div>
+        <TabsContent value={tab}>
+          <div className="bg-card border border-border rounded-lg overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="text-xs border-border hover:bg-transparent">
+                  <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("SUPPLIER / CONTRACT")}</TableHead>
+                  <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("ANNUAL VALUE")}</TableHead>
+                  <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("END DATE")}</TableHead>
+                  <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("TIME LEFT")}</TableHead>
+                  <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("STATUS")}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((c) => (
+                  <TableRow
+                    key={c.id}
+                    onClick={() => onSelectContract(c)}
+                    className={`border-border cursor-pointer hover:bg-secondary/50 ${
+                      initialSelectedId === c.id ? "bg-secondary/50" : ""
+                    }`}
+                  >
+                    <TableCell className="px-4 py-3 whitespace-normal">
+                      <div className="font-medium">{c.supplierName}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {c.ref} · {tr(c.type)}
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-4 py-3 whitespace-normal">{tr("€{value} per year", { value: c.annualValue.toLocaleString() })}</TableCell>
+                    <TableCell className="px-4 py-3 whitespace-normal">
+                      <div>{c.endDate}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {tr("Renewal by {date} · {notice} notice req.", { date: c.renewalBy, notice: c.noticePeriod })}
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-4 py-3 whitespace-normal">{c.timeLeftLabel}</TableCell>
+                    <TableCell className="px-4 py-3 whitespace-normal">
+                      <Badge variant={STATUS_TONE[c.status]}>{c.status}</Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
