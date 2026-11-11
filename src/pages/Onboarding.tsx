@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
-import { Pill } from "@/components/yarowa/pill";
+import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
+import { TabsTriggerWithCount } from "@/components/yarowa/tabs-trigger-with-count";
 import { RowActionsMenu, type RowAction } from "@/components/yarowa/row-actions-menu";
 import { DetailDrawer } from "@/components/yarowa/detail-drawer";
 import {
@@ -284,109 +285,107 @@ export function Onboarding({
           ))}
         </div>
 
-        <div className="flex gap-1 mb-4">
-          {ONB_TABS.map((t) => (
-            <Pill
-              key={t}
-              active={tab === t}
-              onClick={() => setTab(t)}
-              count={cases.filter((c) => inTab(c, t)).length}
-            >
-              {tr(t)}
-            </Pill>
-          ))}
-        </div>
-
-        <div className="bg-card border border-border rounded-lg overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="text-xs border-border hover:bg-transparent">
-                <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("COMPANY")}</TableHead>
-                <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("INVITATION")}</TableHead>
-                <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("COMPANY INFO")}</TableHead>
-                <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("DOCUMENTS")}</TableHead>
-                <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("CONTRACT")}</TableHead>
-                <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("PRICE AGREEMENTS")}</TableHead>
-                <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("LAST CHANGE")}</TableHead>
-                <TableHead className="h-auto w-10 px-4 py-2 whitespace-normal" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((c) => {
-                // Each stage column reads from the linked profile + documents,
-                // so a row shows where the case actually stands per stage.
-                const linked = linkedFor(c);
-                const caseDocs = linked ? DOCS.filter((doc) => doc.supplierId === linked.id) : [];
-                // Any profile or uploaded document means the prospect got past
-                // the invitation, so that column can collapse to a checkmark.
-                const started = Boolean(linked) || caseDocs.length > 0;
-                const cells = [
-                  invitationCell(c, started),
-                  companyInfoCell(c, linked),
-                  documentsCell(caseDocs),
-                  signableCell(c),
-                  signableCell(c),
-                ];
-                return (
-                  <TableRow
-                    key={c.id}
-                    onClick={() => openCase(c)}
-                    className={`group border-border cursor-pointer hover:bg-secondary/50 ${
-                      selected === c.id ? "bg-secondary/50" : ""
-                    }`}
-                  >
-                    <TableCell className="px-4 py-3 whitespace-normal">
-                      {/* Only a case with a submitted profile has an overview to
-                          open, so invitation-only rows keep a plain name rather
-                          than a link that would go nowhere. */}
-                      {linked ? (
-                        <Button
-                          variant="ghost"
-                          /* Plain until pointed at: 14 blue names at rest read as
-                             noise, and the row is clickable anyway. */
-                          className="h-auto justify-start border-0 p-0 text-left font-medium whitespace-normal hover:bg-transparent hover:text-accent hover:underline dark:hover:bg-transparent"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openFullReview(c);
-                          }}
-                        >
-                          {c.companyName}
-                        </Button>
-                      ) : (
-                        <div className="font-medium">{c.companyName}</div>
-                      )}
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        {c.contactName}
-                        {/* A prospect who has written and is waiting on a reply. */}
-                        {unreadFor(relationshipId(PRINCIPAL_ID, onboardingSupplierId(c.id)), "principal") > 0 && (
-                          <Badge variant="critical" title={tr("Messages")}>
-                            <MessageSquare className="w-3 h-3" />
-                            {unreadFor(relationshipId(PRINCIPAL_ID, onboardingSupplierId(c.id)), "principal")}
-                          </Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    {cells.map((cell, i) => (
-                      <TableCell key={i} className="px-4 py-3 whitespace-normal">
-                        <StageCell cell={cell} tr={tr} />
-                      </TableCell>
-                    ))}
-                    <TableCell className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
-                      {formatLastChange(lastChange(caseDocs), lang)}
-                    </TableCell>
-                    {/* Right-aligned row actions, revealed on hover. */}
-                    <TableCell className="px-4 py-3 w-10 whitespace-normal">
-                      <div className="flex justify-end">
-                        <RowActionsMenu actions={actionsFor(c)} />
-                      </div>
-                    </TableCell>
+        <Tabs value={tab} onValueChange={(v) => setTab(v as OnbTab)} className="gap-4">
+          <TabsList>
+            {ONB_TABS.map((t) => (
+              <TabsTriggerWithCount key={t} value={t} count={cases.filter((c) => inTab(c, t)).length}>
+                {tr(t)}
+              </TabsTriggerWithCount>
+            ))}
+          </TabsList>
+          <TabsContent value={tab}>
+            <div className="bg-card border border-border rounded-lg overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="text-xs border-border hover:bg-transparent">
+                    <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("COMPANY")}</TableHead>
+                    <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("INVITATION")}</TableHead>
+                    <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("COMPANY INFO")}</TableHead>
+                    <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("DOCUMENTS")}</TableHead>
+                    <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("CONTRACT")}</TableHead>
+                    <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("PRICE AGREEMENTS")}</TableHead>
+                    <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("LAST CHANGE")}</TableHead>
+                    <TableHead className="h-auto w-10 px-4 py-2 whitespace-normal" />
                   </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </div>
-        <div className="text-xs text-muted-foreground mt-2">{tr("{count} cases", { count: filtered.length })}</div>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((c) => {
+                    // Each stage column reads from the linked profile + documents,
+                    // so a row shows where the case actually stands per stage.
+                    const linked = linkedFor(c);
+                    const caseDocs = linked ? DOCS.filter((doc) => doc.supplierId === linked.id) : [];
+                    // Any profile or uploaded document means the prospect got past
+                    // the invitation, so that column can collapse to a checkmark.
+                    const started = Boolean(linked) || caseDocs.length > 0;
+                    const cells = [
+                      invitationCell(c, started),
+                      companyInfoCell(c, linked),
+                      documentsCell(caseDocs),
+                      signableCell(c),
+                      signableCell(c),
+                    ];
+                    return (
+                      <TableRow
+                        key={c.id}
+                        onClick={() => openCase(c)}
+                        className={`group border-border cursor-pointer hover:bg-secondary/50 ${
+                          selected === c.id ? "bg-secondary/50" : ""
+                        }`}
+                      >
+                        <TableCell className="px-4 py-3 whitespace-normal">
+                          {/* Only a case with a submitted profile has an overview to
+                              open, so invitation-only rows keep a plain name rather
+                              than a link that would go nowhere. */}
+                          {linked ? (
+                            <Button
+                              variant="ghost"
+                              /* Plain until pointed at: 14 blue names at rest read as
+                                 noise, and the row is clickable anyway. */
+                              className="h-auto justify-start border-0 p-0 text-left font-medium whitespace-normal hover:bg-transparent hover:text-accent hover:underline dark:hover:bg-transparent"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openFullReview(c);
+                              }}
+                            >
+                              {c.companyName}
+                            </Button>
+                          ) : (
+                            <div className="font-medium">{c.companyName}</div>
+                          )}
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                            {c.contactName}
+                            {/* A prospect who has written and is waiting on a reply. */}
+                            {unreadFor(relationshipId(PRINCIPAL_ID, onboardingSupplierId(c.id)), "principal") > 0 && (
+                              <Badge variant="critical" title={tr("Messages")}>
+                                <MessageSquare className="w-3 h-3" />
+                                {unreadFor(relationshipId(PRINCIPAL_ID, onboardingSupplierId(c.id)), "principal")}
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        {cells.map((cell, i) => (
+                          <TableCell key={i} className="px-4 py-3 whitespace-normal">
+                            <StageCell cell={cell} tr={tr} />
+                          </TableCell>
+                        ))}
+                        <TableCell className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
+                          {formatLastChange(lastChange(caseDocs), lang)}
+                        </TableCell>
+                        {/* Right-aligned row actions, revealed on hover. */}
+                        <TableCell className="px-4 py-3 w-10 whitespace-normal">
+                          <div className="flex justify-end">
+                            <RowActionsMenu actions={actionsFor(c)} />
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+            <div className="text-xs text-muted-foreground mt-2">{tr("{count} cases", { count: filtered.length })}</div>
+          </TabsContent>
+        </Tabs>
       </div>
 
       {selectedCase && (

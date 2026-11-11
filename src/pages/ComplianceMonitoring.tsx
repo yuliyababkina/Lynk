@@ -3,7 +3,7 @@ import { Upload, ChevronRight } from "lucide-react";
 import { useLynkData } from "../lib/lynk-data-context";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Pill } from "@/components/yarowa/pill";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertBanner } from "@/components/yarowa/alert-banner";
 import { useI18n } from "@/lib/i18n-context";
 import type { SupplierDoc, DocStatus } from "../types";
@@ -109,72 +109,77 @@ export function ComplianceMonitoring({
         ))}
       </div>
 
-      <div className="flex gap-1 mb-4 border-b border-border pb-2">
-        {TABS.map((t) => (
-          <Pill key={t} active={tab === t} onClick={() => setTab(t)}>
-            {tr(t)}
-          </Pill>
-        ))}
-      </div>
-
-      <div className="bg-card border border-border rounded-lg overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="text-xs border-border hover:bg-transparent">
-              <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("DOCUMENT / SUPPLIER")}</TableHead>
-              <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("CATEGORY")}</TableHead>
-              <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("EXPIRY")}</TableHead>
-              <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("STATUS")}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtered.map((d) => (
-              <TableRow
-                key={d.id}
-                onClick={() => onSelectDoc(d)}
-                className={`border-border cursor-pointer hover:bg-secondary/50 ${
-                  selectedDocId === d.id ? "bg-secondary/50" : ""
-                }`}
-              >
-                <TableCell className="px-4 py-3 whitespace-normal">
-                  <div className="font-medium">{tr(d.documentName)}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {d.supplierName} · {tr(d.trade)}
-                  </div>
-                </TableCell>
-                <TableCell className="px-4 py-3 whitespace-normal">{tr(d.documentCategory)}</TableCell>
-                <TableCell className="px-4 py-3 whitespace-normal">
-                  <div
-                    className={
-                      d.daysUntilExpiry < 0
-                        ? "text-critical"
-                        : d.status === "warning-30"
-                          ? "text-chart-orange-ink"
-                          : "text-warning-ink"
-                    }
-                  >
-                    {d.expiryDate}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {d.daysUntilExpiry < 0
-                      ? tr("Expired {days}d ago", { days: Math.abs(d.daysUntilExpiry) })
-                      : tr("{days}d remaining", { days: d.daysUntilExpiry })}
-                  </div>
-                </TableCell>
-                <TableCell className="px-4 py-3 whitespace-normal">
-                  <Badge variant={STATUS_META[d.status].tone}>{tr(STATUS_META[d.status].label)}</Badge>
-                  {d.renewal && (
-                    <div className="flex items-center gap-1 text-xs text-accent mt-1">
-                      <Upload size={11} />
-                      {tr("Upload awaiting review")}
-                    </div>
-                  )}
-                </TableCell>
-              </TableRow>
+      <Tabs value={tab} onValueChange={(v) => setTab(v as (typeof TABS)[number])} className="gap-4">
+        <div className="overflow-x-auto">
+          <TabsList>
+            {TABS.map((t) => (
+              <TabsTrigger key={t} value={t}>
+                {tr(t)}
+              </TabsTrigger>
             ))}
-          </TableBody>
-        </Table>
-      </div>
+          </TabsList>
+        </div>
+        <TabsContent value={tab}>
+          <div className="bg-card border border-border rounded-lg overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="text-xs border-border hover:bg-transparent">
+                  <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("DOCUMENT / SUPPLIER")}</TableHead>
+                  <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("CATEGORY")}</TableHead>
+                  <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("EXPIRY")}</TableHead>
+                  <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{tr("STATUS")}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((d) => (
+                  <TableRow
+                    key={d.id}
+                    onClick={() => onSelectDoc(d)}
+                    className={`border-border cursor-pointer hover:bg-secondary/50 ${
+                      selectedDocId === d.id ? "bg-secondary/50" : ""
+                    }`}
+                  >
+                    <TableCell className="px-4 py-3 whitespace-normal">
+                      <div className="font-medium">{tr(d.documentName)}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {d.supplierName} · {tr(d.trade)}
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-4 py-3 whitespace-normal">{tr(d.documentCategory)}</TableCell>
+                    <TableCell className="px-4 py-3 whitespace-normal">
+                      <div
+                        className={
+                          d.daysUntilExpiry < 0
+                            ? "text-critical"
+                            : d.status === "warning-30"
+                              ? "text-chart-orange-ink"
+                              : "text-warning-ink"
+                        }
+                      >
+                        {d.expiryDate}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {d.daysUntilExpiry < 0
+                          ? tr("Expired {days}d ago", { days: Math.abs(d.daysUntilExpiry) })
+                          : tr("{days}d remaining", { days: d.daysUntilExpiry })}
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-4 py-3 whitespace-normal">
+                      <Badge variant={STATUS_META[d.status].tone}>{tr(STATUS_META[d.status].label)}</Badge>
+                      {d.renewal && (
+                        <div className="flex items-center gap-1 text-xs text-accent mt-1">
+                          <Upload size={11} />
+                          {tr("Upload awaiting review")}
+                        </div>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

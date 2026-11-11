@@ -34,6 +34,10 @@ const badgeVariants = cva(
         danger: "bg-critical-soft text-critical-ink",
         purple: "bg-purple-soft text-purple-ink",
         neutral: "bg-secondary text-secondary-foreground",
+        // Count inside a TabsTrigger. Solid primary reads on both the muted
+        // list (inactive) and the background-coloured active trigger; width
+        // grows with the digits so 2- and 3-digit counts fit.
+        count: "h-4 w-auto min-w-4 bg-primary px-1 text-primary-foreground tabular-nums",
         dark: "bg-primary text-primary-foreground",
         // Outline status pills — faint tint + colored border/text (Figma document
         // + sensitive/action-required pills). Pairs with the soft variants above.

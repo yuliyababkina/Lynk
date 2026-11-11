@@ -3,7 +3,7 @@ import { ChevronDown, ChevronUp, Lock } from "lucide-react";
 import { useLynkData } from "../lib/lynk-data-context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Pill } from "@/components/yarowa/pill";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertBanner } from "@/components/yarowa/alert-banner";
 import { useI18n } from "@/lib/i18n-context";
 
@@ -56,93 +56,98 @@ export function DataGovernance({ initialSelectedId }: { initialSelectedId?: stri
         ))}
       </div>
 
-      <div className="flex gap-1 mb-4 border-b border-border pb-2 overflow-x-auto">
-        {TABS.map((t) => (
-          <Pill key={t} active={tab === t} onClick={() => setTab(t)}>
-            {tr(t)}
-          </Pill>
-        ))}
-      </div>
-
-      <div className="space-y-3">
-        {filtered.map((r) => {
-          const isOpen = expanded === r.id;
-          return (
-            <div key={r.id} className="bg-card border border-border rounded-lg">
-              <Button
-                variant="ghost"
-                onClick={() => setExpanded(isOpen ? null : r.id)}
-                className="flex h-auto w-full justify-between gap-0 rounded-none border-0 px-4 py-3 font-normal leading-normal whitespace-normal hover:bg-transparent dark:hover:bg-transparent"
-              >
-                <div className="flex items-center gap-2 text-left">
-                  <span className="font-medium">{r.supplierName}</span>
-                  <Badge variant="neutral">{tr(r.category)}</Badge>
-                  {r.risk === "Critical" && <Badge variant="danger">{tr("Critical")}</Badge>}
-                  <span className="text-xs text-muted-foreground">
-                    {tr("Requested by {who} · {when}", { who: r.requestedBy, when: r.requestedAt })}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="warning">{tr(r.status)}</Badge>
-                  {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                </div>
-              </Button>
-
-              {isOpen && (
-                <div className="px-4 pb-4 space-y-3 text-sm border-t border-border pt-3">
-                  <div>
-                    <div className="text-xs font-semibold uppercase text-muted-foreground mb-1">
-                      Supplier's stated reason
+      <Tabs value={tab} onValueChange={(v) => setTab(v as (typeof TABS)[number])} className="gap-4">
+        <div className="overflow-x-auto">
+          <TabsList>
+            {TABS.map((t) => (
+              <TabsTrigger key={t} value={t}>
+                {tr(t)}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
+        <TabsContent value={tab}>
+          <div className="space-y-3">
+            {filtered.map((r) => {
+              const isOpen = expanded === r.id;
+              return (
+                <div key={r.id} className="bg-card border border-border rounded-lg">
+                  <Button
+                    variant="ghost"
+                    onClick={() => setExpanded(isOpen ? null : r.id)}
+                    className="flex h-auto w-full justify-between gap-0 rounded-none border-0 px-4 py-3 font-normal leading-normal whitespace-normal hover:bg-transparent dark:hover:bg-transparent"
+                  >
+                    <div className="flex items-center gap-2 text-left">
+                      <span className="font-medium">{r.supplierName}</span>
+                      <Badge variant="neutral">{tr(r.category)}</Badge>
+                      {r.risk === "Critical" && <Badge variant="danger">{tr("Critical")}</Badge>}
+                      <span className="text-xs text-muted-foreground">
+                        {tr("Requested by {who} · {when}", { who: r.requestedBy, when: r.requestedAt })}
+                      </span>
                     </div>
-                    <div>{r.reason}</div>
-                  </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="warning">{tr(r.status)}</Badge>
+                      {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                    </div>
+                  </Button>
 
-                  <div className="text-xs font-semibold uppercase text-muted-foreground">
-                    {r.fields.length} fields changing
-                  </div>
-                  {r.fields.map((f) => (
-                    <div key={f.label} className="border border-border rounded-md overflow-hidden">
-                      <div className="flex items-center justify-between px-3 py-1.5 bg-secondary/60 text-xs font-medium">
-                        {f.label}
-                        {f.sensitive && (
-                          <span className="flex items-center gap-1 text-warning-ink">
-                            <Lock size={11} /> {tr("Sensitive")}
-                          </span>
-                        )}
-                      </div>
-                      <div className="grid grid-cols-2 divide-x divide-border">
-                        <div className="px-3 py-2">
-                          <div className="text-xs text-muted-foreground">{tr("Before")}</div>
-                          <div className="font-mono text-xs">{f.before}</div>
+                  {isOpen && (
+                    <div className="px-4 pb-4 space-y-3 text-sm border-t border-border pt-3">
+                      <div>
+                        <div className="text-xs font-semibold uppercase text-muted-foreground mb-1">
+                          Supplier's stated reason
                         </div>
-                        <div className="px-3 py-2 bg-success/10">
-                          <div className="text-xs text-muted-foreground">{tr("After")}</div>
-                          <div className="font-mono text-xs">{f.after}</div>
+                        <div>{r.reason}</div>
+                      </div>
+
+                      <div className="text-xs font-semibold uppercase text-muted-foreground">
+                        {r.fields.length} fields changing
+                      </div>
+                      {r.fields.map((f) => (
+                        <div key={f.label} className="border border-border rounded-md overflow-hidden">
+                          <div className="flex items-center justify-between px-3 py-1.5 bg-secondary/60 text-xs font-medium">
+                            {f.label}
+                            {f.sensitive && (
+                              <span className="flex items-center gap-1 text-warning-ink">
+                                <Lock size={11} /> {tr("Sensitive")}
+                              </span>
+                            )}
+                          </div>
+                          <div className="grid grid-cols-2 divide-x divide-border">
+                            <div className="px-3 py-2">
+                              <div className="text-xs text-muted-foreground">{tr("Before")}</div>
+                              <div className="font-mono text-xs">{f.before}</div>
+                            </div>
+                            <div className="px-3 py-2 bg-success/10">
+                              <div className="text-xs text-muted-foreground">{tr("After")}</div>
+                              <div className="font-mono text-xs">{f.after}</div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+
+                      <div className="flex items-center gap-4 pt-2">
+                        <div className="text-xs">
+                          <div className="text-muted-foreground">{tr("Four-eyes approval progress")}</div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge variant={r.approvalStep >= 1 ? "info" : "neutral"}>{tr("1. First Review")}</Badge>
+                            <Badge variant="neutral">{tr("2. Final Approval")}</Badge>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
 
-                  <div className="flex items-center gap-4 pt-2">
-                    <div className="text-xs">
-                      <div className="text-muted-foreground">{tr("Four-eyes approval progress")}</div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant={r.approvalStep >= 1 ? "info" : "neutral"}>{tr("1. First Review")}</Badge>
-                        <Badge variant="neutral">{tr("2. Final Approval")}</Badge>
+                      <div className="flex gap-2 pt-2">
+                        <Button variant="outline">{tr("Reject Change")}</Button>
+                        <Button variant="default">{tr("Endorse — First Review")}</Button>
                       </div>
                     </div>
-                  </div>
-
-                  <div className="flex gap-2 pt-2">
-                    <Button variant="outline">{tr("Reject Change")}</Button>
-                    <Button variant="default">{tr("Endorse — First Review")}</Button>
-                  </div>
+                  )}
                 </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+              );
+            })}
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
