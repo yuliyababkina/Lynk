@@ -114,15 +114,13 @@ export function Dashboard({
       <p className="text-sm text-muted-foreground mb-4">{tr("Sorted by criticality. Click a ticket to open it.")}</p>
 
       <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)} className="gap-6">
-        <div className="overflow-x-auto">
-          <TabsList>
-            {(["All tickets", ...CATEGORIES] as const).map((f) => (
-              <TabsTriggerWithCount key={f} value={f} count={counts[f]}>
-                {tr(f)}
-              </TabsTriggerWithCount>
-            ))}
-          </TabsList>
-        </div>
+        <TabsList>
+          {(["All tickets", ...CATEGORIES] as const).map((f) => (
+            <TabsTriggerWithCount key={f} value={f} count={counts[f]}>
+              {tr(f)}
+            </TabsTriggerWithCount>
+          ))}
+        </TabsList>
         <TabsContent value={filter}>
           {grouped.length === 0 && (
             <div className="border border-dashed border-border rounded-2xl py-16 text-center">

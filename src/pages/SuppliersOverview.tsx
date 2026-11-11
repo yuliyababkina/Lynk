@@ -75,8 +75,8 @@ export function SuppliersOverview({
       </div>
 
       <Tabs value={stage} onValueChange={(v) => setStage(v as StageFilter)} className="gap-4">
-        <div className="flex items-center justify-between">
-          <TabsList>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <TabsList className="min-w-0">
             {(["all", "prospect", "supplier", "provider"] as const).map((s) => (
               <TabsTriggerWithCount key={s} value={s} count={counts[s]}>
                 {t(stageLabels[s])}
