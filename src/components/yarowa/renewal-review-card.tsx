@@ -34,7 +34,7 @@ export function RenewalReviewCard({ doc, onReview }: { doc: SupplierDoc; onRevie
           type="button"
           variant="ghost"
           onClick={onReview}
-          className="h-auto w-full justify-start gap-3 rounded-md border-border p-2.5 text-left font-normal whitespace-normal hover:bg-secondary/50 dark:hover:bg-secondary/50"
+          className="h-auto w-full justify-start gap-3 border-border p-2.5 text-left font-normal whitespace-normal hover:bg-secondary/50 dark:hover:bg-secondary/50"
         >
           <FileText size={22} className="size-[22px] shrink-0 text-medium-ink" aria-hidden="true" />
           <span className="min-w-0">

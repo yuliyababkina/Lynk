@@ -72,7 +72,7 @@ export function Sidebar({
             variant="ghost"
             onClick={onToggleCollapse}
             className={cn(
-              "h-auto shrink-0 rounded border-0 p-1 text-muted-foreground hover:bg-secondary hover:text-foreground dark:hover:bg-secondary",
+              "h-auto shrink-0 border-0 p-1 text-muted-foreground hover:bg-secondary hover:text-foreground dark:hover:bg-secondary",
               collapsed ? "" : "ml-auto"
             )}
             aria-label={collapsed ? t("Expand menu") : t("Collapse menu")}
@@ -94,7 +94,7 @@ export function Sidebar({
               onClick={() => onNavigate(item.id)}
               title={t(item.label)}
               className={cn(
-                "h-9 w-full rounded-md border-0 text-sm whitespace-normal",
+                "h-9 w-full border-0 text-sm whitespace-normal",
                 collapsed ? "flex items-center justify-center px-3 py-2" : "flex items-center justify-start gap-3 px-3 py-2",
                 isActive
                   ? "bg-muted font-medium text-foreground hover:bg-muted dark:hover:bg-muted"
@@ -116,7 +116,7 @@ export function Sidebar({
           onClick={onInvite}
           title={t("Invite Supplier")}
           className={cn(
-            "mt-2 h-9 w-full rounded-md border-0 font-normal whitespace-normal text-muted-foreground hover:bg-muted/60 hover:text-muted-foreground dark:hover:bg-muted/60",
+            "mt-2 h-9 w-full border-0 font-normal whitespace-normal text-muted-foreground hover:bg-muted/60 hover:text-muted-foreground dark:hover:bg-muted/60",
             collapsed ? "flex items-center justify-center px-3 py-2" : "flex items-center justify-start gap-3 px-3 py-2"
           )}
         >

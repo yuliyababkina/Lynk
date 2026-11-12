@@ -91,7 +91,7 @@ export function DocumentBrowser({
               key={r.key}
               variant="ghost"
               onClick={() => onSelect(r.key)}
-              className={`h-auto w-full flex-col items-start justify-start gap-1.5 rounded-lg px-3 py-2.5 text-left font-normal whitespace-normal ${
+              className={`h-auto w-full flex-col items-start justify-start gap-1.5 px-3 py-2.5 text-left font-normal whitespace-normal ${
                 active
                   ? "border-primary bg-secondary/60 hover:bg-secondary/60 dark:hover:bg-secondary/60"
                   : "border-border hover:bg-secondary/40 dark:hover:bg-secondary/40"
