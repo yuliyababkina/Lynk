@@ -1,3 +1,10 @@
+/**
+ * @custom   Inline PDF viewer rendered with pdf.js onto canvases at true 100%, so
+ *           it works without a native PDF plugin; reports the page in view.
+ *           shadcn has no document viewer. Composes no shadcn components.
+ * @approved Yuliya Babkina, 2026-11-12
+ */
+
 import { useEffect, useRef, useState } from "react";
 import { Loader2, FileText } from "lucide-react";
 import * as pdfjsLib from "pdfjs-dist";
@@ -114,7 +121,7 @@ function PdfCanvasBody({ fileUrl, className, onPageInfo }: PdfCanvasProps) {
     return (
       <div className={cn("h-full flex flex-col items-center justify-center gap-2 text-sm text-muted-foreground", className)}>
         <FileText className="w-8 h-8 opacity-40" />
-        No file uploaded for this document.
+        {t("No file uploaded for this document.")}
       </div>
     );
   }

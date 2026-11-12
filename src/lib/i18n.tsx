@@ -250,6 +250,7 @@ const DE: Record<string, string> = {
   "Request a change": "Änderung anfordern",
   "Send request": "Anfrage senden",
   Cancel: "Abbrechen",
+  "No file uploaded for this document.": "Für dieses Dokument wurde keine Datei hochgeladen.",
   "What should the supplier update? (shared with the supplier)":
     "Was soll der Lieferant aktualisieren? (wird dem Lieferanten mitgeteilt)",
   "Why is this document being declined? (shared with the supplier)":
