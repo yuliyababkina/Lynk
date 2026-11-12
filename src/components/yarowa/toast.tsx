@@ -1,7 +1,16 @@
+/**
+ * @custom   App toast stack: bottom-right, four tones, optional action and
+ *           dismiss, driven by the dependency-free store in lib/toast so any
+ *           handler can fire one. shadcn's Sonner would add a package; this keeps
+ *           the store and the toast() call sites. Composes Button and Text.
+ * @approved Yuliya Babkina, 2026-11-12
+ */
+
 import { CheckCircle2, AlertTriangle, Info, X, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n-context";
 import { dismissToast, useToasts, type ToastTone } from "@/lib/toast";
+import { Text } from "@/shared/ui/typography";
 
 const TONE_ICON = {
   default: Info,
@@ -36,7 +45,7 @@ export function Toaster() {
           >
             <Icon size={18} className={`shrink-0 mt-0.5 ${TONE_ICON_COLOR[t.tone]}`} aria-hidden="true" />
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-medium text-foreground">{t.title}</div>
+              <Text variant="label" as="div">{t.title}</Text>
               {t.description && (
                 <div className="text-xs text-muted-foreground mt-0.5">{t.description}</div>
               )}
@@ -44,11 +53,12 @@ export function Toaster() {
             {t.action && (
               <Button
                 variant="ghost"
+                size="xs"
                 onClick={() => {
                   t.action!.onClick();
                   dismissToast(t.id);
                 }}
-                className="h-auto shrink-0 gap-1 border-0 p-0 text-xs font-semibold text-accent hover:bg-transparent hover:text-accent hover:underline dark:hover:bg-transparent"
+                className="h-auto shrink-0 gap-1 border-0 p-0 font-semibold text-accent hover:bg-transparent hover:text-accent hover:underline dark:hover:bg-transparent"
               >
                 <Undo2 size={13} className="size-[13px]" />
                 {t.action.label}

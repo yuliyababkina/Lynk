@@ -1,3 +1,11 @@
+/**
+ * @custom   The single conversation surface for all three shells: a non-modal rail
+ *           that pushes the page aside on desktop and falls back to a Sheet below
+ *           1024px. Sheet alone is always an overlay and cannot collapse in place.
+ *           Composes ChatPanel and Sheet.
+ * @approved Yuliya Babkina, 2026-11-12
+ */
+
 import { useEffect, useRef, useState } from "react";
 import { ChatPanel } from "@/components/yarowa/chat-panel";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";

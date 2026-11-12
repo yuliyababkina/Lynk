@@ -1,3 +1,11 @@
+/**
+ * @custom   Non-modal 380px detail rail that sits beside the page and pushes it
+ *           aside while a row is open, so the page stays usable. shadcn Sheet is a
+ *           modal overlay (backdrop, focus trap, scroll lock) with no push layout.
+ *           Composes Button.
+ * @approved Yuliya Babkina, 2026-11-12
+ */
+
 import type { ReactNode } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";

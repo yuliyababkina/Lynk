@@ -5,7 +5,7 @@ import { WizardStepper } from "./wizard-stepper";
 const STEPS = ["Upload", "Preview", "Details", "Distribution"];
 
 const meta = {
-  title: "Product Components/Wizard Stepper",
+  title: "Custom/Wizard Stepper",
   component: WizardStepper,
   tags: ["autodocs"],
   args: { steps: STEPS, current: "Preview", onStepClick: fn() },

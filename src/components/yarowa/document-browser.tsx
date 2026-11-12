@@ -1,3 +1,12 @@
+/**
+ * @custom   Master-detail document browser shared by the manager review, the
+ *           supplier portal and the prospect wizard: a selectable list with status
+ *           badges beside an inline PDF preview, page count and previous/next, with
+ *           role-specific actions injected through slots. shadcn has no document
+ *           list-and-preview pattern. Composes Button, Badge and PdfCanvas.
+ * @approved Yuliya Babkina, 2026-11-12
+ */
+
 import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, FileText, FileX, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +16,7 @@ import { docStatusMeta } from "@/lib/document-status";
 import { parseDocumentInfo, type ParsedDocumentInfo } from "@/lib/pdf-metadata";
 import type { DocStatus } from "@/types";
 import { useI18n } from "@/lib/i18n-context";
+import { Heading, Text } from "@/shared/ui/typography";
 
 /** Marks a value that was read from the file, not confirmed by a person. */
 export function FromFileHint() {
@@ -91,7 +101,7 @@ export function DocumentBrowser({
                   something you can identify a compliance document by. */}
               <span className="flex items-start gap-2 w-full">
                 <FileText className="size-4 mt-0.5 text-muted-foreground shrink-0" />
-                <span className="text-sm font-medium break-words">{t(r.name)}</span>
+                <Text variant="label" as="span" className="break-words">{t(r.name)}</Text>
               </span>
               <Badge variant={meta.variant} className="shrink-0 ml-6">
                 <meta.Icon className="size-3" />
@@ -193,7 +203,7 @@ function DocumentBrowserPanel({
       <div className="w-full flex flex-col border border-border rounded-xl overflow-hidden bg-card">
         <div className="px-4 py-2.5 border-b border-border flex items-start justify-between gap-3">
           <div className="min-w-0">
-          <p className="text-sm font-semibold truncate">{t(selected.name)}</p>
+          <Heading level={4} as="div" className="truncate">{t(selected.name)}</Heading>
           <p className="text-xs text-muted-foreground">
             {selected.category ? t(selected.category) : t("Document")}
           </p>

@@ -14,9 +14,9 @@ type Story = StoryObj<typeof meta>;
 /** One click flips the language; the group's own label translates with it. */
 export const Light: Story = {
   play: async ({ canvas, userEvent }) => {
-    await expect(canvas.getByRole("button", { name: "en" })).toHaveAttribute("aria-pressed", "true");
-    await userEvent.click(canvas.getByRole("button", { name: "de" }));
-    await expect(canvas.getByRole("button", { name: "de" })).toHaveAttribute("aria-pressed", "true");
+    await expect(canvas.getByRole("radio", { name: "en" })).toHaveAttribute("aria-checked", "true");
+    await userEvent.click(canvas.getByRole("radio", { name: "de" }));
+    await expect(canvas.getByRole("radio", { name: "de" })).toHaveAttribute("aria-checked", "true");
     await expect(canvas.getByRole("group", { name: "Sprache" })).toBeVisible();
   },
 };

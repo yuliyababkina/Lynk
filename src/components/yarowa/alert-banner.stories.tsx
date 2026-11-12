@@ -3,7 +3,7 @@ import { expect } from "storybook/test";
 import { AlertBanner } from "./alert-banner";
 
 const meta = {
-  title: "Product Components/Alert Banner",
+  title: "Custom/Alert Banner",
   component: AlertBanner,
   tags: ["autodocs"],
   args: {

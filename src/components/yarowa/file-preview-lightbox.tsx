@@ -1,8 +1,19 @@
+/**
+ * @custom   Full-size look at a file the supplier has picked but not yet
+ *           submitted: a modal with a title and a close button over a PdfCanvas,
+ *           or a stand-in page passed as children. Built by hand; it is one of
+ *           three document-preview modals (with DocumentViewer and
+ *           DocumentLightbox) to be consolidated onto shadcn Dialog. Composes
+ *           Button and PdfCanvas.
+ * @approved Yuliya Babkina, 2026-11-12
+ */
+
 import { useEffect, type ReactNode } from "react";
 import { X } from "lucide-react";
 import { PdfCanvas } from "@/components/yarowa/pdf-canvas";
 import { useI18n } from "@/lib/i18n-context";
 import { Button } from "@/components/ui/button";
+import { Heading } from "@/shared/ui/typography";
 
 /*
  * Full-size look at a file the supplier has picked but not yet submitted.
@@ -47,7 +58,7 @@ export function FilePreviewLightbox({
       >
         <div className="flex items-center gap-3 border-b border-border px-4 py-3 shrink-0">
           <div className="min-w-0 flex-1">
-            <div className="text-sm font-semibold truncate">{fileName}</div>
+            <Heading level={4} as="div" className="truncate">{fileName}</Heading>
             {fileSize && <div className="text-xs text-muted-foreground">{fileSize} · {t("not submitted yet")}</div>}
           </div>
           <Button

@@ -1,3 +1,13 @@
+/**
+ * @custom   Full-screen preview of an attached PDF at 100% scale for the supplier
+ *           profile: a modal with a title, an open-in-new-tab link and a close
+ *           button. Built by hand, with its own pdf.js loop; it is one of three
+ *           document-preview modals (with DocumentLightbox and
+ *           FilePreviewLightbox) to be consolidated onto shadcn Dialog and
+ *           PdfCanvas. Composes Button.
+ * @approved Yuliya Babkina, 2026-11-12
+ */
+
 import { useEffect, useRef, useState } from "react";
 import { X, ExternalLink, Loader2 } from "lucide-react";
 import * as pdfjsLib from "pdfjs-dist";
@@ -5,6 +15,7 @@ import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import type { SupplierDoc } from "@/types";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n-context";
+import { Heading } from "@/shared/ui/typography";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
 
@@ -101,7 +112,7 @@ function DocumentViewerBody({ doc, onClose }: { doc: SupplierDoc; onClose: () =>
       >
         <div className="flex items-center gap-3 border-b border-border px-4 py-3 shrink-0">
           <div className="min-w-0 flex-1">
-            <div className="text-sm font-semibold truncate">{doc.documentName}</div>
+            <Heading level={4} as="div" className="truncate">{doc.documentName}</Heading>
             <div className="text-xs text-muted-foreground truncate">
               {doc.supplierName} · {doc.documentCategory}
               {doc.expiryDate ? ` · Expires ${doc.expiryDate}` : ""}

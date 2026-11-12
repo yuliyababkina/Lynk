@@ -1,10 +1,25 @@
+/**
+ * @custom   The app's left navigation for the procurement manager: brand header,
+ *           the nav list with count badges, an invite action and the signed-in
+ *           user, collapsible to icons. Hand-rolled and kept until the app moves
+ *           onto the shadcn Sidebar that shell/MfeSidebar already uses. Composes
+ *           Button, Badge and Avatar.
+ * @approved Yuliya Babkina, 2026-11-12
+ */
+
 import { Plus, PanelLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { NAV } from "@/lib/lynk-nav";
 import { useI18n } from "@/lib/i18n-context";
+import { BRAND_INITIAL, BRAND_NAME } from "@/lib/brand";
+import { Heading, Text } from "@/shared/ui/typography";
 import type { View } from "@/App";
+
+// The demo account the manager app is signed in as.
+const SIGNED_IN = { name: "Sabine Müller", initials: "SM" };
 
 export function Sidebar({
   view,
@@ -38,12 +53,16 @@ export function Sidebar({
           collapsed ? "flex items-center justify-center px-2" : "flex items-center gap-2 px-4"
         )}
       >
-        <div className="w-7 h-7 shrink-0 rounded-md bg-sidebar-primary flex items-center justify-center text-sidebar-primary-foreground font-bold text-sm">
-          L
-        </div>
+        <Heading
+          level={4}
+          as="div"
+          className="w-7 h-7 shrink-0 rounded-md bg-sidebar-primary flex items-center justify-center text-sidebar-primary-foreground"
+        >
+          {BRAND_INITIAL}
+        </Heading>
         {!collapsed ? (
           <div>
-            <div className="text-sm font-semibold leading-none">Lynk</div>
+            <Heading level={4} as="div" className="leading-none">{BRAND_NAME}</Heading>
             <div className="text-[10px] text-muted-foreground leading-none mt-0.5">{t("Procurement Platform")}</div>
           </div>
         ) : null}
@@ -56,8 +75,8 @@ export function Sidebar({
               "h-auto shrink-0 rounded border-0 p-1 text-muted-foreground hover:bg-secondary hover:text-foreground dark:hover:bg-secondary",
               collapsed ? "" : "ml-auto"
             )}
-            aria-label={collapsed ? "Expand menu" : "Collapse menu"}
-            title={collapsed ? "Expand menu" : "Collapse menu"}
+            aria-label={collapsed ? t("Expand menu") : t("Collapse menu")}
+            title={collapsed ? t("Expand menu") : t("Collapse menu")}
           >
             <PanelLeft className="w-4 h-4" />
           </Button>
@@ -97,7 +116,7 @@ export function Sidebar({
           onClick={onInvite}
           title={t("Invite Supplier")}
           className={cn(
-            "mt-2 h-9 w-full rounded-md border-0 text-sm font-normal whitespace-normal text-muted-foreground hover:bg-muted/60 hover:text-muted-foreground dark:hover:bg-muted/60",
+            "mt-2 h-9 w-full rounded-md border-0 font-normal whitespace-normal text-muted-foreground hover:bg-muted/60 hover:text-muted-foreground dark:hover:bg-muted/60",
             collapsed ? "flex items-center justify-center px-3 py-2" : "flex items-center justify-start gap-3 px-3 py-2"
           )}
         >
@@ -107,12 +126,12 @@ export function Sidebar({
       </nav>
 
       <div className={cn("p-3 border-t border-border flex items-center h-16", collapsed ? "justify-center" : "gap-3")}>
-        <div className="w-7 h-7 rounded-full bg-sidebar-primary flex items-center justify-center text-xs font-semibold text-sidebar-primary-foreground">
-          SM
-        </div>
+        <Avatar className="size-7">
+          <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground">{SIGNED_IN.initials}</AvatarFallback>
+        </Avatar>
         {!collapsed ? (
           <div>
-            <div className="text-xs font-medium text-sidebar-foreground leading-none">Sabine Müller</div>
+            <Text variant="label" as="div" className="text-sidebar-foreground leading-none">{SIGNED_IN.name}</Text>
             <div className="text-[10px] text-muted-foreground leading-none mt-0.5">{t("Procurement Manager")}</div>
           </div>
         ) : null}

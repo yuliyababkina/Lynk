@@ -1,10 +1,19 @@
+/**
+ * @custom   Conversation view: a thread grouped by day with system rows, context
+ *           chips and a composer, or a read-only notice. shadcn has no chat or
+ *           message-thread component. Composes Button, Badge and Textarea.
+ * @approved Yuliya Babkina, 2026-11-12
+ */
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FileText, Lock, Send, SlidersHorizontal, ClipboardList, X } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/lib/i18n-context";
 import { cn } from "@/lib/utils";
+import { Heading, Text } from "@/shared/ui/typography";
 import type { ChatContext, ChatMessage, ChatSide } from "@/types";
 
 /*
@@ -72,15 +81,13 @@ function Initials({ name, muted }: { name: string; muted?: boolean }) {
     .join("")
     .slice(0, 2);
   return (
-    <span
-      aria-hidden="true"
-      className={cn(
-        "w-7 h-7 shrink-0 rounded-full text-xs font-semibold flex items-center justify-center",
-        muted ? "bg-secondary text-muted-foreground" : "bg-primary text-primary-foreground"
-      )}
-    >
-      {initials}
-    </span>
+    <Avatar aria-hidden="true" className="size-7 shrink-0">
+      <AvatarFallback
+        className={muted ? "bg-secondary text-muted-foreground" : "bg-primary text-primary-foreground"}
+      >
+        {initials}
+      </AvatarFallback>
+    </Avatar>
   );
 }
 
@@ -104,10 +111,11 @@ function ContextChip({
     <Button
       type="button"
       variant="ghost"
+      size="xs"
       onClick={() => onOpen?.(context)}
       disabled={!onOpen}
       className={cn(
-        "mt-2 h-auto max-w-full justify-start gap-1.5 rounded-lg border-border bg-background px-2 py-1 text-xs font-normal whitespace-normal disabled:opacity-100",
+        "mt-2 h-auto max-w-full justify-start gap-1.5 rounded-lg border-border bg-background px-2 py-1 font-normal whitespace-normal disabled:opacity-100",
         onOpen ? "hover:bg-secondary/60 dark:hover:bg-secondary/60" : "hover:bg-background"
       )}
       title={onOpen ? label : undefined}
@@ -154,12 +162,12 @@ function MessageRow({
       <div className={cn("min-w-0 max-w-[80%]", mine && "items-end text-right")}>
         {/* Requirement 5: company, person, role — in that order, every message. */}
         <div className={cn("flex flex-wrap items-baseline gap-x-1.5", mine && "justify-end")}>
-          <span className="text-xs font-semibold">
+          <Text variant="label" as="span">
             {message.authorCompany} <span className="text-muted-foreground">|</span> {message.authorName}
             {message.authorInactive && (
               <span className="font-normal text-muted-foreground"> ({t("inactive")})</span>
             )}
-          </span>
+          </Text>
           {message.authorRole && (
             <span className="text-[11px] text-muted-foreground">{message.authorRole}</span>
           )}
@@ -260,7 +268,7 @@ function ChatPanelBody({
     <section className={cn("flex min-h-0 flex-col", className)} aria-label={t("Conversation")}>
       <header className="flex shrink-0 items-start gap-2 border-b border-border px-4 py-3">
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-sm font-semibold">{title}</h3>
+          <Heading level={4} as="h3" className="truncate">{title}</Heading>
           {subtitle && <p className="truncate text-xs text-muted-foreground">{subtitle}</p>}
         </div>
         {onClose && (
@@ -291,7 +299,7 @@ function ChatPanelBody({
             <div key={day.key}>
               <div className="my-3 flex items-center gap-2">
                 <span className="h-px flex-1 bg-border" />
-                <span className="text-[11px] font-medium text-muted-foreground">{day.label}</span>
+                <Text variant="small" as="span">{day.label}</Text>
                 <span className="h-px flex-1 bg-border" />
               </div>
               <ul className="space-y-4">
@@ -331,8 +339,9 @@ function ChatPanelBody({
                 <Button
                   type="button"
                   variant="ghost"
+                  size="xs"
                   onClick={() => setContext(undefined)}
-                  className="h-auto shrink border-0 p-0 text-xs font-normal whitespace-normal text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
+                  className="h-auto shrink border-0 p-0 font-normal whitespace-normal text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
                 >
                   {t("Remove link")}
                 </Button>

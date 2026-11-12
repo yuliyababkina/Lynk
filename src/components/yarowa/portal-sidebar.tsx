@@ -1,6 +1,18 @@
+/**
+ * @custom   The supplier portal's left navigation: brand header, the six portal
+ *           views with count badges, and the supplier's profile, collapsible to
+ *           icons. Hand-rolled and kept until the portal moves onto the shadcn
+ *           Sidebar that shell/MfeSidebar already uses. Composes Button, Badge
+ *           and Avatar.
+ * @approved Yuliya Babkina, 2026-11-12
+ */
+
 import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useI18n } from "@/lib/i18n-context";
+import { BRAND_INITIAL, BRAND_NAME } from "@/lib/brand";
+import { Heading, Text } from "@/shared/ui/typography";
 import type { PortalView } from "@/pages/SupplierPortal";
 import { getPortalNavCounts, getPortalProfile, initialsOf } from "@/pages/portal/portal-data";
 import { LayoutDashboard, AlertCircle, FileText, DollarSign, Building, Users, PanelLeft } from "lucide-react";
@@ -53,12 +65,16 @@ export function PortalSidebar({
           collapsed ? "flex items-center justify-center px-2" : "flex items-center gap-2 px-4"
         )}
       >
-        <div className="w-7 h-7 shrink-0 rounded-md bg-sidebar-primary flex items-center justify-center text-sidebar-primary-foreground font-bold text-sm">
-          L
-        </div>
+        <Heading
+          level={4}
+          as="div"
+          className="w-7 h-7 shrink-0 rounded-md bg-sidebar-primary flex items-center justify-center text-sidebar-primary-foreground"
+        >
+          {BRAND_INITIAL}
+        </Heading>
         {!collapsed ? (
           <div>
-            <div className="text-sm font-semibold leading-none">Lynk</div>
+            <Heading level={4} as="div" className="leading-none">{BRAND_NAME}</Heading>
             <div className="text-[10px] text-muted-foreground leading-none mt-0.5">{t("Procurement Platform")}</div>
           </div>
         ) : null}
@@ -125,12 +141,12 @@ export function PortalSidebar({
           collapsed ? "justify-center" : "gap-3"
         )}
       >
-        <div className="w-8 h-8 rounded-full bg-success-soft text-success-ink text-xs font-semibold flex items-center justify-center shrink-0">
-          {initialsOf(profile.fullName)}
-        </div>
+        <Avatar className="size-8 shrink-0">
+          <AvatarFallback className="bg-success-soft text-success-ink">{initialsOf(profile.fullName)}</AvatarFallback>
+        </Avatar>
         {!collapsed ? (
           <div className="min-w-0">
-            <p className="text-sm font-medium truncate leading-tight">{profile.fullName}</p>
+            <Text variant="label" className="truncate leading-tight">{profile.fullName}</Text>
             <p className="text-xs text-muted-foreground truncate">{profile.role}</p>
           </div>
         ) : null}
