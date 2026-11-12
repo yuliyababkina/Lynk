@@ -1,9 +1,18 @@
+/**
+ * @custom   Requested-update email card with its confirm and update actions:
+ *           sender row, subject and body, due strip, shared by Documents, Company
+ *           Details and Requested Updates. shadcn has no message or email-card
+ *           component. Composes Card, Badge, Button and Separator.
+ * @approved Yuliya Babkina, 2026-11-12
+ */
+
 import { Award, Clock, Eye } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useI18n } from "@/lib/i18n-context";
+import { Heading, Text } from "@/shared/ui/typography";
 import type { RequestedUpdate } from "@/pages/portal/portal-data";
 
 /*
@@ -18,8 +27,10 @@ export function RequestedUpdatePanel({ update }: { update: RequestedUpdate }) {
   const { t } = useI18n();
   return (
     <div className="space-y-4">
-      <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        {t("Requested Updates")}
+      <h2>
+        <Text variant="eyebrow" as="span">
+          {t("Requested Updates")}
+        </Text>
       </h2>
 
       <Card className="rounded-2xl border border-border ring-0 shadow-none [--card-spacing:0px] gap-0">
@@ -29,9 +40,9 @@ export function RequestedUpdatePanel({ update }: { update: RequestedUpdate }) {
             <Award className="w-4 h-4" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold">
+            <Heading level={4} as="div">
               {update.from} · {update.principal}
-            </p>
+            </Heading>
             <p className="text-xs text-muted-foreground mt-0.5">
               {update.email} · {t(update.sentLabel)}
             </p>
@@ -44,7 +55,7 @@ export function RequestedUpdatePanel({ update }: { update: RequestedUpdate }) {
 
         {/* Subject + body */}
         <div className="p-4">
-          <h3 className="text-base font-semibold leading-snug">{update.subject}</h3>
+          <Heading level={3} className="leading-snug">{update.subject}</Heading>
           <div className="mt-3 space-y-3 text-sm leading-relaxed text-foreground">
             {update.body.map((paragraph, i) => (
               <p key={i}>{paragraph}</p>
@@ -56,7 +67,7 @@ export function RequestedUpdatePanel({ update }: { update: RequestedUpdate }) {
         <Separator />
         <div className="flex items-center gap-2 px-4 py-3 bg-muted/50">
           <Clock className="w-3.5 h-3.5 text-chart-orange-ink" />
-          <span className="text-xs font-medium text-chart-orange-ink">{t(update.dueLabel)}</span>
+          <Text variant="label" as="span" className="text-chart-orange-ink">{t(update.dueLabel)}</Text>
         </div>
       </Card>
 
