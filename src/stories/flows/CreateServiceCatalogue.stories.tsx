@@ -5,7 +5,7 @@ import { Heading } from "@/shared/ui/typography";
 import { WizardStepper } from "@/components/yarowa/wizard-stepper";
 import { FileUploadCard } from "@/pages/file-upload-card";
 import { CataloguePreviewTable } from "@/pages/catalogue-preview-table";
-import { SupplierReviewTable, type ReviewSupplier } from "@/components/yarowa/supplier-review-table";
+import { SupplierReviewTable, type ReviewSupplier } from "@/pages/supplier-review-table";
 import { WizardFooter } from "@/components/yarowa/wizard-footer";
 import { Button } from "@/components/ui/button";
 import { ServiceCatalogueWizard } from "@/pages/ServiceCatalogueWizard";

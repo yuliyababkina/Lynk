@@ -9,7 +9,7 @@ import { WizardStepper } from "@/components/yarowa/wizard-stepper";
 import { useI18n } from "@/lib/i18n-context";
 import { FileUploadCard } from "@/pages/file-upload-card";
 import { CataloguePreviewTable } from "@/pages/catalogue-preview-table";
-import { SupplierReviewTable } from "@/components/yarowa/supplier-review-table";
+import { SupplierReviewTable } from "@/pages/supplier-review-table";
 import { WizardFooter } from "@/components/yarowa/wizard-footer";
 import type { Catalogue, ResponseModel } from "../types";
 import { Heading, Text } from "@/shared/ui/typography";

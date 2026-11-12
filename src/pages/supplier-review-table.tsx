@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useI18n } from "@/lib/i18n-context";
+import { Text } from "@/shared/ui/typography";
 
 export interface ReviewSupplier {
   id: string;
@@ -33,7 +34,7 @@ export function SupplierReviewTable({
     return (
       <div className="bg-card border border-border rounded-lg py-12 flex flex-col items-center justify-center text-center">
         <Users size={22} className="text-muted-foreground mb-2" />
-        <p className="text-sm font-medium">{t("No matching suppliers")}</p>
+        <Text variant="label">{t("No matching suppliers")}</Text>
         <p className="text-xs text-muted-foreground">
           {t("No suppliers match this catalogue's region and trade yet.")}
         </p>
