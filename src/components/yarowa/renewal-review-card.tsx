@@ -1,7 +1,18 @@
+/**
+ * @custom   Renewal awaiting review block shared by the Compliance drawer and the
+ *           ticket drawer: a tinted Card header over the uploaded file as a
+ *           pressable row and a Review button, so both open the same lightbox.
+ *           Card has no pressable file row or review action. Composes Card and
+ *           Button.
+ * @approved Yuliya Babkina, 2026-11-12
+ */
+
 import { Upload, FileText, Eye } from "lucide-react";
 import type { SupplierDoc } from "@/types";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useI18n } from "@/lib/i18n-context";
+import { Text } from "@/shared/ui/typography";
 
 /*
  * The "renewal awaiting review" block shown wherever a compliance document has an
@@ -13,12 +24,12 @@ export function RenewalReviewCard({ doc, onReview }: { doc: SupplierDoc; onRevie
   const { t } = useI18n();
   if (!doc.renewal) return null;
   return (
-    <div className="border border-border rounded-lg overflow-hidden">
-      <div className="flex items-center gap-2 bg-secondary/60 border-b border-border px-3 py-2">
+    <Card size="sm" className="gap-0 rounded-lg py-0 shadow-none ring-border">
+      <CardHeader className="flex items-center gap-2 border-b border-border bg-secondary/60 px-3 py-2 [.border-b]:pb-2">
         <Upload size={14} className="text-foreground" aria-hidden="true" />
-        <span className="text-xs font-semibold">{t("Renewal Uploaded — Awaiting Review")}</span>
-      </div>
-      <div className="p-3 space-y-3">
+        <CardTitle className="text-sm">{t("Renewal Uploaded — Awaiting Review")}</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3 p-3">
         <Button
           type="button"
           variant="ghost"
@@ -27,7 +38,7 @@ export function RenewalReviewCard({ doc, onReview }: { doc: SupplierDoc; onRevie
         >
           <FileText size={22} className="size-[22px] shrink-0 text-medium-ink" aria-hidden="true" />
           <span className="min-w-0">
-            <span className="block text-sm font-medium truncate">{doc.renewal.fileName}</span>
+            <Text variant="label" as="span" className="block truncate">{doc.renewal.fileName}</Text>
             <span className="block text-xs text-muted-foreground">
               {doc.renewal.fileSize} · {t("Uploaded {date}", { date: doc.renewal.uploadedAt })}
             </span>
@@ -37,7 +48,7 @@ export function RenewalReviewCard({ doc, onReview }: { doc: SupplierDoc; onRevie
           <Eye size={14} />
           {t("Review document")}
         </Button>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
