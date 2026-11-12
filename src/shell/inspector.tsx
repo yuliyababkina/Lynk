@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { InspectorContext, useInspector } from "@/shell/inspector-context";
+import { Text } from "@/shared/ui/typography";
 
 /*
  * Shell inspector — a presentation aid, not product UI.
@@ -41,9 +42,11 @@ export function Region({
     >
       {children}
       {on ? (
-        <span
+        <Text
+          variant="eyebrow"
+          as="span"
           className={cn(
-            "pointer-events-none absolute z-50 rounded-sm px-1.5 py-0.5 text-[10px] font-semibold tracking-wide whitespace-nowrap uppercase shadow-sm",
+            "pointer-events-none absolute z-50 rounded-sm px-1.5 py-0.5 whitespace-nowrap shadow-sm",
             // Shell strips are thin and busy at both ends, so their tag sits in
             // the empty middle; app regions get theirs in the bottom-right corner.
             owner === "shell"
@@ -52,7 +55,7 @@ export function Region({
           )}
         >
           {owner === "shell" ? "Shell" : "MFE"} · {label}
-        </span>
+        </Text>
       ) : null}
     </div>
   );

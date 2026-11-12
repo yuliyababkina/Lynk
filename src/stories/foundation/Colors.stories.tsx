@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { Heading } from "@/shared/ui/typography";
 
 const TOKENS = [
   { group: "Base", items: ["background", "foreground", "card", "primary", "secondary", "muted", "accent", "border"] },
@@ -104,7 +105,7 @@ function Palette() {
     <div className="flex flex-col gap-5">
       {TOKENS.map((g) => (
         <div key={g.group}>
-          <div className="mb-2 text-[13px] font-semibold">{g.group}</div>
+          <Heading level={4} as="div" className="mb-2">{g.group}</Heading>
           <div className="flex flex-wrap gap-3">
             {g.items.map((t) => (
               <Swatch key={t} token={t} />

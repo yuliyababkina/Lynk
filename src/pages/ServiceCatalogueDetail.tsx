@@ -7,6 +7,7 @@ import { cn } from "../lib/utils";
 import type { Catalogue } from "../types";
 import { useI18n } from "@/lib/i18n-context";
 import { translateCatalogueName } from "@/lib/ticket-i18n";
+import { Heading } from "@/shared/ui/typography";
 
 export function ServiceCatalogueDetail({
   catalogue,
@@ -32,44 +33,53 @@ export function ServiceCatalogueDetail({
       <Button
         variant="ghost"
         onClick={onBack}
-        className="mb-3 h-auto border-0 p-0 text-sm font-normal text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
+        className="mb-3 h-auto border-0 p-0 font-normal text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
       >
-        ← All catalogues
+        {t("← All catalogues")}
       </Button>
 
       <div className="flex items-start justify-between mb-5">
         <div>
-          <h1 className="text-2xl font-bold mb-1">{translateCatalogueName(catalogue.name, t)}</h1>
+          <Heading level={1} className="mb-1">{translateCatalogueName(catalogue.name, t)}</Heading>
           {isCurrent ? (
             <p className="text-sm text-muted-foreground">
-              Current: {catalogue.currentVersion} · {catalogue.region} · {catalogue.trade} · Valid{" "}
-              {catalogue.validFrom} — {catalogue.validTo}
+              {t("Current: {version} · {region} · {trade} · Valid {from} — {to}", {
+                version: catalogue.currentVersion,
+                region: catalogue.region,
+                trade: catalogue.trade,
+                from: catalogue.validFrom,
+                to: catalogue.validTo,
+              })}
             </p>
           ) : (
             <div className="flex items-center gap-3">
               <p className="text-sm text-muted-foreground">
-                Viewing {viewingVersion} (read-only) · {catalogue.region} · {catalogue.trade}
+                {t("Viewing {version} (read-only) · {region} · {trade}", {
+                  version: viewingVersion,
+                  region: catalogue.region,
+                  trade: catalogue.trade,
+                })}
               </p>
               <Button
                 variant="ghost"
                 onClick={() => setViewingVersion(catalogue.currentVersion)}
-                className="h-auto border-0 p-0 text-sm font-medium text-accent hover:bg-transparent hover:text-accent hover:underline dark:hover:bg-transparent"
+                className="h-auto border-0 p-0 text-accent hover:bg-transparent hover:text-accent hover:underline dark:hover:bg-transparent"
               >
-                ← Back to current version
+                {t("← Back to current version")}
               </Button>
             </div>
           )}
         </div>
         {isCurrent && (
           <Button onClick={onStartUpdate}>
-            <Upload size={14} /> Upload new version
+            <Upload size={14} /> {t("Upload new version")}
           </Button>
         )}
       </div>
 
       <div className="grid grid-cols-[1fr_320px] gap-4 items-start">
         <div className="bg-card border border-border rounded-lg overflow-hidden">
-          <div className="px-4 py-3 border-b border-border font-semibold text-sm">{t("Services")}</div>
+          <Heading level={4} as="div" className="px-4 py-3 border-b border-border">{t("Services")}</Heading>
           <Table>
             <TableHeader>
               <TableRow className="text-xs border-border hover:bg-transparent">
@@ -95,7 +105,7 @@ export function ServiceCatalogueDetail({
         <div className="space-y-4">
           <div className="bg-card border border-border rounded-lg overflow-hidden">
             <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-              <span className="font-semibold text-sm">{t("Service catalogue alerts")}</span>
+              <Heading level={4} as="span">{t("Service catalogue alerts")}</Heading>
               <Badge variant={nonCompliant.length > 0 ? "danger" : "success"}>{nonCompliant.length}</Badge>
             </div>
             {nonCompliant.length === 0 ? (
@@ -114,11 +124,11 @@ export function ServiceCatalogueDetail({
                 <div className="px-4 py-3">
                   {remindersSent ? (
                     <div className="text-sm text-success-ink flex items-center gap-1.5">
-                      <CheckCircle2 size={14} /> Reminders sent to {nonCompliant.length} suppliers
+                      <CheckCircle2 size={14} /> {t("Reminders sent to {count} suppliers", { count: nonCompliant.length })}
                     </div>
                   ) : (
                     <Button variant="outline" className="w-full" onClick={() => setRemindersSent(true)}>
-                      <Bell size={14} /> Remind all
+                      <Bell size={14} /> {t("Remind all")}
                     </Button>
                   )}
                 </div>
@@ -127,7 +137,7 @@ export function ServiceCatalogueDetail({
           </div>
 
           <div className="bg-card border border-border rounded-lg overflow-hidden">
-            <div className="px-4 py-3 border-b border-border font-semibold text-sm">{t("History log")}</div>
+            <Heading level={4} as="div" className="px-4 py-3 border-b border-border">{t("History log")}</Heading>
             {catalogue.versions.map((v) => (
               <Button
                 key={v.version}

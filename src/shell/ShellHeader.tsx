@@ -19,6 +19,10 @@ import { useI18n } from "@/lib/i18n-context";
 import type { Lang } from "@/lib/i18n";
 import { AppSwitcher } from "./AppSwitcher";
 import { ROLES, type PlatformApp, type RoleId } from "./apps";
+import { Heading, Text } from "@/shared/ui/typography";
+
+// The logo tile shows the initial of the product name: a brand mark, not translatable text.
+const BRAND_INITIAL = "Yarowa".charAt(0);
 
 /*
  * Shell header — the platform's, not any app's.
@@ -53,10 +57,10 @@ export function ShellHeader({
   return (
     <header className="flex h-12 shrink-0 items-center gap-3 border-b bg-card px-4">
       <div className="flex items-center gap-2">
-        <span className="flex size-7 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground">
-          Y
-        </span>
-        <span className="text-sm font-semibold">Yarowa</span>
+        <Heading level={4} as="span" className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
+          {BRAND_INITIAL}
+        </Heading>
+        <Heading level={4} as="span">Yarowa</Heading>
       </div>
       <div className="flex-1" />
 
@@ -91,15 +95,15 @@ export function ShellHeader({
       <DropdownMenu>
         <DropdownMenuTrigger className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "gap-2 px-1.5")} aria-label={t("Account")}>
             <Avatar className="size-7">
-              <AvatarFallback className="bg-primary text-xs font-semibold text-primary-foreground">
+              <AvatarFallback className="bg-primary text-primary-foreground">
                 {user.initials}
               </AvatarFallback>
             </Avatar>
           </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-64">
           <DropdownMenuLabel className="flex flex-col gap-0.5">
-            <span className="text-sm font-medium text-foreground">{user.person}</span>
-            <span className="text-xs font-normal text-muted-foreground">{t(user.label)}</span>
+            <Text variant="label" as="span">{user.person}</Text>
+            <Text variant="small" as="span">{t(user.label)}</Text>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>

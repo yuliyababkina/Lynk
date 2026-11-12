@@ -7,6 +7,7 @@ import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import type { Catalogue, CatalogueStatus } from "../types";
 import { useI18n } from "@/lib/i18n-context";
 import { translateCatalogueName } from "@/lib/ticket-i18n";
+import { Heading } from "@/shared/ui/typography";
 
 const STATUS_TONE: Record<CatalogueStatus, "success" | "neutral" | "info"> = {
   Active: "success",
@@ -41,12 +42,12 @@ export function ServiceCatalogueList({
   if (catalogues.length === 0) {
     return (
       <div className="p-6">
-        <h1 className="text-2xl font-bold mb-6">{tr("Service catalogues")}</h1>
+        <Heading level={1} className="mb-6">{tr("Service catalogues")}</Heading>
         <div className="flex flex-col items-center justify-center py-24 text-center">
           <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center mb-4">
             <FileSpreadsheet size={26} className="text-muted-foreground" />
           </div>
-          <h2 className="text-lg font-semibold mb-1">{tr("Create a Service catalogue")}</h2>
+          <Heading level={2} className="mb-1">{tr("Create a Service catalogue")}</Heading>
           <p className="text-sm text-muted-foreground mb-5 max-w-sm">
             {tr("Upload a price list of services scoped by Region and Trade, then share it with your suppliers for confirmation.")}
           </p>
@@ -73,7 +74,7 @@ export function ServiceCatalogueList({
     <div className="p-6">
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h1 className="text-2xl font-bold mb-1">{tr("Service catalogues")}</h1>
+          <Heading level={1} className="mb-1">{tr("Service catalogues")}</Heading>
           <p className="text-sm text-muted-foreground">
             {tr("Price lists per Region and Trade, shared with suppliers for confirmation.")}
           </p>
@@ -112,7 +113,7 @@ export function ServiceCatalogueList({
 
       {filtered.length === 0 ? (
         <div className="text-sm text-muted-foreground py-12 text-center">
-          No catalogues match the selected filters.
+          {tr("No catalogues match the selected filters.")}
         </div>
       ) : (
         <div className="grid grid-cols-3 gap-4">

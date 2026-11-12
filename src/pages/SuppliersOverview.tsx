@@ -11,6 +11,7 @@ import { useI18n } from "@/lib/i18n-context";
 import { relationshipId } from "@/lib/db";
 import { PRINCIPAL_ID } from "@/data";
 import type { Supplier } from "../types";
+import { Heading } from "@/shared/ui/typography";
 
 type StageFilter = "all" | "prospect" | "supplier" | "provider";
 
@@ -66,7 +67,7 @@ export function SuppliersOverview({
     <div className="p-6">
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h1 className="text-2xl font-bold mb-1">{t("Suppliers Overview")}</h1>
+          <Heading level={1} className="mb-1">{t("Suppliers Overview")}</Heading>
           <p className="text-sm text-muted-foreground">{t("All contacts — Prospects, Suppliers, and Providers.")}</p>
         </div>
         <Button>
@@ -171,7 +172,7 @@ export function SuppliersOverview({
             </Table>
           </div>
           <div className="text-xs text-muted-foreground mt-2">
-            Showing {filtered.length} of {SUPPLIERS.length} contacts
+            {t("Showing {shown} of {total} contacts", { shown: filtered.length, total: SUPPLIERS.length })}
           </div>
         </TabsContent>
       </Tabs>

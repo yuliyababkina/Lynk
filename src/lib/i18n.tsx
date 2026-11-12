@@ -1185,6 +1185,61 @@ const DE: Record<string, string> = {
   "Platform shell · concept": "Plattform-Shell · Konzept",
   "Wireframe": "Wireframe",
   "External front end": "Externes Frontend",
+
+  // ── Pages that were not yet running through t() (Dashboard, ProspectReview,
+  // ProspectOnboarding, ServiceCatalogueDetail) ─────────────────────────────
+  "No open tickets in {filter}.": "Keine offenen Tickets in {filter}.",
+  "You're now a supplier": "Sie sind jetzt Lieferant",
+  "Delete {name}?": "{name} löschen?",
+  "The file and its details are removed from your submission. You can upload a new version afterwards. This can't be undone.":
+    "Die Datei und ihre Angaben werden aus Ihrer Einreichung entfernt. Anschließend können Sie eine neue Version hochladen. Dies kann nicht rückgängig gemacht werden.",
+  "Keep document": "Dokument behalten",
+  Delete: "Löschen",
+  "Version {version} · {date}": "Version {version} · {date}",
+  // The mock contract shown while signing.
+  Procurement: "Einkauf",
+  "Price List": "Preisliste",
+  Agreement: "Vereinbarung",
+  Service: "Leistung",
+  "Rate (applied to work orders)": "Preis (gilt für Aufträge)",
+  "Supplier signature": "Unterschrift des Lieferanten",
+  "Mock document — for UI/UX prototype only": "Beispieldokument — nur für den UI/UX-Prototyp",
+  "Back to onboarding": "Zurück zum Onboarding",
+  "Prospect · Onboarding review": "Interessent · Onboarding-Prüfung",
+  "Company information": "Unternehmensangaben",
+  "Details the supplier submitted for their profile.":
+    "Angaben, die der Lieferant für sein Profil eingereicht hat.",
+  Address: "Adresse",
+  Email: "E-Mail",
+  Phone: "Telefon",
+  "Not yet uploaded by the supplier.": "Vom Lieferanten noch nicht hochgeladen.",
+  Summary: "Zusammenfassung",
+  "Summary of your review. Approved items are ready; items needing an update are editable.":
+    "Zusammenfassung Ihrer Prüfung. Freigegebene Punkte sind fertig; Punkte mit Aktualisierungsbedarf lassen sich bearbeiten.",
+  // Followed by the status, in bold, then a full stop.
+  "This application is already": "Dieser Antrag ist bereits",
+  "Reset onboarding": "Onboarding zurücksetzen",
+  "Reset the onboarding process": "Onboarding-Prozess zurücksetzen",
+  "Request update ({count})": "Aktualisierung anfordern ({count})",
+  "← All catalogues": "← Alle Kataloge",
+  "Current: {version} · {region} · {trade} · Valid {from} — {to}":
+    "Aktuell: {version} · {region} · {trade} · Gültig {from} — {to}",
+  "Viewing {version} (read-only) · {region} · {trade}":
+    "Ansicht {version} (schreibgeschützt) · {region} · {trade}",
+  "← Back to current version": "← Zurück zur aktuellen Version",
+  "Upload new version": "Neue Version hochladen",
+  "Reminders sent to {count} suppliers": "Erinnerungen an {count} Lieferanten gesendet",
+  "Remind all": "Alle erinnern",
+
+  // ── Data governance, catalogue list, suppliers overview, footer, toast ──────
+  "Supplier's stated reason": "Begründung des Lieferanten",
+  "{count} fields changing": "{count} Felder ändern sich",
+  "No catalogues match the selected filters.": "Keine Kataloge entsprechen den gewählten Filtern.",
+  "Showing {shown} of {total} contacts": "{shown} von {total} Kontakten angezeigt",
+  "© Yarowa AG": "© Yarowa AG",
+  "New version published": "Neue Version veröffentlicht",
+  "{name} · {count} suppliers notified to re-confirm":
+    "{name} · {count} Lieferanten zur erneuten Bestätigung benachrichtigt",
 };
 
 const STORAGE_KEY = "lynk-lang";

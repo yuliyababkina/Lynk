@@ -1,11 +1,13 @@
 import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
+import { Heading } from "@/shared/ui/typography";
 import { WizardStepper } from "@/components/yarowa/wizard-stepper";
-import { FileUploadCard } from "@/components/yarowa/file-upload-card";
-import { CataloguePreviewTable } from "@/components/yarowa/catalogue-preview-table";
-import { SupplierReviewTable, type ReviewSupplier } from "@/components/yarowa/supplier-review-table";
-import { BottomActionBar } from "@/components/yarowa/bottom-action-bar";
+import { FileUploadCard } from "@/pages/file-upload-card";
+import { CataloguePreviewTable } from "@/pages/catalogue-preview-table";
+import { SupplierReviewTable, type ReviewSupplier } from "@/pages/supplier-review-table";
+import { WizardFooter } from "@/components/yarowa/wizard-footer";
+import { Button } from "@/components/ui/button";
 import { ServiceCatalogueWizard } from "@/pages/ServiceCatalogueWizard";
 import { PARSED_LINES } from "@/data";
 import type { Catalogue } from "@/types";
@@ -52,7 +54,7 @@ const CATALOGUE: Catalogue = {
 function StepFrame({ current, children }: { current: string; children: React.ReactNode }) {
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6 text-center">Create a Service catalogue</h1>
+      <Heading level={1} className="mb-6 text-center">Create a Service catalogue</Heading>
       <div className="mb-8">
         <WizardStepper steps={STEPS} current={current} onStepClick={fn()} />
       </div>
@@ -87,7 +89,9 @@ export const StepPreview: Story = {
       <div className="mb-6">
         <CataloguePreviewTable lines={PARSED_LINES} showDiff={false} />
       </div>
-      <BottomActionBar onBack={fn()} onPrimary={fn()} primaryLabel="Next" />
+      <WizardFooter onBack={fn()}>
+        <Button onClick={fn()}>Next</Button>
+      </WizardFooter>
     </StepFrame>
   ),
 };
@@ -117,13 +121,12 @@ function DistributionStep() {
           onDeselectAll={() => setSel(new Set())}
         />
       </div>
-      <BottomActionBar
-        onBack={fn()}
-        showSaveDraft
-        onSaveDraft={fn()}
-        onPrimary={fn()}
-        primaryLabel="Publish & share with suppliers"
-      />
+      <WizardFooter onBack={fn()}>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={fn()}>Save as draft</Button>
+          <Button onClick={fn()}>Publish &amp; share with suppliers</Button>
+        </div>
+      </WizardFooter>
     </StepFrame>
   );
 }

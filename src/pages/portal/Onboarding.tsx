@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { useI18n } from "@/lib/i18n-context";
+import { Heading } from "@/shared/ui/typography";
 
 export interface PortalOnboardingProps {
   supplierId: string;
@@ -10,7 +11,7 @@ export function PortalOnboarding({ supplierId: _supplierId }: PortalOnboardingPr
   return (
     <div className="p-6">
       <Card className="p-6">
-        <h1 className="text-2xl font-bold mb-2">{t("Onboarding Coming Soon")}</h1>
+        <Heading level={1} className="mb-2">{t("Onboarding Coming Soon")}</Heading>
         <p className="text-muted-foreground">
           {t("The onboarding wizard for prospect relationships will be built here.")}
         </p>

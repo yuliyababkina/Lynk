@@ -17,6 +17,7 @@ import {
   ClipboardList,
   PenLine,
   MessageSquare,
+  Languages,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -44,13 +45,13 @@ import { relationshipId } from "@/lib/db";
 import { PRINCIPAL_ID } from "@/data";
 import { toast } from "@/lib/toast";
 import { LanguageToggle } from "@/components/yarowa/language-toggle";
-import { MachineTranslatedTag } from "@/components/yarowa/machine-translated-tag";
 import { useI18n } from "@/lib/i18n-context";
 import { translateContent } from "@/lib/content-i18n";
 import { cn } from "@/lib/utils";
 import { TERMS_SECTIONS, TERMS_VERSION, TERMS_EFFECTIVE_DATE } from "@/lib/terms";
 import type { SupplierDoc } from "@/types";
 import { getPortalProfile } from "./portal/portal-data";
+import { Heading, Text } from "@/shared/ui/typography";
 
 export interface ProspectOnboardingProps {
   supplierId: string;
@@ -71,6 +72,8 @@ const STEP_LABEL: Partial<Record<Step, string>> = {
 };
 
 const PRINCIPAL = PRINCIPAL_COMPANY;
+// The logo tile shows the initial of the product name: a brand mark, not translatable text.
+const BRAND_INITIAL = "Lynk".charAt(0);
 
 /* ── Compliance-document checklist rows ──────────────────────────────────── */
 interface DocRowDef {
@@ -355,7 +358,7 @@ export function ProspectOnboarding({
       console.error("[Lynk] activating supplier failed:", e);
     }
     toast({
-      title: "You're now a supplier",
+      title: t("You're now a supplier"),
       description: `${prospectCompany} is active for ${PRINCIPAL}.`,
       tone: "success",
     });
@@ -405,10 +408,10 @@ export function ProspectOnboarding({
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-sidebar text-foreground">
       {/* Header */}
       <header className="h-12 shrink-0 flex items-center px-6 bg-background border-b border-border">
-        <div className="w-6 h-6 rounded-md bg-foreground text-background flex items-center justify-center text-[11px] font-bold">
-          L
-        </div>
-        <span className="ml-2 text-sm font-semibold">Lynk</span>
+        <Heading level={4} as="div" className="w-6 h-6 rounded-md bg-foreground text-background flex items-center justify-center">
+          {BRAND_INITIAL}
+        </Heading>
+        <Heading level={4} as="span" className="ml-2">Lynk</Heading>
         <span className="ml-1.5 text-sm text-muted-foreground">· {t("Supplier Portal")}</span>
         <div className="flex-1" />
         {/* Present on every step of the wizard, including the welcome/consent
@@ -417,9 +420,9 @@ export function ProspectOnboarding({
           <MessageSquare className="w-4 h-4" />
           {t("Chat")}
           {chatUnread > 0 && (
-            <span className="ml-1 rounded-full bg-critical px-1.5 text-[10px] font-semibold text-critical-foreground">
+            <Badge variant="count-critical" className="ml-1">
               {chatUnread}
-            </span>
+            </Badge>
           )}
         </Button>
         <LanguageToggle />
@@ -427,7 +430,7 @@ export function ProspectOnboarding({
           <Button
             variant="ghost"
             onClick={onSwitchAccount}
-            className="ml-3 h-auto border-0 p-0 text-xs font-medium text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
+            className="ml-3 h-auto border-0 p-0 text-xs text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
           >
             {t("Roles board")}
           </Button>
@@ -496,7 +499,7 @@ export function ProspectOnboarding({
           {step === "documents" && pending && (
             <section className="space-y-5">
               <div>
-                <h1 className="text-xl font-bold">{t("Review document details")}</h1>
+                <Heading level={1}>{t("Review document details")}</Heading>
                 <p className="text-muted-foreground mt-1 text-sm">
                   {t("Confirm the details below so your principals can verify this document.")}
                 </p>
@@ -518,7 +521,7 @@ export function ProspectOnboarding({
           {step === "documents" && !pending && editing && (
             <section className="space-y-5">
               <div>
-                <h1 className="text-xl font-bold">{t("Edit document details")}</h1>
+                <Heading level={1}>{t("Edit document details")}</Heading>
                 {/* One sentence per case: the tail is a clause, and German would
                     not hang it off the end the way English does. */}
                 <p className="text-muted-foreground mt-1 text-sm">
@@ -547,7 +550,7 @@ export function ProspectOnboarding({
           {step === "documents" && !pending && !editing && (
             <section className="space-y-5">
               <div>
-                <h1 className="text-xl font-bold">{t("Standard Compliance Documents")}</h1>
+                <Heading level={1}>{t("Standard Compliance Documents")}</Heading>
                 <p className="text-muted-foreground mt-1 text-sm">
                   {t("These documents are required for all suppliers on the Lynk platform.")}
                   <br />
@@ -648,12 +651,11 @@ export function ProspectOnboarding({
               {/* Deleting is not undoable, so it's confirmed by name. */}
               <Dialog open={Boolean(confirmDelete)} onOpenChange={(o) => !o && !deleting && setConfirmDelete(null)}>
                 <DialogContent showCloseButton={false} className="sm:max-w-[440px] rounded-2xl">
-                  <DialogTitle className="text-base font-semibold">
-                    Delete {confirmDelete?.documentName}?
+                  <DialogTitle>
+                    {t("Delete {name}?", { name: confirmDelete?.documentName ?? "" })}
                   </DialogTitle>
                   <DialogDescription className="text-sm text-muted-foreground">
-                    The file and its details are removed from your submission. You can upload a new
-                    version afterwards. This can't be undone.
+                    {t("The file and its details are removed from your submission. You can upload a new version afterwards. This can't be undone.")}
                   </DialogDescription>
                   <div className="flex gap-2 pt-2">
                     <Button
@@ -662,11 +664,11 @@ export function ProspectOnboarding({
                       disabled={deleting}
                       onClick={() => setConfirmDelete(null)}
                     >
-                      Keep document
+                      {t("Keep document")}
                     </Button>
                     <Button variant="danger" className="flex-1" disabled={deleting} onClick={deleteDoc}>
                       {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                      Delete
+                      {t("Delete")}
                     </Button>
                   </div>
                 </DialogContent>
@@ -718,7 +720,7 @@ function WelcomeStep({
       <div className="w-12 h-12 rounded-xl bg-secondary mx-auto flex items-center justify-center text-2xl">
         🏗️
       </div>
-      <h1 className="text-2xl font-bold mt-4">{t("Welcome, {name}", { name: firstName })}</h1>
+      <Heading level={1} className="mt-4">{t("Welcome, {name}", { name: firstName })}</Heading>
       <p className="text-muted-foreground mt-2 text-sm max-w-md mx-auto">
         {t(
           "You've been invited to extend your existing supplier relationship to a new Principal — {principal}. Your existing data has been pre-filled. Please review, confirm, and upload any missing documents.",
@@ -730,7 +732,7 @@ function WelcomeStep({
         <div className="mt-6 flex items-start gap-2 rounded-lg border border-warning/40 bg-warning-soft/50 p-3 text-left">
           <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-semibold text-warning-ink">{t("Changes requested by procurement")}</p>
+            <Heading level={4} as="div" className="text-warning-ink">{t("Changes requested by procurement")}</Heading>
             {reviewNote && <p className="text-xs text-warning-ink/90 mt-0.5">“{reviewNote}”</p>}
             <p className="text-xs text-muted-foreground mt-1">
               {t("Please update your details/documents and resubmit.")}
@@ -743,7 +745,7 @@ function WelcomeStep({
         <div className="mt-6 flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-left">
           <XCircle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-semibold text-destructive">{t("Application not approved")}</p>
+            <Heading level={4} as="div" className="text-destructive">{t("Application not approved")}</Heading>
             {reviewNote && <p className="text-xs text-destructive/90 mt-0.5">“{reviewNote}”</p>}
           </div>
         </div>
@@ -754,11 +756,16 @@ function WelcomeStep({
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2 flex-wrap">
             <FileText className="w-4 h-4 text-primary" />
-            <h2 className="text-base font-semibold">{t("Terms & Conditions")}</h2>
-            {lang !== "en" && <MachineTranslatedTag />}
+            <Heading level={3} as="h2">{t("Terms & Conditions")}</Heading>
+            {lang !== "en" && (
+              <Badge variant="neutral" title={t("Machine translated — not the author's original wording.")}>
+                <Languages className="size-3" />
+                {t("Machine translated")}
+              </Badge>
+            )}
           </div>
           <span className="text-xs text-muted-foreground shrink-0">
-            Version {TERMS_VERSION} · {TERMS_EFFECTIVE_DATE}
+            {t("Version {version} · {date}", { version: TERMS_VERSION, date: TERMS_EFFECTIVE_DATE })}
           </span>
         </div>
         <p className="text-xs text-muted-foreground mt-1">
@@ -773,7 +780,7 @@ function WelcomeStep({
         >
           {TERMS_SECTIONS.map((sec) => (
             <div key={sec.heading}>
-              <p className="text-xs font-semibold">{translateContent(sec.heading, "en", lang).text}</p>
+              <Heading level={4} as="div">{translateContent(sec.heading, "en", lang).text}</Heading>
               <p className="text-xs text-muted-foreground mt-0.5">{translateContent(sec.body, "en", lang).text}</p>
             </div>
           ))}
@@ -889,7 +896,7 @@ function CompanyStep({
         <div className="flex items-start gap-2.5 rounded-lg bg-success-soft p-3">
           <CheckCircle2 className="w-4 h-4 text-success-ink shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-semibold text-success-ink">{t("Approved by procurement")}</p>
+            <Heading level={4} as="div" className="text-success-ink">{t("Approved by procurement")}</Heading>
             <p className="text-xs text-muted-foreground mt-0.5">
               {t("{principal} has verified your company details — no changes needed here.", { principal: PRINCIPAL })}
             </p>
@@ -898,7 +905,7 @@ function CompanyStep({
       )}
       <div className="flex items-center gap-2">
         <Building2 className="w-4 h-4 text-primary" />
-        <h1 className="text-base font-semibold">{t("Company Details")}</h1>
+        <Heading level={3} as="h1">{t("Company Details")}</Heading>
         {approved && (
           <Badge variant="success-outline" className="ml-auto">
             <CheckCircle2 className="w-3 h-3" />
@@ -917,7 +924,7 @@ function CompanyStep({
 
       <div className="flex items-center gap-2 pt-2">
         <MapPin className="w-4 h-4 text-primary" />
-        <h2 className="text-base font-semibold">{t("Registered Address")}</h2>
+        <Heading level={3} as="h2">{t("Registered Address")}</Heading>
       </div>
       <div className="space-y-4">
         <FormField label={t("Street")} value={form.street} onChange={setField("street")} readOnly={approved} />
@@ -973,7 +980,7 @@ function DoneStep() {
       <div className="w-12 h-12 rounded-full bg-success-soft mx-auto flex items-center justify-center">
         <CheckCircle2 className="w-6 h-6 text-success" />
       </div>
-      <h1 className="text-2xl font-bold mt-4">{t("You're all done!")}</h1>
+      <Heading level={1} className="mt-4">{t("You're all done!")}</Heading>
       <p className="text-muted-foreground mt-2 text-sm max-w-md mx-auto">
         {t(
           "Your profile and all required documents have been submitted. {manager} at Lynk will now complete the qualification review. You'll receive an email once a decision has been made.",
@@ -982,9 +989,9 @@ function DoneStep() {
       </p>
 
       <Card className="rounded-2xl border border-border ring-0 shadow-none text-left mt-6 [--card-spacing:1.25rem] px-(--card-spacing)">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">
+        <Text variant="eyebrow" className="mb-3">
           {t("What happens next")}
-        </p>
+        </Text>
         <ol className="space-y-2">
           {[
             t("Procurement team reviews your qualification score"),
@@ -1050,7 +1057,7 @@ function ContractsStep({
       <div className="flex items-start gap-2.5 rounded-lg bg-success-soft p-3">
         <CheckCircle2 className="w-4 h-4 text-success-ink shrink-0 mt-0.5" />
         <div>
-          <p className="text-sm font-semibold text-success-ink">{t("Approved by procurement")}</p>
+          <Heading level={4} as="div" className="text-success-ink">{t("Approved by procurement")}</Heading>
           <p className="text-xs text-muted-foreground mt-0.5">
             {t("{principal} has verified your details and documents.", { principal: PRINCIPAL })}
           </p>
@@ -1058,7 +1065,7 @@ function ContractsStep({
       </div>
 
       <div>
-        <h1 className="text-xl font-bold">{t("Review & sign your contracts")}</h1>
+        <Heading level={1}>{t("Review & sign your contracts")}</Heading>
         <p className="text-muted-foreground mt-1 text-sm">
           {t(
             "{principal} has sent the documents below — the main agreement and the price catalogues that apply to your work orders. Review each carefully and sign all of them to activate your supplier account.",
@@ -1093,7 +1100,7 @@ function ContractsStep({
                     <RowIcon className="w-4 h-4 text-foreground" />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-semibold truncate">{c.name}</span>
+                    <Heading level={4} as="span" className="block truncate">{c.name}</Heading>
                     <span className="block text-xs text-muted-foreground">
                       {c.kind === "catalogue" ? t("Pricing catalogue") : t("Contract")}
                     </span>
@@ -1117,7 +1124,7 @@ function ContractsStep({
           <div className="flex items-center gap-3 border-b border-border px-4 py-3 shrink-0">
             <SelectedIcon className="w-4 h-4 text-medium-ink shrink-0" />
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-semibold truncate">{selected.name}</div>
+              <Heading level={4} as="div" className="truncate">{selected.name}</Heading>
               <div className="text-xs text-muted-foreground truncate">{selected.meta}</div>
             </div>
             {isSelectedSigned && (
@@ -1134,10 +1141,10 @@ function ContractsStep({
 
           <div className="border-t border-border px-4 py-4 shrink-0">
             {isSelectedSigned ? (
-              <div className="flex items-center gap-2 text-sm font-medium text-success-ink">
+              <Text variant="label" as="div" className="flex items-center gap-2 text-success-ink">
                 <CheckCircle2 className="w-4 h-4" />
                 {t("Signed by {name}", { name: signerName })}
-              </div>
+              </Text>
             ) : (
               <div className="space-y-3">
                 <Label className="items-start gap-2.5 cursor-pointer font-normal leading-normal">
@@ -1176,7 +1183,7 @@ function SupplierActivatedStep({ company }: { company: string }) {
       <div className="w-12 h-12 rounded-full bg-success-soft mx-auto flex items-center justify-center">
         <CheckCircle2 className="w-6 h-6 text-success" />
       </div>
-      <h1 className="text-2xl font-bold mt-4">{t("You're now a supplier 🎉")}</h1>
+      <Heading level={1} className="mt-4">{t("You're now a supplier 🎉")}</Heading>
       <p className="text-muted-foreground mt-2 text-sm max-w-md mx-auto">
         {t(
           "Contracts signed. {company} is active for {principal} and can now receive work orders. Manage your documents, contracts and details anytime from your supplier portal.",
@@ -1193,20 +1200,21 @@ function SupplierActivatedStep({ company }: { company: string }) {
 const LINE_WIDTHS = ["w-full", "w-[94%]", "w-[97%]", "w-[88%]", "w-[72%]", "w-[96%]", "w-[80%]"];
 
 function ContractPreview({ contract }: { contract: PrincipalContract }) {
+  const { t } = useI18n();
   const isCatalogue = contract.kind === "catalogue";
   return (
     <div className="mx-auto w-full max-w-[620px] bg-paper text-paper-foreground shadow-md rounded-sm p-10">
       <div className="flex items-start justify-between border-b border-paper-border pb-4">
         <div>
-          <div className="text-lg font-bold tracking-tight">{PRINCIPAL}</div>
-          <div className="text-[11px] text-paper-muted">Procurement</div>
+          <Heading level={2} as="div" className="text-paper-foreground">{PRINCIPAL}</Heading>
+          <div className="text-[11px] text-paper-muted">{t("Procurement")}</div>
         </div>
-        <div className="text-right text-[10px] uppercase tracking-wide text-paper-muted font-semibold">
-          {isCatalogue ? "Price List" : "Agreement"}
-        </div>
+        <Text variant="eyebrow" as="div" className="text-right text-paper-muted">
+          {isCatalogue ? t("Price List") : t("Agreement")}
+        </Text>
       </div>
 
-      <div className="mt-7 text-xl font-bold leading-tight">{contract.name}</div>
+      <Text variant="stat" as="div" className="mt-7 leading-tight text-paper-foreground">{contract.name}</Text>
       <div className="text-xs text-paper-muted mt-1">{contract.meta}</div>
       <p className="text-sm text-paper-secondary mt-4 leading-relaxed">{contract.summary}</p>
 
@@ -1219,8 +1227,8 @@ function ContractPreview({ contract }: { contract: PrincipalContract }) {
       {isCatalogue && (
         <div className="mt-6 border border-paper-border rounded overflow-hidden text-xs">
           <div className="grid grid-cols-[1fr_auto] gap-4 bg-paper-header font-semibold text-paper-secondary px-3 py-2">
-            <span>Service</span>
-            <span>Rate (applied to work orders)</span>
+            <span>{t("Service")}</span>
+            <span>{t("Rate (applied to work orders)")}</span>
           </div>
           {[
             ["Standard call-out", "€ 85 / h"],
@@ -1239,10 +1247,10 @@ function ContractPreview({ contract }: { contract: PrincipalContract }) {
       <div className="mt-8 border-t border-dashed border-paper-border pt-5 flex items-end justify-between">
         <div>
           <div className="h-px w-36 bg-paper-rule" />
-          <div className="text-[11px] text-paper-muted mt-1">Supplier signature</div>
+          <div className="text-[11px] text-paper-muted mt-1">{t("Supplier signature")}</div>
         </div>
         <div className="text-[10px] text-paper-subtle max-w-[45%] text-right">
-          Mock document — for UI/UX prototype only
+          {t("Mock document — for UI/UX prototype only")}
         </div>
       </div>
     </div>

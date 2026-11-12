@@ -47,6 +47,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { translateCatalogueName } from "@/lib/ticket-i18n";
 import type { Supplier, SupplierDoc, Contact, OnboardingCase, ChatContext } from "../types";
 import type { ProspectDecision } from "../lib/db";
+import { Heading, Text } from "@/shared/ui/typography";
 
 // Status presentation comes from the shared definition so the PM, the supplier,
 // and the prospect all see the same label/icon for a given document.
@@ -184,16 +185,16 @@ export function ProspectReview({
       <Button
         variant="ghost"
         onClick={onClose}
-        className="mb-4 flex h-auto justify-start gap-1.5 border-0 p-0 text-sm font-normal text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
+        className="mb-4 flex h-auto justify-start gap-1.5 border-0 p-0 font-normal text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
       >
-        <ArrowLeft className="w-4 h-4" /> Back to onboarding
+        <ArrowLeft className="w-4 h-4" /> {t("Back to onboarding")}
       </Button>
 
       <div className="flex items-start justify-between gap-4 mb-5">
         <div>
-          <h1 className="text-2xl font-bold">{supplier.name}</h1>
+          <Heading level={1}>{supplier.name}</Heading>
           <p className="text-sm text-muted-foreground">
-            {contact?.name ? `${contact.name} · ` : ""}Prospect · Onboarding review
+            {contact?.name ? `${contact.name} · ` : ""}{t("Prospect · Onboarding review")}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -202,9 +203,9 @@ export function ProspectReview({
           <Button variant={unread > 0 ? "default" : "outline"} size="sm" onClick={openChat}>
             <MessageSquare className="w-4 h-4" /> {t("Chat")}
             {unread > 0 && (
-              <span className="ml-1 rounded-full bg-critical px-1.5 text-[10px] font-semibold text-critical-foreground">
+              <Badge variant="count-critical" className="ml-1">
                 {unread}
-              </span>
+              </Badge>
             )}
           </Button>
           {(() => {
@@ -225,18 +226,18 @@ export function ProspectReview({
 
       {step === "Company info" && (
         <div className="max-w-2xl mx-auto">
-          <StepShell title="Company information" subtitle="Details the supplier submitted for their profile.">
+          <StepShell title={t("Company information")} subtitle={t("Details the supplier submitted for their profile.")}>
             <dl className="space-y-3">
-              <Row icon={<Building2 className="w-4 h-4" />} label="Legal name" value={supplier.name} />
-              <Row label="VAT ID" value={supplier.vatId || "—"} />
-              <Row label="Trade" value={supplier.trade || "—"} />
-              <Row label="Region" value={supplier.region || "—"} />
-              <Row icon={<MapPin className="w-4 h-4" />} label="Address" value={supplier.address || "—"} />
+              <Row icon={<Building2 className="w-4 h-4" />} label={t("Legal name")} value={supplier.name} />
+              <Row label={t("VAT ID")} value={supplier.vatId || "—"} />
+              <Row label={t("Trade")} value={supplier.trade || "—"} />
+              <Row label={t("Region")} value={supplier.region || "—"} />
+              <Row icon={<MapPin className="w-4 h-4" />} label={t("Address")} value={supplier.address || "—"} />
               {contact && (
                 <>
-                  <Row icon={<Mail className="w-4 h-4" />} label="Contact" value={contact.name} />
-                  {contact.email && <Row label="Email" value={contact.email} />}
-                  {contact.phone && <Row icon={<Phone className="w-4 h-4" />} label="Phone" value={contact.phone} />}
+                  <Row icon={<Mail className="w-4 h-4" />} label={t("Contact")} value={contact.name} />
+                  {contact.email && <Row label={t("Email")} value={contact.email} />}
+                  {contact.phone && <Row icon={<Phone className="w-4 h-4" />} label={t("Phone")} value={contact.phone} />}
                 </>
               )}
             </dl>
@@ -342,7 +343,7 @@ function DocumentsReviewStep({
   return (
     <div>
       <div className="mb-4">
-        <h2 className="text-lg font-semibold">{t("Uploaded documents")}</h2>
+        <Heading level={2}>{t("Uploaded documents")}</Heading>
         <p className="text-sm text-muted-foreground mt-0.5">
           {t("Review each document — open the preview, then approve or decline with a comment.")}
         </p>
@@ -367,7 +368,7 @@ function DocumentsReviewStep({
               >
                 <span className="flex items-center gap-2 min-w-0">
                   <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
-                  <span className="text-sm font-medium truncate">{r.name}</span>
+                  <Text variant="label" as="span" className="truncate">{r.name}</Text>
                 </span>
                 <Badge variant={meta.variant} className="shrink-0">
                   <meta.Icon className="size-3" />
@@ -396,7 +397,7 @@ function DocumentsReviewStep({
             />
           ) : (
             <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">
-              Select a document to preview.
+              {t("Select a document to preview.")}
             </div>
           )}
         </div>
@@ -474,7 +475,7 @@ function DocumentPreviewPanel({
       <div className="w-full flex flex-col border border-border rounded-xl overflow-hidden bg-card">
         <div className="px-4 py-2.5 border-b border-border flex items-start justify-between gap-3">
           <div className="min-w-0">
-          <p className="text-sm font-semibold truncate">{t(selected.name)}</p>
+          <Heading level={4} as="div" className="truncate">{t(selected.name)}</Heading>
           <p className="text-xs text-muted-foreground">{t(selected.category)}</p>
           {selected.doc && info && (
             <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 mt-2 text-xs">
@@ -570,7 +571,7 @@ function DocumentPreviewPanel({
                   />
                 ) : (
                   <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <FileX className="w-3.5 h-3.5" /> Not yet uploaded by the supplier.
+                    <FileX className="w-3.5 h-3.5" /> {t("Not yet uploaded by the supplier.")}
                   </span>
                 )}
                 {idx < count - 1 && (
@@ -691,7 +692,7 @@ function StepShell({ title, subtitle, children }: { title: string; subtitle: str
   return (
     <Card className="rounded-2xl border border-border ring-0 shadow-none [--card-spacing:1.5rem] px-(--card-spacing)">
       <div className="mb-4">
-        <h2 className="text-lg font-semibold">{t(title)}</h2>
+        <Heading level={2}>{t(title)}</Heading>
         <p className="text-sm text-muted-foreground mt-0.5">{t(subtitle)}</p>
       </div>
       {children}
@@ -973,7 +974,7 @@ function DecisionStep({
         : { variant: "neutral", Icon: Circle, iconClass: "text-muted-foreground", label: "Not reviewed", note: "" };
 
   return (
-    <StepShell title="Summary" subtitle="Summary of your review. Approved items are ready; items needing an update are editable.">
+    <StepShell title={t("Summary")} subtitle={t("Summary of your review. Approved items are ready; items needing an update are editable.")}>
       {decided && (
         <div
           className={`mb-4 flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${
@@ -990,13 +991,13 @@ function DecisionStep({
             <XCircle className="w-4 h-4 shrink-0" />
           ) : null}
           <span>
-            This application is already <span className="font-semibold">{t(caseStatus)}</span>.
+            {t("This application is already")} <span className="font-semibold">{t(caseStatus)}</span>.
           </span>
         </div>
       )}
 
       <div className="rounded-xl border border-border divide-y divide-border/60 mb-5">
-        <SummaryItem label="Company info" meta={companyMeta} onEdit={companyMeta.label !== "Confirmed" ? onEditCompany : undefined} />
+        <SummaryItem label={t("Company info")} meta={companyMeta} onEdit={companyMeta.label !== "Confirmed" ? onEditCompany : undefined} />
         {rows.map((r) => {
           const key = r.doc?.status ?? "missing";
           const base = DOC_STATUS_META[key];
@@ -1033,18 +1034,18 @@ function DecisionStep({
             </div>
             <div className="flex gap-2">
               <Button variant="outline" className="flex-1" disabled={busy} onClick={() => setResetting(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button variant="default" className="flex-1" disabled={busy} onClick={reset}>
                 {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
-                Reset onboarding
+                {t("Reset onboarding")}
               </Button>
             </div>
           </div>
         ) : (
           <Button variant="outline" className="w-full" disabled={busy} onClick={() => setResetting(true)}>
             <RotateCcw className="w-4 h-4" />
-            Reset the onboarding process
+            {t("Reset the onboarding process")}
           </Button>
         )
       ) : rejecting ? (
@@ -1059,10 +1060,10 @@ function DecisionStep({
           />
           <div className="flex gap-2">
             <Button variant="outline" className="flex-1" disabled={busy} onClick={() => setRejecting(false)}>
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button variant="danger" className="flex-1" disabled={busy || !reason.trim()} onClick={() => decide("reject", reason.trim())}>
-              Confirm rejection
+              {t("Confirm rejection")}
             </Button>
           </div>
         </div>
@@ -1083,7 +1084,7 @@ function DecisionStep({
             {hasIssues ? (
               <Button variant="default" disabled={busy} onClick={() => decide("changes", combinedFeedback)}>
                 {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                Request update ({feedbackParts.length})
+                {t("Request update ({count})", { count: feedbackParts.length })}
               </Button>
             ) : (
               // Approving isn't the finish line — the contract and catalogues
@@ -1124,7 +1125,7 @@ function SummaryItem({
       <div className="min-w-0">
         <div className="flex items-center gap-2">
           <meta.Icon className={`w-4 h-4 shrink-0 ${meta.iconClass}`} />
-          <span className="text-sm font-medium truncate">{label}</span>
+          <Text variant="label" as="span" className="truncate">{label}</Text>
           {onEdit && (
             <Button
               variant="ghost"
@@ -1197,7 +1198,7 @@ function SendContractStep({
     >
       <div className="space-y-5">
         <div>
-          <Label className="block text-xs font-medium leading-4 text-muted-foreground mb-1">
+          <Label className="block text-xs leading-4 text-muted-foreground mb-1">
             {t("Contract template")}
           </Label>
           <NativeSelect
@@ -1214,7 +1215,7 @@ function SendContractStep({
         </div>
 
         <div>
-          <Label className="block text-xs font-medium leading-4 text-muted-foreground mb-1">
+          <Label className="block text-xs leading-4 text-muted-foreground mb-1">
             {t("Service catalogues")}
           </Label>
           <p className="text-xs text-muted-foreground mb-2">
@@ -1227,7 +1228,7 @@ function SendContractStep({
                 type="button"
                 variant="ghost"
                 onClick={() => toggle(c.name)}
-                className="flex h-auto w-full justify-start gap-2.5 rounded-none border-0 border-b border-border/60 px-3 py-2.5 text-left text-sm font-normal whitespace-normal last:border-b-0 hover:bg-secondary/50 dark:hover:bg-secondary/50"
+                className="flex h-auto w-full justify-start gap-2.5 rounded-none border-0 border-b border-border/60 px-3 py-2.5 text-left font-normal whitespace-normal last:border-b-0 hover:bg-secondary/50 dark:hover:bg-secondary/50"
               >
                 <Checkbox checked={picked.has(c.name)} tabIndex={-1} className="pointer-events-none" />
                 <span className="min-w-0 flex-1">

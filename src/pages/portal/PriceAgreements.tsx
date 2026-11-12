@@ -1,6 +1,7 @@
 import { ReceiptText } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { useI18n } from "@/lib/i18n-context";
+import { Heading } from "@/shared/ui/typography";
 
 export interface PortalPriceAgreementsProps {
   supplierId: string;
@@ -11,7 +12,7 @@ export function PortalPriceAgreements({ supplierId: _supplierId }: PortalPriceAg
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">{t("Price Agreements")}</h1>
+        <Heading level={1}>{t("Price Agreements")}</Heading>
         <p className="text-muted-foreground mt-1">
           {t("Rate cards and framework pricing agreed with your principals.")}
         </p>

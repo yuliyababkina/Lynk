@@ -6,6 +6,7 @@ import { RequestedUpdatePanel } from "@/components/yarowa/requested-update-panel
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n-context";
 import { getPortalProfile } from "./portal-data";
+import { Heading, Text } from "@/shared/ui/typography";
 
 export interface PortalRequestedUpdatesProps {
   supplierId: string;
@@ -22,7 +23,7 @@ export function PortalRequestedUpdates({ supplierId }: PortalRequestedUpdatesPro
     <div className="flex flex-col lg:flex-row min-h-full">
       <section className="flex-1 min-w-0 p-6 space-y-6 bg-sidebar">
         <div>
-          <h1 className="text-2xl font-bold">{t("Requested Updates")}</h1>
+          <Heading level={1}>{t("Requested Updates")}</Heading>
           <p className="text-muted-foreground mt-1">
             {t("Review principal requests, update company data, and confirm changes.")}
           </p>
@@ -48,12 +49,12 @@ export function PortalRequestedUpdates({ supplierId }: PortalRequestedUpdatesPro
                   )}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-semibold text-primary truncate">{u.principal}</p>
+                    <Heading level={4} as="div" className="text-primary truncate">{u.principal}</Heading>
                     <Badge variant="warning">{t("Action required")}</Badge>
                   </div>
                   {/* Subject and body are principal-authored free text: they go
                       through the machine-translation seam, not this dictionary. */}
-                  <p className="text-sm font-medium mt-1 line-clamp-2">{u.subject}</p>
+                  <Text variant="label" className="mt-1 line-clamp-2">{u.subject}</Text>
                   <p className="text-xs text-muted-foreground mt-2">
                     {u.from} · {t(u.sentLabel)}
                   </p>

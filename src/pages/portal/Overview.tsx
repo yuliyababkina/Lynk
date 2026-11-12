@@ -29,6 +29,7 @@ import {
   type PrincipalChip,
   type Tone,
 } from "./portal-data";
+import { Heading, Text } from "@/shared/ui/typography";
 
 export interface PortalOverviewProps {
   supplierId: string;
@@ -194,7 +195,7 @@ function StatTile({ stat, onNavigate }: { stat: PortalStat; onNavigate?: (view: 
         <p className="text-sm text-muted-foreground">{t(stat.label)}</p>
         <ArrowRight className="w-4 h-4 text-muted-foreground" />
       </div>
-      <p className="text-3xl font-bold mt-2">{stat.value}</p>
+      <Text variant="stat" className="mt-2">{stat.value}</Text>
       {stat.principals ? (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2">
           {stat.principals.map((p) => {
@@ -232,7 +233,7 @@ export function PortalOverview({ supplierId, groups, onNavigate, onOpenActivity,
     <div className="@container p-6 space-y-6">
       {/* Greeting */}
       <div>
-        <h1 className="text-2xl font-bold">{t("Good morning, {name}", { name: profile.firstName })}</h1>
+        <Heading level={1}>{t("Good morning, {name}", { name: profile.firstName })}</Heading>
         <p className="text-muted-foreground mt-1">
           {t("Here's the current status of your supplier account with Lynk.")}
         </p>
@@ -274,7 +275,7 @@ export function PortalOverview({ supplierId, groups, onNavigate, onOpenActivity,
                 <Icon className="w-4 h-4" />
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-semibold truncate">{t(title)}</p>
+                <Heading level={4} as="div" className="truncate">{t(title)}</Heading>
                 <p className="text-xs text-muted-foreground truncate">{t(hint)}</p>
               </div>
             </div>

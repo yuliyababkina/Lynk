@@ -1,10 +1,11 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { Heading } from "@/shared/ui/typography";
 
 function Type() {
   return (
     <div className="flex flex-col gap-3">
-      <div className="text-2xl font-bold">Heading — Task Queue (text-2xl / bold)</div>
-      <div className="text-lg font-semibold">Subheading (text-lg / semibold)</div>
+      <Heading level={1} as="div">Heading — Task Queue (text-2xl / bold)</Heading>
+      <Heading level={2} as="div">Subheading (text-lg / semibold)</Heading>
       <div className="text-sm">Body text — the default 14px reading size (text-sm).</div>
       <div className="text-xs text-muted-foreground">
         Caption / metadata — muted foreground (text-xs).

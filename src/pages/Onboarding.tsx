@@ -28,6 +28,7 @@ import { ProspectReview, type ProspectReviewProps } from "./ProspectReview";
 import type { DocStatus, OnboardingStatus, OnboardingCase } from "../types";
 import type { ProspectDecision } from "../lib/db";
 import { useI18n } from "@/lib/i18n-context";
+import { Heading, Text } from "@/shared/ui/typography";
 
 // Uploaded-document status → badge (mirrors the supplier portal).
 type BadgeVariant = NonNullable<ComponentProps<typeof Badge>["variant"]>;
@@ -267,7 +268,7 @@ export function Onboarding({
   return (
     <div className="flex h-full min-h-0">
       <div className="flex-1 min-w-0 p-6 overflow-y-auto">
-        <h1 className="text-2xl font-bold mb-1">{tr("Onboarding")}</h1>
+        <Heading level={1} className="mb-1">{tr("Onboarding")}</Heading>
         <p className="text-sm text-muted-foreground mb-4">
           {tr("Prospect invitations that are stale or incomplete. Follow up to keep your pipeline moving.")}
         </p>
@@ -280,7 +281,7 @@ export function Onboarding({
           ].map((c) => (
             <div key={c.label} className="bg-card border border-border rounded-lg p-3">
               <div className="text-xs text-muted-foreground mb-1">{tr(c.label)}</div>
-              <div className="text-xl font-bold">{c.value}</div>
+              <Text variant="stat" as="div">{c.value}</Text>
             </div>
           ))}
         </div>
@@ -412,10 +413,10 @@ export function Onboarding({
               {/* Submitted profile — the data the prospect filled in the wizard */}
               <SectionLabel icon={<Building2 className="w-3.5 h-3.5" />}>{tr("Company details")}</SectionLabel>
               <dl className="space-y-2 mb-4">
-                <ReviewField label="Legal name" value={linkedSupplier.name} />
-                <ReviewField label="VAT ID" value={linkedSupplier.vatId || "—"} />
-                <ReviewField label="Trade" value={linkedSupplier.trade ? tr(linkedSupplier.trade) : "—"} />
-                <ReviewField label="Region" value={linkedSupplier.region ? tr(linkedSupplier.region) : "—"} />
+                <ReviewField label={tr("Legal name")} value={linkedSupplier.name} />
+                <ReviewField label={tr("VAT ID")} value={linkedSupplier.vatId || "—"} />
+                <ReviewField label={tr("Trade")} value={linkedSupplier.trade ? tr(linkedSupplier.trade) : "—"} />
+                <ReviewField label={tr("Region")} value={linkedSupplier.region ? tr(linkedSupplier.region) : "—"} />
               </dl>
 
               <SectionLabel icon={<MapPin className="w-3.5 h-3.5" />}>{tr("Registered address")}</SectionLabel>
@@ -464,7 +465,7 @@ export function Onboarding({
                     >
                       <span className="flex items-center gap-2 min-w-0">
                         <FileText className="size-3.5 text-muted-foreground shrink-0" />
-                        <span className="text-xs font-medium truncate">{tr(doc.documentName)}</span>
+                        <Text variant="label" as="span" className="truncate">{tr(doc.documentName)}</Text>
                         {openable && <ExternalLink className="size-3 text-muted-foreground shrink-0" />}
                       </span>
                       <Badge variant={meta.variant} className="shrink-0">
@@ -486,9 +487,9 @@ export function Onboarding({
             </>
           ) : (
             <>
-              <div className="text-xs font-semibold uppercase text-muted-foreground mb-2">
+              <Text variant="eyebrow" as="div" className="mb-2">
                 {tr("Invitation timeline")}
-              </div>
+              </Text>
               <div className="text-sm mb-4">
                 {tr("Invitation sent, {days} days ago. No response from contact yet.", {
                   days: selectedCase.daysNoResponse,
@@ -516,7 +517,7 @@ export function Onboarding({
 
       <Dialog open={Boolean(revokingCase)} onOpenChange={(o) => !o && setRevokingCase(null)}>
         <DialogContent showCloseButton={false} className="sm:max-w-[440px] rounded-2xl">
-          <DialogTitle className="text-base font-semibold">
+          <DialogTitle>
             {tr("Revoke the invitation for {company}?", { company: revokingCase?.companyName ?? "" })}
           </DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
@@ -608,7 +609,7 @@ function DeleteCaseDialog({
   return (
     <Dialog open onOpenChange={(o) => !o && !busy && onClose()}>
       <DialogContent showCloseButton={false} className="sm:max-w-[460px] rounded-2xl">
-        <DialogTitle className="text-base font-semibold">
+        <DialogTitle>
           {t("Delete {company}?", { company: caseItem.companyName })}
         </DialogTitle>
         {/* Whole sentences rather than a stitched-in document count: German puts
@@ -631,7 +632,7 @@ function DeleteCaseDialog({
         </DialogDescription>
 
         <div className="space-y-1.5">
-          <Label htmlFor="delete-reason" className="block text-xs font-normal leading-4 text-muted-foreground">
+          <Label htmlFor="delete-reason" className="block text-xs leading-4 text-muted-foreground">
             {t("Reason for deleting")} <span className="text-destructive">*</span>
           </Label>
           <Textarea
@@ -671,10 +672,10 @@ function DeleteCaseDialog({
    field below translate what they are handed, like the portal's own Field. */
 function SectionLabel({ icon, children }: { icon?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+    <Text variant="eyebrow" as="div" className="flex items-center gap-1.5 mb-2">
       {icon}
       {children}
-    </div>
+    </Text>
   );
 }
 

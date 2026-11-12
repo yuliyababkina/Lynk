@@ -7,6 +7,7 @@ import { relationshipId } from "@/lib/db";
 import { useI18n } from "@/lib/i18n-context";
 import { SUPPLIER_RELATIONSHIPS_MARTIN, SUPPLIER_RELATIONSHIPS_MEHMET } from "@/data";
 import type { SupplierPrincipalRelationship } from "@/types";
+import { Heading, Text } from "@/shared/ui/typography";
 
 export interface PortalPrincipalsProps {
   supplierId: string;
@@ -42,7 +43,7 @@ export function PortalPrincipals({ supplierId, onOpenChat }: PortalPrincipalsPro
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">{t("My Principals")}</h1>
+        <Heading level={1}>{t("My Principals")}</Heading>
         <p className="text-muted-foreground mt-1">{t("Companies you work with or are onboarding with")}</p>
       </div>
 
@@ -71,15 +72,15 @@ export function PortalPrincipals({ supplierId, onOpenChat }: PortalPrincipalsPro
                   <div className="grid grid-cols-3 gap-4 text-sm mb-3">
                     <div>
                       <p className="text-muted-foreground">{t("Pending")}</p>
-                      <p className="text-lg font-semibold">{relationship.pendingCount}</p>
+                      <Text variant="stat">{relationship.pendingCount}</Text>
                     </div>
                     <div>
                       <p className="text-muted-foreground">{t("Changes Requested")}</p>
-                      <p className="text-lg font-semibold text-destructive">{relationship.rejectedCount}</p>
+                      <Text variant="stat" className="text-destructive">{relationship.rejectedCount}</Text>
                     </div>
                     <div>
                       <p className="text-muted-foreground">{t("Messages")}</p>
-                      <p className="text-lg font-semibold">{unread}</p>
+                      <Text variant="stat">{unread}</Text>
                     </div>
                   </div>
                   {/* The real last message, not a mock string. */}
