@@ -4,12 +4,35 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import { fileURLToPath } from 'node:url';
+import { existsSync } from 'node:fs';
+import { execSync } from 'node:child_process';
 import { storybookTest } from '@storybook/addon-vitest/vitest-plugin';
 import { playwright } from '@vitest/browser-playwright';
 const dirname = typeof __dirname !== 'undefined' ? __dirname : path.dirname(fileURLToPath(import.meta.url));
 
+/**
+ * .env.local is git-ignored, so a fresh git worktree never has it and the app
+ * would silently fall back to the static mock data. When this checkout has no
+ * .env.local, read the env files from the main checkout instead (the folder
+ * that owns the shared .git directory). A .env.local of its own always wins.
+ */
+function resolveEnvDir(): string {
+  if (existsSync(path.join(dirname, '.env.local'))) return dirname;
+  try {
+    const commonDir = execSync('git rev-parse --path-format=absolute --git-common-dir', {
+      cwd: dirname,
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).toString().trim();
+    const mainCheckout = path.dirname(commonDir);
+    return existsSync(path.join(mainCheckout, '.env.local')) ? mainCheckout : dirname;
+  } catch {
+    return dirname; // no git (e.g. a build container): use this folder
+  }
+}
+
 // More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
+  envDir: resolveEnvDir(),
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
