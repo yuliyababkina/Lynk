@@ -47,20 +47,21 @@ A custom component must carry this header, stating why 1–3 were not enough, an
 
 It also needs a Storybook story titled **`Custom/<Name>`** (e.g. `Custom/Alert Banner`) covering its variants and states. Don't add a custom component without both; ask for the approval instead of writing `@approved` yourself.
 
-> Legacy: existing stories under `Product Components/…` predate this rule and are renamed to `Custom/…` when each component is next touched.
+`npm run check:custom` enforces both for every `.tsx` in `src/components/yarowa/` (the pre-commit hook checks the staged ones, CI checks all). Existing components and `Product Components/…` stories predate the rule and fail it until they get their header and a `Custom/…` story.
 
 ## 4. Typography
 
-UI text — screen titles, section headings, helper text — uses `<Heading>` and `<Text>` from `@/shared/ui/typography`. Don't write `text-2xl font-semibold` by hand: that is the type scale drifting outside the design system. Raw `<h1>`/`<p>`/`<ul>` stay correct for prose blocks.
+UI text — screen titles, section headings, helper text — uses `<Heading>` and `<Text>` from `@/shared/ui/typography`. Don't write `text-2xl font-semibold` by hand: that is the type scale drifting outside the design system. Lint enforces it (`lynk/type-scale`): a text size and a font weight in the same class string is an error everywhere except `typography.tsx`. A size alone or a weight alone is fine. If no level or variant fits, add one to `typography.tsx`. Raw `<h1>`/`<p>`/`<ul>` stay correct for prose blocks.
 
 ## 5. i18n
 
-Lynk ships in English and German. **Every user-facing string goes through `useI18n`** — `const { t } = useI18n()` from `@/lib/i18n`, then `t("Scheduled exports")`, with `{name}` placeholders for values: `t("{n} documents", { n })`. The English source string is the key; add its German translation to the `DE` map in `src/lib/i18n.tsx` in the same change. No hardcoded user-facing text in JSX, `aria-label`, `placeholder`, `title` or toasts.
+Lynk ships in English and German. **Every user-facing string goes through `useI18n`** — `const { t } = useI18n()` from `@/lib/i18n`, then `t("Scheduled exports")`, with `{name}` placeholders for values: `t("{n} documents", { n })`. The English source string is the key; add its German translation to the `DE` map in `src/lib/i18n.tsx` in the same change. No hardcoded user-facing text in JSX, `aria-label`, `placeholder`, `title`, `alt`, `label`, `subtitle`, `description` or toasts. Lint enforces it (`lynk/no-literal-string`) outside stories; `Lynk`, `Yarowa` and the language names in the switcher are allowed as-is.
 
 ## 6. Reviewing and checks
 
 - `npm run dev` (app, `:5173`) · `npm run storybook` (`:6006`).
-- `npm run lint` — ESLint, `--max-warnings=0`. `npm run typecheck` — `tsc --noEmit`. `npm test` — unit tests.
+- `npm run lint` — ESLint, `--max-warnings=0`. `npm run typecheck` — `tsc --noEmit`. `npm run check:custom` — custom component headers and stories. `npm test` — unit tests.
+- Pre-commit runs lint, the custom component check (staged files) and typecheck. GitHub Actions (`.github/workflows/checks.yml`) runs all checks plus the build on the whole codebase for every PR and push to `main`.
 - Lint tiers: **vendored** (`src/components/ui/**`, `src/hooks/**`) gets the colour rules only; **authored** (`src/pages/**`, `src/components/yarowa/**`, `src/shell/**`, `src/shared/**`, `src/stories/**`) gets the full set. The rules live in `eslint.presentation.js`.
 - Supabase schema changes cannot be run from an agent session (anon key only): write the migration, the user pastes it into the SQL Editor.
 
