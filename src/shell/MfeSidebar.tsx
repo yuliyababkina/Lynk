@@ -13,6 +13,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { useI18n } from "@/lib/i18n-context";
+import { Heading } from "@/shared/ui/typography";
 
 /*
  * The inner menu every micro frontend renders on the left.
@@ -51,7 +52,7 @@ export function MfeSidebar({
       <SidebarHeader className="h-12 justify-center border-b px-4">
         <div className="flex items-center gap-2">
           <AppIcon className="size-4 text-primary" />
-          <span className="truncate text-sm font-semibold">{t(appName)}</span>
+          <Heading level={4} as="span" className="truncate">{t(appName)}</Heading>
         </div>
       </SidebarHeader>
       <SidebarContent>

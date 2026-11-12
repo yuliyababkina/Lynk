@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import type { PlatformApp, WireframeBlock } from "./apps";
 import { Region } from "./inspector";
 import { MfeSidebar } from "./MfeSidebar";
+import { Text } from "@/shared/ui/typography";
 
 /*
  * A placeholder micro frontend. Real inner menu (so switching inside the app
@@ -35,7 +36,7 @@ export function WireframeApp({ app }: { app: PlatformApp }) {
           stock tint all but disappeared, and a wireframe has to read on a projector. */}
       <main className="flex min-w-0 flex-1 flex-col overflow-y-auto bg-sidebar [&_[data-slot=skeleton]]:bg-foreground/[0.07]">
         <div className="flex h-12 shrink-0 items-center gap-2 border-b bg-card px-6">
-          <span className="text-sm font-medium">{item ? t(item.label) : ""}</span>
+          <Text variant="label" as="span">{item ? t(item.label) : ""}</Text>
           <Badge variant="outline" className="ml-1 font-normal text-muted-foreground">
             {t("Wireframe")}
           </Badge>
@@ -82,7 +83,7 @@ function Block({ block }: { block: WireframeBlock }) {
       return (
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-medium">{label}</CardTitle>
+            <CardTitle className="text-sm">{label}</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             <div className="grid grid-cols-[2fr_1fr_1fr_1fr] gap-4">
@@ -105,7 +106,7 @@ function Block({ block }: { block: WireframeBlock }) {
       return (
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-medium">{label}</CardTitle>
+            <CardTitle className="text-sm">{label}</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             {[0, 1, 2, 3, 4].map((r) => (
@@ -125,7 +126,7 @@ function Block({ block }: { block: WireframeBlock }) {
       return (
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-medium">{label}</CardTitle>
+            <CardTitle className="text-sm">{label}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex h-48 items-end gap-3">
@@ -140,7 +141,7 @@ function Block({ block }: { block: WireframeBlock }) {
       return (
         <Card className="max-w-2xl">
           <CardHeader>
-            <CardTitle className="text-sm font-medium">{label}</CardTitle>
+            <CardTitle className="text-sm">{label}</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-2 gap-4">
             {[0, 1, 2, 3, 4, 5].map((f) => (
@@ -158,7 +159,7 @@ function Block({ block }: { block: WireframeBlock }) {
         <div className="grid gap-4 lg:grid-cols-[1fr_1.2fr]">
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm font-medium">{left}</CardTitle>
+              <CardTitle className="text-sm">{left}</CardTitle>
             </CardHeader>
             <CardContent>
               <Skeleton className="h-80 w-full" />
@@ -166,7 +167,7 @@ function Block({ block }: { block: WireframeBlock }) {
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm font-medium">{right ?? left}</CardTitle>
+              <CardTitle className="text-sm">{right ?? left}</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-3">
               {[0, 1, 2, 3, 4, 5].map((r) => (
@@ -180,7 +181,7 @@ function Block({ block }: { block: WireframeBlock }) {
     case "cards":
       return (
         <div className="flex flex-col gap-3">
-          <span className="text-sm font-medium">{label}</span>
+          <Text variant="label" as="span">{label}</Text>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {[0, 1, 2, 3, 4, 5].map((c) => (
               <Card key={c} size="sm">
