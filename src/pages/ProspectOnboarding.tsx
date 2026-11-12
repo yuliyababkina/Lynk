@@ -17,6 +17,7 @@ import {
   ClipboardList,
   PenLine,
   MessageSquare,
+  Languages,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -44,7 +45,6 @@ import { relationshipId } from "@/lib/db";
 import { PRINCIPAL_ID } from "@/data";
 import { toast } from "@/lib/toast";
 import { LanguageToggle } from "@/components/yarowa/language-toggle";
-import { MachineTranslatedTag } from "@/components/yarowa/machine-translated-tag";
 import { useI18n } from "@/lib/i18n-context";
 import { translateContent } from "@/lib/content-i18n";
 import { cn } from "@/lib/utils";
@@ -757,7 +757,12 @@ function WelcomeStep({
           <div className="flex items-center gap-2 flex-wrap">
             <FileText className="w-4 h-4 text-primary" />
             <Heading level={3} as="h2">{t("Terms & Conditions")}</Heading>
-            {lang !== "en" && <MachineTranslatedTag />}
+            {lang !== "en" && (
+              <Badge variant="neutral" title={t("Machine translated — not the author's original wording.")}>
+                <Languages className="size-3" />
+                {t("Machine translated")}
+              </Badge>
+            )}
           </div>
           <span className="text-xs text-muted-foreground shrink-0">
             {t("Version {version} · {date}", { version: TERMS_VERSION, date: TERMS_EFFECTIVE_DATE })}
