@@ -1,7 +1,17 @@
+/**
+ * @custom   Full-width pressable choice: a tone-tinted icon chip, a title and a
+ *           muted line, on the TONE scale shared with AlertBanner so an "info"
+ *           action and an "info" alert are the same colour family. shadcn Button
+ *           has no two-line layout or tinted chip, and Card is not pressable.
+ *           Composes Button.
+ * @approved Yuliya Babkina, 2026-11-12
+ */
+
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TONE, type Tone } from "@/lib/tones";
 import { Button } from "@/components/ui/button";
+import { Heading, Text } from "@/shared/ui/typography";
 
 /*
  * A full-width, tappable action choice — soft tinted surface, rounded icon chip,
@@ -38,8 +48,8 @@ export function ActionCard({
         <Icon size={18} className={cn("size-[18px]", t.ink)} aria-hidden="true" />
       </span>
       <span className="min-w-0">
-        <span className="block font-semibold text-sm text-foreground">{title}</span>
-        {description && <span className="block text-xs text-muted-foreground mt-0.5">{description}</span>}
+        <Heading level={4} as="span" className="block">{title}</Heading>
+        {description && <Text variant="small" as="span" className="block mt-0.5">{description}</Text>}
       </span>
     </Button>
   );
