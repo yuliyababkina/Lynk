@@ -9,6 +9,7 @@ import { RequestedUpdatePanel } from "@/components/yarowa/requested-update-panel
 import { WizardFooter } from "@/components/yarowa/wizard-footer";
 import { useI18n } from "@/lib/i18n-context";
 import { getPortalProfile, type CompanyDetails } from "./portal-data";
+import { Heading } from "@/shared/ui/typography";
 
 export interface PortalCompanyDetailsProps {
   supplierId: string;
@@ -71,7 +72,7 @@ function SectionCard({
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Icon className="w-4 h-4 text-primary" />
-          <h2 className="text-base font-semibold">{t(title)}</h2>
+          <Heading level={3} as="h2">{t(title)}</Heading>
         </div>
         {action}
       </div>
@@ -93,7 +94,7 @@ export function PortalCompanyDetails({ supplierId, company: live }: PortalCompan
       {/* Company details form */}
       <section className="flex-1 min-w-0 p-6 space-y-6">
         <div>
-          <h1 className="text-2xl font-bold">{t("Company Details")}</h1>
+          <Heading level={1}>{t("Company Details")}</Heading>
           <p className="text-muted-foreground mt-1">
             {t("Legal profile, registered address, and payment data shared with principals.")}
           </p>
@@ -101,7 +102,7 @@ export function PortalCompanyDetails({ supplierId, company: live }: PortalCompan
 
         <SectionCard
           icon={Building2}
-          title="Company Details"
+          title={t("Company Details")}
           action={
             <Badge variant="secondary">
               <Lock className="w-3 h-3" />
@@ -110,45 +111,45 @@ export function PortalCompanyDetails({ supplierId, company: live }: PortalCompan
           }
         >
           <div className="space-y-4">
-            <Field label="Legal Name" value={company.legalName} />
+            <Field label={t("Legal Name")} value={company.legalName} />
             <div className="grid grid-cols-2 gap-4">
-              <Field label="VAT ID" value={company.vatId} />
-              <Field label="Registration No." value={company.registrationNo} />
+              <Field label={t("VAT ID")} value={company.vatId} />
+              <Field label={t("Registration No.")} value={company.registrationNo} />
             </div>
-            <Field label="Website" value={company.website} />
+            <Field label={t("Website")} value={company.website} />
           </div>
         </SectionCard>
 
         {/* Associate selector */}
-        <Button variant="ghost" className="h-auto px-2 py-1 text-lg font-semibold gap-2">
+        <Button variant="ghost" className="h-auto px-2 py-1 gap-2">
           {t("Associate: {name}", { name: company.associate })}
           <ChevronDown className="w-4 h-4 text-muted-foreground" />
         </Button>
 
-        <SectionCard icon={MapPin} title="Registered Address">
+        <SectionCard icon={MapPin} title={t("Registered Address")}>
           <div className="space-y-4">
-            <Field label="Street" value={address.street} />
+            <Field label={t("Street")} value={address.street} />
             <div className="grid grid-cols-2 gap-4">
-              <Field label="City" value={address.city} />
-              <Field label="Postcode" value={address.postcode} />
+              <Field label={t("City")} value={address.city} />
+              <Field label={t("Postcode")} value={address.postcode} />
             </div>
-            <Field label="Country" value={address.country} />
+            <Field label={t("Country")} value={address.country} />
           </div>
         </SectionCard>
 
-        <SectionCard icon={Building2} title="Primary Contact">
+        <SectionCard icon={Building2} title={t("Primary Contact")}>
           <div className="space-y-4">
-            <Field label="Contact person" value={company.contact.name || "—"} />
+            <Field label={t("Contact person")} value={company.contact.name || "—"} />
             <div className="grid grid-cols-2 gap-4">
-              <Field label="Contact email" value={company.contact.email || "—"} />
-              <Field label="Contact phone" value={company.contact.phone || "—"} />
+              <Field label={t("Contact email")} value={company.contact.email || "—"} />
+              <Field label={t("Contact phone")} value={company.contact.phone || "—"} />
             </div>
           </div>
         </SectionCard>
 
         <SectionCard
           icon={Wallet}
-          title="Payment Data"
+          title={t("Payment Data")}
           action={
             <Badge variant="critical-outline">
               <Lock className="w-3 h-3" />
@@ -157,9 +158,9 @@ export function PortalCompanyDetails({ supplierId, company: live }: PortalCompan
           }
         >
           <div className="space-y-4">
-            <Field label="IBAN" value={payment.iban} mono />
-            <Field label="Bank Name" value={payment.bankName} />
-            <Field label="BIC / SWIFT" value={payment.bic} mono />
+            <Field label={t("IBAN")} value={payment.iban} mono />
+            <Field label={t("Bank Name")} value={payment.bankName} />
+            <Field label={t("BIC / SWIFT")} value={payment.bic} mono />
           </div>
         </SectionCard>
 

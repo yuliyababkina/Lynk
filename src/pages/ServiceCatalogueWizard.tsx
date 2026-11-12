@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { CATALOGUE_REGIONS, CATALOGUE_TRADES, PARSED_LINES, DIFF_LINES } from "../data";
-import { cn } from "../lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +12,7 @@ import { CataloguePreviewTable } from "@/components/yarowa/catalogue-preview-tab
 import { SupplierReviewTable } from "@/components/yarowa/supplier-review-table";
 import { BottomActionBar } from "@/components/yarowa/bottom-action-bar";
 import type { Catalogue, ResponseModel } from "../types";
+import { Heading, Text } from "@/shared/ui/typography";
 
 type Step = "Upload" | "Parsing" | "Preview" | "Details" | "Distribution";
 
@@ -45,7 +45,7 @@ function SummaryTile({ label, value, tone }: { label: string; value: string; ton
   return (
     <div className="bg-card border border-border rounded-lg p-3 flex-1">
       <div className="text-xs text-muted-foreground mb-1">{t(label)}</div>
-      <div className={cn("text-xl font-bold", tone)}>{value}</div>
+      <Text variant="stat" as="div" className={tone}>{value}</Text>
     </div>
   );
 }
@@ -98,7 +98,7 @@ export function ServiceCatalogueWizard({
   const inputCls = "h-auto rounded-md border-border bg-card px-3 py-1.5 text-sm";
   const selectCls =
     "w-full [&_select]:h-auto [&_select]:rounded-md [&_select]:border-border [&_select]:bg-card [&_select]:py-1.5 [&_select]:pl-3";
-  const labelCls = "block text-xs font-medium leading-4 text-muted-foreground mb-1";
+  const labelCls = "block text-xs leading-4 text-muted-foreground mb-1";
   const title = isUpdate
     ? t("Upload new version — {catalogue}", { catalogue: catalogue?.name ?? "" })
     : t("Create a Service catalogue");
@@ -132,11 +132,11 @@ export function ServiceCatalogueWizard({
       <Button
         variant="ghost"
         onClick={onCancel}
-        className="mb-3 h-auto border-0 p-0 text-sm font-normal text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
+        className="mb-3 h-auto border-0 p-0 font-normal text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
       >
         ← {t("Cancel and go back")}
       </Button>
-      <h1 className="text-2xl font-bold mb-6 text-center">{title}</h1>
+      <Heading level={1} className="mb-6 text-center">{title}</Heading>
       <div className="mb-8">
         <WizardStepper
           steps={VISIBLE_STEPS}
@@ -174,17 +174,17 @@ export function ServiceCatalogueWizard({
           <div className="flex gap-3 mb-4">
             {isUpdate ? (
               <>
-                <SummaryTile label="Rows added" value={String(added)} tone="text-success-ink" />
-                <SummaryTile label="Rows changed" value={String(changed)} tone="text-warning-ink" />
-                <SummaryTile label="Rows removed" value={String(removed)} tone="text-critical" />
-                <SummaryTile label="Total rows" value={String(lines.length)} />
+                <SummaryTile label={t("Rows added")} value={String(added)} tone="text-success-ink" />
+                <SummaryTile label={t("Rows changed")} value={String(changed)} tone="text-warning-ink" />
+                <SummaryTile label={t("Rows removed")} value={String(removed)} tone="text-critical" />
+                <SummaryTile label={t("Total rows")} value={String(lines.length)} />
               </>
             ) : (
               <>
-                <SummaryTile label="Total rows" value={String(lines.length)} />
-                <SummaryTile label="Categories" value={String(categories)} />
-                <SummaryTile label="Trades detected" value={`1 · ${t("Painting")}`} />
-                <SummaryTile label="Regions detected" value={`1 · ${t("Bavaria")}`} />
+                <SummaryTile label={t("Total rows")} value={String(lines.length)} />
+                <SummaryTile label={t("Categories")} value={String(categories)} />
+                <SummaryTile label={t("Trades detected")} value={`1 · ${t("Painting")}`} />
+                <SummaryTile label={t("Regions detected")} value={`1 · ${t("Bavaria")}`} />
               </>
             )}
           </div>
@@ -248,7 +248,7 @@ export function ServiceCatalogueWizard({
               </div>
             </div>
             <div>
-              <Label className="block text-xs font-medium leading-4 text-muted-foreground mb-2">
+              <Label className="block text-xs leading-4 text-muted-foreground mb-2">
                 {t("Supplier response model")}
               </Label>
               <RadioGroup
@@ -256,7 +256,7 @@ export function ServiceCatalogueWizard({
                 onValueChange={(v) => setResponseModel(v as ResponseModel)}
                 className="gap-2"
               >
-                <Label htmlFor="response-model-agree" className="cursor-pointer items-start gap-2 text-sm font-normal leading-5">
+                <Label htmlFor="response-model-agree" className="cursor-pointer items-start gap-2 font-normal leading-5">
                   <RadioGroupItem id="response-model-agree" value="actively-agree" className="mt-0.5" />
                   <span>
                     <span className="font-medium">{t("Actively agree")}</span>
@@ -265,7 +265,7 @@ export function ServiceCatalogueWizard({
                     </span>
                   </span>
                 </Label>
-                <Label htmlFor="response-model-disagree" className="cursor-pointer items-start gap-2 text-sm font-normal leading-5">
+                <Label htmlFor="response-model-disagree" className="cursor-pointer items-start gap-2 font-normal leading-5">
                   <RadioGroupItem id="response-model-disagree" value="actively-disagree" className="mt-0.5" />
                   <span>
                     <span className="font-medium">{t("Actively disagree")}</span>

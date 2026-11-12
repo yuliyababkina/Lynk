@@ -6,6 +6,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useLynkData } from "../lib/lynk-data-context";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
 import { TabsTriggerWithCount } from "@/components/yarowa/tabs-trigger-with-count";
@@ -20,6 +21,7 @@ import { PRINCIPAL_ID } from "@/data";
 import type { ChatContext } from "@/types";
 import { translateTicketTitle, translateAgeLabel } from "@/lib/ticket-i18n";
 import type { Ticket, Criticality, TicketCategory, TicketStatus } from "../types";
+import { Heading, Text } from "@/shared/ui/typography";
 
 const CATEGORIES: TicketCategory[] = [
   "Document compliance",
@@ -110,7 +112,7 @@ export function Dashboard({
 
   return (
     <div className="@container p-6">
-      <h1 className="text-2xl font-bold mb-1">{tr("Task Queue")}</h1>
+      <Heading level={1} className="mb-1">{tr("Task Queue")}</Heading>
       <p className="text-sm text-muted-foreground mb-4">{tr("Sorted by criticality. Click a ticket to open it.")}</p>
 
       <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)} className="gap-6">
@@ -125,9 +127,11 @@ export function Dashboard({
           {grouped.length === 0 && (
             <div className="border border-dashed border-border rounded-2xl py-16 text-center">
               <Check className="mx-auto mb-3 text-success-ink" size={28} />
-              <p className="text-sm font-medium">{tr("You're all caught up")}</p>
+              <Text variant="label">{tr("You're all caught up")}</Text>
               <p className="text-xs text-muted-foreground mt-1">
-                No open tickets{filter !== "All tickets" ? ` in ${filter}` : ""}.
+                {filter !== "All tickets"
+                  ? tr("No open tickets in {filter}.", { filter: tr(filter) })
+                  : tr("No open tickets.")}
               </p>
             </div>
           )}
@@ -169,11 +173,12 @@ export function Dashboard({
                             {tr(t.entityType)} ·{" "}
                             <Button
                               variant="ghost"
+                              size="xs"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 onOpenSupplier(t.entityName);
                               }}
-                              className="inline-block h-auto border-0 p-0 text-xs font-normal whitespace-normal text-muted-foreground hover:bg-transparent hover:text-accent hover:underline dark:hover:bg-transparent"
+                              className="inline-block h-auto border-0 p-0 font-normal whitespace-normal text-muted-foreground hover:bg-transparent hover:text-accent hover:underline dark:hover:bg-transparent"
                             >
                               {t.entityName}
                             </Button>{" "}
@@ -215,9 +220,9 @@ export function Dashboard({
                                 <MessageSquare size={14} />
                                 {tr("Chat")}
                                 {chatUnread > 0 && (
-                                  <span className="ml-1 rounded-full bg-critical px-1.5 text-[10px] font-semibold text-critical-foreground">
+                                  <Badge variant="count-critical" className="ml-1">
                                     {chatUnread}
-                                  </span>
+                                  </Badge>
                                 )}
                               </Button>
                             )}
@@ -230,7 +235,7 @@ export function Dashboard({
                     <Button
                       variant="ghost"
                       onClick={() => toggleExpanded(group.criticality)}
-                      className="flex h-auto w-full gap-1.5 rounded-none border-0 px-4 py-2.5 text-xs font-medium text-muted-foreground hover:bg-secondary/40 hover:text-muted-foreground dark:hover:bg-secondary/40"
+                      className="flex h-auto w-full gap-1.5 rounded-none border-0 px-4 py-2.5 text-xs text-muted-foreground hover:bg-secondary/40 hover:text-muted-foreground dark:hover:bg-secondary/40"
                     >
                       <ChevronDown
                         size={14}
@@ -268,11 +273,12 @@ export function Dashboard({
                         <span>·</span>
                         <Button
                           variant="ghost"
+                          size="xs"
                           onClick={(e) => {
                             e.stopPropagation();
                             onOpenSupplier(t.entityName);
                           }}
-                          className="inline-block h-auto border-0 p-0 text-xs font-normal whitespace-normal text-muted-foreground hover:bg-transparent hover:text-accent hover:underline dark:hover:bg-transparent"
+                          className="inline-block h-auto border-0 p-0 font-normal whitespace-normal text-muted-foreground hover:bg-transparent hover:text-accent hover:underline dark:hover:bg-transparent"
                         >
                           {t.entityName}
                         </Button>
@@ -286,7 +292,7 @@ export function Dashboard({
                 <Button
                   variant="ghost"
                   onClick={() => setResolvedExpanded((v) => !v)}
-                  className="flex h-auto w-full gap-1.5 rounded-none border-0 px-4 py-2.5 text-xs font-medium text-muted-foreground hover:bg-secondary/40 hover:text-muted-foreground dark:hover:bg-secondary/40"
+                  className="flex h-auto w-full gap-1.5 rounded-none border-0 px-4 py-2.5 text-xs text-muted-foreground hover:bg-secondary/40 hover:text-muted-foreground dark:hover:bg-secondary/40"
                 >
                   <ChevronDown
                     size={14}
