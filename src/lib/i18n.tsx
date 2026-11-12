@@ -1230,6 +1230,16 @@ const DE: Record<string, string> = {
   "Upload new version": "Neue Version hochladen",
   "Reminders sent to {count} suppliers": "Erinnerungen an {count} Lieferanten gesendet",
   "Remind all": "Alle erinnern",
+
+  // ── Data governance, catalogue list, suppliers overview, footer, toast ──────
+  "Supplier's stated reason": "Begründung des Lieferanten",
+  "{count} fields changing": "{count} Felder ändern sich",
+  "No catalogues match the selected filters.": "Keine Kataloge entsprechen den gewählten Filtern.",
+  "Showing {shown} of {total} contacts": "{shown} von {total} Kontakten angezeigt",
+  "© Yarowa AG": "© Yarowa AG",
+  "New version published": "Neue Version veröffentlicht",
+  "{name} · {count} suppliers notified to re-confirm":
+    "{name} · {count} Lieferanten zur erneuten Bestätigung benachrichtigt",
 };
 
 const STORAGE_KEY = "lynk-lang";
