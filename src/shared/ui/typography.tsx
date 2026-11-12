@@ -54,8 +54,10 @@ export function Heading({
      * Visual weight and document outline are separate concerns: a card title
      * that should look like a level 3 might still need to be an <h2> for
      * screen readers, or a <div> inside a landmark that already has a heading.
+     * "span" is for an item title that sits inline inside a flex row or a
+     * button-like block and must not add a block-level box.
      */
-    as?: "h1" | "h2" | "h3" | "h4" | "div";
+    as?: "h1" | "h2" | "h3" | "h4" | "div" | "span";
   }) {
   const Tag = as ?? (`h${level}` as const);
   return (
