@@ -1,7 +1,17 @@
+/**
+ * @custom   Page header bar shared by the app and the supplier portal: current
+ *           page name, optional leading and trailing controls, the language
+ *           switch, and an account switch with initials. shadcn has no app
+ *           header; Sidebar's header is a different slot. Composes Button,
+ *           LanguageToggle and Text.
+ * @approved Yuliya Babkina, 2026-11-12
+ */
+
 import type { ReactNode } from "react";
 import { useI18n } from "@/lib/i18n-context";
 import { LanguageToggle } from "@/components/yarowa/language-toggle";
 import { Button } from "@/components/ui/button";
+import { Text } from "@/shared/ui/typography";
 
 export interface TopHeaderProps {
   currentLabel: string;
@@ -28,7 +38,7 @@ export function TopHeader({
       {leading ? <div className="mr-3">{leading}</div> : null}
       {/* Just the current page — the brand and platform name already sit in the
           sidebar header, so repeating them here only ate horizontal space. */}
-      <span className="text-sm font-medium">{t(currentLabel)}</span>
+      <Text variant="label" as="span">{t(currentLabel)}</Text>
       <div className="flex-1" />
       {trailing ? <div className="mr-3">{trailing}</div> : null}
       {showLanguage ? <LanguageToggle /> : null}
@@ -37,15 +47,16 @@ export function TopHeader({
           <Button
             variant="ghost"
             onClick={onSwitchAccount}
-            className="mx-3 h-auto border-0 p-0 text-xs font-medium text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
+            className="mx-3 h-auto border-0 p-0 text-xs text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
             title={t("Switch account")}
           >
             {t("Switch")}
           </Button>
           <Button
             variant="ghost"
+            size="xs"
             onClick={onSwitchAccount}
-            className="size-7 cursor-pointer rounded-full border-0 bg-primary p-0 text-xs font-semibold text-primary-foreground hover:bg-primary hover:text-primary-foreground hover:opacity-80 dark:hover:bg-primary"
+            className="size-7 cursor-pointer rounded-full border-0 bg-primary p-0 font-semibold text-primary-foreground hover:bg-primary hover:text-primary-foreground hover:opacity-80 dark:hover:bg-primary"
             title={t("Switch account")}
           >
             {accountInitials}
