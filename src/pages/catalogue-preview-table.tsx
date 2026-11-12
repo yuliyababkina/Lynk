@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { diffRow, diffLabel } from "@/lib/theme";
 import { useI18n } from "@/lib/i18n-context";
+import { Text } from "@/shared/ui/typography";
 import type { CatalogueLineDiff } from "@/types";
 
 /* TableRow tints on hover by default; these keep each row's own diff colour
@@ -34,7 +35,7 @@ export function CataloguePreviewTable({
     return (
       <div className="bg-card border border-border rounded-lg py-12 flex flex-col items-center justify-center text-center">
         <FileSpreadsheet size={22} className="text-muted-foreground mb-2" />
-        <p className="text-sm font-medium">{t("No rows parsed")}</p>
+        <Text variant="label">{t("No rows parsed")}</Text>
         <p className="text-xs text-muted-foreground">{t("The uploaded file contained no service lines.")}</p>
       </div>
     );
@@ -74,13 +75,15 @@ export function CataloguePreviewTable({
                 )}
               </TableCell>
               {showDiff && (
-                <TableCell className="px-4 py-2.5 whitespace-normal text-xs font-medium">
-                  {l.change === "added" && <span className={diffLabel.added}>{t("Added")}</span>}
-                  {l.change === "changed" && <span className={diffLabel.changed}>{t("Changed")}</span>}
-                  {l.change === "removed" && (
-                    <span className={cn(diffLabel.removed, "no-underline")}>{t("Removed")}</span>
-                  )}
-                  {l.change === "unchanged" && <span className="text-muted-foreground">—</span>}
+                <TableCell className="px-4 py-2.5 whitespace-normal">
+                  <Text variant="label" as="span">
+                    {l.change === "added" && <span className={diffLabel.added}>{t("Added")}</span>}
+                    {l.change === "changed" && <span className={diffLabel.changed}>{t("Changed")}</span>}
+                    {l.change === "removed" && (
+                      <span className={cn(diffLabel.removed, "no-underline")}>{t("Removed")}</span>
+                    )}
+                    {l.change === "unchanged" && <span className="text-muted-foreground">—</span>}
+                  </Text>
                 </TableCell>
               )}
             </TableRow>

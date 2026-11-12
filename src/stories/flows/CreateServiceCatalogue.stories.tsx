@@ -4,7 +4,7 @@ import { fn } from "storybook/test";
 import { Heading } from "@/shared/ui/typography";
 import { WizardStepper } from "@/components/yarowa/wizard-stepper";
 import { FileUploadCard } from "@/components/yarowa/file-upload-card";
-import { CataloguePreviewTable } from "@/components/yarowa/catalogue-preview-table";
+import { CataloguePreviewTable } from "@/pages/catalogue-preview-table";
 import { SupplierReviewTable, type ReviewSupplier } from "@/components/yarowa/supplier-review-table";
 import { WizardFooter } from "@/components/yarowa/wizard-footer";
 import { Button } from "@/components/ui/button";

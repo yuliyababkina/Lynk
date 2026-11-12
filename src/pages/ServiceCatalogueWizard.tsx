@@ -8,7 +8,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { WizardStepper } from "@/components/yarowa/wizard-stepper";
 import { useI18n } from "@/lib/i18n-context";
 import { FileUploadCard } from "@/components/yarowa/file-upload-card";
-import { CataloguePreviewTable } from "@/components/yarowa/catalogue-preview-table";
+import { CataloguePreviewTable } from "@/pages/catalogue-preview-table";
 import { SupplierReviewTable } from "@/components/yarowa/supplier-review-table";
 import { WizardFooter } from "@/components/yarowa/wizard-footer";
 import type { Catalogue, ResponseModel } from "../types";
