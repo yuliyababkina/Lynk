@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
+import { Heading } from "@/shared/ui/typography";
 import { WizardStepper } from "@/components/yarowa/wizard-stepper";
 import { FileUploadCard } from "@/components/yarowa/file-upload-card";
 import { CataloguePreviewTable } from "@/components/yarowa/catalogue-preview-table";
@@ -52,7 +53,7 @@ const CATALOGUE: Catalogue = {
 function StepFrame({ current, children }: { current: string; children: React.ReactNode }) {
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6 text-center">Create a Service catalogue</h1>
+      <Heading level={1} className="mb-6 text-center">Create a Service catalogue</Heading>
       <div className="mb-8">
         <WizardStepper steps={STEPS} current={current} onStepClick={fn()} />
       </div>

@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { Heading } from "@/shared/ui/typography";
 import {
   // actions
   Eye, AlertTriangle, RefreshCw, Bell, Check, Send, Upload, Download, Edit, Plus, Search, MoreHorizontal,
@@ -56,7 +57,7 @@ function IconGallery() {
     <div className="flex flex-col gap-6">
       {GROUPS.map(({ group, icons }) => (
         <div key={group}>
-          <div className="mb-2.5 text-[13px] font-semibold">{group}</div>
+          <Heading level={4} as="div" className="mb-2.5">{group}</Heading>
           <div className="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-2">
             {icons.map(([name, Icon]) => (
               <div
