@@ -6,7 +6,8 @@ import { WizardStepper } from "@/components/yarowa/wizard-stepper";
 import { FileUploadCard } from "@/components/yarowa/file-upload-card";
 import { CataloguePreviewTable } from "@/components/yarowa/catalogue-preview-table";
 import { SupplierReviewTable, type ReviewSupplier } from "@/components/yarowa/supplier-review-table";
-import { BottomActionBar } from "@/components/yarowa/bottom-action-bar";
+import { WizardFooter } from "@/components/yarowa/wizard-footer";
+import { Button } from "@/components/ui/button";
 import { ServiceCatalogueWizard } from "@/pages/ServiceCatalogueWizard";
 import { PARSED_LINES } from "@/data";
 import type { Catalogue } from "@/types";
@@ -88,7 +89,9 @@ export const StepPreview: Story = {
       <div className="mb-6">
         <CataloguePreviewTable lines={PARSED_LINES} showDiff={false} />
       </div>
-      <BottomActionBar onBack={fn()} onPrimary={fn()} primaryLabel="Next" />
+      <WizardFooter onBack={fn()}>
+        <Button onClick={fn()}>Next</Button>
+      </WizardFooter>
     </StepFrame>
   ),
 };
@@ -118,13 +121,12 @@ function DistributionStep() {
           onDeselectAll={() => setSel(new Set())}
         />
       </div>
-      <BottomActionBar
-        onBack={fn()}
-        showSaveDraft
-        onSaveDraft={fn()}
-        onPrimary={fn()}
-        primaryLabel="Publish & share with suppliers"
-      />
+      <WizardFooter onBack={fn()}>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={fn()}>Save as draft</Button>
+          <Button onClick={fn()}>Publish &amp; share with suppliers</Button>
+        </div>
+      </WizardFooter>
     </StepFrame>
   );
 }

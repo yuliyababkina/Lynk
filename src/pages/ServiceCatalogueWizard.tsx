@@ -10,7 +10,7 @@ import { useI18n } from "@/lib/i18n-context";
 import { FileUploadCard } from "@/components/yarowa/file-upload-card";
 import { CataloguePreviewTable } from "@/components/yarowa/catalogue-preview-table";
 import { SupplierReviewTable } from "@/components/yarowa/supplier-review-table";
-import { BottomActionBar } from "@/components/yarowa/bottom-action-bar";
+import { WizardFooter } from "@/components/yarowa/wizard-footer";
 import type { Catalogue, ResponseModel } from "../types";
 import { Heading, Text } from "@/shared/ui/typography";
 
@@ -191,11 +191,9 @@ export function ServiceCatalogueWizard({
           <div className="mb-6">
             <CataloguePreviewTable lines={lines} showDiff={isUpdate} />
           </div>
-          <BottomActionBar
-            onBack={() => setStep("Upload")}
-            onPrimary={() => setStep("Details")}
-            primaryLabel="Next"
-          />
+          <WizardFooter onBack={() => setStep("Upload")}>
+            <Button onClick={() => setStep("Details")}>{t("Next")}</Button>
+          </WizardFooter>
         </div>
       )}
 
@@ -278,11 +276,9 @@ export function ServiceCatalogueWizard({
             </div>
           </div>
           <div className="max-w-lg mx-auto">
-            <BottomActionBar
-              onBack={() => setStep("Preview")}
-              onPrimary={() => setStep("Distribution")}
-              primaryLabel="Next"
-            />
+            <WizardFooter onBack={() => setStep("Preview")}>
+              <Button onClick={() => setStep("Distribution")}>{t("Next")}</Button>
+            </WizardFooter>
           </div>
         </div>
       )}
@@ -308,13 +304,18 @@ export function ServiceCatalogueWizard({
               onDeselectAll={() => setSelectedSuppliers(new Set())}
             />
           </div>
-          <BottomActionBar
-            onBack={() => setStep("Details")}
-            showSaveDraft={!isUpdate}
-            onSaveDraft={() => finish(false)}
-            onPrimary={() => finish(true)}
-            primaryLabel={isUpdate ? "Publish & notify suppliers" : "Publish & share with suppliers"}
-          />
+          <WizardFooter onBack={() => setStep("Details")}>
+            <div className="flex gap-2">
+              {!isUpdate && (
+                <Button variant="outline" onClick={() => finish(false)}>
+                  {t("Save as draft")}
+                </Button>
+              )}
+              <Button onClick={() => finish(true)}>
+                {isUpdate ? t("Publish & notify suppliers") : t("Publish & share with suppliers")}
+              </Button>
+            </div>
+          </WizardFooter>
         </div>
       )}
     </div>
