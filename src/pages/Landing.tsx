@@ -2,6 +2,10 @@ import { ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useI18n } from "@/lib/i18n-context";
 import { LanguageToggle } from "@/components/yarowa/language-toggle";
+import { Heading, Text } from "@/shared/ui/typography";
+
+// The logo tile shows the initial of the product name: a brand mark, not translatable text.
+const BRAND_INITIAL = "Lynk".charAt(0);
 
 export type LandingRole = "pm" | "supplier" | "prospect";
 
@@ -59,11 +63,11 @@ export function Landing({ onSelectRole }: LandingProps) {
       <div className="text-center mb-10">
         <div className="flex items-center justify-center gap-2.5 mb-6">
           <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold">
-            L
+            {BRAND_INITIAL}
           </div>
-          <span className="text-2xl font-semibold">Lynk</span>
+          <Heading level={1} as="span">Lynk</Heading>
         </div>
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight">{t("Supplier Management Platform")}</h1>
+        <Heading level={1} className="tracking-tight">{t("Supplier Management Platform")}</Heading>
         <p className="text-muted-foreground mt-3">{t("Three distinct user experiences within the same workflow.")}</p>
         <p className="text-muted-foreground">{t("Choose a role to explore.")}</p>
       </div>
@@ -84,7 +88,7 @@ export function Landing({ onSelectRole }: LandingProps) {
             </div>
 
             {/* Name */}
-            <h2 className="text-lg font-semibold">{role.name}</h2>
+            <Heading level={2}>{role.name}</Heading>
 
             {/* Role pill */}
             <Badge variant="secondary" className="mt-2">
@@ -95,10 +99,10 @@ export function Landing({ onSelectRole }: LandingProps) {
             <p className="text-sm leading-relaxed mt-4 text-muted-foreground">{t(role.description)}</p>
 
             {/* CTA */}
-            <span className="inline-flex items-center gap-1.5 text-sm font-medium mt-6 text-primary">
+            <Text variant="label" as="span" className="inline-flex items-center gap-1.5 mt-6 text-primary">
               {t(role.cta)}
               <ArrowRight className="w-4 h-4" />
-            </span>
+            </Text>
           </div>
         ))}
       </div>

@@ -110,7 +110,7 @@ export function PlatformShell({
 
           <Region owner="shell" label={t("footer")} className="shrink-0">
             <footer className="flex h-8 items-center gap-4 border-t bg-card px-4 text-xs text-muted-foreground">
-              <span>© Yarowa AG</span>
+              <span>{t("© Yarowa AG")}</span>
               <span>{t("Imprint")}</span>
               <span>{t("Privacy")}</span>
               <span className="flex-1" />

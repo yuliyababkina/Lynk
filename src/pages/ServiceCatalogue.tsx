@@ -5,6 +5,7 @@ import { ServiceCatalogueList } from "./ServiceCatalogueList";
 import { ServiceCatalogueDetail } from "./ServiceCatalogueDetail";
 import { ServiceCatalogueWizard, type WizardResult } from "./ServiceCatalogueWizard";
 import { toast } from "@/lib/toast";
+import { useI18n } from "@/lib/i18n-context";
 import type { Catalogue, CatalogueLine, CatalogueLineDiff } from "../types";
 
 type Mode =
@@ -29,6 +30,7 @@ function nextVersionOf(current: string): string {
 }
 
 export function ServiceCatalogue({ initialSelectedId }: { initialSelectedId?: string | null }) {
+  const { t } = useI18n();
   const { catalogues, setCatalogues, persistCatalogue } = useLynkData();
   const [mode, setMode] = useState<Mode>(() =>
     initialSelectedId && catalogues.some((c) => c.id === initialSelectedId)
@@ -88,8 +90,11 @@ export function ServiceCatalogue({ initialSelectedId }: { initialSelectedId?: st
     setCatalogues((prev) => prev.map((c) => (c.id === catalogueId ? updated : c)));
     persistCatalogue(updated);
     toast({
-      title: "New version published",
-      description: `${updated.name} · ${updated.suppliers.length} suppliers notified to re-confirm`,
+      title: t("New version published"),
+      description: t("{name} · {count} suppliers notified to re-confirm", {
+        name: updated.name,
+        count: updated.suppliers.length,
+      }),
       tone: "success",
     });
     setMode({ kind: "detail", catalogueId });

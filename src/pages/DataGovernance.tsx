@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertBanner } from "@/components/yarowa/alert-banner";
 import { useI18n } from "@/lib/i18n-context";
+import { Heading, Text } from "@/shared/ui/typography";
 
 const TABS = ["All Requests", "Awaiting Review", "Endorsed — Awaiting 2nd Approval", "Approved", "Rejected"] as const;
 
@@ -27,7 +28,7 @@ export function DataGovernance({ initialSelectedId }: { initialSelectedId?: stri
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-1">{tr("Master Data Governance")}</h1>
+      <Heading level={1} className="mb-1">{tr("Master Data Governance")}</Heading>
       <p className="text-sm text-muted-foreground mb-4">
         {tr("Sensitive data changes require four-eyes approval before taking effect. Every change is logged to the immutable audit trail.")}
       </p>
@@ -51,7 +52,7 @@ export function DataGovernance({ initialSelectedId }: { initialSelectedId?: stri
         ].map((c) => (
           <div key={c.label} className="bg-card border border-border rounded-lg p-3">
             <div className="text-xs text-muted-foreground mb-1">{tr(c.label)}</div>
-            <div className="text-xl font-bold">{c.value}</div>
+            <Text variant="stat" as="div">{c.value}</Text>
           </div>
         ))}
       </div>
@@ -92,25 +93,25 @@ export function DataGovernance({ initialSelectedId }: { initialSelectedId?: stri
                   {isOpen && (
                     <div className="px-4 pb-4 space-y-3 text-sm border-t border-border pt-3">
                       <div>
-                        <div className="text-xs font-semibold uppercase text-muted-foreground mb-1">
-                          Supplier's stated reason
-                        </div>
+                        <Text variant="eyebrow" as="div" className="mb-1">
+                          {tr("Supplier's stated reason")}
+                        </Text>
                         <div>{r.reason}</div>
                       </div>
 
-                      <div className="text-xs font-semibold uppercase text-muted-foreground">
-                        {r.fields.length} fields changing
-                      </div>
+                      <Text variant="eyebrow" as="div">
+                        {tr("{count} fields changing", { count: r.fields.length })}
+                      </Text>
                       {r.fields.map((f) => (
                         <div key={f.label} className="border border-border rounded-md overflow-hidden">
-                          <div className="flex items-center justify-between px-3 py-1.5 bg-secondary/60 text-xs font-medium">
+                          <Text variant="label" as="div" className="flex items-center justify-between px-3 py-1.5 bg-secondary/60">
                             {f.label}
                             {f.sensitive && (
                               <span className="flex items-center gap-1 text-warning-ink">
                                 <Lock size={11} /> {tr("Sensitive")}
                               </span>
                             )}
-                          </div>
+                          </Text>
                           <div className="grid grid-cols-2 divide-x divide-border">
                             <div className="px-3 py-2">
                               <div className="text-xs text-muted-foreground">{tr("Before")}</div>
