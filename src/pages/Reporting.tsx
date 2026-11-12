@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
 import { useI18n } from "@/lib/i18n-context";
+import { Heading, Text } from "@/shared/ui/typography";
 
 export function Reporting() {
   const [period, setPeriod] = useState<"Q1 2026" | "Q4 2025" | "Last 12 months">("Q1 2026");
@@ -12,7 +13,7 @@ export function Reporting() {
     <div className="p-6">
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h1 className="text-2xl font-bold mb-1">{tr("Supplier Performance Report")}</h1>
+          <Heading level={1} className="mb-1">{tr("Supplier Performance Report")}</Heading>
           <p className="text-sm text-muted-foreground">
             {tr("KPIs, compliance rates, and supplier ratings. Filter before generating for management or audit use.")}
           </p>
@@ -42,7 +43,7 @@ export function Reporting() {
             ].map((c) => (
               <div key={c.label} className="bg-card border border-border rounded-lg p-3">
                 <div className="text-xs text-muted-foreground mb-1">{tr(c.label)}</div>
-                <div className="text-xl font-bold">{c.value}</div>
+                <Text variant="stat" as="div">{c.value}</Text>
                 <div className="text-[11px] text-muted-foreground mt-1">{tr(c.delta)}</div>
               </div>
             ))}
@@ -50,7 +51,7 @@ export function Reporting() {
 
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div className="bg-card border border-border rounded-lg p-4">
-              <div className="font-semibold text-sm mb-1">{tr("Compliance Rate & Avg Score Trend")}</div>
+              <Heading level={4} as="div" className="mb-1">{tr("Compliance Rate & Avg Score Trend")}</Heading>
               <div className="text-xs text-muted-foreground mb-3">{tr("Across all suppliers · {period}", { period: tr(period) })}</div>
               <div className="h-40 flex items-end gap-3 px-2">
                 {["h-[81%]", "h-[79%]", "h-[83%]", "h-[80%]"].map((h, i) => (
@@ -62,7 +63,7 @@ export function Reporting() {
               </div>
             </div>
             <div className="bg-card border border-border rounded-lg p-4">
-              <div className="font-semibold text-sm mb-1">{tr("Score Distribution")}</div>
+              <Heading level={4} as="div" className="mb-1">{tr("Score Distribution")}</Heading>
               <div className="text-xs text-muted-foreground mb-3">{tr("Active suppliers by score band")}</div>
               <div className="h-40 flex items-end gap-3 px-2">
                 {[
@@ -83,7 +84,7 @@ export function Reporting() {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-card border border-border rounded-lg p-4">
-              <div className="font-semibold text-sm mb-1">{tr("Compliance Rate by Trade")}</div>
+              <Heading level={4} as="div" className="mb-1">{tr("Compliance Rate by Trade")}</Heading>
               <div className="text-xs text-muted-foreground mb-3">{tr("Percentage of suppliers with no critical flags")}</div>
               <div className="space-y-2">
                 {[
@@ -103,7 +104,7 @@ export function Reporting() {
               </div>
             </div>
             <div className="bg-card border border-border rounded-lg p-4">
-              <div className="font-semibold text-sm mb-1">{tr("Network Composition")}</div>
+              <Heading level={4} as="div" className="mb-1">{tr("Network Composition")}</Heading>
               <div className="text-xs text-muted-foreground mb-3">{tr("Contacts by lifecycle stage")}</div>
               <div className="flex items-center gap-6">
                 <div className="w-28 h-28 rounded-full border-[14px] border-accent border-r-success border-b-purple" />

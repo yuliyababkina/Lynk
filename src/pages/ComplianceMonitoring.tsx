@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertBanner } from "@/components/yarowa/alert-banner";
 import { useI18n } from "@/lib/i18n-context";
 import type { SupplierDoc, DocStatus } from "../types";
+import { Heading, Text } from "@/shared/ui/typography";
 
 const STATUS_META: Record<DocStatus, { label: string; tone: "success" | "warning" | "orange" | "danger" | "info" | "neutral" }> = {
   valid: { label: "Valid", tone: "success" },
@@ -69,7 +70,7 @@ export function ComplianceMonitoring({
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-1">{tr("Compliance Monitoring")}</h1>
+      <Heading level={1} className="mb-1">{tr("Compliance Monitoring")}</Heading>
       <p className="text-sm text-muted-foreground mb-4">
         {tr("Continuous document expiry monitoring. Warnings at 60 days, auto-notification at 30 days, auto-block on expiry.")}
       </p>
@@ -90,7 +91,7 @@ export function ComplianceMonitoring({
         ].map((c) => (
           <div key={c.label} className="bg-card border border-border rounded-lg p-3">
             <div className="text-xs text-muted-foreground mb-1">{tr(c.label)}</div>
-            <div className="text-xl font-bold">{c.value}</div>
+            <Text variant="stat" as="div">{c.value}</Text>
           </div>
         ))}
       </div>

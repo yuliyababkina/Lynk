@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertBanner } from "@/components/yarowa/alert-banner";
 import type { Contract, ContractStatus } from "../types";
 import { useI18n } from "@/lib/i18n-context";
+import { Heading, Text } from "@/shared/ui/typography";
 
 const STATUS_TONE: Record<ContractStatus, "success" | "warning" | "danger" | "info" | "neutral"> = {
   Active: "success",
@@ -49,7 +50,7 @@ export function ContractManagement({
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-1">{tr("Contract Management")}</h1>
+      <Heading level={1} className="mb-1">{tr("Contract Management")}</Heading>
       <p className="text-sm text-muted-foreground mb-4">
         {tr("Framework contracts, renewal deadlines, and full history. No contract lapses without a decision.")}
       </p>
@@ -69,7 +70,7 @@ export function ContractManagement({
         ].map((c) => (
           <div key={c.label} className="bg-card border border-border rounded-lg p-3">
             <div className="text-xs text-muted-foreground mb-1">{tr(c.label)}</div>
-            <div className="text-xl font-bold">{c.value}</div>
+            <Text variant="stat" as="div">{c.value}</Text>
           </div>
         ))}
       </div>
