@@ -52,6 +52,54 @@ export const HeadingAsOtherTag: Story = {
   ),
 };
 
+/**
+ * `as="span"` is for an item title that sits inline in a flex row or inside a
+ * button-like block, where a block-level box would break the layout.
+ */
+export const HeadingAsSpan: Story = {
+  render: () => (
+    <div className="flex max-w-md flex-col gap-3">
+      <div className="flex items-center gap-2 rounded-lg border border-border p-3">
+        <Heading level={4} as="span" className="truncate">
+          Certificate of insurance — Urban Habitat Management GmbH
+        </Heading>
+        <Text variant="small" as="span" className="shrink-0">
+          Expires 30 Nov
+        </Text>
+      </div>
+      <Heading level={4} as="span">
+        Heading 4 as a span (inline, no block box)
+      </Heading>
+    </div>
+  ),
+};
+
+/**
+ * German runs about a third longer than English. Every variant that carries a
+ * label must wrap or truncate cleanly at a narrow width.
+ */
+export const LongGermanLabels: Story = {
+  render: () => (
+    <div className="flex w-64 flex-col gap-4 rounded-lg border border-border p-4">
+      <Heading level={1}>Lieferantenstammdaten-Änderungsantrag</Heading>
+      <Heading level={2}>Genehmigungsworkflow für Compliance-Dokumente</Heading>
+      <Heading level={3}>Haftpflichtversicherungsnachweis erforderlich</Heading>
+      <Heading level={4}>Betriebshaftpflichtversicherung — Verlängerung</Heading>
+      <Text variant="label">Umsatzsteuer-Identifikationsnummer des Lieferanten</Text>
+      <Text variant="eyebrow">Ausstehende Genehmigungen und Rückfragen</Text>
+      <Text variant="small">
+        Die hochgeladene Datei enthielt keine auswertbaren Leistungspositionen.
+      </Text>
+      <Text variant="stat" as="div">
+        1.284.500,00 €
+      </Text>
+      <Text variant="label" className="truncate">
+        Bescheinigung über die Freistellung vom Steuerabzug bei Bauleistungen
+      </Text>
+    </div>
+  ),
+};
+
 export const InContext: Story = {
   render: () => (
     <div className="flex max-w-md flex-col gap-1">
