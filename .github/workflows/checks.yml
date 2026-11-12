@@ -1,0 +1,42 @@
+# The same guardrails the pre-commit hook runs, on the whole codebase, for every
+# pull request and every push to main. The hook only sees staged files and can
+# be skipped; this can't. Replaces the Foundry pack's GitLab CI (Lynk is on GitHub).
+name: Checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    env:
+      HUSKY: 0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      # Each check runs even when an earlier one fails, so one run lists everything.
+      - name: Lint (tokens, shadcn components, type scale, i18n)
+        run: npm run lint
+      - name: Typecheck
+        if: ${{ !cancelled() }}
+        run: npm run typecheck
+      - name: Custom components (@custom header + Custom/ story)
+        if: ${{ !cancelled() }}
+        run: npm run check:custom
+      - name: Unit tests
+        if: ${{ !cancelled() }}
+        run: npm test
+      - name: Build
+        if: ${{ !cancelled() }}
+        run: npm run build
