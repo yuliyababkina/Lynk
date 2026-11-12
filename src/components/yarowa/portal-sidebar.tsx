@@ -84,7 +84,7 @@ export function PortalSidebar({
             variant="ghost"
             onClick={onToggleCollapse}
             className={cn(
-              "h-auto shrink-0 rounded border-0 p-1 text-muted-foreground hover:bg-secondary hover:text-foreground dark:hover:bg-secondary",
+              "h-auto shrink-0 border-0 p-1 text-muted-foreground hover:bg-secondary hover:text-foreground dark:hover:bg-secondary",
               collapsed ? "" : "ml-auto"
             )}
             aria-label={collapsed ? t("Expand menu") : t("Collapse menu")}
@@ -106,7 +106,7 @@ export function PortalSidebar({
               onClick={() => onNavigate(item.view)}
               title={t(item.label)}
               className={cn(
-                "h-9 w-full rounded-md border-0 text-sm whitespace-normal",
+                "h-9 w-full border-0 text-sm whitespace-normal",
                 collapsed
                   ? "flex items-center justify-center px-3 py-2"
                   : "grid grid-cols-[1.25rem_minmax(0,1fr)_auto] items-center justify-normal gap-3 px-3 py-2",
