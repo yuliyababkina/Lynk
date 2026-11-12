@@ -250,6 +250,16 @@ const DE: Record<string, string> = {
   "Request a change": "Änderung anfordern",
   "Send request": "Anfrage senden",
   Cancel: "Abbrechen",
+  // Paper labels on the mock documents
+  Certificate: "Zertifikat",
+  "Renewal — valid from {date}": "Verlängerung — gültig ab {date}",
+  "Reference no.": "Referenznr.",
+  Coverage: "Deckungssumme",
+  "Authorised signature": "Autorisierte Unterschrift",
+  Renewed: "Verlängert",
+  "Issuing authority": "Ausstellende Stelle",
+  "Valid until {date}": "Gültig bis {date}",
+  "Valid until": "Gültig bis",
   "No file uploaded for this document.": "Für dieses Dokument wurde keine Datei hochgeladen.",
   "What should the supplier update? (shared with the supplier)":
     "Was soll der Lieferant aktualisieren? (wird dem Lieferanten mitgeteilt)",

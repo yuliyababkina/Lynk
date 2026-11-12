@@ -1,8 +1,19 @@
+/**
+ * @custom   Full-screen review of an uploaded renewal for the compliance manager:
+ *           a modal with the file's details, a paper preview and the Accept /
+ *           Reject decision, opened from the Compliance drawer or a Dashboard
+ *           ticket. Built by hand; it is one of three document-preview modals
+ *           (with DocumentViewer and FilePreviewLightbox) to be consolidated onto
+ *           shadcn Dialog and a shared paper page. Composes Button.
+ * @approved Yuliya Babkina, 2026-11-12
+ */
+
 import { useEffect } from "react";
 import { X, FileText } from "lucide-react";
 import type { SupplierDoc } from "@/types";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n-context";
+import { Heading, Text } from "@/shared/ui/typography";
 
 /*
  * Full-screen lightbox that previews an uploaded renewal document at large size
@@ -46,7 +57,7 @@ export function DocumentLightbox({
         <div className="flex items-center gap-3 border-b border-border px-4 py-3 shrink-0">
           <FileText size={18} className="text-medium-ink shrink-0" aria-hidden="true" />
           <div className="min-w-0 flex-1">
-            <div className="text-sm font-semibold truncate">{doc.renewal.fileName}</div>
+            <Heading level={4} as="div" className="truncate">{doc.renewal.fileName}</Heading>
             <div className="text-xs text-muted-foreground truncate">
               {doc.renewal.fileSize} · {t("Uploaded {date}", { date: doc.renewal.uploadedAt })} ·{" "}
               {doc.renewal.uploadedBy}
@@ -92,34 +103,34 @@ export function DocumentLightbox({
 }
 
 /*
- * A faux paper document so the lightbox reads like a real PDF preview.
- *
- * Its wording stays as authored, like the names of uploaded files: this stands
- * in for the supplier's own certificate, which arrives in whatever language it
- * was issued in. The chrome around it — header, hint, decision buttons —
- * translates.
+ * A faux paper document so the lightbox reads like a real PDF preview. Its labels
+ * translate with the rest of the screen; the supplier's name, the document's name
+ * and the reference are data and stay as they are.
  */
 // Static width classes, not a style prop: Tailwind needs to see each one in source.
 const LINE_WIDTHS = ["w-full", "w-[94%]", "w-[97%]", "w-[68%]", "w-[90%]", "w-[62%]", "w-[84%]"];
+// A reference number, not text: the prefix is part of the identifier.
+const REFERENCE_PREFIX = "DOC-2026-";
 
 function DocumentPreview({ doc }: { doc: SupplierDoc }) {
+  const { t } = useI18n();
   const ref = doc.id.replace(/[^0-9]/g, "").padStart(4, "0");
   return (
     <div className="mx-auto w-full max-w-[540px] aspect-[1/1.3] bg-paper text-paper-foreground shadow-md rounded-sm p-10 flex flex-col">
       <div className="flex items-start justify-between border-b border-paper-border pb-4">
         <div>
-          <div className="text-lg font-bold tracking-tight">{doc.supplierName}</div>
+          <Heading level={2} as="div" className="text-paper-foreground">{doc.supplierName}</Heading>
           <div className="text-xs text-paper-muted">{doc.trade}</div>
         </div>
         <div className="text-right text-[11px]">
-          <div className="font-semibold text-paper-secondary uppercase tracking-wide">Certificate</div>
+          <div className="font-semibold text-paper-secondary uppercase tracking-wide">{t("Certificate")}</div>
           <div className="text-paper-subtle">{doc.documentCategory}</div>
         </div>
       </div>
 
       <div className="mt-8">
-        <div className="text-xl font-bold leading-tight">{doc.documentName}</div>
-        <div className="text-sm text-paper-muted mt-1">Renewal — valid from {doc.expiryDate}</div>
+        <Text variant="stat" as="div" className="leading-tight text-paper-foreground">{doc.documentName}</Text>
+        <div className="text-sm text-paper-muted mt-1">{t("Renewal — valid from {date}", { date: doc.expiryDate })}</div>
       </div>
 
       <div className="mt-8 space-y-2.5">
@@ -130,11 +141,11 @@ function DocumentPreview({ doc }: { doc: SupplierDoc }) {
 
       <div className="mt-7 grid grid-cols-2 gap-4 text-xs">
         <div>
-          <div className="text-paper-subtle">Reference no.</div>
-          <div className="font-medium">DOC-2026-{ref}</div>
+          <div className="text-paper-subtle">{t("Reference no.")}</div>
+          <div className="font-medium">{REFERENCE_PREFIX + ref}</div>
         </div>
         <div>
-          <div className="text-paper-subtle">Coverage</div>
+          <div className="text-paper-subtle">{t("Coverage")}</div>
           <div className="font-medium">€5,000,000</div>
         </div>
       </div>
@@ -142,13 +153,17 @@ function DocumentPreview({ doc }: { doc: SupplierDoc }) {
       <div className="mt-auto flex items-end justify-between pt-8">
         <div>
           <div className="h-px w-32 bg-paper-rule" />
-          <div className="text-xs text-paper-muted mt-1">Authorised signature</div>
+          <div className="text-xs text-paper-muted mt-1">{t("Authorised signature")}</div>
         </div>
-        <div className="size-16 rounded-full border-2 border-paper-stamp/40 text-paper-stamp-ink/70 grid place-items-center text-[9px] font-bold text-center leading-tight rotate-[-8deg]">
-          RENEWED
+        <Text
+          variant="eyebrow"
+          as="div"
+          className="size-16 rounded-full border-2 border-paper-stamp/40 text-paper-stamp-ink/70 grid place-items-center text-center leading-tight rotate-[-8deg]"
+        >
+          {t("Renewed")}
           <br />
           2026
-        </div>
+        </Text>
       </div>
     </div>
   );

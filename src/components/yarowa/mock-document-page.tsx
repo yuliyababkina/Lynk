@@ -1,3 +1,14 @@
+/**
+ * @custom   Faux paper page for a seeded compliance document that has metadata
+ *           but no PDF, labelled as a mock so it cannot be mistaken for a real
+ *           file. Paper colours come from the paper tokens. shadcn has no
+ *           document or page component. Composes Heading and Text.
+ * @approved Yuliya Babkina, 2026-11-12
+ */
+
+import { useI18n } from "@/lib/i18n-context";
+import { Heading, Text } from "@/shared/ui/typography";
+
 /*
  * Faux paper page for a compliance document, in the same spirit as the contract
  * preview in the prospect onboarding flow: seeded demo documents carry metadata
@@ -20,20 +31,21 @@ export function MockDocumentPage({
   issuingInstitution?: string;
   expiry?: string;
 }) {
+  const { t } = useI18n();
   return (
     <div className="mx-auto w-full max-w-[620px] min-h-[877px] flex flex-col bg-paper text-paper-foreground shadow-md rounded-sm p-10">
       <div className="flex items-start justify-between border-b border-paper-border pb-4">
         <div>
-          <div className="text-lg font-bold tracking-tight">{issuingInstitution || "Issuing authority"}</div>
-          <div className="text-[11px] text-paper-muted">Compliance</div>
+          <Heading level={2} as="div" className="text-paper-foreground">{issuingInstitution || t("Issuing authority")}</Heading>
+          <div className="text-[11px] text-paper-muted">{t("Compliance")}</div>
         </div>
-        <div className="text-right text-[10px] uppercase tracking-wide text-paper-muted font-semibold">
-          {category || documentType || "Certificate"}
-        </div>
+        <Text variant="eyebrow" as="div" className="text-right text-paper-muted">
+          {category || documentType || t("Certificate")}
+        </Text>
       </div>
 
-      <div className="mt-7 text-xl font-bold leading-tight">{documentName}</div>
-      {expiry && <div className="text-xs text-paper-muted mt-1">Valid until {expiry}</div>}
+      <Text variant="stat" as="div" className="mt-7 leading-tight text-paper-foreground">{documentName}</Text>
+      {expiry && <div className="text-xs text-paper-muted mt-1">{t("Valid until {date}", { date: expiry })}</div>}
 
       <div className="mt-6 space-y-2.5">
         {LINE_WIDTHS.map((w, i) => (
@@ -43,9 +55,9 @@ export function MockDocumentPage({
 
       <div className="mt-6 border border-paper-border rounded overflow-hidden text-xs">
         {[
-          ["Document type", documentType || "—"],
-          ["Issued by", issuingInstitution || "—"],
-          ["Valid until", expiry || "—"],
+          [t("Document type"), documentType || "—"],
+          [t("Issued by"), issuingInstitution || "—"],
+          [t("Valid until"), expiry || "—"],
         ].map(([label, value]) => (
           <div
             key={label}
@@ -60,10 +72,10 @@ export function MockDocumentPage({
       <div className="mt-auto pt-5 border-t border-dashed border-paper-border flex items-end justify-between">
         <div>
           <div className="h-px w-36 bg-paper-rule" />
-          <div className="text-[11px] text-paper-muted mt-1">Authorised signature</div>
+          <div className="text-[11px] text-paper-muted mt-1">{t("Authorised signature")}</div>
         </div>
         <div className="text-[10px] text-paper-subtle max-w-[45%] text-right">
-          Mock document — for UI/UX prototype only
+          {t("Mock document — for UI/UX prototype only")}
         </div>
       </div>
     </div>
