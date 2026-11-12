@@ -10,6 +10,7 @@ import { useLynkData } from "@/lib/lynk-data-context";
 import { useI18n } from "@/lib/i18n-context";
 import { useDocumentUpload } from "@/lib/use-document-upload";
 import { getPortalProfile } from "./portal-data";
+import { Heading, Text } from "@/shared/ui/typography";
 
 export interface PortalDocumentsProps {
   supplierId: string;
@@ -40,7 +41,7 @@ export function PortalDocuments({ supplierId }: PortalDocumentsProps) {
       <section className="flex-1 min-w-0 p-6 space-y-3 bg-sidebar">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold">{t("Documents")}</h1>
+            <Heading level={1}>{t("Documents")}</Heading>
             <p className="text-muted-foreground mt-1">
               {t("Compliance files shared with your principals, with expiry status and actions.")}
             </p>
@@ -79,8 +80,10 @@ export function PortalDocuments({ supplierId }: PortalDocumentsProps) {
           </Card>
         )}
 
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          {t("All Documents")}
+        <h2>
+          <Text variant="eyebrow" as="span">
+            {t("All Documents")}
+          </Text>
         </h2>
         {docs.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t("No documents yet — upload your first PDF above.")}</p>
