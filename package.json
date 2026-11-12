@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit",
+    "check:custom": "node scripts/check-custom.mjs",
     "prepare": "husky",
     "test": "vitest run --project=unit",
     "test:all": "vitest run",
