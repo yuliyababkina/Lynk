@@ -1,5 +1,14 @@
+/**
+ * @custom   Horizontal numbered stepper for multi-step flows: completed steps show
+ *           a check, the current step is filled, later ones are muted, and steps
+ *           are clickable when a handler is passed. shadcn ships no stepper.
+ *           Composes Button.
+ * @approved Yuliya Babkina, 2026-11-12
+ */
+
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Text } from "@/shared/ui/typography";
 import { useI18n } from "@/lib/i18n-context";
 import { Button } from "@/components/ui/button";
 
@@ -36,9 +45,11 @@ export function WizardStepper({
                 onStepClick ? "hover:opacity-70" : "cursor-default"
               )}
             >
-              <span
+              <Text
+                variant="label"
+                as="span"
                 className={cn(
-                  "w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold border",
+                  "w-7 h-7 rounded-full flex items-center justify-center border",
                   done
                     ? "bg-success border-success text-success-foreground"
                     : active
@@ -47,7 +58,7 @@ export function WizardStepper({
                 )}
               >
                 {done ? <Check size={14} className="size-3.5" /> : i + 1}
-              </span>
+              </Text>
               <span className={cn("text-sm", active ? "font-semibold" : "text-muted-foreground")}>
                 {t(s)}
               </span>

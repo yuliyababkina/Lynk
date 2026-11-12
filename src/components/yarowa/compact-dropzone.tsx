@@ -1,3 +1,11 @@
+/**
+ * @custom   Drop target with real drag-and-drop and a hidden file input, sized for
+ *           the 380px detail rail. It highlights on drag-over and accepts one PDF
+ *           up to the upload limit. shadcn has no dropzone; Empty is a static
+ *           placeholder with no drag state. Composes Button and Input.
+ * @approved Yuliya Babkina, 2026-11-12
+ */
+
 import { useRef, useState } from "react";
 import { Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -5,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MAX_UPLOAD_MB } from "@/lib/use-document-upload";
 import { useI18n } from "@/lib/i18n-context";
+import { Text } from "@/shared/ui/typography";
 
 /*
  * Drop target sized for the 380px detail rail. FileUploadCard is the same idea
@@ -55,7 +64,7 @@ export function CompactDropzone({
         }}
       />
       <Upload className="w-4 h-4 mx-auto text-muted-foreground" />
-      <p className="text-xs font-medium mt-1.5">{t(label)}</p>
+      <Text variant="label" className="mt-1.5">{t(label)}</Text>
       <Button
         variant="outline"
         size="sm"

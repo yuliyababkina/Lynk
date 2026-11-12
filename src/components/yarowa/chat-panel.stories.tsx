@@ -40,7 +40,7 @@ const THREAD: ChatMessage[] = [
 ];
 
 const meta = {
-  title: "Product Components/Chat Panel",
+  title: "Custom/Chat Panel",
   component: ChatPanel,
   tags: ["autodocs"],
   decorators: [

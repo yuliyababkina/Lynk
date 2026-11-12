@@ -1,5 +1,17 @@
+/**
+ * @custom   Grouped task list shared by the manager queue and the supplier
+ *           overview: a card with a tinted header (icon, label, count) over rows on
+ *           a four-zone grid (icon / main / status / action) that reflows on the
+ *           list's own width via container queries. shadcn Card and Item cover a
+ *           surface and a single row, but neither reflows its zones by container
+ *           width. Uses the .ticket-row grid in index.css.
+ * @approved Yuliya Babkina, 2026-11-12
+ */
+
 import type { ReactNode, KeyboardEvent } from "react";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Text } from "@/shared/ui/typography";
 
 /*
  * Shared "grouped task list" surface used by the PM Task Queue (Dashboard) and the
@@ -26,10 +38,10 @@ export function TaskGroupCard({
     <div className={cn("bg-card border border-border rounded-2xl", className)}>
       <div className="flex items-center gap-2 bg-secondary/60 border-b border-border px-4 py-2.5 rounded-t-2xl">
         {icon}
-        <span className="text-[11px] font-bold tracking-wide uppercase">{label}</span>
-        <span className="inline-flex items-center justify-center min-w-[22px] h-[22px] px-1 rounded-full bg-card border border-border text-xs font-bold text-foreground">
+        <Text variant="eyebrow" as="span" className="text-foreground">{label}</Text>
+        <Badge variant="outline" className="h-[22px] min-w-[22px] bg-card px-1">
           {count}
-        </span>
+        </Badge>
       </div>
       {/* The rows reflow on this list's own width — see `.ticket-list` in
           index.css — so a card in a narrow column lays out like a narrow card,
@@ -82,7 +94,7 @@ export function TaskRow({
     >
       {icon && <span className="tr-icon mt-0.5 shrink-0">{icon}</span>}
       <div className="tr-main">
-        <div className={cn("text-sm font-medium truncate", muted && "text-muted-foreground")}>{title}</div>
+        <Text variant="label" as="div" className={cn("truncate", muted && "text-muted-foreground")}>{title}</Text>
         {subline && <div className="text-xs text-muted-foreground mt-0.5">{subline}</div>}
       </div>
       {status && <div className="tr-status">{status}</div>}

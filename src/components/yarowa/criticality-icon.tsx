@@ -1,3 +1,11 @@
+/**
+ * @custom   Maps the four criticality levels to Jira/Linear-style priority
+ *           chevrons (double-up, up, equal, down) in the criticality colour tokens.
+ *           shadcn has no priority or severity glyph; Badge variants carry colour
+ *           but no direction. Wraps lucide icons only.
+ * @approved Yuliya Babkina, 2026-11-12
+ */
+
 import { ChevronsUp, ChevronUp, Equal, ChevronDown, type LucideIcon } from "lucide-react";
 import type { Criticality } from "@/types";
 
