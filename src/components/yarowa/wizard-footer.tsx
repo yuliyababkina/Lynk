@@ -1,3 +1,10 @@
+/**
+ * @custom   Step footer shared by the onboarding, review and catalogue flows:
+ *           Back with an arrow on the left, the step's actions on the right, so
+ *           every step lines up. shadcn has no wizard footer. Composes Button.
+ * @approved Yuliya Babkina, 2026-11-12
+ */
+
 import type { ReactNode } from "react";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
