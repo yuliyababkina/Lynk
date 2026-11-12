@@ -12,6 +12,7 @@ import { relationshipId } from "@/lib/db";
 import { useI18n } from "@/lib/i18n-context";
 import { PRINCIPAL_ID } from "@/data";
 import type { Ticket, SupplierDoc, ChatContext } from "../types";
+import { Heading, Text } from "@/shared/ui/typography";
 
 // Lazy — pulls the heavy pdfjs-dist bundle (+ worker) into its own chunk that is
 // only fetched when a user actually opens the PDF viewer.
@@ -87,7 +88,7 @@ export function SupplierProfile({
       <Button
         variant="ghost"
         onClick={onBack}
-        className="mb-3 flex h-auto justify-start gap-1 border-0 p-0 text-sm font-normal whitespace-normal text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
+        className="mb-3 flex h-auto justify-start gap-1 border-0 p-0 font-normal whitespace-normal text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
       >
         <ArrowLeft size={14} className="size-3.5" /> {t("Suppliers Overview")} <span className="mx-1">/</span> <span className="text-foreground font-medium">{supplier.name}</span>
       </Button>
@@ -99,7 +100,7 @@ export function SupplierProfile({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold">{supplier.name}</h1>
+              <Heading level={1}>{supplier.name}</Heading>
               <Badge variant="neutral">{t(supplier.stage)}</Badge>
             </div>
             <div className="text-xs text-muted-foreground mt-0.5">
@@ -110,11 +111,11 @@ export function SupplierProfile({
         </div>
         <div className="flex items-center gap-5">
           <div className="text-center">
-            <div className="text-xl font-bold">{healthScore}</div>
+            <Text variant="stat" as="div">{healthScore}</Text>
             <div className="text-[10px] text-muted-foreground uppercase">{t("Health Score")}</div>
           </div>
           <div className="text-center">
-            <div className="text-xl font-bold">{supplier.openTickets}</div>
+            <Text variant="stat" as="div">{supplier.openTickets}</Text>
             <div className="text-[10px] text-muted-foreground uppercase">{t("Open Tickets")}</div>
           </div>
           <Button variant="outline">
@@ -123,9 +124,9 @@ export function SupplierProfile({
           <Button variant={unread > 0 ? "default" : "outline"} onClick={openChat}>
             <MessageSquare size={14} /> {t("Chat")}
             {unread > 0 && (
-              <span className="ml-1 rounded-full bg-critical px-1.5 text-[10px] font-semibold text-critical-foreground">
+              <Badge variant="count-critical" className="ml-1">
                 {unread}
-              </span>
+              </Badge>
             )}
           </Button>
           <Button variant="outline">
@@ -159,9 +160,9 @@ export function SupplierProfile({
       </div>
 
       <div className="mb-5">
-        <div className="text-xs font-semibold uppercase text-muted-foreground mb-2">
+        <Text variant="eyebrow" as="div" className="mb-2">
           {t("Open Tickets")} · {tickets.length}
-        </div>
+        </Text>
         <div className="bg-card border border-border rounded-lg">
           {tickets.length === 0 && (
             <div className="p-4 text-sm text-muted-foreground">{t("No open tickets.")}</div>
@@ -176,7 +177,7 @@ export function SupplierProfile({
               <div className="min-w-0">
                 {/* Same treatment the Task Queue gives a ticket: the title is a
                     templated backend string, the age a relative label. */}
-                <div className="text-sm font-medium truncate">{translateTicketTitle(ticket.title, t)}</div>
+                <Text variant="label" as="div" className="truncate">{translateTicketTitle(ticket.title, t)}</Text>
                 <div className="text-xs text-muted-foreground mt-0.5">
                   {translateAgeLabel(ticket.ageLabel, t)}
                 </div>
@@ -195,7 +196,7 @@ export function SupplierProfile({
 
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-card border border-border rounded-lg p-4">
-          <div className="text-xs font-semibold uppercase text-muted-foreground mb-3">{t("Contacts")}</div>
+          <Text variant="eyebrow" as="div" className="mb-3">{t("Contacts")}</Text>
           <div className="space-y-3">
             {supplier.contacts.map((c) => (
               <div key={c.name} className="flex items-center justify-between text-sm">
@@ -212,7 +213,7 @@ export function SupplierProfile({
         </div>
 
         <div className="bg-card border border-border rounded-lg p-4">
-          <div className="text-xs font-semibold uppercase text-muted-foreground mb-3">{t("Services")}</div>
+          <Text variant="eyebrow" as="div" className="mb-3">{t("Services")}</Text>
           <div className="text-xs text-muted-foreground mb-1">{t("Trade Categories")}</div>
           <div className="flex flex-wrap gap-1.5 mb-3">
             {[supplier.trade, "Site Safety"].map((tag) => (
@@ -241,7 +242,7 @@ export function SupplierProfile({
 
         <div className="bg-card border border-border rounded-lg p-4">
           <div className="flex items-center justify-between mb-3">
-            <div className="text-xs font-semibold uppercase text-muted-foreground">{t("Documents")}</div>
+            <Text variant="eyebrow" as="div">{t("Documents")}</Text>
             <span className="text-xs text-muted-foreground">{t("{count} on file", { count: docs.length })}</span>
           </div>
           <div className="divide-y divide-border">
@@ -255,17 +256,17 @@ export function SupplierProfile({
                       <Button
                         variant="ghost"
                         onClick={() => setPreviewDoc(d)}
-                        className="flex h-auto justify-start gap-1.5 border-0 p-0 text-sm font-medium truncate hover:bg-transparent hover:text-accent hover:underline dark:hover:bg-transparent"
+                        className="flex h-auto justify-start gap-1.5 border-0 p-0 truncate hover:bg-transparent hover:text-accent hover:underline dark:hover:bg-transparent"
                         title={t("Preview attached document")}
                       >
                         <FileText size={14} className="size-3.5 text-muted-foreground shrink-0" />
                         {t(d.documentName)}
                       </Button>
                     ) : (
-                      <span className="flex items-center gap-1.5 text-sm font-medium truncate">
+                      <Text variant="label" as="span" className="flex items-center gap-1.5 truncate">
                         <FileText size={14} className="text-muted-foreground shrink-0" />
                         {t(d.documentName)}
-                      </span>
+                      </Text>
                     )}
                     <div className="text-xs text-muted-foreground mt-0.5 truncate">
                       {t(d.documentCategory)}
@@ -286,7 +287,7 @@ export function SupplierProfile({
 
         <div className="bg-card border border-border rounded-lg p-4">
           <div className="flex items-center justify-between mb-3">
-            <div className="text-xs font-semibold uppercase text-muted-foreground">{t("Contracts")}</div>
+            <Text variant="eyebrow" as="div">{t("Contracts")}</Text>
             <span className="text-xs text-accent">{t("View all")}</span>
           </div>
           <div className="space-y-2 text-sm">
@@ -309,9 +310,9 @@ export function SupplierProfile({
 
         {supplier.iban && (
           <div className="bg-card border border-border rounded-lg p-4">
-            <div className="text-xs font-semibold uppercase text-muted-foreground mb-3">
+            <Text variant="eyebrow" as="div" className="mb-3">
               {t("Master Data")}
-            </div>
+            </Text>
             <div className="space-y-2 text-sm">
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">{t("VAT ID")}</span>
@@ -334,9 +335,9 @@ export function SupplierProfile({
 
         {activity.length > 0 && (
           <div className="bg-card border border-border rounded-lg p-4">
-            <div className="text-xs font-semibold uppercase text-muted-foreground mb-3">
+            <Text variant="eyebrow" as="div" className="mb-3">
               {t("Activity Timeline")}
-            </div>
+            </Text>
             <div className="space-y-3">
               {activity.map((a, i) => (
                 <div key={i} className="flex gap-2 text-sm">
