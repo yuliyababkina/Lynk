@@ -130,6 +130,133 @@ const forbidElements = Object.entries(HAND_ROLLED).map(([element, message]) => (
   message,
 }));
 
+// ─── Lynk rules: type scale and i18n (AUTHORED only) ───────────────────────
+//
+// Two rules the shadcn preset can't express as a selector ban, so they live in
+// a small local plugin. Both read string literals, the same way the colour
+// rules do.
+
+// A text size and a font weight in the same class string is a heading or label
+// written by hand: the type scale drifting outside <Heading> / <Text>, the way
+// bg-blue-500 drifts outside the colour tokens. A size alone (text-xs on a
+// badge) or a weight alone (font-medium on a link) stays legal.
+const TYPE_SIZE = /(?:^|[\s:])text-(?:xs|sm|base|lg|[2-9]?xl|\[[\d.]+(?:px|rem|em)\])(?=\s|$)/u;
+const TYPE_WEIGHT = /(?:^|[\s:])font-(?:thin|extralight|light|normal|medium|semibold|bold|extrabold|black)(?=\s|$)/u;
+
+// The scale itself is defined here and nowhere else.
+const TYPE_SCALE_FILE = "src/shared/ui/typography.tsx";
+
+const typeScale = {
+  meta: {
+    type: "problem",
+    docs: { description: "Text size + weight together belong to <Heading> / <Text>." },
+    schema: [],
+  },
+  create(context) {
+    const check = (node, value) => {
+      if (typeof value === "string" && TYPE_SIZE.test(value) && TYPE_WEIGHT.test(value)) {
+        context.report({
+          node,
+          message:
+            "Hand-written type style (text size + font weight). Use <Heading level> or <Text variant> from @/shared/ui/typography. If no level or variant fits, add one there.",
+        });
+      }
+    };
+    return {
+      Literal: (node) => check(node, node.value),
+      TemplateElement: (node) => check(node, node.value.raw),
+    };
+  },
+};
+
+// User-facing text must go through t("…") so the German build has it. Checked:
+// text between JSX tags, text-carrying attributes, and toast({ title, description }).
+// Strings without a letter ("·", "—", "%", "42") are not text.
+const HAS_LETTER = /\p{L}/u;
+const TEXT_ATTRIBUTES = new Set([
+  "aria-label",
+  "aria-description",
+  "aria-placeholder",
+  "aria-roledescription",
+  "alt",
+  "placeholder",
+  "title",
+  "subtitle",
+  "description",
+  "label",
+]);
+const TOAST_TEXT_KEYS = new Set(["title", "description", "label"]);
+const I18N_MESSAGE =
+  'Hardcoded user-facing text. Use t("…") from useI18n() and add the German entry to the DE map in src/lib/i18n.tsx.';
+
+const noLiteralString = {
+  meta: {
+    type: "problem",
+    docs: { description: "User-facing strings go through t()." },
+    schema: [
+      {
+        type: "object",
+        properties: { allow: { type: "array", items: { type: "string" } } },
+        additionalProperties: false,
+      },
+    ],
+  },
+  create(context) {
+    const allow = new Set(context.options[0]?.allow ?? []);
+    const isText = (value) =>
+      typeof value === "string" && HAS_LETTER.test(value) && !allow.has(value.trim());
+    const report = (node) => context.report({ node, message: I18N_MESSAGE });
+    return {
+      JSXText(node) {
+        if (isText(node.value)) report(node);
+      },
+      // {"Save"} or {`Save`} as a child.
+      "JSXElement > JSXExpressionContainer > Literal, JSXFragment > JSXExpressionContainer > Literal"(node) {
+        if (isText(node.value)) report(node);
+      },
+      "JSXElement > JSXExpressionContainer > TemplateLiteral, JSXFragment > JSXExpressionContainer > TemplateLiteral"(node) {
+        if (node.quasis.some((q) => isText(q.value.raw))) report(node);
+      },
+      JSXAttribute(node) {
+        const name = typeof node.name.name === "string" ? node.name.name : null;
+        if (!name || !TEXT_ATTRIBUTES.has(name) || !node.value) return;
+        const value =
+          node.value.type === "Literal"
+            ? node.value.value
+            : node.value.type === "JSXExpressionContainer" && node.value.expression.type === "Literal"
+              ? node.value.expression.value
+              : null;
+        if (isText(value)) report(node.value);
+      },
+      CallExpression(node) {
+        const callee = node.callee;
+        const name =
+          callee.type === "Identifier"
+            ? callee.name
+            : callee.type === "MemberExpression" && callee.object.type === "Identifier"
+              ? callee.object.name
+              : null;
+        if (name !== "toast") return;
+        for (const arg of node.arguments) {
+          if (arg.type === "Literal" && isText(arg.value)) report(arg);
+          if (arg.type !== "ObjectExpression") continue;
+          for (const prop of arg.properties) {
+            const key = prop.type === "Property" && (prop.key.name ?? prop.key.value);
+            if (TOAST_TEXT_KEYS.has(key) && prop.value.type === "Literal" && isText(prop.value.value))
+              report(prop.value);
+          }
+        }
+      },
+    };
+  },
+};
+
+const lynk = { rules: { "type-scale": typeScale, "no-literal-string": noLiteralString } };
+
+// Product and company names, and language names in the language switcher (each
+// shown in its own language), stay as they are in both languages.
+const UNTRANSLATED = ["Lynk", "Yarowa", "English", "Deutsch"];
+
 export const presentationRules = [
   // ── Tier 0: exemptions for generated code ───────────────────────────────
   {
@@ -216,5 +343,20 @@ export const presentationRules = [
         },
       ],
     },
+  },
+
+  // ── Tier 3: Lynk rules — type scale and i18n ────────────────────────────
+  {
+    files: AUTHORED,
+    ignores: [TYPE_SCALE_FILE],
+    plugins: { lynk },
+    rules: { "lynk/type-scale": "error" },
+  },
+  {
+    // Stories render sample content in English on purpose.
+    files: AUTHORED,
+    ignores: ["src/stories/**", "**/*.stories.tsx"],
+    plugins: { lynk },
+    rules: { "lynk/no-literal-string": ["error", { allow: UNTRANSLATED }] },
   },
 ];
