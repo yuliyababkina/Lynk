@@ -47,10 +47,11 @@ export const Disabled: Story = {
   ),
 };
 
-/** Long German label: the list scrolls rather than wrapping. */
+/** Long German label: the label truncates and the count badge stays visible
+ *  when a single tab is wider than its container. */
 export const LongGermanLabel: Story = {
   render: () => (
-    <div className="max-w-md overflow-x-auto">
+    <div className="max-w-md">
       <Tabs defaultValue="endorsed">
         <TabsList>
           <TabsTriggerWithCount value="all" count={12}>Alle Anfragen</TabsTriggerWithCount>
@@ -63,4 +64,30 @@ export const LongGermanLabel: Story = {
       </Tabs>
     </div>
   ),
+};
+
+/** Tabs wrap onto the next row when space runs out; they never scroll
+ *  sideways. The behaviour lives in `ui/tabs.tsx`; see `UI/Tabs › Wrapping`
+ *  for the full set of wrapping stories. */
+export const Wrapping: Story = {
+  render: () => (
+    <div className="w-[320px]">
+      <Tabs defaultValue="all">
+        <TabsList>
+          <TabsTriggerWithCount value="all" count={24}>All</TabsTriggerWithCount>
+          <TabsTriggerWithCount value="expiring" count={6}>Expiring</TabsTriggerWithCount>
+          <TabsTriggerWithCount value="blocked" count={3}>Blocked</TabsTriggerWithCount>
+          <TabsTriggerWithCount value="renewal" count={12}>Renewal due</TabsTriggerWithCount>
+          <TabsTriggerWithCount value="archived" count={120}>Archived</TabsTriggerWithCount>
+        </TabsList>
+        <TabsContent value="all">All items</TabsContent>
+      </Tabs>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const tabs = canvas.getAllByRole("tab");
+    const list = canvas.getByRole("tablist");
+    await expect(new Set(tabs.map((t) => t.offsetTop)).size).toBeGreaterThanOrEqual(2);
+    await expect(list.scrollWidth).toBeLessThanOrEqual(list.clientWidth);
+  },
 };

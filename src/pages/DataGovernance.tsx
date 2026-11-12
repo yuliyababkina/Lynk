@@ -57,15 +57,13 @@ export function DataGovernance({ initialSelectedId }: { initialSelectedId?: stri
       </div>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as (typeof TABS)[number])} className="gap-4">
-        <div className="overflow-x-auto">
-          <TabsList>
-            {TABS.map((t) => (
-              <TabsTrigger key={t} value={t}>
-                {tr(t)}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </div>
+        <TabsList>
+          {TABS.map((t) => (
+            <TabsTrigger key={t} value={t}>
+              {tr(t)}
+            </TabsTrigger>
+          ))}
+        </TabsList>
         <TabsContent value={tab}>
           <div className="space-y-3">
             {filtered.map((r) => {
