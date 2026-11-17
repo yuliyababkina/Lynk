@@ -1,3 +1,5 @@
+import type { WoSystem } from "@/lib/wo-systems";
+
 export type Criticality = "critical" | "high" | "medium" | "low";
 
 /** Workflow status of a Task Queue ticket. */
@@ -35,7 +37,7 @@ export interface Ticket {
   resolved?: boolean;
 }
 
-export type SupplierStage = "prospect" | "supplier" | "provider" | "inactive";
+export type SupplierStage = "prospect" | "supplier" | "inactive";
 
 export interface Contact {
   name: string;
@@ -49,6 +51,9 @@ export interface Supplier {
   id: string;
   name: string;
   stage: SupplierStage;
+  /** Which work order system the company receives work orders through. An
+   * attribute, not a lifecycle stage. "Unknown" until we learn otherwise. */
+  woSystem: WoSystem;
   relationshipId: string;
   trade: string;
   region: string;
@@ -261,7 +266,7 @@ export interface Principal {
   associatesCount?: number;
 }
 
-export type RelationshipStatus = "prospect" | "supplier" | "provider" | "inactive";
+export type RelationshipStatus = "prospect" | "supplier" | "inactive";
 
 export interface SupplierPrincipalRelationship {
   id: string;
