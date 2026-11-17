@@ -189,6 +189,7 @@ export const SUPPLIERS: Supplier[] = [
     id: "supplier_1",
     name: "Acme Corporation",
     stage: "supplier",
+    woSystem: "Unknown",
     relationshipId: "rel_1",
     trade: "Manufacturing",
     region: "EU",

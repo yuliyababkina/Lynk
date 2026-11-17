@@ -14,7 +14,7 @@ truncate table activity_log, catalogue_suppliers, catalogues, onboarding_cases,
   restart identity cascade;
 
 -- ─────────────────────────────────────────────────────────────────────────
--- SUPPLIERS (30 total: 8 Prospect, 17 Supplier, 5 Provider)
+-- SUPPLIERS (30 total: 8 Prospect, 22 Supplier)
 -- ─────────────────────────────────────────────────────────────────────────
 
 insert into suppliers (id, name, stage, trade, region, compliance, rating, open_tickets, contacts, regions_served, capabilities, vat_id, iban, address, last_active) values
@@ -44,10 +44,10 @@ insert into suppliers (id, name, stage, trade, region, compliance, rating, open_
 ('muellerlogistik', 'Müller Logistik KG', 'Supplier', 'Logistics', 'Bavaria', 'Pending Review', 71, 3,
   '[{"name":"Frank Müller","role":"Owner","email":"frank@mueller-logistik.de","phone":"+49 89 1234 007","primary":true}]',
   '{Bavaria}', '{Warehousing,Freight}', null, null, null, '7 days ago'),
-('schmidt', 'Schmidt Consulting GmbH', 'Provider', 'Consulting', 'Berlin', 'Fully Compliant', 97, 0,
+('schmidt', 'Schmidt Consulting GmbH', 'Supplier', 'Consulting', 'Berlin', 'Fully Compliant', 97, 0,
   '[{"name":"Birgit Schmidt","role":"Owner","email":"birgit@schmidt-consulting.de","phone":"+49 30 1234 008","primary":true}]',
   '{"All Germany"}', '{"Process consulting"}', null, null, null, '12 days ago'),
-('zimmer', 'Zimmer IT Services', 'Provider', 'IT Services', 'Hamburg', 'Action Required', 80, 2,
+('zimmer', 'Zimmer IT Services', 'Supplier', 'IT Services', 'Hamburg', 'Action Required', 80, 2,
   '[{"name":"Dominik Zimmer","role":"Owner","email":"dominik@zimmer-it.de","phone":"+49 40 1234 009","primary":true}]',
   '{Hamburg}', '{"IT support"}', null, null, null, '2 days ago'),
 
@@ -106,16 +106,22 @@ insert into suppliers (id, name, stage, trade, region, compliance, rating, open_
   '[{"name":"Robert Thiel","role":"Owner","email":"robert@thiel-metallbau.de","phone":"+49 341 1234 026","primary":true}]',
   '{Saxony}', '{"Steel fabrication"}', null, null, null, '3 days ago'),
 
--- ── 3 new Providers ──
-('neumann', 'Neumann Sicherheitsdienst GmbH', 'Provider', 'Security Services', 'Berlin', 'Fully Compliant', 93, 0,
+-- ── 3 new Suppliers (work orders via Enable, see wo_system below) ──
+('neumann', 'Neumann Sicherheitsdienst GmbH', 'Supplier', 'Security Services', 'Berlin', 'Fully Compliant', 93, 0,
   '[{"name":"Thomas Neumann","role":"Owner","email":"thomas@neumann-sicherheit.de","phone":"+49 30 1234 027","primary":true}]',
   '{Berlin}', '{"Site security"}', null, null, null, '4 days ago'),
-('lang', 'Lang Gebäudereinigung GmbH', 'Provider', 'Cleaning Services', 'Hamburg', 'Action Required', 61, 2,
+('lang', 'Lang Gebäudereinigung GmbH', 'Supplier', 'Cleaning Services', 'Hamburg', 'Action Required', 61, 2,
   '[{"name":"Monika Lang","role":"Owner","email":"monika@lang-reinigung.de","phone":"+49 40 1234 028","primary":true}]',
   '{Hamburg}', '{"Facility cleaning"}', null, null, null, '1 day ago'),
-('peters', 'Peters Facility Management GmbH', 'Provider', 'Facility Management', 'NRW', 'Fully Compliant', 87, 0,
+('peters', 'Peters Facility Management GmbH', 'Supplier', 'Facility Management', 'NRW', 'Fully Compliant', 87, 0,
   '[{"name":"Andreas Peters","role":"Owner","email":"andreas@peters-fm.de","phone":"+49 211 1234 029","primary":true}]',
   '{NRW}', '{"Facility management"}', null, null, null, '7 days ago');
+
+-- WO management system. Everything else keeps the column default 'Unknown';
+-- these five are the former "Provider" records, who receive work orders
+-- through Enable.
+update suppliers set wo_system = 'Enable (Yarowa)'
+  where id in ('schmidt', 'zimmer', 'neumann', 'lang', 'peters');
 
 -- ─────────────────────────────────────────────────────────────────────────
 -- COMPLIANCE DOCUMENTS

@@ -226,7 +226,6 @@ const DE: Record<string, string> = {
   Consulting: "Beratung",
   "{count} Prospects": "{count} Interessenten",
   "{count} Suppliers": "{count} Lieferanten",
-  "{count} Providers": "{count} Anbieter",
   "{count} total network contacts": "{count} Netzwerkkontakte insgesamt",
 
   // ── Service Catalogue page ──────────────────────────────────────────────
@@ -353,12 +352,15 @@ const DE: Record<string, string> = {
   "Send Reminder": "Erinnerung senden",
 
   // ── Suppliers Overview page ─────────────────────────────────────────────
-  "All contacts — Prospects, Suppliers, and Providers.":
-    "Alle Kontakte — Interessenten, Lieferanten und Dienstleister.",
+  "All contacts — Prospects and Suppliers.": "Alle Kontakte — Interessenten und Lieferanten.",
   "Search...": "Suchen…",
-  Provider: "Anbieter",
   COMPANY: "UNTERNEHMEN",
   STAGE: "PHASE",
+  // WO = work order. Product names in the list (SAP, Planon, …) stay as-is.
+  "WO MANAGEMENT SYSTEM": "AUFTRAGSVERWALTUNGSSYSTEM",
+  "None / manual": "Keines / manuell",
+  Unknown: "Unbekannt",
+  Other: "Sonstiges",
   TRADE: "GEWERK",
   REGION: "REGION",
   TICKETS: "TICKETS",

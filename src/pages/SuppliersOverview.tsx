@@ -10,16 +10,16 @@ import { TabsTriggerWithCount } from "@/components/yarowa/tabs-trigger-with-coun
 import { useI18n } from "@/lib/i18n-context";
 import { relationshipId } from "@/lib/db";
 import { PRINCIPAL_ID } from "@/data";
+import { DEFAULT_WO_SYSTEM } from "@/lib/wo-systems";
 import type { Supplier } from "../types";
 import { Heading } from "@/shared/ui/typography";
 
-type StageFilter = "all" | "prospect" | "supplier" | "provider";
+type StageFilter = "all" | "prospect" | "supplier";
 
 const stageLabels: Record<StageFilter, string> = {
   all: "All",
   prospect: "Prospect",
   supplier: "Supplier",
-  provider: "Provider",
 };
 
 const complianceTone: Record<string, "success" | "warning" | "danger" | "neutral" | "purple"> = {
@@ -60,7 +60,6 @@ export function SuppliersOverview({
     all: SUPPLIERS.length,
     prospect: SUPPLIERS.filter((s) => s.stage.toLowerCase() === "prospect").length,
     supplier: SUPPLIERS.filter((s) => s.stage.toLowerCase() === "supplier").length,
-    provider: SUPPLIERS.filter((s) => s.stage.toLowerCase() === "provider").length,
   };
 
   return (
@@ -68,7 +67,7 @@ export function SuppliersOverview({
       <div className="flex items-start justify-between mb-4">
         <div>
           <Heading level={1} className="mb-1">{t("Suppliers Overview")}</Heading>
-          <p className="text-sm text-muted-foreground">{t("All contacts — Prospects, Suppliers, and Providers.")}</p>
+          <p className="text-sm text-muted-foreground">{t("All contacts — Prospects and Suppliers.")}</p>
         </div>
         <Button>
           <Plus size={14} /> {t("Invite Supplier")}
@@ -78,7 +77,7 @@ export function SuppliersOverview({
       <Tabs value={stage} onValueChange={(v) => setStage(v as StageFilter)} className="gap-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <TabsList className="min-w-0">
-            {(["all", "prospect", "supplier", "provider"] as const).map((s) => (
+            {(["all", "prospect", "supplier"] as const).map((s) => (
               <TabsTriggerWithCount key={s} value={s} count={counts[s]}>
                 {t(stageLabels[s])}
               </TabsTriggerWithCount>
@@ -98,11 +97,12 @@ export function SuppliersOverview({
           {/* Scrolls inside its own box rather than pushing the page sideways, so
               the table stays usable when the chat dock takes 380px off the width. */}
           <div className="bg-card border border-border rounded-xl overflow-x-auto">
-            <Table className="min-w-[720px]">
+            <Table className="min-w-[880px]">
               <TableHeader>
                 <TableRow className="text-xs border-border hover:bg-transparent">
                   <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{t("COMPANY")}</TableHead>
                   <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{t("STAGE")}</TableHead>
+                  <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{t("WO MANAGEMENT SYSTEM")}</TableHead>
                   <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{t("TRADE")}</TableHead>
                   <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{t("REGION")}</TableHead>
                   <TableHead className="h-auto px-4 py-2 whitespace-normal text-muted-foreground">{t("TICKETS")}</TableHead>
@@ -135,6 +135,13 @@ export function SuppliersOverview({
                     </TableCell>
                     <TableCell className="px-4 py-3 whitespace-normal">
                       <Badge variant="neutral">{t(formatStageLabel(s.stage))}</Badge>
+                    </TableCell>
+                    <TableCell className="px-4 py-3 whitespace-normal">
+                      {s.woSystem === DEFAULT_WO_SYSTEM ? (
+                        <span className="text-muted-foreground">{t(s.woSystem)}</span>
+                      ) : (
+                        t(s.woSystem)
+                      )}
                     </TableCell>
                     <TableCell className="px-4 py-3 whitespace-normal">{t(s.trade)}</TableCell>
                     <TableCell className="px-4 py-3 whitespace-normal">{t(s.region)}</TableCell>

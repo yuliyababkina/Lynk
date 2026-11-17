@@ -33,8 +33,6 @@ export function PortalPrincipals({ supplierId, onOpenChat }: PortalPrincipalsPro
         return "success";
       case "prospect":
         return "warning";
-      case "provider":
-        return "primary";
       default:
         return "neutral";
     }
