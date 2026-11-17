@@ -226,7 +226,6 @@ const DE: Record<string, string> = {
   Consulting: "Beratung",
   "{count} Prospects": "{count} Interessenten",
   "{count} Suppliers": "{count} Lieferanten",
-  "{count} Providers": "{count} Anbieter",
   "{count} total network contacts": "{count} Netzwerkkontakte insgesamt",
 
   // ── Service Catalogue page ──────────────────────────────────────────────
