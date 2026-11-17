@@ -505,7 +505,7 @@ export function ProspectOnboarding({
                 </p>
               </div>
               {error && <p className="text-sm text-destructive">{error}</p>}
-              <Card className="rounded-2xl border border-border ring-0 shadow-none [--card-spacing:1.25rem] px-(--card-spacing)">
+              <Card className="border border-border ring-0 shadow-none [--card-spacing:1.25rem] px-(--card-spacing)">
                 <DocumentMetadataForm
                   fileName={pending.file.name}
                   documentName={pending.row.name}
@@ -533,7 +533,7 @@ export function ProspectOnboarding({
                 </p>
               </div>
               {error && <p className="text-sm text-destructive">{error}</p>}
-              <Card className="rounded-2xl border border-border ring-0 shadow-none [--card-spacing:1.25rem] px-(--card-spacing)">
+              <Card className="border border-border ring-0 shadow-none [--card-spacing:1.25rem] px-(--card-spacing)">
                 <DocumentMetadataForm
                   mode="edit"
                   documentName={editing.doc.documentName}
@@ -650,7 +650,7 @@ export function ProspectOnboarding({
 
               {/* Deleting is not undoable, so it's confirmed by name. */}
               <Dialog open={Boolean(confirmDelete)} onOpenChange={(o) => !o && !deleting && setConfirmDelete(null)}>
-                <DialogContent showCloseButton={false} className="sm:max-w-[440px] rounded-2xl">
+                <DialogContent showCloseButton={false} className="sm:max-w-[440px]">
                   <DialogTitle>
                     {t("Delete {name}?", { name: confirmDelete?.documentName ?? "" })}
                   </DialogTitle>
@@ -717,7 +717,7 @@ function WelcomeStep({
 
   return (
     <section className="text-center pt-6">
-      <div className="w-12 h-12 rounded-xl bg-secondary mx-auto flex items-center justify-center text-2xl">
+      <div className="w-12 h-12 rounded-lg bg-secondary mx-auto flex items-center justify-center text-2xl">
         🏗️
       </div>
       <Heading level={1} className="mt-4">{t("Welcome, {name}", { name: firstName })}</Heading>
@@ -752,7 +752,7 @@ function WelcomeStep({
       )}
 
       {/* Consent gate: nothing is entered until the terms are accepted. */}
-      <Card className="rounded-2xl border border-border ring-0 shadow-none text-left mt-6 [--card-spacing:1.25rem] px-(--card-spacing)">
+      <Card className="border border-border ring-0 shadow-none text-left mt-6 [--card-spacing:1.25rem] px-(--card-spacing)">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2 flex-wrap">
             <FileText className="w-4 h-4 text-primary" />
@@ -964,7 +964,7 @@ function FormField({
         onChange={onChange}
         readOnly={readOnly}
         className={cn(
-          "h-10 rounded-lg border-border bg-background",
+          "h-10 border-border bg-background",
           readOnly && "bg-muted/40 text-muted-foreground cursor-default focus-visible:ring-0"
         )}
       />
@@ -988,7 +988,7 @@ function DoneStep() {
         )}
       </p>
 
-      <Card className="rounded-2xl border border-border ring-0 shadow-none text-left mt-6 [--card-spacing:1.25rem] px-(--card-spacing)">
+      <Card className="border border-border ring-0 shadow-none text-left mt-6 [--card-spacing:1.25rem] px-(--card-spacing)">
         <Text variant="eyebrow" className="mb-3">
           {t("What happens next")}
         </Text>
@@ -1120,7 +1120,7 @@ function ContractsStep({
         </div>
 
         {/* Right — big preview + inline sign */}
-        <div className="flex-1 min-w-0 border border-border rounded-2xl overflow-hidden flex flex-col bg-card">
+        <div className="flex-1 min-w-0 border border-border rounded-xl overflow-hidden flex flex-col bg-card">
           <div className="flex items-center gap-3 border-b border-border px-4 py-3 shrink-0">
             <SelectedIcon className="w-4 h-4 text-medium-ink shrink-0" />
             <div className="min-w-0 flex-1">

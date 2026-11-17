@@ -33,7 +33,7 @@ export function RequestedUpdatePanel({ update }: { update: RequestedUpdate }) {
         </Text>
       </h2>
 
-      <Card className="rounded-2xl border border-border ring-0 shadow-none [--card-spacing:0px] gap-0">
+      <Card className="border border-border ring-0 shadow-none [--card-spacing:0px] gap-0">
         {/* Sender */}
         <div className="flex items-start gap-3 p-4">
           <div className="w-8 h-8 rounded-full bg-warning-soft text-warning-ink flex items-center justify-center shrink-0">

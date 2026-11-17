@@ -97,7 +97,7 @@ export function SuppliersOverview({
         <TabsContent value={stage}>
           {/* Scrolls inside its own box rather than pushing the page sideways, so
               the table stays usable when the chat dock takes 380px off the width. */}
-          <div className="bg-card border border-border rounded-lg overflow-x-auto">
+          <div className="bg-card border border-border rounded-xl overflow-x-auto">
             <Table className="min-w-[720px]">
               <TableHeader>
                 <TableRow className="text-xs border-border hover:bg-transparent">

@@ -70,7 +70,7 @@ export function DataGovernance({ initialSelectedId }: { initialSelectedId?: stri
             {filtered.map((r) => {
               const isOpen = expanded === r.id;
               return (
-                <div key={r.id} className="bg-card border border-border rounded-lg">
+                <div key={r.id} className="bg-card border border-border rounded-xl">
                   <Button
                     variant="ghost"
                     onClick={() => setExpanded(isOpen ? null : r.id)}
@@ -103,7 +103,7 @@ export function DataGovernance({ initialSelectedId }: { initialSelectedId?: stri
                         {tr("{count} fields changing", { count: r.fields.length })}
                       </Text>
                       {r.fields.map((f) => (
-                        <div key={f.label} className="border border-border rounded-md overflow-hidden">
+                        <div key={f.label} className="border border-border rounded-xl overflow-hidden">
                           <Text variant="label" as="div" className="flex items-center justify-between px-3 py-1.5 bg-secondary/60">
                             {f.label}
                             {f.sensitive && (

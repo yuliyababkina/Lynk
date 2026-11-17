@@ -68,7 +68,7 @@ export function PortalDocuments({ supplierId }: PortalDocumentsProps) {
         {error && <p className="text-sm text-destructive">{error}</p>}
 
         {pending && (
-          <Card className="rounded-xl border border-border ring-0 shadow-none [--card-spacing:1.25rem] px-(--card-spacing) max-w-xl">
+          <Card className="border border-border ring-0 shadow-none [--card-spacing:1.25rem] px-(--card-spacing) max-w-xl">
             <DocumentMetadataForm
               fileName={pending.file.name}
               documentName={pending.name}

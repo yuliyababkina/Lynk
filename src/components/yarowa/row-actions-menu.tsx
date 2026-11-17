@@ -45,7 +45,7 @@ export function RowActionsMenu({ actions }: { actions: RowAction[] }) {
           className={cn(
             buttonVariants({ variant: "ghost" }),
             // Hidden at rest, revealed on row hover — but always visible while open.
-            "h-auto rounded-md border-0 p-1 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-secondary hover:text-foreground focus-visible:opacity-100 data-[state=open]:bg-transparent data-[state=open]:opacity-100 dark:hover:bg-secondary"
+            "h-auto border-0 p-1 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-secondary hover:text-foreground focus-visible:opacity-100 data-[state=open]:bg-transparent data-[state=open]:opacity-100 dark:hover:bg-secondary"
           )}
         >
           <MoreVertical className="size-4" />

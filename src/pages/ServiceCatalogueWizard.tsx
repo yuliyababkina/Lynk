@@ -199,7 +199,7 @@ export function ServiceCatalogueWizard({
 
       {step === "Details" && (
         <div>
-          <div className="bg-card border border-border rounded-2xl p-5 mb-6 space-y-4 max-w-lg mx-auto">
+          <div className="bg-card border border-border rounded-xl p-5 mb-6 space-y-4 max-w-lg mx-auto">
             <div>
               <Label className={labelCls}>{t("Name")}</Label>
               <Input

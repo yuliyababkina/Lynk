@@ -119,7 +119,7 @@ export function ComplianceMonitoring({
           ))}
         </TabsList>
         <TabsContent value={tab}>
-          <div className="bg-card border border-border rounded-lg overflow-hidden">
+          <div className="bg-card border border-border rounded-xl overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow className="text-xs border-border hover:bg-transparent">

@@ -78,7 +78,7 @@ export function ServiceCatalogueDetail({
       </div>
 
       <div className="grid grid-cols-[1fr_320px] gap-4 items-start">
-        <div className="bg-card border border-border rounded-lg overflow-hidden">
+        <div className="bg-card border border-border rounded-xl overflow-hidden">
           <Heading level={4} as="div" className="px-4 py-3 border-b border-border">{t("Services")}</Heading>
           <Table>
             <TableHeader>
@@ -103,7 +103,7 @@ export function ServiceCatalogueDetail({
         </div>
 
         <div className="space-y-4">
-          <div className="bg-card border border-border rounded-lg overflow-hidden">
+          <div className="bg-card border border-border rounded-xl overflow-hidden">
             <div className="px-4 py-3 border-b border-border flex items-center justify-between">
               <Heading level={4} as="span">{t("Service catalogue alerts")}</Heading>
               <Badge variant={nonCompliant.length > 0 ? "danger" : "success"}>{nonCompliant.length}</Badge>
@@ -136,7 +136,7 @@ export function ServiceCatalogueDetail({
             )}
           </div>
 
-          <div className="bg-card border border-border rounded-lg overflow-hidden">
+          <div className="bg-card border border-border rounded-xl overflow-hidden">
             <Heading level={4} as="div" className="px-4 py-3 border-b border-border">{t("History log")}</Heading>
             {catalogue.versions.map((v) => (
               <Button

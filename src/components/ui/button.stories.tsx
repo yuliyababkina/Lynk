@@ -118,8 +118,8 @@ export const PrimaryStates: Story = {
 };
 
 /**
- * Corner radius — `rounded-2xl` on the component's base class in `button.tsx`,
- * from the `--radius` scale like inputs, tabs and badges. The same corner holds
+ * Corner radius — `rounded-md` on the component's base class in `button.tsx`,
+ * from the `--radius` scale like inputs and tabs. The same corner holds
  * at every size and on the square icon buttons, where it is most visible.
  */
 export const CornerRadius: Story = {

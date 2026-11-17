@@ -72,7 +72,7 @@ export function NotificationBell({
         )}
       </PopoverTrigger>
 
-      <PopoverContent align="end" className="w-80 overflow-hidden rounded-lg p-0">
+      <PopoverContent align="end" className="w-80 overflow-hidden p-0">
         <div className="border-b border-border px-3 py-2">
           <Text variant="label" as="div" className="text-muted-foreground">
             {t("Messages")}

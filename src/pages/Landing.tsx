@@ -80,10 +80,10 @@ export function Landing({ onSelectRole }: LandingProps) {
             role="button"
             tabIndex={0}
             onClick={() => onSelectRole(role.id)}
-            className="p-6 rounded-2xl cursor-pointer transition-all bg-card border border-border shadow-none hover:border-foreground/20 hover:shadow-md"
+            className="p-6 rounded-xl cursor-pointer transition-all bg-card border border-border shadow-none hover:border-foreground/20 hover:shadow-md"
           >
             {/* Icon */}
-            <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xl mb-4 bg-secondary-brand">
+            <div className="w-11 h-11 rounded-lg flex items-center justify-center text-xl mb-4 bg-secondary-brand">
               {role.icon}
             </div>
 

@@ -163,7 +163,7 @@ export function SupplierProfile({
         <Text variant="eyebrow" as="div" className="mb-2">
           {t("Open Tickets")} · {tickets.length}
         </Text>
-        <div className="bg-card border border-border rounded-lg">
+        <div className="bg-card border border-border rounded-xl">
           {tickets.length === 0 && (
             <div className="p-4 text-sm text-muted-foreground">{t("No open tickets.")}</div>
           )}
@@ -195,7 +195,7 @@ export function SupplierProfile({
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="bg-card border border-border rounded-lg p-4">
+        <div className="bg-card border border-border rounded-xl p-4">
           <Text variant="eyebrow" as="div" className="mb-3">{t("Contacts")}</Text>
           <div className="space-y-3">
             {supplier.contacts.map((c) => (
@@ -212,7 +212,7 @@ export function SupplierProfile({
           </div>
         </div>
 
-        <div className="bg-card border border-border rounded-lg p-4">
+        <div className="bg-card border border-border rounded-xl p-4">
           <Text variant="eyebrow" as="div" className="mb-3">{t("Services")}</Text>
           <div className="text-xs text-muted-foreground mb-1">{t("Trade Categories")}</div>
           <div className="flex flex-wrap gap-1.5 mb-3">
@@ -240,7 +240,7 @@ export function SupplierProfile({
           </div>
         </div>
 
-        <div className="bg-card border border-border rounded-lg p-4">
+        <div className="bg-card border border-border rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
             <Text variant="eyebrow" as="div">{t("Documents")}</Text>
             <span className="text-xs text-muted-foreground">{t("{count} on file", { count: docs.length })}</span>
@@ -285,7 +285,7 @@ export function SupplierProfile({
           </div>
         </div>
 
-        <div className="bg-card border border-border rounded-lg p-4">
+        <div className="bg-card border border-border rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
             <Text variant="eyebrow" as="div">{t("Contracts")}</Text>
             <span className="text-xs text-accent">{t("View all")}</span>
@@ -309,7 +309,7 @@ export function SupplierProfile({
         </div>
 
         {supplier.iban && (
-          <div className="bg-card border border-border rounded-lg p-4">
+          <div className="bg-card border border-border rounded-xl p-4">
             <Text variant="eyebrow" as="div" className="mb-3">
               {t("Master Data")}
             </Text>
@@ -334,7 +334,7 @@ export function SupplierProfile({
         )}
 
         {activity.length > 0 && (
-          <div className="bg-card border border-border rounded-lg p-4">
+          <div className="bg-card border border-border rounded-xl p-4">
             <Text variant="eyebrow" as="div" className="mb-3">
               {t("Activity Timeline")}
             </Text>

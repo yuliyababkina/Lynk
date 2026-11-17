@@ -35,8 +35,8 @@ export function TaskGroupCard({
   className?: string;
 }) {
   return (
-    <div className={cn("bg-card border border-border rounded-2xl", className)}>
-      <div className="flex items-center gap-2 bg-secondary/60 border-b border-border px-4 py-2.5 rounded-t-2xl">
+    <div className={cn("bg-card border border-border rounded-xl", className)}>
+      <div className="flex items-center gap-2 bg-secondary/60 border-b border-border px-4 py-2.5 rounded-t-xl">
         {icon}
         <Text variant="eyebrow" as="span" className="text-foreground">{label}</Text>
         <Badge variant="outline" className="h-[22px] min-w-[22px] bg-card px-1">

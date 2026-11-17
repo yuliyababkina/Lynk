@@ -125,7 +125,7 @@ export function Dashboard({
         </TabsList>
         <TabsContent value={filter}>
           {grouped.length === 0 && (
-            <div className="border border-dashed border-border rounded-2xl py-16 text-center">
+            <div className="border border-dashed border-border rounded-xl py-16 text-center">
               <Check className="mx-auto mb-3 text-success-ink" size={28} />
               <Text variant="label">{tr("You're all caught up")}</Text>
               <p className="text-xs text-muted-foreground mt-1">
