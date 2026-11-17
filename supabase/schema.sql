@@ -20,11 +20,17 @@
 
 create extension if not exists pgcrypto;
 
--- ── Suppliers / Prospects / Providers ──────────────────────────────────────
+-- ── Suppliers / Prospects ───────────────────────────────────────────────────
 create table if not exists suppliers (
   id text primary key,
   name text not null,
-  stage text not null check (stage in ('Prospect','Supplier','Provider')),
+  stage text not null check (stage in ('Prospect','Supplier')),
+  -- Which work order system the company receives work orders through. An
+  -- attribute, not a lifecycle stage. Mirrors WO_SYSTEMS in src/lib/wo-systems.ts.
+  wo_system text not null default 'Unknown' check (wo_system in (
+    'Enable (Yarowa)','SAP','Planon','IBM Maximo','Eptura (Archibus)','Infor EAM','Aareon',
+    'Haufe iX-Haus','MRI Software','Yardi','Rimo R5 (Switzerland)','Other','None / manual','Unknown'
+  )),
   trade text not null,
   region text not null,
   compliance text not null default '—',

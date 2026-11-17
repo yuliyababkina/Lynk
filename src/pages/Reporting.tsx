@@ -107,16 +107,13 @@ export function Reporting() {
               <Heading level={4} as="div" className="mb-1">{tr("Network Composition")}</Heading>
               <div className="text-xs text-muted-foreground mb-3">{tr("Contacts by lifecycle stage")}</div>
               <div className="flex items-center gap-6">
-                <div className="w-28 h-28 rounded-full border-[14px] border-accent border-r-success border-b-purple" />
+                <div className="w-28 h-28 rounded-full border-[14px] border-accent border-r-success border-b-success" />
                 <div className="space-y-1 text-sm">
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-medium" /> {tr("{count} Prospects", { count: 3 })}
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-success" /> {tr("{count} Suppliers", { count: 5 })}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-purple" /> {tr("{count} Providers", { count: 2 })}
+                    <span className="w-2 h-2 rounded-full bg-success" /> {tr("{count} Suppliers", { count: 7 })}
                   </div>
                   <div className="text-xs text-muted-foreground pt-1">{tr("{count} total network contacts", { count: 10 })}</div>
                 </div>
