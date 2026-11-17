@@ -115,7 +115,7 @@ function ContextChip({
       onClick={() => onOpen?.(context)}
       disabled={!onOpen}
       className={cn(
-        "mt-2 h-auto max-w-full justify-start gap-1.5 rounded-lg border-border bg-background px-2 py-1 font-normal whitespace-normal disabled:opacity-100",
+        "mt-2 h-auto max-w-full justify-start gap-1.5 border-border bg-background px-2 py-1 font-normal whitespace-normal disabled:opacity-100",
         onOpen ? "hover:bg-secondary/60 dark:hover:bg-secondary/60" : "hover:bg-background"
       )}
       title={onOpen ? label : undefined}
@@ -362,7 +362,7 @@ function ChatPanelBody({
                 rows={2}
                 aria-label={t("Write a message")}
                 placeholder={t("Write a message…")}
-                className="field-sizing-fixed min-h-[2.5rem] flex-1 rounded-lg border-border bg-background p-2 text-sm"
+                className="field-sizing-fixed min-h-[2.5rem] flex-1 border-border bg-background p-2 text-sm"
               />
               <Button variant="default" size="sm" disabled={!canSend} onClick={submit}>
                 <Send className="h-4 w-4" />

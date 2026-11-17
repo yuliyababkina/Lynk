@@ -295,7 +295,7 @@ export function Onboarding({
             ))}
           </TabsList>
           <TabsContent value={tab}>
-            <div className="bg-card border border-border rounded-lg overflow-hidden">
+            <div className="bg-card border border-border rounded-xl overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow className="text-xs border-border hover:bg-transparent">
@@ -516,7 +516,7 @@ export function Onboarding({
       )}
 
       <Dialog open={Boolean(revokingCase)} onOpenChange={(o) => !o && setRevokingCase(null)}>
-        <DialogContent showCloseButton={false} className="sm:max-w-[440px] rounded-2xl">
+        <DialogContent showCloseButton={false} className="sm:max-w-[440px]">
           <DialogTitle>
             {tr("Revoke the invitation for {company}?", { company: revokingCase?.companyName ?? "" })}
           </DialogTitle>
@@ -608,7 +608,7 @@ function DeleteCaseDialog({
 
   return (
     <Dialog open onOpenChange={(o) => !o && !busy && onClose()}>
-      <DialogContent showCloseButton={false} className="sm:max-w-[460px] rounded-2xl">
+      <DialogContent showCloseButton={false} className="sm:max-w-[460px]">
         <DialogTitle>
           {t("Delete {company}?", { company: caseItem.companyName })}
         </DialogTitle>
@@ -642,7 +642,7 @@ function DeleteCaseDialog({
             onChange={(e) => setReason(e.target.value)}
             rows={3}
             placeholder={t("e.g. duplicate invitation, company no longer trading, invited in error")}
-            className="field-sizing-fixed min-h-0 rounded-lg border-border bg-background p-2 text-sm"
+            className="field-sizing-fixed min-h-0 border-border bg-background p-2 text-sm"
           />
           <p className="text-xs text-muted-foreground">
             {t("Kept in the activity log — the only record left once the case is gone.")}
@@ -788,7 +788,7 @@ function ReviewActions({
         placeholder={
           mode === "changes" ? t("What does the supplier need to change?") : t("Reason for rejection")
         }
-        className="field-sizing-fixed min-h-0 rounded-lg border-border bg-background p-2 text-sm"
+        className="field-sizing-fixed min-h-0 border-border bg-background p-2 text-sm"
       />
       <div className="flex gap-2">
         <Button

@@ -189,7 +189,7 @@ function StatTile({ stat, onNavigate }: { stat: PortalStat; onNavigate?: (view: 
       role="button"
       tabIndex={0}
       onClick={() => onNavigate?.(stat.key as PortalView)}
-      className="rounded-2xl border border-border ring-0 shadow-none [--card-spacing:1.25rem] px-(--card-spacing) gap-0 cursor-pointer hover:bg-secondary/50 transition-colors"
+      className="border border-border ring-0 shadow-none [--card-spacing:1.25rem] px-(--card-spacing) gap-0 cursor-pointer hover:bg-secondary/50 transition-colors"
     >
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">{t(stat.label)}</p>
@@ -268,7 +268,7 @@ export function PortalOverview({ supplierId, groups, onNavigate, onOpenActivity,
             role="button"
             tabIndex={0}
             onClick={() => onOpenActivity?.({ quick, sectionLabel: title, tone: "neutral" })}
-            className="rounded-2xl border border-border ring-0 shadow-none [--card-spacing:1rem] px-(--card-spacing) cursor-pointer hover:bg-secondary/50 transition-colors"
+            className="border border-border ring-0 shadow-none [--card-spacing:1rem] px-(--card-spacing) cursor-pointer hover:bg-secondary/50 transition-colors"
           >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-success-soft text-success-ink flex items-center justify-center shrink-0">

@@ -24,7 +24,7 @@ export function RenewalReviewCard({ doc, onReview }: { doc: SupplierDoc; onRevie
   const { t } = useI18n();
   if (!doc.renewal) return null;
   return (
-    <Card size="sm" className="gap-0 rounded-lg py-0 shadow-none ring-border">
+    <Card size="sm" className="gap-0 py-0 shadow-none ring-border">
       <CardHeader className="flex items-center gap-2 border-b border-border bg-secondary/60 px-3 py-2 [.border-b]:pb-2">
         <Upload size={14} className="text-foreground" aria-hidden="true" />
         <CardTitle className="text-sm">{t("Renewal Uploaded — Awaiting Review")}</CardTitle>

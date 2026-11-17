@@ -49,7 +49,7 @@ export function Field({
         value={value}
         placeholder={placeholder && t(placeholder)}
         onChange={onChange && ((e) => onChange(e.target.value))}
-        className={cn("h-10 rounded-lg border-border bg-background", mono && "font-mono")}
+        className={cn("h-10 border-border bg-background", mono && "font-mono")}
       />
     </div>
   );
@@ -68,7 +68,7 @@ function SectionCard({
 }) {
   const { t } = useI18n();
   return (
-    <Card className="rounded-2xl border border-border ring-0 shadow-none [--card-spacing:1.25rem] px-(--card-spacing) gap-0">
+    <Card className="border border-border ring-0 shadow-none [--card-spacing:1.25rem] px-(--card-spacing) gap-0">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Icon className="w-4 h-4 text-primary" />

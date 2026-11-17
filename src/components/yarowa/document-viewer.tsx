@@ -107,7 +107,7 @@ function DocumentViewerBody({ doc, onClose }: { doc: SupplierDoc; onClose: () =>
         role="dialog"
         aria-modal="true"
         aria-label={`Preview ${doc.documentName}`}
-        className="bg-card rounded-2xl shadow-2xl w-full max-w-4xl h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 fade-in duration-150"
+        className="bg-card rounded-xl shadow-2xl w-full max-w-4xl h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 fade-in duration-150"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3 border-b border-border px-4 py-3 shrink-0">

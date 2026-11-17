@@ -32,7 +32,7 @@ export function SupplierReviewTable({
   const { t } = useI18n();
   if (suppliers.length === 0) {
     return (
-      <div className="bg-card border border-border rounded-lg py-12 flex flex-col items-center justify-center text-center">
+      <div className="bg-card border border-border rounded-xl py-12 flex flex-col items-center justify-center text-center">
         <Users size={22} className="text-muted-foreground mb-2" />
         <Text variant="label">{t("No matching suppliers")}</Text>
         <p className="text-xs text-muted-foreground">
@@ -52,7 +52,7 @@ export function SupplierReviewTable({
           {t("Deselect all")}
         </Button>
       </div>
-      <div className="bg-card border border-border rounded-lg overflow-hidden">
+      <div className="bg-card border border-border rounded-xl overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow className="text-xs text-muted-foreground border-border hover:bg-transparent">

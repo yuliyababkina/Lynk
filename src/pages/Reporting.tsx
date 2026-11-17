@@ -50,7 +50,7 @@ export function Reporting() {
           </div>
 
           <div className="grid grid-cols-2 gap-4 mb-4">
-            <div className="bg-card border border-border rounded-lg p-4">
+            <div className="bg-card border border-border rounded-xl p-4">
               <Heading level={4} as="div" className="mb-1">{tr("Compliance Rate & Avg Score Trend")}</Heading>
               <div className="text-xs text-muted-foreground mb-3">{tr("Across all suppliers · {period}", { period: tr(period) })}</div>
               <div className="h-40 flex items-end gap-3 px-2">
@@ -62,7 +62,7 @@ export function Reporting() {
                 ))}
               </div>
             </div>
-            <div className="bg-card border border-border rounded-lg p-4">
+            <div className="bg-card border border-border rounded-xl p-4">
               <Heading level={4} as="div" className="mb-1">{tr("Score Distribution")}</Heading>
               <div className="text-xs text-muted-foreground mb-3">{tr("Active suppliers by score band")}</div>
               <div className="h-40 flex items-end gap-3 px-2">
@@ -83,7 +83,7 @@ export function Reporting() {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-card border border-border rounded-lg p-4">
+            <div className="bg-card border border-border rounded-xl p-4">
               <Heading level={4} as="div" className="mb-1">{tr("Compliance Rate by Trade")}</Heading>
               <div className="text-xs text-muted-foreground mb-3">{tr("Percentage of suppliers with no critical flags")}</div>
               <div className="space-y-2">
@@ -103,7 +103,7 @@ export function Reporting() {
                 ))}
               </div>
             </div>
-            <div className="bg-card border border-border rounded-lg p-4">
+            <div className="bg-card border border-border rounded-xl p-4">
               <Heading level={4} as="div" className="mb-1">{tr("Network Composition")}</Heading>
               <div className="text-xs text-muted-foreground mb-3">{tr("Contacts by lifecycle stage")}</div>
               <div className="flex items-center gap-6">

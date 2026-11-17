@@ -44,7 +44,7 @@ export function ServiceCatalogueList({
       <div className="p-6">
         <Heading level={1} className="mb-6">{tr("Service catalogues")}</Heading>
         <div className="flex flex-col items-center justify-center py-24 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center mb-4">
+          <div className="w-14 h-14 rounded-lg bg-secondary flex items-center justify-center mb-4">
             <FileSpreadsheet size={26} className="text-muted-foreground" />
           </div>
           <Heading level={2} className="mb-1">{tr("Create a Service catalogue")}</Heading>
@@ -122,7 +122,7 @@ export function ServiceCatalogueList({
               key={c.id}
               variant="ghost"
               onClick={() => onOpenCatalogue(c.id)}
-              className="h-auto flex-col items-stretch justify-start gap-0 rounded-2xl border-border bg-card p-4 text-left font-normal leading-normal whitespace-normal hover:border-accent hover:bg-card dark:hover:bg-card"
+              className="h-auto flex-col items-stretch justify-start gap-0 rounded-xl border-border bg-card p-4 text-left font-normal leading-normal whitespace-normal hover:border-accent hover:bg-card dark:hover:bg-card"
             >
               <div className="flex items-start justify-between gap-2 mb-1">
                 <div className="font-semibold">{translateCatalogueName(c.name, tr)}</div>

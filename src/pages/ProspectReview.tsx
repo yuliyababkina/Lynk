@@ -360,7 +360,7 @@ function DocumentsReviewStep({
                 key={r.key}
                 variant="ghost"
                 onClick={() => onSelect(r.key)}
-                className={`h-auto w-full justify-between gap-2 rounded-lg px-3 py-2.5 text-left font-normal whitespace-normal ${
+                className={`h-auto w-full justify-between gap-2 px-3 py-2.5 text-left font-normal whitespace-normal ${
                   active
                     ? "border-primary bg-secondary/60 hover:bg-secondary/60 dark:hover:bg-secondary/60"
                     : "border-border hover:bg-secondary/40 dark:hover:bg-secondary/40"
@@ -634,7 +634,7 @@ function ChangeRequestComposer({
             ? t("What should the supplier update? (shared with the supplier)")
             : t("Why is this document being declined? (shared with the supplier)")
         }
-        className="h-9 flex-1 rounded-lg border-border bg-background px-3 py-0 text-sm"
+        className="h-9 flex-1 border-border bg-background px-3 py-0 text-sm"
       />
       <Button variant="ghost" size="sm" className="shrink-0" onClick={onCancel}>
         {t("Cancel")}
@@ -690,7 +690,7 @@ function DocActionBar({
 function StepShell({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
   const { t } = useI18n();
   return (
-    <Card className="rounded-2xl border border-border ring-0 shadow-none [--card-spacing:1.5rem] px-(--card-spacing)">
+    <Card className="border border-border ring-0 shadow-none [--card-spacing:1.5rem] px-(--card-spacing)">
       <div className="mb-4">
         <Heading level={2}>{t(title)}</Heading>
         <p className="text-sm text-muted-foreground mt-0.5">{t(subtitle)}</p>
@@ -798,7 +798,7 @@ function SectionReviewControl({
           onChange={(e) => setDraft(e.target.value)}
           rows={3}
           placeholder={t("What does the supplier need to fix in this section?")}
-          className="field-sizing-fixed min-h-0 rounded-lg border-border bg-background p-2 text-sm"
+          className="field-sizing-fixed min-h-0 border-border bg-background p-2 text-sm"
         />
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => setFixing(false)}>
@@ -1056,7 +1056,7 @@ function DecisionStep({
             onChange={(e) => setReason(e.target.value)}
             rows={3}
             placeholder={t("Reason for rejection (shared with the supplier)")}
-            className="field-sizing-fixed min-h-0 rounded-lg border-border bg-background p-2 text-sm"
+            className="field-sizing-fixed min-h-0 border-border bg-background p-2 text-sm"
           />
           <div className="flex gap-2">
             <Button variant="outline" className="flex-1" disabled={busy} onClick={() => setRejecting(false)}>
@@ -1204,7 +1204,7 @@ function SendContractStep({
           <NativeSelect
             value={template}
             onChange={(e) => setTemplate(e.target.value)}
-            className="w-full [&_select]:h-auto [&_select]:rounded-lg [&_select]:border-border [&_select]:bg-background [&_select]:py-2 [&_select]:pl-3"
+            className="w-full [&_select]:h-auto [&_select]:border-border [&_select]:bg-background [&_select]:py-2 [&_select]:pl-3"
           >
             {CONTRACT_TEMPLATES.map((c) => (
               <NativeSelectOption key={c} value={c}>

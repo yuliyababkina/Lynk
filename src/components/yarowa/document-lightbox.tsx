@@ -50,7 +50,7 @@ export function DocumentLightbox({
         role="dialog"
         aria-modal="true"
         aria-label={t("Review {file}", { file: doc.renewal.fileName })}
-        className="bg-card rounded-2xl shadow-2xl w-full max-w-3xl max-h-[88vh] flex flex-col overflow-hidden animate-in zoom-in-95 fade-in duration-150"
+        className="bg-card rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] flex flex-col overflow-hidden animate-in zoom-in-95 fade-in duration-150"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

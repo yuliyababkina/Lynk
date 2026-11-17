@@ -40,11 +40,11 @@ export function ActionCard({
       variant="ghost"
       onClick={onClick}
       className={cn(
-        "group h-auto w-full justify-start gap-3 rounded-2xl border-border bg-card p-3.5 text-left font-normal whitespace-normal hover:bg-secondary/50 dark:hover:bg-secondary/50 active:translate-y-px",
+        "group h-auto w-full justify-start gap-3 rounded-xl border-border bg-card p-3.5 text-left font-normal whitespace-normal hover:bg-secondary/50 dark:hover:bg-secondary/50 active:translate-y-px",
         className
       )}
     >
-      <span className={cn("grid size-9 shrink-0 place-items-center rounded-xl", t.chip)}>
+      <span className={cn("grid size-9 shrink-0 place-items-center rounded-lg", t.chip)}>
         <Icon size={18} className={cn("size-[18px]", t.ink)} aria-hidden="true" />
       </span>
       <span className="min-w-0">

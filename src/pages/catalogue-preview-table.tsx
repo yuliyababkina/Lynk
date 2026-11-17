@@ -33,7 +33,7 @@ export function CataloguePreviewTable({
   const { t } = useI18n();
   if (lines.length === 0) {
     return (
-      <div className="bg-card border border-border rounded-lg py-12 flex flex-col items-center justify-center text-center">
+      <div className="bg-card border border-border rounded-xl py-12 flex flex-col items-center justify-center text-center">
         <FileSpreadsheet size={22} className="text-muted-foreground mb-2" />
         <Text variant="label">{t("No rows parsed")}</Text>
         <p className="text-xs text-muted-foreground">{t("The uploaded file contained no service lines.")}</p>
@@ -42,7 +42,7 @@ export function CataloguePreviewTable({
   }
 
   return (
-    <div className="bg-card border border-border rounded-lg overflow-hidden">
+    <div className="bg-card border border-border rounded-xl overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow className="text-xs border-border hover:bg-transparent">

@@ -44,7 +44,7 @@ export function PortalRequestedUpdates({ supplierId }: PortalRequestedUpdatesPro
                   tabIndex={0}
                   onClick={() => setSelectedId(u.id)}
                   className={cn(
-                    "rounded-2xl ring-0 shadow-none [--card-spacing:1rem] px-(--card-spacing) gap-0 cursor-pointer transition-colors",
+                    "ring-0 shadow-none [--card-spacing:1rem] px-(--card-spacing) gap-0 cursor-pointer transition-colors",
                     active ? "border border-primary bg-secondary/60" : "border border-border hover:bg-secondary/50"
                   )}
                 >

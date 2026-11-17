@@ -25,7 +25,7 @@ export function FileUploadCard({
   const { t } = useI18n();
   if (loading) {
     return (
-      <div className="border border-border rounded-2xl py-20 flex flex-col items-center justify-center bg-card">
+      <div className="border border-border rounded-xl py-20 flex flex-col items-center justify-center bg-card">
         <Loader2 size={28} className="animate-spin text-muted-foreground mb-4" />
         <Text variant="label" className="mb-1">{t(loadingLabel)}</Text>
         {loadingFilename && <p className="text-xs text-muted-foreground">{loadingFilename}</p>}
@@ -34,8 +34,8 @@ export function FileUploadCard({
   }
 
   return (
-    <div className="border-2 border-dashed border-border rounded-2xl py-20 flex flex-col items-center justify-center text-center bg-card">
-      <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center mb-3">
+    <div className="border-2 border-dashed border-border rounded-xl py-20 flex flex-col items-center justify-center text-center bg-card">
+      <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center mb-3">
         <Upload size={22} className="text-muted-foreground" />
       </div>
       <p className="text-sm text-muted-foreground mb-4 max-w-xs">{t(description)}</p>

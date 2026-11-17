@@ -53,7 +53,7 @@ export function FilePreviewLightbox({
         role="dialog"
         aria-modal="true"
         aria-label={`Preview ${fileName}`}
-        className="bg-card rounded-2xl shadow-2xl w-full max-w-3xl h-[88vh] flex flex-col overflow-hidden animate-in zoom-in-95 fade-in duration-150"
+        className="bg-card rounded-xl shadow-2xl w-full max-w-3xl h-[88vh] flex flex-col overflow-hidden animate-in zoom-in-95 fade-in duration-150"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3 border-b border-border px-4 py-3 shrink-0">

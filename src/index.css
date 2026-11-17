@@ -169,7 +169,7 @@ body {
   --chart-3: oklch(0.444 0.014 var(--neutral-hue));
   --chart-4: oklch(0.374 0.012 var(--neutral-hue));
   --chart-5: oklch(0.268 0.009 var(--neutral-hue));
-  --radius: 0.45rem;
+  --radius: 0.5rem;
   --sidebar: oklch(0.985 0.003 var(--neutral-hue));
   --sidebar-foreground: oklch(0.147 0.006 var(--neutral-hue));
   /* The logo tile and avatar. On a light sidebar these sit next to primary
