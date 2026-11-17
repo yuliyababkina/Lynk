@@ -34,7 +34,7 @@ function Harness({ suppliers, initial }: { suppliers: ReviewSupplier[]; initial:
 }
 
 const meta = {
-  title: "Product Components/Supplier Review Table",
+  title: "Custom/Supplier Review Table",
   component: SupplierReviewTable,
   tags: ["autodocs"],
   parameters: { layout: "padded" },

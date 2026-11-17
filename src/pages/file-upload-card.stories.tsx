@@ -3,7 +3,7 @@ import { fn } from "storybook/test";
 import { FileUploadCard } from "./file-upload-card";
 
 const meta = {
-  title: "Product Components/File Upload Card",
+  title: "Custom/File Upload Card",
   component: FileUploadCard,
   tags: ["autodocs"],
   args: { onUpload: fn() },
