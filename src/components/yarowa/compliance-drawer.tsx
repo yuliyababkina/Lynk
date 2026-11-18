@@ -1,3 +1,11 @@
+/**
+ * @custom   Right-hand panel for one compliance document: status badge,
+ *           expiry metadata, status callout, recommended actions or the
+ *           renewal review card, and the document history timeline. Domain
+ *           logic (status → callout/actions) no shadcn component carries.
+ *           Composes Badge, Button, AlertBanner, ActionCard, RenewalReviewCard.
+ * @approved Yuliya Babkina, 2026-11-18
+ */
 import {
   X, ShieldAlert, XCircle, Clock, CheckCircle2, AlertTriangle,
   Upload, Bell, Send, Ban, FileText, type LucideIcon,
@@ -12,6 +20,7 @@ import { useI18n } from "@/lib/i18n-context";
 import { translateStatusNote } from "@/lib/ticket-i18n";
 import type { Tone } from "@/lib/tones";
 import { Button } from "@/components/ui/button";
+import { Heading, Text } from "@/shared/ui/typography";
 
 // Badge-variant name per status (distinct from the ActionCard `Tone` scale).
 type BadgeTone = "success" | "warning" | "orange" | "danger" | "info" | "neutral" | "purple";
@@ -45,14 +54,12 @@ const EVENT_META: Record<ComplianceEventType, { icon: LucideIcon; color: string 
   upload: { icon: Upload, color: "text-success-ink" },
 };
 
-/* The label is the English source, translated here rather than at each call
-   site — the value beside it is a date and stays as it comes. */
+/* The label arrives translated; the value beside it is a date and stays as it comes. */
 function MetaField({ label, value, valueClassName }: { label: string; value: string; valueClassName?: string }) {
-  const { t } = useI18n();
   return (
     <div>
-      <div className="text-[11px] font-medium tracking-wide uppercase text-muted-foreground mb-0.5">{t(label)}</div>
-      <div className={`text-sm font-medium ${valueClassName ?? ""}`}>{value}</div>
+      <Text as="div" variant="eyebrow" className="mb-0.5">{label}</Text>
+      <Text as="div" variant="label" className={valueClassName}>{value}</Text>
     </div>
   );
 }
@@ -81,7 +88,7 @@ export function ComplianceDrawer({
     <div className={`flex gap-2.5 rounded-lg p-3 ${callout.className}`}>
       <CalloutIcon size={16} className={`shrink-0 mt-0.5 ${callout.iconColor}`} aria-hidden="true" />
       <div>
-        <div className="text-sm font-semibold">{t(callout.title)}</div>
+        <Heading level={4} as="div">{t(callout.title)}</Heading>
         <div className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
           {translateStatusNote(doc.statusNote, t)}
         </div>
@@ -187,10 +194,10 @@ export function ComplianceDrawer({
       <div className="p-4 border-b border-border">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <div className="text-[11px] font-medium tracking-wide uppercase text-muted-foreground">
+            <Text as="div" variant="eyebrow">
               {t(doc.documentCategory)}
-            </div>
-            <h3 className="font-semibold text-base mt-0.5">{t(doc.documentName)}</h3>
+            </Text>
+            <Heading level={3} className="mt-0.5">{t(doc.documentName)}</Heading>
             <div className="text-xs text-muted-foreground mt-0.5">
               {doc.supplierName} · {t(doc.trade)}
             </div>
@@ -211,13 +218,13 @@ export function ComplianceDrawer({
 
         {/* Metadata */}
         <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-          <MetaField label="Expiry date" value={doc.expiryDate} />
+          <MetaField label={t("Expiry date")} value={doc.expiryDate} />
           <MetaField
-            label="Days remaining"
+            label={t("Days remaining")}
             value={daysLabel}
             valueClassName={doc.daysUntilExpiry < 0 ? "text-critical-ink" : undefined}
           />
-          {doc.autoNotified && <MetaField label="Auto-notified" value={doc.autoNotified} />}
+          {doc.autoNotified && <MetaField label={t("Auto-notified")} value={doc.autoNotified} />}
         </div>
 
         {doc.fileUrl && (
@@ -225,10 +232,10 @@ export function ComplianceDrawer({
             href={doc.fileUrl}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center gap-2 rounded-lg border border-border bg-secondary/30 px-3 py-2 text-sm font-medium hover:bg-secondary/50 transition-colors"
+            className="flex items-center gap-2 rounded-lg border border-border bg-secondary/30 px-3 py-2 hover:bg-secondary/50 transition-colors"
           >
             <FileText size={15} className="text-muted-foreground shrink-0" />
-            {t("View attached document")}
+            <Text as="span" variant="label">{t("View attached document")}</Text>
           </a>
         )}
 
@@ -262,9 +269,9 @@ export function ComplianceDrawer({
         {/* Document history */}
         {doc.history.length > 0 && (
           <div>
-            <div className="text-[11px] font-medium tracking-wide uppercase text-muted-foreground mb-3">
+            <Text as="div" variant="eyebrow" className="mb-3">
               {t("Document history")}
-            </div>
+            </Text>
             <ol className="space-y-3">
               {doc.history.map((h, i) => {
                 const meta = EVENT_META[h.type ?? "verified"];
