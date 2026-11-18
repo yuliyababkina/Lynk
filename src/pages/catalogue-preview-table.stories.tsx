@@ -3,7 +3,7 @@ import { CataloguePreviewTable } from "./catalogue-preview-table";
 import { PARSED_LINES, DIFF_LINES } from "@/data";
 
 const meta = {
-  title: "Product Components/Catalogue Preview Table",
+  title: "Custom/Catalogue Preview Table",
   component: CataloguePreviewTable,
   tags: ["autodocs"],
   parameters: { layout: "padded" },
