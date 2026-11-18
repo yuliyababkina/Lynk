@@ -601,7 +601,7 @@ export function ProspectOnboarding({
                   return (
                     <div className="flex items-center justify-end gap-2 min-w-0">
                       <p className="text-xs text-muted-foreground min-w-0 truncate mr-1">
-                        {declined && r.statusNote ? `Declined — “${r.statusNote}”` : def.hint}
+                        {declined && r.statusNote ? t("Declined — “{note}”", { note: r.statusNote }) : t(def.hint)}
                       </p>
                       {/* Uploading a file again supersedes the stored one and sends
                           the new version back for review. */}
