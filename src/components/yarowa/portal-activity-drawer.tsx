@@ -1,3 +1,11 @@
+/**
+ * @custom   Supplier-portal drawer for one activity item: current file,
+ *           replacement upload with metadata review, profile-field edits and
+ *           submitted changes, with discard confirmation. Domain workflow over
+ *           DetailDrawer; composes Badge, Button, Input, Label and the
+ *           document components.
+ * @approved Yuliya Babkina, 2026-11-18
+ */
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { PencilLine, Upload, Send, CircleCheck, Loader2, FileText, Lock, Trash2, Repeat, Eye } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +24,7 @@ import { useI18n } from "@/lib/i18n-context";
 import { useDocumentUpload, formatFileSize } from "@/lib/use-document-upload";
 import { docStatusMeta } from "@/lib/document-status";
 import { cn } from "@/lib/utils";
+import { Heading, Text } from "@/shared/ui/typography";
 import {
   primaryActionLabel,
   secondaryActions,
@@ -71,7 +80,7 @@ function CurrentFile({ supplierId, docName }: { supplierId: string; docName: str
     return (
       <div className="rounded-lg border border-border bg-background p-3 mb-3">
         <div className="text-xs text-muted-foreground mb-1">{t("CURRENT FILE")}</div>
-        <p className="text-sm font-medium">{t(docName)}</p>
+        <Text variant="label">{t(docName)}</Text>
         <p className="text-xs text-muted-foreground mt-0.5">{t("Not uploaded yet")}</p>
       </div>
     );
@@ -92,7 +101,7 @@ function CurrentFile({ supplierId, docName }: { supplierId: string; docName: str
       <div className="text-xs text-muted-foreground mb-1">{t("CURRENT FILE")}</div>
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-sm font-medium truncate">{t(doc.documentName)}</p>
+          <Text variant="label" className="truncate">{t(doc.documentName)}</Text>
           <p className="text-xs text-muted-foreground mt-0.5">
             {t(doc.documentCategory)} · {doc.expiryDate}
           </p>
@@ -145,12 +154,12 @@ function DocumentThumbnail({
 
 /* ── What was already submitted, for an item nobody can act on any more ───── */
 
+/** `label` arrives translated from the call site. */
 function MetaRow({ label, value }: { label: string; value?: string }) {
-  const { t } = useI18n();
   if (!value) return null;
   return (
     <div className="flex items-baseline justify-between gap-3 text-xs">
-      <span className="text-muted-foreground shrink-0">{t(label)}</span>
+      <span className="text-muted-foreground shrink-0">{label}</span>
       <span className="font-medium text-right break-words">{value}</span>
     </div>
   );
@@ -191,7 +200,7 @@ function SubmittedDocument({ supplierId, docName }: { supplierId: string; docNam
           </div>
 
           <div className="space-y-1.5">
-            <MetaRow label="Document" value={docName} />
+            <MetaRow label={t("Document")} value={docName} />
           </div>
 
           <p className="text-xs text-muted-foreground mt-2 border-t border-border pt-2">
@@ -199,7 +208,7 @@ function SubmittedDocument({ supplierId, docName }: { supplierId: string; docNam
           </p>
 
           <Button variant="outline" size="sm" className="w-full mt-3" onClick={() => setZoomed(true)}>
-            <Eye className="w-3.5 h-3.5" /> View full size
+            <Eye className="w-3.5 h-3.5" /> {t("View full size")}
           </Button>
         </div>
         {zoomed && (
@@ -251,11 +260,11 @@ function SubmittedDocument({ supplierId, docName }: { supplierId: string; docNam
         </div>
 
         <div className="space-y-1.5">
-          <MetaRow label="Document" value={doc.documentName} />
-          <MetaRow label="Type" value={doc.documentType} />
-          <MetaRow label="Issued by" value={doc.issuingInstitution} />
-          <MetaRow label="Expiry" value={doc.doesNotExpire ? t("Does not expire") : doc.expiryDate} />
-          <MetaRow label="Submitted" value={submitted} />
+          <MetaRow label={t("Document")} value={doc.documentName} />
+          <MetaRow label={t("Type")} value={doc.documentType} />
+          <MetaRow label={t("Issued by")} value={doc.issuingInstitution} />
+          <MetaRow label={t("Expiry")} value={doc.doesNotExpire ? t("Does not expire") : doc.expiryDate} />
+          <MetaRow label={t("Submitted")} value={submitted} />
         </div>
 
         {doc.statusNote && (
@@ -263,7 +272,7 @@ function SubmittedDocument({ supplierId, docName }: { supplierId: string; docNam
         )}
 
         <Button variant="outline" size="sm" className="w-full mt-3" onClick={() => setZoomed(true)}>
-          <Eye className="w-3.5 h-3.5" /> View full size
+          <Eye className="w-3.5 h-3.5" /> {t("View full size")}
         </Button>
       </div>
       {zoomed && (
@@ -298,7 +307,7 @@ function SubmittedChanges({ changes, pending }: { changes: ChangeRecord[]; pendi
           <div key={c.key}>
             <div className="text-xs text-muted-foreground">{t(c.label)}</div>
             <div className="text-xs line-through text-muted-foreground break-words">{c.before || "—"}</div>
-            <div className="text-sm font-medium break-words">{c.after}</div>
+            <Text as="div" variant="label" className="break-words">{c.after}</Text>
           </div>
         ))}
       </div>
@@ -328,6 +337,7 @@ function PickedFile({
   onReplace: () => void;
   onRemove: () => void;
 }) {
+  const { t } = useI18n();
   const [zoomed, setZoomed] = useState(false);
   return (
     <>
@@ -338,16 +348,16 @@ function PickedFile({
         <div className="flex items-start gap-2">
           <FileText className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium truncate">{fileName}</p>
+            <Text variant="label" className="truncate">{fileName}</Text>
             <p className="text-xs text-muted-foreground">{fileSize}</p>
           </div>
         </div>
         <div className="flex gap-2 mt-2">
           <Button variant="outline" size="sm" className="flex-1" disabled={disabled} onClick={onReplace}>
-            <Repeat className="w-3.5 h-3.5" /> Replace
+            <Repeat className="w-3.5 h-3.5" /> {t("Replace")}
           </Button>
           <Button variant="outline" size="sm" className="flex-1" disabled={disabled} onClick={onRemove}>
-            <Trash2 className="w-3.5 h-3.5" /> Remove
+            <Trash2 className="w-3.5 h-3.5" /> {t("Remove")}
           </Button>
         </div>
       </div>
@@ -530,7 +540,7 @@ export function PortalActivityDrawer({
       for (const k of changedKeys) next = PORTAL_FIELDS[k].write(next, values[k].trim());
       onCompanyChange(next);
       if (item) onItemDone(item.id, "resolved", record);
-      toast({ title: "Changes saved", description: "Your profile is up to date.", tone: "success" });
+      toast({ title: t("Changes saved"), description: t("Your profile is up to date."), tone: "success" });
     }
     setSaving(false);
     onClose();
@@ -547,9 +557,9 @@ export function PortalActivityDrawer({
       onClose={attemptClose}
       header={<Badge variant={tone as never}>{t(sectionLabel)}</Badge>}
     >
-      <h3 className="font-semibold text-base mb-1">
+      <Heading level={3} className="mb-1">
         {item ? t(item.title) : kind === "data" ? t("Request a data change") : t("Upload a document")}
-      </h3>
+      </Heading>
       <p className="text-sm text-muted-foreground mb-4">
         {item
           ? t(item.detail)
@@ -630,7 +640,7 @@ export function PortalActivityDrawer({
         <div className="space-y-3">
           {fieldKeys.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Open the field you want to change from Company details.
+              {t("Open the field you want to change from Company details.")}
             </p>
           ) : (
             fieldKeys.map((k) => (
@@ -648,8 +658,7 @@ export function PortalActivityDrawer({
           )}
           {sensitive && fieldKeys.length > 0 && (
             <p className="text-xs text-muted-foreground">
-              These fields decide where payments go, so a principal has to endorse the change before it
-              takes effect. Your current details stay active meanwhile.
+              {t("These fields decide where payments go, so a principal has to endorse the change before it takes effect. Your current details stay active meanwhile.")}
             </p>
           )}
           {fieldKeys.length > 0 && (
@@ -717,7 +726,7 @@ export function PortalActivityDrawer({
 
       {confirmingClose && (
         <div className="mt-4 rounded-lg border border-border bg-secondary/50 p-3">
-          <p className="text-sm font-medium">{t("Discard your changes?")}</p>
+          <Text variant="label">{t("Discard your changes?")}</Text>
           <p className="text-xs text-muted-foreground mt-0.5">
             {upload.pending
               ? t("The file you picked hasn't been submitted.")

@@ -1253,6 +1253,46 @@ const DE: Record<string, string> = {
   "New version published": "Neue Version veröffentlicht",
   "{name} · {count} suppliers notified to re-confirm":
     "{name} · {count} Lieferanten zur erneuten Bestätigung benachrichtigt",
+
+  // ── Document metadata form ──────────────────────────────────────────────────
+  "These details were read from your document": "Diese Angaben wurden aus Ihrem Dokument gelesen",
+  "We pre-filled these details from your document": "Wir haben diese Angaben aus Ihrem Dokument vorausgefüllt",
+  "Correct anything that's wrong. Your file stays as it is.":
+    "Korrigieren Sie, was nicht stimmt. Ihre Datei bleibt unverändert.",
+  "Please check each field and correct anything that's wrong before confirming.":
+    "Bitte prüfen Sie jedes Feld und korrigieren Sie Fehler, bevor Sie bestätigen.",
+  File: "Datei",
+  "Uploading as: {name}": "Wird hochgeladen als: {name}",
+  "Select a type…": "Typ auswählen…",
+  "Issuing institution": "Ausstellende Stelle",
+  "Your document says “{hint}” — please give the exact date.":
+    "Ihr Dokument nennt „{hint}“ – bitte geben Sie das genaue Datum an.",
+  "Save details": "Angaben speichern",
+  "Confirm & upload": "Bestätigen & hochladen",
+  "Fill in the type, issuer, and either an expiry date or “does not expire”.":
+    "Geben Sie Typ, Aussteller und entweder ein Ablaufdatum oder „läuft nicht ab“ an.",
+  Registration: "Registrierung",
+  Declaration: "Erklärung",
+  "Bank Letter": "Bankschreiben",
+  "Standard / ISO Certificate": "Norm-/ISO-Zertifikat",
+
+  // ── Invite supplier, portal activity drawer, ticket drawer ──────────────────
+  "contact@company.com": "kontakt@firma.de",
+  "View full size": "In voller Größe anzeigen",
+  Type: "Typ",
+  Expiry: "Ablauf",
+  Submitted: "Eingereicht",
+  Replace: "Ersetzen",
+  Remove: "Entfernen",
+  "Changes saved": "Änderungen gespeichert",
+  "Your profile is up to date.": "Ihr Profil ist auf dem neuesten Stand.",
+  "Open the field you want to change from Company details.":
+    "Öffnen Sie das Feld, das Sie ändern möchten, über die Firmendaten.",
+  "These fields decide where payments go, so a principal has to endorse the change before it takes effect. Your current details stay active meanwhile.":
+    "Diese Felder bestimmen, wohin Zahlungen gehen. Daher muss ein Auftraggeber die Änderung bestätigen, bevor sie wirksam wird. Bis dahin bleiben Ihre aktuellen Angaben gültig.",
+  "€{value}/yr": "{value} €/Jahr",
+  "{category} change": "Änderung: {category}",
+  "{days}d without response": "{days} T. ohne Antwort",
 };
 
 const STORAGE_KEY = "lynk-lang";

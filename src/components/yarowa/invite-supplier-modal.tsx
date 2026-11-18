@@ -1,3 +1,10 @@
+/**
+ * @custom   Multi-step invite flow whose steps change with the company
+ *           match (new / already on Lynk / already connected): company search,
+ *           trades, invitation settings, review. Dialog provides the shell only;
+ *           composes Dialog, Input, Textarea, Checkbox, Badge and Button.
+ * @approved Yuliya Babkina, 2026-11-18
+ */
 import { useMemo, useState } from "react";
 import {
   Mail, Building2, Tag, Search, ChevronRight, ChevronsUpDown, Check, X, Send,
@@ -8,6 +15,7 @@ import type { DirectoryCompany, InviteMatch, OnboardingCase } from "@/types";
 import {
   Dialog, DialogContent, DialogTitle, DialogDescription, DialogClose,
 } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -16,6 +24,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n-context";
+import { Heading, Text } from "@/shared/ui/typography";
 import { PRINCIPAL_COMPANY, PROCUREMENT_MANAGER, PROCUREMENT_MANAGER_ROLE } from "@/lib/principal";
 
 /* Step names are the English source: the wizard branches on them, and they are
@@ -196,7 +205,7 @@ export function InviteSupplierModal({
         {/* Header */}
         <div className="flex items-start justify-between px-5 pt-5 pb-4">
           <div className="min-w-0">
-            <DialogTitle className="text-base font-semibold">{t("Invite Supplier")}</DialogTitle>
+            <DialogTitle className="font-semibold">{t("Invite Supplier")}</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground mt-0.5">{subtitle}</DialogDescription>
           </div>
           <DialogClose asChild>
@@ -218,16 +227,18 @@ export function InviteSupplierModal({
               const current = idx === stepIndex;
               return (
                 <li key={s} className="flex items-center gap-1.5">
-                  <span
+                  <Text
+                    as="span"
+                    variant="label"
                     className={cn(
-                      "grid size-6 shrink-0 place-items-center rounded-full text-xs font-semibold",
+                      "grid size-6 shrink-0 place-items-center rounded-full",
                       done && "bg-success text-success-foreground",
                       current && "bg-foreground text-background",
                       !done && !current && "bg-secondary text-muted-foreground"
                     )}
                   >
                     {done ? <Check size={14} /> : idx + 1}
-                  </span>
+                  </Text>
                   <span className={cn("font-medium", current || done ? "text-foreground" : "text-muted-foreground")}>
                     {t(s)}
                   </span>
@@ -297,7 +308,7 @@ export function InviteSupplierModal({
               <DialogClose asChild>
                 <Button
                   variant="ghost"
-                  className="h-auto border-0 p-0 text-sm font-medium text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
+                  className="h-auto border-0 p-0 text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
                 >
                   {t("Cancel")}
                 </Button>
@@ -306,7 +317,7 @@ export function InviteSupplierModal({
               <Button
                 variant="ghost"
                 onClick={() => setI((n) => n - 1)}
-                className="h-auto gap-1 border-0 p-0 text-sm font-medium text-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
+                className="h-auto gap-1 border-0 p-0 text-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
               >
                 <ChevronRight size={15} className="size-[15px] rotate-180" />
                 {t("Back")}
@@ -350,7 +361,8 @@ function SectionLabel({ icon: Icon, children }: { icon: typeof Mail; children: R
 
 // Overrides that keep the compact field look on shadcn Input / Textarea.
 const fieldCls = "h-auto rounded-md border-border bg-card px-3 py-2 text-sm";
-const labelCls = "block text-sm font-medium leading-5 mb-1";
+// Label already sets text-sm font-medium; these only adjust layout.
+const labelCls = "block leading-5 mb-1";
 
 function ContactStep(props: {
   company: string;
@@ -396,7 +408,7 @@ function ContactStep(props: {
                     e.preventDefault();
                     onSelect(c);
                   }}
-                  className="flex h-auto w-full justify-start rounded-none border-0 px-3 py-2 text-left text-sm font-normal whitespace-normal hover:bg-secondary/60 dark:hover:bg-secondary/60"
+                  className="flex h-auto w-full justify-start rounded-none border-0 px-3 py-2 text-left font-normal whitespace-normal hover:bg-secondary/60 dark:hover:bg-secondary/60"
                 >
                   {c.name}
                 </Button>
@@ -420,7 +432,7 @@ function ContactStep(props: {
           </Label>
           <Input
             className={fieldCls}
-            placeholder="contact@company.com"
+            placeholder={t("contact@company.com")}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
@@ -442,11 +454,11 @@ function MatchCard({ company, match }: { company: DirectoryCompany; match: Invit
         <div>
           {/* One sentence per state rather than a stitched-together phrase —
               German puts "bereits" where English puts "already". */}
-          <div className={cn("text-sm font-semibold", onLynk ? "text-medium-ink" : "text-success-ink")}>
+          <Heading level={4} as="div" className={onLynk ? "text-medium-ink" : "text-success-ink"}>
             {onLynk
               ? t("{company} is already on Lynk", { company: company.name })
               : t("{company} is already connected", { company: company.name })}
-          </div>
+          </Heading>
           <div className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
             {onLynk
               ? t("This supplier has a verified profile. Sending a connection request will notify their account manager — no email invite needed.")
@@ -457,25 +469,20 @@ function MatchCard({ company, match }: { company: DirectoryCompany; match: Invit
       <div className="mt-3 flex items-center gap-3 rounded-md border border-border bg-card p-2.5">
         <ShieldCheck size={18} className={cn("shrink-0", onLynk ? "text-medium-ink" : "text-success-ink")} />
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-medium truncate">{company.name}</div>
+          <Text as="div" variant="label" className="truncate">{company.name}</Text>
           <div className="text-xs text-muted-foreground">
             {t(company.trade)} · {t(company.city)}
           </div>
         </div>
         {company.rating != null && (
-          <span className="inline-flex items-center gap-1 text-xs font-medium">
+          <Text as="span" variant="small" className="inline-flex items-center gap-1 text-foreground">
             <Star size={13} className="fill-current text-high" />
             {company.rating}
-          </span>
+          </Text>
         )}
-        <span
-          className={cn(
-            "text-xs font-medium rounded-full px-2 py-0.5",
-            onLynk ? "bg-medium/15 text-medium-ink" : "bg-success/15 text-success-ink"
-          )}
-        >
+        <Badge variant={onLynk ? "medium" : "success"}>
           {onLynk ? t("On Lynk") : t("Connected")}
-        </span>
+        </Badge>
       </div>
     </div>
   );
@@ -506,7 +513,7 @@ function DetailsStep({
           </span>
         ) : (
           trades.map((trade) => (
-            <span key={trade} className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
+            <Badge key={trade} variant="neutral">
               {t(trade)}
               <Button
                 variant="ghost"
@@ -516,7 +523,7 @@ function DetailsStep({
               >
                 <X size={12} className="size-3" />
               </Button>
-            </span>
+            </Badge>
           ))
         )}
       </div>
@@ -530,7 +537,7 @@ function DetailsStep({
                 type="button"
                 variant="ghost"
                 onClick={() => toggle(trade)}
-                className="flex h-auto w-full justify-start gap-2.5 rounded-none border-0 px-3 py-2 text-sm font-normal whitespace-normal hover:bg-secondary/50 dark:hover:bg-secondary/50"
+                className="flex h-auto w-full justify-start gap-2.5 rounded-none border-0 px-3 py-2 font-normal whitespace-normal hover:bg-secondary/50 dark:hover:bg-secondary/50"
               >
                 <Checkbox checked={trades.includes(trade)} tabIndex={-1} className="pointer-events-none" />
                 {t(trade)}
@@ -542,8 +549,9 @@ function DetailsStep({
           <span className="text-muted-foreground">{t("{count} selected", { count: trades.length })}</span>
           <Button
             variant="ghost"
+            size="xs"
             onClick={clear}
-            className="h-auto border-0 p-0 text-xs font-medium text-accent hover:bg-transparent hover:text-accent hover:underline dark:hover:bg-transparent"
+            className="h-auto border-0 p-0 text-accent hover:bg-transparent hover:text-accent hover:underline dark:hover:bg-transparent"
           >
             {t("Clear all")}
           </Button>
@@ -576,7 +584,7 @@ function SettingsStep(props: {
           <Label className="cursor-pointer items-start gap-2.5 font-normal leading-normal">
             <Checkbox checked={sendWelcome} onCheckedChange={(v) => setSendWelcome(!!v)} className="mt-0.5" />
             <span>
-              <span className="block text-sm font-medium">{t("Send welcome email")}</span>
+              <Text as="span" variant="label" className="block">{t("Send welcome email")}</Text>
               <span className="block text-xs text-muted-foreground">
                 {t("The supplier receives a branded onboarding email with a portal link.")}
               </span>
@@ -585,7 +593,7 @@ function SettingsStep(props: {
           <Label className="cursor-pointer items-start gap-2.5 font-normal leading-normal">
             <Checkbox checked={requireChecklist} onCheckedChange={(v) => setRequireChecklist(!!v)} className="mt-0.5" />
             <span>
-              <span className="block text-sm font-medium">{t("Require onboarding checklist")}</span>
+              <Text as="span" variant="label" className="block">{t("Require onboarding checklist")}</Text>
               <span className="block text-xs text-muted-foreground">
                 {t("Supplier must complete profile, upload documents, and sign agreements.")}
               </span>
@@ -609,14 +617,12 @@ function SettingsStep(props: {
   );
 }
 
-/* The label is translated here rather than at each call site, the way the
-   portal's Field does it — every row gets it from one place. */
+/* The label arrives translated from the call site. */
 function ReviewRow({ label, value }: { label: string; value: React.ReactNode }) {
-  const { t } = useI18n();
   return (
     <div className="flex items-center justify-between gap-4 px-4 py-3 border-b border-border last:border-0">
-      <span className="text-sm text-muted-foreground">{t(label)}</span>
-      <span className="text-sm font-medium text-right">{value}</span>
+      <Text as="span" variant="muted">{label}</Text>
+      <Text as="span" variant="label" className="text-right">{value}</Text>
     </div>
   );
 }
@@ -636,18 +642,18 @@ function ReviewStep(props: {
   return (
     <div>
       <div className="rounded-lg border border-border bg-secondary/20 mb-3">
-        <ReviewRow label="Company" value={company} />
-        {!onLynk && <ReviewRow label="Contact" value={contact || "—"} />}
+        <ReviewRow label={t("Company")} value={company} />
+        {!onLynk && <ReviewRow label={t("Contact")} value={contact || "—"} />}
         {onLynk ? (
-          <ReviewRow label="Action" value={t("Connection request")} />
+          <ReviewRow label={t("Action")} value={t("Connection request")} />
         ) : (
-          <ReviewRow label="Invitation email" value={email} />
+          <ReviewRow label={t("Invitation email")} value={email} />
         )}
-        <ReviewRow label="Trades" value={trades || "—"} />
-        {!onLynk && <ReviewRow label="Welcome email" value={sendWelcome ? t("Yes") : t("No")} />}
+        <ReviewRow label={t("Trades")} value={trades || "—"} />
+        {!onLynk && <ReviewRow label={t("Welcome email")} value={sendWelcome ? t("Yes") : t("No")} />}
         {!onLynk && (
           <ReviewRow
-            label="Onboarding checklist"
+            label={t("Onboarding checklist")}
             value={requireChecklist ? t("Required") : t("Optional")}
           />
         )}

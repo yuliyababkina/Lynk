@@ -1,3 +1,11 @@
+/**
+ * @custom   Task-queue drawer for one ticket: entity facts, the linked
+ *           document / contract / data request / onboarding case, and the
+ *           resolve, escalate and chat actions. Domain workflow over
+ *           DetailDrawer; composes Badge, Button, TicketStatusMenu and
+ *           RenewalReviewCard.
+ * @approved Yuliya Babkina, 2026-11-18
+ */
 import { ArrowUpRight, AlertTriangle, MessageSquare } from "lucide-react";
 import type { Ticket, SupplierDoc, TicketStatus } from "@/types";
 import { useLynkData } from "@/lib/lynk-data-context";
@@ -9,6 +17,7 @@ import { RenewalReviewCard } from "@/components/yarowa/renewal-review-card";
 import { TicketStatusMenu } from "@/components/yarowa/ticket-status-menu";
 import { CriticalityIcon } from "@/components/yarowa/criticality-icon";
 import { useI18n } from "@/lib/i18n-context";
+import { Heading } from "@/shared/ui/typography";
 import { translateTicketTitle, translateAgeLabel } from "@/lib/ticket-i18n";
 import { relationshipId } from "@/lib/db";
 import { PRINCIPAL_ID } from "@/data";
@@ -104,14 +113,15 @@ export function TicketDrawer({
         </div>
       }
     >
-      <h3 className="font-semibold text-base mb-3">{translateTicketTitle(ticket.title, t)}</h3>
+      <Heading level={3} className="mb-3">{translateTicketTitle(ticket.title, t)}</Heading>
 
         <div className="grid grid-cols-2 gap-3 text-xs mb-4">
           <div>
             <div className="text-muted-foreground mb-0.5">{t("ENTITY")}</div>
             <Button
               variant="ghost"
-              className="h-auto justify-start border-0 p-0 text-left text-xs font-medium whitespace-normal text-accent underline hover:bg-transparent hover:text-accent dark:hover:bg-transparent"
+              size="xs"
+              className="h-auto justify-start border-0 p-0 text-left whitespace-normal text-accent underline hover:bg-transparent hover:text-accent dark:hover:bg-transparent"
               onClick={() => onOpenSupplier(ticket.entityName)}
             >
               {ticket.entityName}
@@ -129,7 +139,7 @@ export function TicketDrawer({
 
         {doc && (
           <div className="border border-border rounded-lg p-3 mb-4 space-y-2 text-xs">
-            <div className="font-semibold text-sm">{t(doc.documentName)}</div>
+            <Heading level={4} as="div">{t(doc.documentName)}</Heading>
             <div className="text-muted-foreground">
               {t(doc.documentCategory)} · {t("Expires {date}", { date: doc.expiryDate })}
             </div>
@@ -145,9 +155,9 @@ export function TicketDrawer({
 
         {contract && (
           <div className="border border-border rounded-lg p-3 mb-4 space-y-2 text-xs">
-            <div className="font-semibold text-sm">{contract.ref}</div>
+            <Heading level={4} as="div">{contract.ref}</Heading>
             <div className="text-muted-foreground">
-              {contract.type} · €{contract.annualValue.toLocaleString()}/yr
+              {t(contract.type)} · {t("€{value}/yr", { value: contract.annualValue.toLocaleString() })}
             </div>
             <div className="grid grid-cols-2 gap-2 pt-1">
               <div>
@@ -164,7 +174,7 @@ export function TicketDrawer({
 
         {dgr && (
           <div className="border border-border rounded-lg p-3 mb-4 space-y-2 text-xs">
-            <div className="font-semibold text-sm">{dgr.category} change</div>
+            <Heading level={4} as="div">{t("{category} change", { category: t(dgr.category) })}</Heading>
             <div className="text-muted-foreground">{dgr.reason}</div>
             <div className="space-y-1.5 pt-1">
               {dgr.fields.map((f) => (
@@ -181,9 +191,9 @@ export function TicketDrawer({
 
         {onb && (
           <div className="border border-border rounded-lg p-3 mb-4 space-y-2 text-xs">
-            <div className="font-semibold text-sm">{onb.companyName}</div>
+            <Heading level={4} as="div">{onb.companyName}</Heading>
             <div className="text-muted-foreground">
-              {onb.status} · {onb.daysNoResponse}d without response
+              {t(onb.status)} · {t("{days}d without response", { days: onb.daysNoResponse })}
             </div>
           </div>
         )}
@@ -219,9 +229,9 @@ export function TicketDrawer({
                   <MessageSquare size={14} />
                   {t("Chat")}
                   {chatUnread > 0 && (
-                    <span className="ml-1 rounded-full bg-critical px-1.5 text-[10px] font-semibold text-critical-foreground">
+                    <Badge variant="count-critical" className="ml-1">
                       {chatUnread}
-                    </span>
+                    </Badge>
                   )}
                 </Button>
               )}
@@ -233,7 +243,7 @@ export function TicketDrawer({
           <Button
             variant="ghost"
             onClick={() => onNavigate(targetView, ticket.targetId)}
-            className="h-auto w-full gap-1.5 rounded-none border-0 border-t border-border px-0 pb-2 pt-3 text-sm font-medium text-accent hover:bg-transparent hover:text-accent dark:hover:bg-transparent"
+            className="h-auto w-full gap-1.5 rounded-none border-0 border-t border-border px-0 pb-2 pt-3 text-accent hover:bg-transparent hover:text-accent dark:hover:bg-transparent"
           >
             {t("Open in {view}", { view: t(sourceLabel[ticket.source]) })}
             <ArrowUpRight size={14} className="size-3.5" />

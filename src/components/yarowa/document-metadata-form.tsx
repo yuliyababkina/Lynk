@@ -1,3 +1,10 @@
+/**
+ * @custom   Review-and-confirm form for a document's type, issuer and
+ *           expiry, pre-filled from the file, used both on upload and when
+ *           correcting a document on file. A form, not a primitive: composes
+ *           Label, NativeSelect, Input, Checkbox and Button.
+ * @approved Yuliya Babkina, 2026-11-18
+ */
 import { useState } from "react";
 import { Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,6 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { DOCUMENT_TYPE_OPTIONS, type DocumentMetadata } from "@/lib/onboarding-documents";
 import { useI18n } from "@/lib/i18n-context";
+import { Text } from "@/shared/ui/typography";
 
 /*
  * Shown right after a file is picked: the app pre-fills what it recognised from
@@ -58,28 +66,28 @@ export function DocumentMetadataForm({
         <div className="text-xs">
           <p className="font-medium text-foreground">
             {editing
-              ? "These details were read from your document"
-              : "We pre-filled these details from your document"}
+              ? t("These details were read from your document")
+              : t("We pre-filled these details from your document")}
           </p>
           <p className="text-muted-foreground mt-0.5">
             {editing
-              ? "Correct anything that's wrong. Your file stays as it is."
-              : "Please check each field and correct anything that's wrong before confirming."}
+              ? t("Correct anything that's wrong. Your file stays as it is.")
+              : t("Please check each field and correct anything that's wrong before confirming.")}
           </p>
         </div>
       </div>
 
       <div className="space-y-1">
-        <Label className="text-xs text-muted-foreground">{editing ? "Document" : "File"}</Label>
-        {fileName && <p className="text-sm font-medium truncate">{fileName}</p>}
-        <p className={editing ? "text-sm font-medium" : "text-xs text-muted-foreground"}>
-          {editing ? documentName : `Uploading as: ${documentName}`}
-        </p>
+        <Label className="text-xs text-muted-foreground">{editing ? t("Document") : t("File")}</Label>
+        {fileName && <Text variant="label" className="truncate">{fileName}</Text>}
+        <Text variant={editing ? "label" : "small"}>
+          {editing ? documentName : t("Uploading as: {name}", { name: documentName })}
+        </Text>
       </div>
 
       <div className="space-y-1">
         <Label htmlFor="doc-type" className="text-xs text-muted-foreground">
-          Document type
+          {t("Document type")}
         </Label>
         <NativeSelect
           id="doc-type"
@@ -87,10 +95,10 @@ export function DocumentMetadataForm({
           onChange={(e) => set("documentType", e.target.value)}
           className="w-full [&_select]:h-10 [&_select]:rounded-lg [&_select]:border-border [&_select]:bg-background [&_select]:pl-3"
         >
-          <NativeSelectOption value="">Select a type…</NativeSelectOption>
-          {DOCUMENT_TYPE_OPTIONS.map((t) => (
-            <NativeSelectOption key={t} value={t}>
-              {t}
+          <NativeSelectOption value="">{t("Select a type…")}</NativeSelectOption>
+          {DOCUMENT_TYPE_OPTIONS.map((opt) => (
+            <NativeSelectOption key={opt} value={opt}>
+              {t(opt)}
             </NativeSelectOption>
           ))}
         </NativeSelect>
@@ -98,7 +106,7 @@ export function DocumentMetadataForm({
 
       <div className="space-y-1">
         <Label htmlFor="doc-issuer" className="text-xs text-muted-foreground">
-          Issuing institution
+          {t("Issuing institution")}
         </Label>
         <Input
           id="doc-issuer"
@@ -111,7 +119,7 @@ export function DocumentMetadataForm({
 
       <div className="space-y-2">
         <Label htmlFor="doc-expiry" className="text-xs text-muted-foreground">
-          Expiry date
+          {t("Expiry date")}
         </Label>
         <Input
           id="doc-expiry"
@@ -123,7 +131,7 @@ export function DocumentMetadataForm({
         />
         {expiryHint && !meta.expiryDate && !meta.doesNotExpire && (
           <p className="text-xs text-muted-foreground">
-            Your document says “{expiryHint}” — please give the exact date.
+            {t("Your document says “{hint}” — please give the exact date.", { hint: expiryHint })}
           </p>
         )}
         <Label className="cursor-pointer font-normal leading-5">
@@ -135,22 +143,22 @@ export function DocumentMetadataForm({
               if (on) set("expiryDate", "");
             }}
           />
-          This certificate does not expire
+          {t("This certificate does not expire")}
         </Label>
       </div>
 
       <div className="flex gap-2 pt-1">
         <Button variant="outline" className="flex-1" disabled={busy} onClick={onCancel}>
-          Cancel
+          {t("Cancel")}
         </Button>
         <Button variant="default" className="flex-1" disabled={busy || !valid} onClick={() => onConfirm(meta)}>
           {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-          {editing ? "Save details" : "Confirm & upload"}
+          {editing ? t("Save details") : t("Confirm & upload")}
         </Button>
       </div>
       {!valid && (
         <p className="text-xs text-muted-foreground text-center">
-          Fill in the type, issuer, and either an expiry date or "does not expire".
+          {t("Fill in the type, issuer, and either an expiry date or “does not expire”.")}
         </p>
       )}
     </div>
