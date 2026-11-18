@@ -8,6 +8,7 @@
 
 import { ChevronsUp, ChevronUp, Equal, ChevronDown, type LucideIcon } from "lucide-react";
 import type { Criticality } from "@/types";
+import { criticalityText } from "@/lib/theme";
 
 // Jira/Linear-style priority arrows — direction encodes rank (up = more urgent).
 const ICON: Record<Criticality, LucideIcon> = {
@@ -15,14 +16,6 @@ const ICON: Record<Criticality, LucideIcon> = {
   high: ChevronUp,
   medium: Equal,
   low: ChevronDown,
-};
-
-// Strong criticality colour (same hue family as the badge tints / text).
-const COLOR: Record<Criticality, string> = {
-  critical: "text-critical",
-  high: "text-high",
-  medium: "text-medium",
-  low: "text-low",
 };
 
 export function CriticalityIcon({
@@ -39,7 +32,7 @@ export function CriticalityIcon({
     <Icon
       size={size}
       strokeWidth={2.25}
-      className={`${COLOR[criticality]} ${className}`}
+      className={`${criticalityText[criticality]} ${className}`}
       aria-hidden="true"
     />
   );

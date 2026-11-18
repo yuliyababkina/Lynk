@@ -14,7 +14,7 @@ import { TaskGroupCard, TaskRow } from "@/components/yarowa/task-group-card";
 import { TicketStatusMenu } from "@/components/yarowa/ticket-status-menu";
 import { CriticalityIcon } from "@/components/yarowa/criticality-icon";
 import { ACTION_ICON } from "@/lib/action-icons";
-import { criticalityLabel } from "@/lib/theme";
+import { criticalityLabel, criticalityText } from "@/lib/theme";
 import { useI18n } from "@/lib/i18n-context";
 import { relationshipId } from "@/lib/db";
 import { PRINCIPAL_ID } from "@/data";
@@ -166,7 +166,7 @@ export function Dashboard({
                       <TaskRow
                         key={t.id}
                         onClick={() => onSelectTicket(t)}
-                        icon={CategoryIcon && <CategoryIcon size={16} className="text-muted-foreground" aria-hidden="true" />}
+                        icon={CategoryIcon && <CategoryIcon size={16} className={criticalityText[group.criticality]} aria-hidden="true" />}
                         title={translateTicketTitle(t.title, tr)}
                         subline={
                           <>
@@ -263,7 +263,7 @@ export function Dashboard({
                     key={t.id}
                     onClick={() => onSelectTicket(t)}
                     muted
-                    icon={CategoryIcon && <CategoryIcon size={16} className="text-muted-foreground" aria-hidden="true" />}
+                    icon={CategoryIcon && <CategoryIcon size={16} className="text-success" aria-hidden="true" />}
                     title={translateTicketTitle(t.title, tr)}
                     subline={
                       <span className="flex items-center gap-1">

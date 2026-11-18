@@ -16,6 +16,15 @@ export const criticalityDot: Record<Criticality, string> = {
   low: "bg-low",
 };
 
+/** Icon / text colour per ticket criticality — the same hues the criticality
+ *  chevrons use, so a row icon and its group header read as one colour. */
+export const criticalityText: Record<Criticality, string> = {
+  critical: "text-critical",
+  high: "text-high",
+  medium: "text-medium",
+  low: "text-low",
+};
+
 /** Human-readable label per criticality. */
 export const criticalityLabel: Record<Criticality, string> = {
   critical: "Critical",
