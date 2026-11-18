@@ -235,7 +235,7 @@ export default function App({ embedded = false }: AppProps = {}) {
       description: `${ticket.entityName} · ${ticket.title}`,
       tone: result.tone,
       action: {
-        label: "Undo",
+        label: t("Undo"),
         onClick: () => unresolveTicket(ticket.id),
       },
     });
@@ -250,17 +250,20 @@ export default function App({ embedded = false }: AppProps = {}) {
     persistDecideRenewal(doc, decision);
     if (decision === "accept") {
       toast({
-        title: "Renewal accepted",
+        title: t("Renewal accepted"),
         description:
           doc.status === "blocked"
-            ? `${doc.supplierName} reactivated for work orders.`
-            : `New version of ${doc.documentName} is now active.`,
+            ? t("{supplier} reactivated for work orders.", { supplier: doc.supplierName })
+            : t("New version of {document} is now active.", { document: doc.documentName }),
         tone: "success",
       });
     } else {
       toast({
-        title: "Renewal rejected",
-        description: `${doc.supplierName} asked to re-upload ${doc.documentName}.`,
+        title: t("Renewal rejected"),
+        description: t("{supplier} asked to re-upload {document}.", {
+          supplier: doc.supplierName,
+          document: doc.documentName,
+        }),
         tone: "warning",
       });
     }

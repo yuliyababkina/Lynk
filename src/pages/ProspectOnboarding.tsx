@@ -346,7 +346,7 @@ export function ProspectOnboarding({
 
   function signContract(c: PrincipalContract) {
     setSignedContracts((prev) => new Set(prev).add(c.id));
-    toast({ title: `${c.name} signed`, tone: "success" });
+    toast({ title: t("{name} signed", { name: c.name }), tone: "success" });
   }
 
   async function activateSupplier() {
@@ -359,7 +359,7 @@ export function ProspectOnboarding({
     }
     toast({
       title: t("You're now a supplier"),
-      description: `${prospectCompany} is active for ${PRINCIPAL}.`,
+      description: t("{company} is active for {principal}.", { company: prospectCompany, principal: PRINCIPAL }),
       tone: "success",
     });
   }

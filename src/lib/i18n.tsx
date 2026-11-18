@@ -1293,6 +1293,20 @@ const DE: Record<string, string> = {
   "€{value}/yr": "{value} €/Jahr",
   "{category} change": "Änderung: {category}",
   "{days}d without response": "{days} T. ohne Antwort",
+
+  // Toasts: renewals and contract signing
+  "Renewal accepted": "Verlängerung akzeptiert",
+  "Renewal rejected": "Verlängerung abgelehnt",
+  "{supplier} reactivated for work orders.": "{supplier} ist wieder für Arbeitsaufträge freigegeben.",
+  "New version of {document} is now active.": "Die neue Version von {document} ist jetzt aktiv.",
+  "{supplier} asked to re-upload {document}.": "{supplier} wurde gebeten, {document} erneut hochzuladen.",
+  "{name} signed": "{name} unterzeichnet",
+  "{company} is active for {principal}.": "{company} ist jetzt für {principal} aktiv.",
+  "Catalogue published": "Katalog veröffentlicht",
+  "Draft saved": "Entwurf gespeichert",
+  "{name} · shared with {n} supplier": "{name} · mit {n} Lieferanten geteilt",
+  "{name} · shared with {n} suppliers": "{name} · mit {n} Lieferanten geteilt",
+  "{name} · not yet shared": "{name} · noch nicht geteilt",
 };
 
 const STORAGE_KEY = "lynk-lang";
