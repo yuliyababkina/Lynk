@@ -36,9 +36,11 @@ function formatStageLabel(stage: Supplier["stage"]) {
 
 export function SuppliersOverview({
   onOpenProfile,
+  onInvite,
   initialSelectedId,
 }: {
   onOpenProfile: (id: string) => void;
+  onInvite: () => void;
   initialSelectedId?: string | null;
 }) {
   const { suppliers: SUPPLIERS, unreadFor } = useLynkData();
@@ -69,7 +71,7 @@ export function SuppliersOverview({
           <Heading level={1} className="mb-1">{t("Suppliers Overview")}</Heading>
           <p className="text-sm text-muted-foreground">{t("All contacts — Prospects and Suppliers.")}</p>
         </div>
-        <Button>
+        <Button onClick={onInvite}>
           <Plus size={14} /> {t("Invite Supplier")}
         </Button>
       </div>

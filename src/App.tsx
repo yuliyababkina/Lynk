@@ -468,7 +468,11 @@ export default function App({ embedded = false }: AppProps = {}) {
               />
             )}
             {view === "suppliers" && (
-              <SuppliersOverview onOpenProfile={openProfile} initialSelectedId={pendingSelected} />
+              <SuppliersOverview
+                onOpenProfile={openProfile}
+                onInvite={() => setInviteOpen(true)}
+                initialSelectedId={pendingSelected}
+              />
             )}
             {view === "supplier-profile" && selectedSupplierId && (
               <SupplierProfile
