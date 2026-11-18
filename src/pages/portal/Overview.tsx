@@ -12,10 +12,11 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n-context";
 import { TaskGroupCard, TaskRow } from "@/components/yarowa/task-group-card";
+import { ClickableCard, ClickableCardTrigger } from "@/components/yarowa/clickable-card";
+import { ActionCard } from "@/components/yarowa/action-card";
 import type { PortalView } from "@/pages/SupplierPortal";
 import type { PortalActivitySelection } from "@/components/yarowa/portal-activity-drawer";
 import type { ChatContext } from "@/types";
@@ -185,14 +186,11 @@ const CHIP_ICON: Record<PrincipalChip["tone"], { Icon: typeof CircleCheck; ink: 
 function StatTile({ stat, onNavigate }: { stat: PortalStat; onNavigate?: (view: PortalView) => void }) {
   const { t } = useI18n();
   return (
-    <Card
-      role="button"
-      tabIndex={0}
-      onClick={() => onNavigate?.(stat.key as PortalView)}
-      className="border border-border ring-0 shadow-none [--card-spacing:1.25rem] px-(--card-spacing) gap-0 cursor-pointer hover:bg-secondary/50 transition-colors"
-    >
+    <ClickableCard className="[--card-spacing:1.25rem] px-(--card-spacing) gap-0">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">{t(stat.label)}</p>
+        <ClickableCardTrigger onClick={() => onNavigate?.(stat.key as PortalView)}>
+          <Text variant="muted" as="span">{t(stat.label)}</Text>
+        </ClickableCardTrigger>
         <ArrowRight className="w-4 h-4 text-muted-foreground" />
       </div>
       <Text variant="stat" className="mt-2">{stat.value}</Text>
@@ -211,7 +209,7 @@ function StatTile({ stat, onNavigate }: { stat: PortalStat; onNavigate?: (view: 
       ) : (
         <p className="text-xs text-muted-foreground mt-2">{stat.hint ? t(stat.hint) : null}</p>
       )}
-    </Card>
+    </ClickableCard>
   );
 }
 
@@ -263,23 +261,14 @@ export function PortalOverview({ supplierId, groups, onNavigate, onOpenActivity,
       {/* Quick actions */}
       <div className="grid grid-cols-1 @min-[32rem]:grid-cols-2 gap-4">
         {QUICK_ACTIONS.map(({ icon: Icon, title, hint, quick }) => (
-          <Card
+          <ActionCard
             key={title}
-            role="button"
-            tabIndex={0}
+            tone="success"
+            icon={Icon}
+            title={t(title)}
+            description={t(hint)}
             onClick={() => onOpenActivity?.({ quick, sectionLabel: title, tone: "neutral" })}
-            className="border border-border ring-0 shadow-none [--card-spacing:1rem] px-(--card-spacing) cursor-pointer hover:bg-secondary/50 transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-success-soft text-success-ink flex items-center justify-center shrink-0">
-                <Icon className="w-4 h-4" />
-              </div>
-              <div className="min-w-0">
-                <Heading level={4} as="div" className="truncate">{t(title)}</Heading>
-                <p className="text-xs text-muted-foreground truncate">{t(hint)}</p>
-              </div>
-            </div>
-          </Card>
+          />
         ))}
       </div>
     </div>

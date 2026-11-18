@@ -355,6 +355,14 @@ export const presentationRules = [
           selector: 'JSXAttribute[name.name="style"]',
           message: "No style prop. Use className with Tailwind utilities.",
         },
+
+        // A <div role="button"> is a hand-rolled <button> that the element ban
+        // can't see, and it never gets Enter/Space or a focus ring for free.
+        {
+          selector: 'JSXAttribute[name.name="role"][value.value=/^(?:button|link|checkbox|switch|tab)$/]',
+          message:
+            'No role="button" (or link/checkbox/switch/tab) on a plain element. Use <Button>, <ClickableCard> + <ClickableCardTrigger>, or the shadcn control for that role.',
+        },
       ],
     },
   },
