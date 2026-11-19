@@ -67,8 +67,8 @@ export function TaskRow({
   subline?: ReactNode;
   status?: ReactNode;
   action?: ReactNode;
-  /** Assignee avatar, after the action buttons (Jira-style). Its slot has a
-   * fixed width so the buttons line up from row to row. */
+  /** Assignee avatar, after the action buttons (Jira-style). The avatar has a
+   * fixed size matched to the buttons, so the buttons line up row to row. */
   assignee?: ReactNode;
   onClick?: () => void;
   muted?: boolean;
@@ -105,7 +105,7 @@ export function TaskRow({
       {(action || assignee) && (
         <div className="tr-action flex items-center gap-2">
           {action}
-          {assignee && <div className="flex w-8 shrink-0 justify-center">{assignee}</div>}
+          {assignee && <div className="flex shrink-0">{assignee}</div>}
         </div>
       )}
     </div>

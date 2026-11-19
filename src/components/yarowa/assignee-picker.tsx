@@ -37,18 +37,34 @@ import type { User } from "@/types";
  * through the React tree) away from a clickable row the picker sits in. */
 const stop = (e: MouseEvent | KeyboardEvent) => e.stopPropagation();
 
-function PersonAvatar({ user, isMe }: { user: User | null; isMe?: boolean }) {
+/*
+ * Sizes come in matched pairs so the avatar always stands exactly as tall as
+ * the row's action buttons: default Button (h-8) ↔ Button size "icon" (size-8)
+ * ↔ Avatar size "default" (size-8). Change one, change its partner — never a
+ * pixel value. The smaller "sm" avatar is only for the list inside the picker.
+ */
+const TRIGGER_SIZE = "icon" as const;
+
+function PersonAvatar({
+  user,
+  isMe,
+  size = "default",
+}: {
+  user: User | null;
+  isMe?: boolean;
+  size?: "default" | "sm";
+}) {
   if (!user) {
     return (
-      <Avatar size="sm" className="border border-dashed border-muted-foreground/60 after:hidden">
+      <Avatar size={size} className="border border-dashed border-muted-foreground/60 after:hidden">
         <AvatarFallback className="bg-transparent text-muted-foreground">
-          <UserPlus size={12} aria-hidden="true" />
+          <UserPlus className={size === "sm" ? "size-3" : "size-4"} aria-hidden="true" />
         </AvatarFallback>
       </Avatar>
     );
   }
   return (
-    <Avatar size="sm">
+    <Avatar size={size}>
       <AvatarFallback className={cn("font-medium",isMe && "bg-primary text-primary-foreground")}>
         {user.avatarInitials}
       </AvatarFallback>
@@ -130,10 +146,12 @@ export function AssigneePicker({
     <PopoverTrigger
       aria-label={t("Change assignee, currently {name}", { name })}
       className={cn(
-        buttonVariants({ variant: "ghost" }),
         variant === "avatar"
-          ? "size-8 rounded-full border-0 p-0"
-          : "h-auto max-w-full justify-start gap-2 border-0 px-1.5 py-1 font-normal"
+          ? cn(buttonVariants({ variant: "ghost", size: TRIGGER_SIZE }), "rounded-full border-0 p-0")
+          : cn(
+              buttonVariants({ variant: "ghost" }),
+              "h-auto max-w-full justify-start gap-2 border-0 px-1.5 py-1 font-normal"
+            )
       )}
     >
       {variant === "avatar" ? (
@@ -199,7 +217,7 @@ export function AssigneePicker({
                       data-checked={u.id === assignee?.id}
                       onSelect={() => pick(u.id)}
                     >
-                      <PersonAvatar user={u} isMe={u.id === currentUser.id} />
+                      <PersonAvatar user={u} isMe={u.id === currentUser.id} size="sm" />
                       <span className="min-w-0 truncate">{u.name}</span>
                       {u.id === currentUser.id && (
                         <span className="shrink-0 text-xs text-muted-foreground">{t("(you)")}</span>
