@@ -8,6 +8,9 @@ import { AssigneePicker } from "./assignee-picker";
 const ME = USERS[0]; // Sabine Müller, Procurement North
 const TEAMMATE = USERS[1]; // Jonas Becker, Procurement North
 const LONG_NAME = USERS.find((u) => u.id === "u-katharina-wiedemann")!; // Katharina Wiedemann-Lechner
+const WITH_PHOTO = USERS.find((u) => u.avatarUrl)!; // Leonie Hartmann — illustrated SVG in public/avatars/
+/** A photo URL that 404s: the coloured initials must take over. */
+const BROKEN_PHOTO: User = { ...TEAMMATE, avatarUrl: "/avatars/does-not-exist.svg" };
 
 const meta = {
   title: "Custom/Assignee Picker",
@@ -41,6 +44,29 @@ export const AssignedToSomeoneElse: Story = {
 
 /** Nobody owns it: dashed avatar with a person-plus icon. */
 export const Unassigned: Story = { args: { assignee: null } };
+
+/** Initials on each person's own colour — derived from the user id, so the
+ * same person has the same colour on every row, in the picker and the drawer. */
+export const Initials: Story = {
+  render: (args) => (
+    <div className="flex items-center gap-3">
+      {USERS.filter((u) => !u.avatarUrl).map((u) => (
+        <AssigneePicker key={u.id} {...args} assignee={u} readOnly />
+      ))}
+    </div>
+  ),
+};
+
+/** A photo replaces the initials. */
+export const Photo: Story = { args: { assignee: WITH_PHOTO } };
+
+/** The photo fails to load: the coloured initials show instead. */
+export const PhotoFailsToLoad: Story = {
+  args: { assignee: BROKEN_PHOTO },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText(BROKEN_PHOTO.avatarInitials)).toBeInTheDocument();
+  },
+};
 
 /** Resolved tasks show who did it, without the picker. */
 export const ReadOnly: Story = { args: { assignee: TEAMMATE, readOnly: true } };

@@ -19,15 +19,15 @@ truncate table activity_log, catalogue_suppliers, catalogues, onboarding_cases,
 -- Mirrors USERS in src/data.ts.
 -- ─────────────────────────────────────────────────────────────────────────
 
-insert into users (id, name, email, team, avatar_initials) values
-('u-sabine-mueller','Sabine Müller','sabine.mueller@urbanhabitat-management.de','Procurement North','SM'),
-('u-jonas-becker','Jonas Becker','jonas.becker@urbanhabitat-management.de','Procurement North','JB'),
-('u-leonie-hartmann','Leonie Hartmann','leonie.hartmann@urbanhabitat-management.de','Procurement North','LH'),
-('u-maximilian-schaefer','Maximilian Schäfer-Oberhuber','maximilian.schaefer@urbanhabitat-management.de','Procurement North','MS'),
-('u-katharina-wiedemann','Katharina Wiedemann-Lechner','katharina.wiedemann@urbanhabitat-management.de','Procurement South','KW'),
-('u-florian-brandstaetter','Florian Brandstätter','florian.brandstaetter@urbanhabitat-management.de','Procurement South','FB'),
-('u-aylin-demir','Aylin Demir','aylin.demir@urbanhabitat-management.de','Procurement South','AD'),
-('u-tobias-huber','Tobias Huber','tobias.huber@urbanhabitat-management.de','Procurement South','TH');
+insert into users (id, name, email, team, avatar_initials, avatar_url) values
+('u-sabine-mueller','Sabine Müller','sabine.mueller@urbanhabitat-management.de','Procurement North','SM',null),
+('u-jonas-becker','Jonas Becker','jonas.becker@urbanhabitat-management.de','Procurement North','JB',null),
+('u-leonie-hartmann','Leonie Hartmann','leonie.hartmann@urbanhabitat-management.de','Procurement North','LH','/avatars/leonie-hartmann.svg'),
+('u-maximilian-schaefer','Maximilian Schäfer-Oberhuber','maximilian.schaefer@urbanhabitat-management.de','Procurement North','MS',null),
+('u-katharina-wiedemann','Katharina Wiedemann-Lechner','katharina.wiedemann@urbanhabitat-management.de','Procurement South','KW',null),
+('u-florian-brandstaetter','Florian Brandstätter','florian.brandstaetter@urbanhabitat-management.de','Procurement South','FB',null),
+('u-aylin-demir','Aylin Demir','aylin.demir@urbanhabitat-management.de','Procurement South','AD',null),
+('u-tobias-huber','Tobias Huber','tobias.huber@urbanhabitat-management.de','Procurement South','TH',null);
 
 -- ─────────────────────────────────────────────────────────────────────────
 -- SUPPLIERS (30 total: 8 Prospect, 22 Supplier)

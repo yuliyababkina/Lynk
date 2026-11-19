@@ -6,12 +6,14 @@ export const PRINCIPAL_ID = "principal_urban_habitat";
 /**
  * The Principal's procurement staff — who a task can be assigned to. Mirrors the
  * `users` rows in supabase/seed.sql and the 2026-11-19 migration, and is what the
- * app uses until that migration has been run. Fictional people.
+ * app uses until that migration has been run. Fictional people. Everyone is on
+ * initials except Leonie, who has an illustrated (not a real) photo so the
+ * photo case shows in the prototype.
  */
 export const USERS: User[] = [
   { id: "u-sabine-mueller", name: "Sabine Müller", email: "sabine.mueller@urbanhabitat-management.de", team: "Procurement North", avatarInitials: "SM" },
   { id: "u-jonas-becker", name: "Jonas Becker", email: "jonas.becker@urbanhabitat-management.de", team: "Procurement North", avatarInitials: "JB" },
-  { id: "u-leonie-hartmann", name: "Leonie Hartmann", email: "leonie.hartmann@urbanhabitat-management.de", team: "Procurement North", avatarInitials: "LH" },
+  { id: "u-leonie-hartmann", name: "Leonie Hartmann", email: "leonie.hartmann@urbanhabitat-management.de", team: "Procurement North", avatarInitials: "LH", avatarUrl: "/avatars/leonie-hartmann.svg" },
   { id: "u-maximilian-schaefer", name: "Maximilian Schäfer-Oberhuber", email: "maximilian.schaefer@urbanhabitat-management.de", team: "Procurement North", avatarInitials: "MS" },
   { id: "u-katharina-wiedemann", name: "Katharina Wiedemann-Lechner", email: "katharina.wiedemann@urbanhabitat-management.de", team: "Procurement South", avatarInitials: "KW" },
   { id: "u-florian-brandstaetter", name: "Florian Brandstätter", email: "florian.brandstaetter@urbanhabitat-management.de", team: "Procurement South", avatarInitials: "FB" },

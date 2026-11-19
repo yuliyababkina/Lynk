@@ -150,6 +150,25 @@
      identification, so no 3:1 requirement applies. */
   --secondary-brand-border: oklch(0.90 0.045 134);       /* #D2E5C7 */
   --secondary-brand-border-hover: oklch(0.86 0.06 134);  /* #C1DAB3 */
+
+  /*
+   * Avatar colours — one per person, so the same colleague has the same colour
+   * on every row, in the picker and in the drawer (src/lib/avatar.ts picks one
+   * from the user id). Identity, not meaning: the hues stay clear of every
+   * status tone — red (critical), amber (high/warning), blue (medium, "In
+   * progress") and the two greens (success, brand) — so an avatar never reads
+   * as a status. Same lightness and chroma, eight hues around the gaps.
+   * Use the derived -soft / -ink pair below: initials (-ink) on the tint
+   * (-soft) measure 6.8–7.4:1 — AA with room to spare.
+   */
+  --avatar-1: oklch(0.55 0.10 185); /* teal */
+  --avatar-2: oklch(0.55 0.10 210); /* cyan */
+  --avatar-3: oklch(0.55 0.10 232); /* sky */
+  --avatar-4: oklch(0.55 0.13 280); /* indigo */
+  --avatar-5: oklch(0.55 0.15 303); /* violet */
+  --avatar-6: oklch(0.58 0.18 333); /* fuchsia */
+  --avatar-7: oklch(0.58 0.14 0); /* pink */
+  --avatar-8: oklch(0.55 0.08 108); /* olive */
 }
 
 .dark {
@@ -231,4 +250,21 @@
   /* Orange — compliance 30-day stage + charts (not a global semantic). */
   --color-chart-orange-soft: color-mix(in srgb, var(--chart-orange), white 88%);
   --color-chart-orange-ink: color-mix(in srgb, var(--chart-orange), black 35%);
+  /* Avatars — initials on a per-person tint (see --avatar-1 … --avatar-8). */
+  --color-avatar-1-soft: color-mix(in srgb, var(--avatar-1), white 76%);
+  --color-avatar-1-ink: color-mix(in srgb, var(--avatar-1), black 40%);
+  --color-avatar-2-soft: color-mix(in srgb, var(--avatar-2), white 76%);
+  --color-avatar-2-ink: color-mix(in srgb, var(--avatar-2), black 40%);
+  --color-avatar-3-soft: color-mix(in srgb, var(--avatar-3), white 76%);
+  --color-avatar-3-ink: color-mix(in srgb, var(--avatar-3), black 40%);
+  --color-avatar-4-soft: color-mix(in srgb, var(--avatar-4), white 76%);
+  --color-avatar-4-ink: color-mix(in srgb, var(--avatar-4), black 40%);
+  --color-avatar-5-soft: color-mix(in srgb, var(--avatar-5), white 76%);
+  --color-avatar-5-ink: color-mix(in srgb, var(--avatar-5), black 40%);
+  --color-avatar-6-soft: color-mix(in srgb, var(--avatar-6), white 76%);
+  --color-avatar-6-ink: color-mix(in srgb, var(--avatar-6), black 40%);
+  --color-avatar-7-soft: color-mix(in srgb, var(--avatar-7), white 76%);
+  --color-avatar-7-ink: color-mix(in srgb, var(--avatar-7), black 40%);
+  --color-avatar-8-soft: color-mix(in srgb, var(--avatar-8), white 76%);
+  --color-avatar-8-ink: color-mix(in srgb, var(--avatar-8), black 40%);
 }

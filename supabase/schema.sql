@@ -56,6 +56,7 @@ create table if not exists users (
   email text not null unique,
   team text not null,
   avatar_initials text not null,
+  avatar_url text,                                     -- optional photo; initials otherwise
   created_at timestamptz not null default now()
 );
 
@@ -259,6 +260,7 @@ alter table supplier_docs add column if not exists file_url text;
 alter table onboarding_cases add column if not exists email text;
 alter table onboarding_cases add column if not exists invite_token text;
 alter table tickets add column if not exists assignee_id text references users(id) on delete set null;
+alter table users add column if not exists avatar_url text;
 
 -- ── Storage bucket for attached documents (certificates, insurance, etc.) ───
 -- Public bucket + anon insert, matching the "anon full access" approach above

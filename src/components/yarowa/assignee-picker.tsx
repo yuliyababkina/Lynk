@@ -4,7 +4,7 @@
  */
 import { useState, type KeyboardEvent, type MouseEvent } from "react";
 import { ChevronDown, UserCheck, UserPlus, UserX } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { buttonVariants } from "@/components/ui/button";
 import {
   Command,
@@ -18,6 +18,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useI18n } from "@/lib/i18n-context";
+import { avatarToneClass } from "@/lib/avatar";
 import { cn } from "@/lib/utils";
 import type { User } from "@/types";
 
@@ -45,15 +46,12 @@ const stop = (e: MouseEvent | KeyboardEvent) => e.stopPropagation();
  */
 const TRIGGER_SIZE = "icon" as const;
 
-function PersonAvatar({
-  user,
-  isMe,
-  size = "default",
-}: {
-  user: User | null;
-  isMe?: boolean;
-  size?: "default" | "sm";
-}) {
+/*
+ * Initials on the person's own colour by default. A photo, when the user has
+ * one, sits on top; if it fails to load, Radix falls back to the initials.
+ * alt is empty: the name is always given next to it or in the trigger's label.
+ */
+function PersonAvatar({ user, size = "default" }: { user: User | null; size?: "default" | "sm" }) {
   if (!user) {
     return (
       <Avatar size={size} className="border border-dashed border-muted-foreground/60 after:hidden">
@@ -65,7 +63,8 @@ function PersonAvatar({
   }
   return (
     <Avatar size={size}>
-      <AvatarFallback className={cn("font-medium",isMe && "bg-primary text-primary-foreground")}>
+      {user.avatarUrl && <AvatarImage src={user.avatarUrl} alt="" />}
+      <AvatarFallback className={cn("font-medium", avatarToneClass(user.id))}>
         {user.avatarInitials}
       </AvatarFallback>
     </Avatar>
@@ -117,7 +116,7 @@ export function AssigneePicker({
 
   const fieldValue = (
     <>
-      <PersonAvatar user={assignee} isMe={isMine} />
+      <PersonAvatar user={assignee} />
       <span className="min-w-0 text-left">
         <span className={cn("block truncate text-sm", !assignee && "text-muted-foreground")}>{name}</span>
         {assignee && <span className="block truncate text-xs text-muted-foreground">{t(assignee.team)}</span>}
@@ -133,7 +132,7 @@ export function AssigneePicker({
         <Tooltip>
           <TooltipTrigger asChild>
             <span role="img" tabIndex={0} aria-label={tooltip} className="inline-flex rounded-full">
-              <PersonAvatar user={assignee} isMe={isMine} />
+              <PersonAvatar user={assignee} />
             </span>
           </TooltipTrigger>
           <TooltipContent>{tooltip}</TooltipContent>
@@ -155,7 +154,7 @@ export function AssigneePicker({
       )}
     >
       {variant === "avatar" ? (
-        <PersonAvatar user={assignee} isMe={isMine} />
+        <PersonAvatar user={assignee} />
       ) : (
         <>
           {fieldValue}
@@ -217,7 +216,7 @@ export function AssigneePicker({
                       data-checked={u.id === assignee?.id}
                       onSelect={() => pick(u.id)}
                     >
-                      <PersonAvatar user={u} isMe={u.id === currentUser.id} size="sm" />
+                      <PersonAvatar user={u} size="sm" />
                       <span className="min-w-0 truncate">{u.name}</span>
                       {u.id === currentUser.id && (
                         <span className="shrink-0 text-xs text-muted-foreground">{t("(you)")}</span>

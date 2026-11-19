@@ -50,8 +50,10 @@ export interface User {
   name: string;
   email: string;
   team: string;
-  /** Shown in the avatar. There are no profile photos. */
+  /** Shown in the avatar, on the person's own colour (src/lib/avatar.ts). */
   avatarInitials: string;
+  /** Optional photo. Replaces the initials when set; initials show if it fails to load. */
+  avatarUrl?: string | null;
 }
 
 export type SupplierStage = "prospect" | "supplier" | "inactive";

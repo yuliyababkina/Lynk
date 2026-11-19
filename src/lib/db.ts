@@ -109,6 +109,7 @@ function mapUser(row: any): User {
     email: row.email,
     team: row.team,
     avatarInitials: row.avatar_initials,
+    avatarUrl: row.avatar_url ?? null,
   };
 }
 
