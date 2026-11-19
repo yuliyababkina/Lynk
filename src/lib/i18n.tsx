@@ -1293,6 +1293,42 @@ const DE: Record<string, string> = {
   "€{value}/yr": "{value} €/Jahr",
   "{category} change": "Änderung: {category}",
   "{days}d without response": "{days} T. ohne Antwort",
+
+  // Toasts: renewals and contract signing
+  "Renewal accepted": "Verlängerung akzeptiert",
+  "Renewal rejected": "Verlängerung abgelehnt",
+  "{supplier} reactivated for work orders.": "{supplier} ist wieder für Arbeitsaufträge freigegeben.",
+  "New version of {document} is now active.": "Die neue Version von {document} ist jetzt aktiv.",
+  "{supplier} asked to re-upload {document}.": "{supplier} wurde gebeten, {document} erneut hochzuladen.",
+  "{name} signed": "{name} unterzeichnet",
+  "{company} is active for {principal}.": "{company} ist jetzt für {principal} aktiv.",
+  "Catalogue published": "Katalog veröffentlicht",
+  "Draft saved": "Entwurf gespeichert",
+  "{name} · shared with {n} supplier": "{name} · mit {n} Lieferanten geteilt",
+  "{name} · shared with {n} suppliers": "{name} · mit {n} Lieferanten geteilt",
+  "{name} · not yet shared": "{name} · noch nicht geteilt",
+
+  // Labels kept in data objects and translated where they render
+  Performance: "Leistung",
+  Confirmed: "Bestätigt",
+  "Needs update": "Aktualisierung nötig",
+  "Not reviewed": "Nicht geprüft",
+  Resubmit: "Erneut einreichen",
+  "Declined — “{note}”": "Abgelehnt — „{note}“",
+  "Insurance Certificate Expired": "Versicherungsnachweis abgelaufen",
+  "On file from previous onboarding": "Aus vorherigem Onboarding vorhanden",
+  "DE289347821 — verified": "DE289347821 — verifiziert",
+  "Please upload: minimum €2M coverage required": "Bitte hochladen: Mindestdeckung 2 Mio. € erforderlich",
+  "IBAN confirmed — no action needed": "IBAN bestätigt — keine Aktion nötig",
+  "Your licence expired Jan 2026 — upload renewed version": "Ihre Lizenz ist im Jan. 2026 abgelaufen — bitte erneuerte Version hochladen",
+  "IBAN change request submitted by supplier": "IBAN-Änderungsantrag vom Lieferanten eingereicht",
+  "Manual compliance reminder sent": "Manuelle Compliance-Erinnerung gesendet",
+  "30-day auto-notification sent for ISO 9001": "Automatische 30-Tage-Benachrichtigung für ISO 9001 gesendet",
+  "Public Liability Insurance expired — supplier blocked": "Betriebshaftpflichtversicherung abgelaufen — Lieferant gesperrt",
+  "Compliance resolved — insurance uploaded": "Compliance geklärt — Versicherung hochgeladen",
+  "Compliance flag raised on Framework Contract": "Compliance-Hinweis zum Rahmenvertrag gesetzt",
+  "Contract renewal reminder triggered": "Erinnerung zur Vertragsverlängerung ausgelöst",
+  "Profile last updated — annual review": "Profil zuletzt aktualisiert — jährliche Prüfung",
 };
 
 const STORAGE_KEY = "lynk-lang";

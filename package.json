@@ -64,7 +64,10 @@
     "vitest": "^4.1.10"
   },
   "lint-staged": {
-    "src/{components/ui,hooks,pages,components/yarowa,shell,shared,stories}/**/*.{ts,tsx}": [
+    "src/{components/ui,hooks,pages,components/yarowa,shell,shared,stories,lib}/**/*.{ts,tsx}": [
+      "eslint --max-warnings=0"
+    ],
+    "src/*.tsx": [
       "eslint --max-warnings=0"
     ]
   },

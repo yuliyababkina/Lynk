@@ -372,7 +372,7 @@ function DocumentsReviewStep({
                 </span>
                 <Badge variant={meta.variant} className="shrink-0">
                   <meta.Icon className="size-3" />
-                  {meta.label}
+                  {t(meta.label)}
                 </Badge>
               </Button>
             );
@@ -511,7 +511,7 @@ function DocumentPreviewPanel({
             return (
               <Badge variant={m.variant} className="shrink-0">
                 <m.Icon className="w-3 h-3" />
-                {m.label}
+                {t(m.label)}
               </Badge>
             );
           })()}
@@ -1141,7 +1141,7 @@ function SummaryItem({
         {meta.note && <p className="text-xs text-muted-foreground mt-0.5 ml-6">“{meta.note}”</p>}
       </div>
       <Badge variant={meta.variant} className="shrink-0">
-        {meta.label}
+        {t(meta.label)}
       </Badge>
     </div>
   );

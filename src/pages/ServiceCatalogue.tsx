@@ -65,10 +65,13 @@ export function ServiceCatalogue({ initialSelectedId }: { initialSelectedId?: st
     setCatalogues((prev) => [newCatalogue, ...prev]);
     persistCatalogue(newCatalogue);
     toast({
-      title: result.publish ? "Catalogue published" : "Draft saved",
+      title: result.publish ? t("Catalogue published") : t("Draft saved"),
       description: result.publish
-        ? `${newCatalogue.name} · shared with ${result.suppliers.length} supplier${result.suppliers.length === 1 ? "" : "s"}`
-        : `${newCatalogue.name} · not yet shared`,
+        ? t(result.suppliers.length === 1 ? "{name} · shared with {n} supplier" : "{name} · shared with {n} suppliers", {
+            name: newCatalogue.name,
+            n: result.suppliers.length,
+          })
+        : t("{name} · not yet shared", { name: newCatalogue.name }),
       tone: result.publish ? "success" : "default",
     });
     setMode(result.publish ? { kind: "detail", catalogueId: id } : { kind: "list" });

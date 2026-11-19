@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { Card } from "@/components/ui/card";
+import { ClickableCard, ClickableCardTrigger } from "@/components/yarowa/clickable-card";
 import { Badge } from "@/components/ui/badge";
 import { AlertBanner } from "@/components/yarowa/alert-banner";
 import { RequestedUpdatePanel } from "@/components/yarowa/requested-update-panel";
-import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n-context";
 import { getPortalProfile } from "./portal-data";
 import { Heading, Text } from "@/shared/ui/typography";
@@ -38,18 +37,15 @@ export function PortalRequestedUpdates({ supplierId }: PortalRequestedUpdatesPro
             {updates.map((u) => {
               const active = u.id === selected.id;
               return (
-                <Card
+                <ClickableCard
                   key={u.id}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setSelectedId(u.id)}
-                  className={cn(
-                    "ring-0 shadow-none [--card-spacing:1rem] px-(--card-spacing) gap-0 cursor-pointer transition-colors",
-                    active ? "border border-primary bg-secondary/60" : "border border-border hover:bg-secondary/50"
-                  )}
+                  active={active}
+                  className="[--card-spacing:1rem] px-(--card-spacing) gap-0"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <Heading level={4} as="div" className="text-primary truncate">{u.principal}</Heading>
+                    <ClickableCardTrigger onClick={() => setSelectedId(u.id)} aria-current={active || undefined} className="min-w-0">
+                      <Heading level={4} as="span" className="text-primary truncate">{u.principal}</Heading>
+                    </ClickableCardTrigger>
                     <Badge variant="warning">{t("Action required")}</Badge>
                   </div>
                   {/* Subject and body are principal-authored free text: they go
@@ -58,7 +54,7 @@ export function PortalRequestedUpdates({ supplierId }: PortalRequestedUpdatesPro
                   <p className="text-xs text-muted-foreground mt-2">
                     {u.from} · {t(u.sentLabel)}
                   </p>
-                </Card>
+                </ClickableCard>
               );
             })}
           </div>

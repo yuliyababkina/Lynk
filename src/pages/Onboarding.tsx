@@ -52,7 +52,7 @@ function StageCell({
   cell: Cell;
   tr: (s: string, vars?: Record<string, string | number>) => string;
 }) {
-  if (cell.tone === "muted") return <span className="text-xs text-muted-foreground">{cell.label}</span>;
+  if (cell.tone === "muted") return <span className="text-xs text-muted-foreground">{tr(cell.label, cell.vars)}</span>;
   const label = tr(cell.label, cell.vars);
   if (cell.tone === "done")
     return (

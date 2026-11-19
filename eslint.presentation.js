@@ -44,6 +44,10 @@ const AUTHORED = [
   "src/shell/**/*.{ts,tsx}",
   "src/shared/**/*.{ts,tsx}",
   "src/stories/**/*.{ts,tsx}",
+  // The app root and the React parts of lib (providers, the i18n context) render
+  // UI too, so they are held to the same rules.
+  "src/*.tsx",
+  "src/lib/**/*.tsx",
 ];
 
 const ALL_PRESENTATION = [...VENDORED, ...AUTHORED];
@@ -237,14 +241,24 @@ const noLiteralString = {
               ? callee.object.name
               : null;
         if (name !== "toast") return;
-        for (const arg of node.arguments) {
-          if (arg.type === "Literal" && isText(arg.value)) report(arg);
-          if (arg.type !== "ObjectExpression") continue;
-          for (const prop of arg.properties) {
-            const key = prop.type === "Property" && (prop.key.name ?? prop.key.value);
-            if (TOAST_TEXT_KEYS.has(key) && prop.value.type === "Literal" && isText(prop.value.value))
-              report(prop.value);
+        // A text value is a string literal, or a template literal whose fixed
+        // parts contain words (`${name} was invited`). `${a} · ${b}` is not text.
+        const isTextValue = (value) =>
+          (value.type === "Literal" && isText(value.value)) ||
+          (value.type === "TemplateLiteral" && value.quasis.some((q) => isText(q.value.raw))) ||
+          (value.type === "ConditionalExpression" && (isTextValue(value.consequent) || isTextValue(value.alternate)));
+        // Walks nested objects too, so toast({ action: { label: "Undo" } }) is caught.
+        const checkObject = (object) => {
+          for (const prop of object.properties) {
+            if (prop.type !== "Property") continue;
+            const key = prop.key.name ?? prop.key.value;
+            if (prop.value.type === "ObjectExpression") checkObject(prop.value);
+            else if (TOAST_TEXT_KEYS.has(key) && isTextValue(prop.value)) report(prop.value);
           }
+        };
+        for (const arg of node.arguments) {
+          if (isTextValue(arg)) report(arg);
+          else if (arg.type === "ObjectExpression") checkObject(arg);
         }
       },
     };
@@ -340,6 +354,14 @@ export const presentationRules = [
         {
           selector: 'JSXAttribute[name.name="style"]',
           message: "No style prop. Use className with Tailwind utilities.",
+        },
+
+        // A <div role="button"> is a hand-rolled <button> that the element ban
+        // can't see, and it never gets Enter/Space or a focus ring for free.
+        {
+          selector: 'JSXAttribute[name.name="role"][value.value=/^(?:button|link|checkbox|switch|tab)$/]',
+          message:
+            'No role="button" (or link/checkbox/switch/tab) on a plain element. Use <Button>, <ClickableCard> + <ClickableCardTrigger>, or the shadcn control for that role.',
         },
       ],
     },

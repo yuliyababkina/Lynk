@@ -62,7 +62,7 @@ Lynk ships in English and German. **Every user-facing string goes through `useI1
 - `npm run dev` (app, `:5173`) · `npm run storybook` (`:6006`).
 - `npm run lint` — ESLint, `--max-warnings=0`. `npm run typecheck` — `tsc --noEmit`. `npm run check:custom` — custom component headers and stories. `npm test` — unit tests.
 - Pre-commit runs lint, the custom component check (staged files) and typecheck. GitHub Actions (`.github/workflows/checks.yml`) runs all checks plus the build on the whole codebase for every PR and push to `main`.
-- Lint tiers: **vendored** (`src/components/ui/**`, `src/hooks/**`) gets the colour rules only; **authored** (`src/pages/**`, `src/components/yarowa/**`, `src/shell/**`, `src/shared/**`, `src/stories/**`) gets the full set. The rules live in `eslint.presentation.js`.
+- Lint tiers: **vendored** (`src/components/ui/**`, `src/hooks/**`) gets the colour rules only; **authored** (`src/pages/**`, `src/components/yarowa/**`, `src/shell/**`, `src/shared/**`, `src/stories/**`, `src/*.tsx`, `src/lib/**/*.tsx`) gets the full set. The rules live in `eslint.presentation.js`.
 - Supabase schema changes cannot be run from an agent session (anon key only): write the migration, the user pastes it into the SQL Editor.
 
 ## 7. Required prefix for UI prompts

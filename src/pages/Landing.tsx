@@ -2,6 +2,7 @@ import { ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useI18n } from "@/lib/i18n-context";
 import { LanguageToggle } from "@/components/yarowa/language-toggle";
+import { ClickableCard, ClickableCardTrigger } from "@/components/yarowa/clickable-card";
 import { Heading, Text } from "@/shared/ui/typography";
 
 // The logo tile shows the initial of the product name: a brand mark, not translatable text.
@@ -75,12 +76,9 @@ export function Landing({ onSelectRole }: LandingProps) {
       {/* Role cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-5xl w-full">
         {ROLES.map((role) => (
-          <div
+          <ClickableCard
             key={role.id}
-            role="button"
-            tabIndex={0}
-            onClick={() => onSelectRole(role.id)}
-            className="p-6 rounded-xl cursor-pointer transition-all bg-card border border-border shadow-none hover:border-foreground/20 hover:shadow-md"
+            className="gap-0 p-6 transition-all hover:bg-card hover:border-foreground/20 hover:shadow-md"
           >
             {/* Icon */}
             <div className="w-11 h-11 rounded-lg flex items-center justify-center text-xl mb-4 bg-secondary-brand">
@@ -88,7 +86,9 @@ export function Landing({ onSelectRole }: LandingProps) {
             </div>
 
             {/* Name */}
-            <Heading level={2}>{role.name}</Heading>
+            <ClickableCardTrigger onClick={() => onSelectRole(role.id)}>
+              <Heading level={2} as="span">{role.name}</Heading>
+            </ClickableCardTrigger>
 
             {/* Role pill */}
             <Badge variant="secondary" className="mt-2">
@@ -103,7 +103,7 @@ export function Landing({ onSelectRole }: LandingProps) {
               {t(role.cta)}
               <ArrowRight className="w-4 h-4" />
             </Text>
-          </div>
+          </ClickableCard>
         ))}
       </div>
 

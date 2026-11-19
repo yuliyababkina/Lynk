@@ -346,7 +346,7 @@ export function ProspectOnboarding({
 
   function signContract(c: PrincipalContract) {
     setSignedContracts((prev) => new Set(prev).add(c.id));
-    toast({ title: `${c.name} signed`, tone: "success" });
+    toast({ title: t("{name} signed", { name: c.name }), tone: "success" });
   }
 
   async function activateSupplier() {
@@ -359,7 +359,7 @@ export function ProspectOnboarding({
     }
     toast({
       title: t("You're now a supplier"),
-      description: `${prospectCompany} is active for ${PRINCIPAL}.`,
+      description: t("{company} is active for {principal}.", { company: prospectCompany, principal: PRINCIPAL }),
       tone: "success",
     });
   }
@@ -601,7 +601,7 @@ export function ProspectOnboarding({
                   return (
                     <div className="flex items-center justify-end gap-2 min-w-0">
                       <p className="text-xs text-muted-foreground min-w-0 truncate mr-1">
-                        {declined && r.statusNote ? `Declined — “${r.statusNote}”` : def.hint}
+                        {declined && r.statusNote ? t("Declined — “{note}”", { note: r.statusNote }) : t(def.hint)}
                       </p>
                       {/* Uploading a file again supersedes the stored one and sends
                           the new version back for review. */}
