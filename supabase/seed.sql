@@ -10,8 +10,24 @@
 -- Re-running this file is safe — it truncates first.
 
 truncate table activity_log, catalogue_suppliers, catalogues, onboarding_cases,
-  data_governance_requests, contracts, supplier_docs, tickets, suppliers
+  data_governance_requests, contracts, supplier_docs, tickets, suppliers, users
   restart identity cascade;
+
+-- ─────────────────────────────────────────────────────────────────────────
+-- USERS — procurement staff tasks can be assigned to (two teams).
+-- Sabine Müller is the current user (PROCUREMENT_MANAGER_ID in src/lib/principal.ts).
+-- Mirrors USERS in src/data.ts.
+-- ─────────────────────────────────────────────────────────────────────────
+
+insert into users (id, name, email, team, avatar_initials) values
+('u-sabine-mueller','Sabine Müller','sabine.mueller@urbanhabitat-management.de','Procurement North','SM'),
+('u-jonas-becker','Jonas Becker','jonas.becker@urbanhabitat-management.de','Procurement North','JB'),
+('u-leonie-hartmann','Leonie Hartmann','leonie.hartmann@urbanhabitat-management.de','Procurement North','LH'),
+('u-maximilian-schaefer','Maximilian Schäfer-Oberhuber','maximilian.schaefer@urbanhabitat-management.de','Procurement North','MS'),
+('u-katharina-wiedemann','Katharina Wiedemann-Lechner','katharina.wiedemann@urbanhabitat-management.de','Procurement South','KW'),
+('u-florian-brandstaetter','Florian Brandstätter','florian.brandstaetter@urbanhabitat-management.de','Procurement South','FB'),
+('u-aylin-demir','Aylin Demir','aylin.demir@urbanhabitat-management.de','Procurement South','AD'),
+('u-tobias-huber','Tobias Huber','tobias.huber@urbanhabitat-management.de','Procurement South','TH');
 
 -- ─────────────────────────────────────────────────────────────────────────
 -- SUPPLIERS (30 total: 8 Prospect, 22 Supplier)
@@ -326,6 +342,19 @@ insert into tickets (id, title, criticality, entity_name, entity_type, age_label
 -- critical tickets are resolved, so the Critical group keeps 5 active items.
 update tickets set status = 'In progress' where id in ('t3','t18','t8','t20','t10','t28');
 update tickets set status = 'Resolved', resolved = true, resolved_at = now() where id in ('t13','t15','t29','t32');
+
+-- Assignees: one person per task or nobody — never a team. Mirrors
+-- SEED_TICKET_ASSIGNEES in src/data.ts.
+update tickets set assignee_id = 'u-sabine-mueller'
+ where id in ('t3','t4','t6','t8','t13','t16','t19','t22','t26','t30');
+update tickets set assignee_id = 'u-jonas-becker' where id in ('t5','t15','t17','t27');
+update tickets set assignee_id = 'u-leonie-hartmann' where id in ('t9','t20','t33');
+update tickets set assignee_id = 'u-maximilian-schaefer' where id in ('t24');
+update tickets set assignee_id = 'u-katharina-wiedemann' where id in ('t7','t18','t28','t29');
+update tickets set assignee_id = 'u-florian-brandstaetter' where id in ('t10','t21','t31');
+update tickets set assignee_id = 'u-aylin-demir' where id in ('t11','t23');
+update tickets set assignee_id = 'u-tobias-huber' where id in ('t12','t32');
+-- t14, t25, t34 stay unassigned.
 
 -- ─────────────────────────────────────────────────────────────────────────
 -- SERVICE CATALOGUES (unchanged from the original prototype)

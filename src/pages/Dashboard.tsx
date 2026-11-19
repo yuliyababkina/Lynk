@@ -13,6 +13,8 @@ import { TabsTriggerWithCount } from "@/components/yarowa/tabs-trigger-with-coun
 import { TaskGroupCard, TaskRow } from "@/components/yarowa/task-group-card";
 import { TicketStatusMenu } from "@/components/yarowa/ticket-status-menu";
 import { CriticalityIcon } from "@/components/yarowa/criticality-icon";
+import { AssigneePicker } from "@/components/yarowa/assignee-picker";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ACTION_ICON } from "@/lib/action-icons";
 import { criticalityLabel, criticalityText } from "@/lib/theme";
 import { useI18n } from "@/lib/i18n-context";
@@ -32,6 +34,15 @@ const CATEGORIES: TicketCategory[] = [
 ];
 
 const CRITICALITY_ORDER: Criticality[] = ["critical", "high", "medium", "low"];
+
+/* Whose tasks the queue shows. No per-person or region filter, by agreement —
+   anyone can still see and take over a colleague's task via "My team". */
+type AssigneeFilter = "mine" | "team" | "unassigned";
+const ASSIGNEE_FILTERS: { value: AssigneeFilter; label: string; empty: string }[] = [
+  { value: "mine", label: "Assigned to me", empty: "Nothing assigned to you" },
+  { value: "team", label: "My team", empty: "Nothing assigned to your team" },
+  { value: "unassigned", label: "Unassigned", empty: "No unassigned tasks" },
+];
 // Rows shown per group before the "show more" toggle appears.
 const COLLAPSED_ROWS = 5;
 // Icon illustrating each ticket type (mirrors the sidebar module iconography).
@@ -63,9 +74,13 @@ export function Dashboard({
     setTicketStatus,
     suppliers: SUPPLIERS,
     unreadFor,
+    users,
+    currentUser,
+    setTicketAssignee,
   } = useLynkData();
   const { t: tr } = useI18n();
   const [filter, setFilter] = useState<"All tickets" | TicketCategory>("All tickets");
+  const [assigneeFilter, setAssigneeFilter] = useState<AssigneeFilter>("mine");
   const [expanded, setExpanded] = useState<Set<Criticality>>(new Set());
   const [resolvedExpanded, setResolvedExpanded] = useState(false);
 
@@ -83,8 +98,26 @@ export function Dashboard({
   const byCategory = (list: Ticket[]) =>
     filter === "All tickets" ? list : list.filter((t) => t.category === filter);
 
-  const open = useMemo(() => TICKETS.filter((t) => !resolvedIds.has(t.id)), [TICKETS, resolvedIds]);
-  const resolved = useMemo(() => TICKETS.filter((t) => resolvedIds.has(t.id)), [TICKETS, resolvedIds]);
+  const userById = useMemo(() => new Map(users.map((u) => [u.id, u])), [users]);
+  const assigneeOf = (t: Ticket) => (t.assigneeId ? userById.get(t.assigneeId) ?? null : null);
+
+  /* Applied before everything else — groups, resolved section and tab counts
+     all start from this list, so a count always matches what is shown. */
+  const visibleTickets = useMemo(
+    () =>
+      TICKETS.filter((t) => {
+        if (assigneeFilter === "unassigned") return !t.assigneeId;
+        if (assigneeFilter === "mine") return t.assigneeId === currentUser.id;
+        const assignee = t.assigneeId ? userById.get(t.assigneeId) : undefined;
+        return assignee?.team === currentUser.team;
+      }),
+    [TICKETS, assigneeFilter, currentUser, userById]
+  );
+
+  const open = useMemo(() => visibleTickets.filter((t) => !resolvedIds.has(t.id)), [visibleTickets, resolvedIds]);
+  const resolved = useMemo(() => visibleTickets.filter((t) => resolvedIds.has(t.id)), [visibleTickets, resolvedIds]);
+
+  const emptyTitle = ASSIGNEE_FILTERS.find((f) => f.value === assigneeFilter)!.empty;
 
   const filtered = byCategory(open);
   const resolvedFiltered = byCategory(resolved);
@@ -116,18 +149,32 @@ export function Dashboard({
       <p className="text-sm text-muted-foreground mb-4">{tr("Sorted by criticality. Click a ticket to open it.")}</p>
 
       <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)} className="gap-6">
-        <TabsList>
-          {(["All tickets", ...CATEGORIES] as const).map((f) => (
-            <TabsTriggerWithCount key={f} value={f} count={counts[f]}>
-              {tr(f)}
-            </TabsTriggerWithCount>
-          ))}
-        </TabsList>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <TabsList>
+            {(["All tickets", ...CATEGORIES] as const).map((f) => (
+              <TabsTriggerWithCount key={f} value={f} count={counts[f]}>
+                {tr(f)}
+              </TabsTriggerWithCount>
+            ))}
+          </TabsList>
+          <Select value={assigneeFilter} onValueChange={(v) => setAssigneeFilter(v as AssigneeFilter)}>
+            <SelectTrigger aria-label={tr("Filter by assignee")} className="ml-auto min-w-[180px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent position="popper" align="end">
+              {ASSIGNEE_FILTERS.map((f) => (
+                <SelectItem key={f.value} value={f.value}>
+                  {tr(f.label)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <TabsContent value={filter}>
           {grouped.length === 0 && (
             <div className="border border-dashed border-border rounded-xl py-16 text-center">
               <Check className="mx-auto mb-3 text-success-ink" size={28} />
-              <Text variant="label">{tr("You're all caught up")}</Text>
+              <Text variant="label">{tr(emptyTitle)}</Text>
               <p className="text-xs text-muted-foreground mt-1">
                 {filter !== "All tickets"
                   ? tr("No open tickets in {filter}.", { filter: tr(filter) })
@@ -228,6 +275,14 @@ export function Dashboard({
                             )}
                           </div>
                         }
+                        assignee={
+                          <AssigneePicker
+                            assignee={assigneeOf(t)}
+                            currentUser={currentUser}
+                            users={users}
+                            onChange={(id) => setTicketAssignee(t, id)}
+                          />
+                        }
                       />
                     );
                   })}
@@ -285,6 +340,7 @@ export function Dashboard({
                       </span>
                     }
                     status={<TicketStatusMenu status={statusOf(t)} onChange={(s) => changeStatus(t, s)} align="end" />}
+                    assignee={<AssigneePicker readOnly assignee={assigneeOf(t)} currentUser={currentUser} users={users} />}
                   />
                 );
               })}

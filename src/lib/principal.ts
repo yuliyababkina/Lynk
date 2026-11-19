@@ -10,6 +10,9 @@ export const PRINCIPAL_COMPANY = "Urban Habitat Management GmbH";
 /** Compact form for chips, badges and activity rows where the legal name is too long. */
 export const PRINCIPAL_SHORT = "Urban Habitat";
 export const PROCUREMENT_MANAGER = "Sabine Müller";
+/** Her row in the `users` table. The app has no login, so this IS the current
+ * user; components read it as `currentUser` from the data context. */
+export const PROCUREMENT_MANAGER_ID = "u-sabine-mueller";
 export const PROCUREMENT_MANAGER_ROLE = "Procurement Manager";
 export const PROCUREMENT_EMAIL = "procurement@urbanhabitat-management.de";
 

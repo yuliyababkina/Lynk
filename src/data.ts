@@ -1,7 +1,47 @@
-import type { Supplier, Ticket, SupplierDoc, Contract, DataGovernanceRequest, OnboardingCase, Catalogue, Principal, SupplierPrincipalRelationship, DirectoryCompany, CatalogueLineDiff, ChatMessage } from "./types";
+import type { Supplier, Ticket, SupplierDoc, Contract, DataGovernanceRequest, OnboardingCase, Catalogue, Principal, SupplierPrincipalRelationship, DirectoryCompany, CatalogueLineDiff, ChatMessage, User } from "./types";
 import { PRINCIPAL_COMPANY, PRINCIPAL_SHORT, PRINCIPAL_PROFILE, PROCUREMENT_MANAGER, PROCUREMENT_MANAGER_ROLE } from "./lib/principal";
 
 export const PRINCIPAL_ID = "principal_urban_habitat";
+
+/**
+ * The Principal's procurement staff — who a task can be assigned to. Mirrors the
+ * `users` rows in supabase/seed.sql and the 2026-11-19 migration, and is what the
+ * app uses until that migration has been run. Fictional people.
+ */
+export const USERS: User[] = [
+  { id: "u-sabine-mueller", name: "Sabine Müller", email: "sabine.mueller@urbanhabitat-management.de", team: "Procurement North", avatarInitials: "SM" },
+  { id: "u-jonas-becker", name: "Jonas Becker", email: "jonas.becker@urbanhabitat-management.de", team: "Procurement North", avatarInitials: "JB" },
+  { id: "u-leonie-hartmann", name: "Leonie Hartmann", email: "leonie.hartmann@urbanhabitat-management.de", team: "Procurement North", avatarInitials: "LH" },
+  { id: "u-maximilian-schaefer", name: "Maximilian Schäfer-Oberhuber", email: "maximilian.schaefer@urbanhabitat-management.de", team: "Procurement North", avatarInitials: "MS" },
+  { id: "u-katharina-wiedemann", name: "Katharina Wiedemann-Lechner", email: "katharina.wiedemann@urbanhabitat-management.de", team: "Procurement South", avatarInitials: "KW" },
+  { id: "u-florian-brandstaetter", name: "Florian Brandstätter", email: "florian.brandstaetter@urbanhabitat-management.de", team: "Procurement South", avatarInitials: "FB" },
+  { id: "u-aylin-demir", name: "Aylin Demir", email: "aylin.demir@urbanhabitat-management.de", team: "Procurement South", avatarInitials: "AD" },
+  { id: "u-tobias-huber", name: "Tobias Huber", email: "tobias.huber@urbanhabitat-management.de", team: "Procurement South", avatarInitials: "TH" },
+];
+
+/**
+ * Seeded assignee per ticket id — the same mix supabase/seed.sql writes. Used
+ * when `tickets.assignee_id` does not exist yet (migration not run), so the
+ * filters show something realistic instead of every task being unassigned.
+ * Ticket ids missing here are unassigned.
+ */
+export const SEED_TICKET_ASSIGNEES: Record<string, string> = {
+  ticket_1: "u-sabine-mueller",
+  // Sabine
+  t3: "u-sabine-mueller", t4: "u-sabine-mueller", t6: "u-sabine-mueller", t8: "u-sabine-mueller",
+  t13: "u-sabine-mueller", t16: "u-sabine-mueller", t19: "u-sabine-mueller", t22: "u-sabine-mueller",
+  t26: "u-sabine-mueller", t30: "u-sabine-mueller",
+  // Her team (Procurement North)
+  t5: "u-jonas-becker", t15: "u-jonas-becker", t17: "u-jonas-becker", t27: "u-jonas-becker",
+  t9: "u-leonie-hartmann", t20: "u-leonie-hartmann", t33: "u-leonie-hartmann",
+  t24: "u-maximilian-schaefer",
+  // The other team (Procurement South)
+  t7: "u-katharina-wiedemann", t18: "u-katharina-wiedemann", t28: "u-katharina-wiedemann", t29: "u-katharina-wiedemann",
+  t10: "u-florian-brandstaetter", t21: "u-florian-brandstaetter", t31: "u-florian-brandstaetter",
+  t11: "u-aylin-demir", t23: "u-aylin-demir",
+  t12: "u-tobias-huber", t32: "u-tobias-huber",
+  // Unassigned: t14, t25, t34
+};
 
 // Urban Habitat is the Principal that runs this tenant — every supplier and
 // prospect has a relationship with it, and Sabine always writes on its behalf
@@ -220,6 +260,7 @@ export const TICKETS: Ticket[] = [
     source: "compliance-monitoring",
     category: "Document compliance",
     status: "To do",
+    assigneeId: "u-sabine-mueller",
   },
   // ... more tickets
 ];

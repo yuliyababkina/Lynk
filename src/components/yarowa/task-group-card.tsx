@@ -57,6 +57,7 @@ export function TaskRow({
   subline,
   status,
   action,
+  assignee,
   onClick,
   muted,
   className,
@@ -66,6 +67,9 @@ export function TaskRow({
   subline?: ReactNode;
   status?: ReactNode;
   action?: ReactNode;
+  /** Assignee avatar, after the action buttons (Jira-style). Its slot has a
+   * fixed width so the buttons line up from row to row. */
+  assignee?: ReactNode;
   onClick?: () => void;
   muted?: boolean;
   className?: string;
@@ -98,7 +102,12 @@ export function TaskRow({
         {subline && <div className="text-xs text-muted-foreground mt-0.5">{subline}</div>}
       </div>
       {status && <div className="tr-status">{status}</div>}
-      {action && <div className="tr-action">{action}</div>}
+      {(action || assignee) && (
+        <div className="tr-action flex items-center gap-2">
+          {action}
+          {assignee && <div className="flex w-8 shrink-0 justify-center">{assignee}</div>}
+        </div>
+      )}
     </div>
   );
 }

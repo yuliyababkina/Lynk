@@ -46,6 +46,19 @@ create table if not exists suppliers (
   created_at timestamptz not null default now()
 );
 
+-- ── Procurement users (who a task can be assigned to) ───────────────────────
+-- Team is an attribute of the person: it groups people in the assignee picker
+-- and backs the "My team" filter. Tasks are never assigned to a team.
+-- See supabase/migrations/2026-11-19_add_ticket_assignees.sql.
+create table if not exists users (
+  id text primary key,
+  name text not null,
+  email text not null unique,
+  team text not null,
+  avatar_initials text not null,
+  created_at timestamptz not null default now()
+);
+
 -- ── Task Queue tickets (the triage dashboard) ───────────────────────────────
 create table if not exists tickets (
   id text primary key,
@@ -61,8 +74,11 @@ create table if not exists tickets (
   status text not null default 'To do' check (status in ('To do','In progress','Resolved')),
   resolved boolean not null default false,
   resolved_at timestamptz,
+  assignee_id text references users(id) on delete set null,  -- one person or nobody
   created_at timestamptz not null default now()
 );
+
+create index if not exists tickets_assignee_id_idx on tickets (assignee_id);
 
 -- ── Compliance documents ────────────────────────────────────────────────────
 create table if not exists supplier_docs (
@@ -211,6 +227,7 @@ create table if not exists chat_reads (
 
 -- ── Row Level Security ───────────────────────────────────────────────────────
 alter table suppliers enable row level security;
+alter table users enable row level security;
 alter table tickets enable row level security;
 alter table supplier_docs enable row level security;
 alter table contracts enable row level security;
@@ -223,6 +240,7 @@ alter table chat_messages enable row level security;
 alter table chat_reads enable row level security;
 
 create policy "anon full access" on suppliers for all using (true) with check (true);
+create policy "anon full access" on users for all using (true) with check (true);
 create policy "anon full access" on tickets for all using (true) with check (true);
 create policy "anon full access" on supplier_docs for all using (true) with check (true);
 create policy "anon full access" on contracts for all using (true) with check (true);
@@ -240,6 +258,7 @@ alter table supplier_docs add column if not exists file_path text;
 alter table supplier_docs add column if not exists file_url text;
 alter table onboarding_cases add column if not exists email text;
 alter table onboarding_cases add column if not exists invite_token text;
+alter table tickets add column if not exists assignee_id text references users(id) on delete set null;
 
 -- ── Storage bucket for attached documents (certificates, insurance, etc.) ───
 -- Public bucket + anon insert, matching the "anon full access" approach above
