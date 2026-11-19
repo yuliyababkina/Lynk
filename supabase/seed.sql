@@ -117,11 +117,12 @@ insert into suppliers (id, name, stage, trade, region, compliance, rating, open_
   '[{"name":"Andreas Peters","role":"Owner","email":"andreas@peters-fm.de","phone":"+49 211 1234 029","primary":true}]',
   '{NRW}', '{"Facility management"}', null, null, null, '7 days ago');
 
--- WO management system. Everything else keeps the column default 'Unknown';
--- these five are the former "Provider" records, who receive work orders
--- through Enable.
-update suppliers set wo_system = 'Enable (Yarowa)'
-  where id in ('schmidt', 'zimmer', 'neumann', 'lang', 'peters');
+-- WO management system. Demo values (PO sync, 17 Nov 2026): only systems that
+-- can connect to Lynk matter, so the table never shows 'Unknown'. Everyone is
+-- on Enable, with a couple of SAP rows as a showcase.
+update suppliers set wo_system = 'Enable (Yarowa)';
+update suppliers set wo_system = 'SAP'
+  where id in ('techparts', 'riedel');
 
 -- ─────────────────────────────────────────────────────────────────────────
 -- COMPLIANCE DOCUMENTS
