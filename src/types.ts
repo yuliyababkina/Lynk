@@ -35,6 +35,25 @@ export interface Ticket {
   status?: TicketStatus;
   /** Legacy flag kept in sync with status === "Resolved" for backward compatibility. */
   resolved?: boolean;
+  /** The one person who owns the task, or null when nobody does. Never a team. */
+  assigneeId?: string | null;
+}
+
+/**
+ * A person on the Principal's procurement staff — someone a task can be
+ * assigned to. `team` is an attribute of the person: it only groups people in
+ * the assignee picker and backs the "My team" filter. Tasks are never assigned
+ * to a team.
+ */
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  team: string;
+  /** Shown in the avatar, on the person's own colour (src/lib/avatar.ts). */
+  avatarInitials: string;
+  /** Optional photo. Replaces the initials when set; initials show if it fails to load. */
+  avatarUrl?: string | null;
 }
 
 export type SupplierStage = "prospect" | "supplier" | "inactive";

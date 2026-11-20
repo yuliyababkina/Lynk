@@ -16,6 +16,7 @@ import type {
   ChatMessage,
   ChatRead,
   ChatSide,
+  User,
 } from "../types";
 
 export interface LynkDataset {
@@ -28,6 +29,8 @@ export interface LynkDataset {
   catalogues: Catalogue[];
   chatMessages: ChatMessage[];
   chatReads: ChatRead[];
+  /** Procurement staff a task can be assigned to. */
+  users: User[];
 }
 
 function getStaticDataset(): LynkDataset {
@@ -41,6 +44,7 @@ function getStaticDataset(): LynkDataset {
     catalogues: staticData.CATALOGUES,
     chatMessages: staticData.CHAT_MESSAGES,
     chatReads: [],
+    users: staticData.USERS,
   };
 }
 
@@ -90,6 +94,22 @@ function mapTicket(row: any): Ticket & { resolved?: boolean } {
     // `status` column may not exist yet on older projects — derive from `resolved`.
     status: (row.status as Ticket["status"]) ?? (row.resolved ? "Resolved" : "To do"),
     resolved: row.resolved ?? false,
+    // Until the assignee migration has run the column is absent (not null), so
+    // fall back to the seeded mix rather than showing every task unassigned.
+    assigneeId:
+      "assignee_id" in row ? (row.assignee_id ?? null) : (staticData.SEED_TICKET_ASSIGNEES[row.id] ?? null),
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapUser(row: any): User {
+  return {
+    id: row.id,
+    name: row.name,
+    email: row.email,
+    team: row.team,
+    avatarInitials: row.avatar_initials,
+    avatarUrl: row.avatar_url ?? null,
   };
 }
 
@@ -247,6 +267,7 @@ export async function fetchAllData(): Promise<LynkDataset> {
     catSuppliersRes,
     chatRes,
     chatReadsRes,
+    usersRes,
   ] = await Promise.all([
     supabase.from("suppliers").select("*").order("name"),
     supabase.from("tickets").select("*"),
@@ -258,6 +279,7 @@ export async function fetchAllData(): Promise<LynkDataset> {
     supabase.from("catalogue_suppliers").select("*"),
     supabase.from("chat_messages").select("*").order("created_at"),
     supabase.from("chat_reads").select("*"),
+    supabase.from("users").select("*").order("name"),
   ]);
 
   const firstError = [
@@ -285,6 +307,17 @@ export async function fetchAllData(): Promise<LynkDataset> {
       "[Lynk] chat tables unavailable, using static threads:",
       (chatRes.error ?? chatReadsRes.error)?.message,
       "— run supabase/migrations/2026-10-08_add_chat.sql"
+    );
+  }
+
+  /* Same tolerance for the users table (2026-11-19 migration): without it the
+     picker offers the static staff list and assignments live for the session. */
+  const usersMissing = Boolean(usersRes.error) || (usersRes.data ?? []).length === 0;
+  if (usersMissing) {
+    console.warn(
+      "[Lynk] users table unavailable or empty, using static staff list:",
+      usersRes.error?.message ?? "no rows",
+      "— run supabase/migrations/2026-11-19_add_ticket_assignees.sql"
     );
   }
 
@@ -328,6 +361,7 @@ export async function fetchAllData(): Promise<LynkDataset> {
       ? staticData.CHAT_MESSAGES
       : (chatRes.data ?? []).map(mapChatMessage),
     chatReads: chatTablesMissing ? [] : (chatReadsRes.data ?? []).map(mapChatRead),
+    users: usersMissing ? staticData.USERS : (usersRes.data ?? []).map(mapUser),
   };
 }
 
@@ -354,6 +388,20 @@ export async function setTicketStatusDb(ticketId: string, status: TicketStatus) 
     .update({ resolved, resolved_at })
     .eq("id", ticketId);
   if (fallbackError) console.error("[Lynk] setTicketStatusDb failed:", fallbackError.message);
+}
+
+/** Sets or clears a ticket's single assignee. Without the migration the column
+ * is missing: the change then lives for the session only, with a warning. */
+export async function setTicketAssigneeDb(ticketId: string, assigneeId: string | null) {
+  if (!isSupabaseConfigured) return;
+  const { error } = await supabase.from("tickets").update({ assignee_id: assigneeId }).eq("id", ticketId);
+  if (error) {
+    console.warn(
+      "[Lynk] setTicketAssigneeDb failed:",
+      error.message,
+      "— run supabase/migrations/2026-11-19_add_ticket_assignees.sql"
+    );
+  }
 }
 
 export async function setDocStatusDb(docId: string, status: DocStatus) {

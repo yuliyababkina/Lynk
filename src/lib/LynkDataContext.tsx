@@ -9,6 +9,7 @@ import { LynkDataCtx } from "@/lib/lynk-data-context";
 import {
   fetchAllData,
   setTicketStatusDb,
+  setTicketAssigneeDb,
   setDocStatusDb,
   insertOnboardingCaseDb,
   deleteOnboardingCaseDb,
@@ -37,8 +38,13 @@ import {
 } from "./db";
 import { isSupabaseConfigured } from "./supabase";
 import { useI18n } from "./i18n-context";
-import { PRINCIPAL_COMPANY, PROCUREMENT_MANAGER, PROCUREMENT_MANAGER_ROLE } from "./principal";
-import { PRINCIPAL_ID } from "../data";
+import {
+  PRINCIPAL_COMPANY,
+  PROCUREMENT_MANAGER,
+  PROCUREMENT_MANAGER_ID,
+  PROCUREMENT_MANAGER_ROLE,
+} from "./principal";
+import { PRINCIPAL_ID, USERS } from "../data";
 import type {
   Ticket,
   SupplierDoc,
@@ -49,6 +55,7 @@ import type {
   ChatMessage,
   ChatContext,
   ChatSide,
+  User,
 } from "../types";
 
 /** Who is writing. The app has no login, so the caller — which knows its own
@@ -69,6 +76,10 @@ export interface LynkDataValue extends LynkDataset {
   ticketStatusById: Map<string, TicketStatus>;
   /** Move a ticket to any workflow status (To do / In progress / Resolved). */
   setTicketStatus: (ticket: Ticket, status: TicketStatus) => void;
+  /** The person using the app. There is no login: this is the Procurement Manager. */
+  currentUser: User;
+  /** Give a ticket to one person, or `null` to unassign it. Logged to the activity log. */
+  setTicketAssignee: (ticket: Ticket, assigneeId: string | null) => void;
   resolvedTicketIds: Set<string>;
   resolveTicket: (ticket: Ticket, action: string) => void;
   unresolveTicket: (ticketId: string) => void;
@@ -199,6 +210,33 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
     setTicketStatusById((prev) => new Map(prev).set(ticket.id, status));
     setTicketStatusDb(ticket.id, status).catch(console.error);
   }, []);
+
+  const setTicketAssignee = useCallback(
+    (ticket: Ticket, assigneeId: string | null) => {
+      setData((prev) =>
+        prev
+          ? { ...prev, tickets: prev.tickets.map((x) => (x.id === ticket.id ? { ...x, assigneeId } : x)) }
+          : prev
+      );
+      setTicketAssigneeDb(ticket.id, assigneeId).catch(console.error);
+      const assignee = data?.users.find((u) => u.id === assigneeId);
+      logActivity(
+        ticket.entityName,
+        assignee ? `Assigned to ${assignee.name}` : "Unassigned",
+        ticket.title
+      ).catch(console.error);
+    },
+    [data?.users]
+  );
+
+  /* Falls back to the static entry so a users table without Sabine's row can't
+     leave the app without a current user. */
+  const currentUser = useMemo(
+    () =>
+      data?.users.find((u) => u.id === PROCUREMENT_MANAGER_ID) ??
+      USERS.find((u) => u.id === PROCUREMENT_MANAGER_ID)!,
+    [data?.users]
+  );
 
   const resolveTicket = useCallback((ticket: Ticket, action: string) => {
     setTicketStatusById((prev) => new Map(prev).set(ticket.id, "Resolved"));
@@ -896,6 +934,8 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
       persisted: isSupabaseConfigured,
       ticketStatusById,
       setTicketStatus,
+      currentUser,
+      setTicketAssignee,
       resolvedTicketIds,
       resolveTicket,
       unresolveTicket,
@@ -931,6 +971,8 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
     error,
     ticketStatusById,
     setTicketStatus,
+    currentUser,
+    setTicketAssignee,
     resolvedTicketIds,
     resolveTicket,
     unresolveTicket,

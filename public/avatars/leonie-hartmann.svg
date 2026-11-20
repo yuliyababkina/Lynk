@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Illustrated avatar">
+  <!-- Flat illustration for the prototype, not a photo of a real person. -->
+  <rect width="64" height="64" fill="#e6e1f5"/>
+  <path d="M14 30c0-14 8-21 18-21s18 7 18 21v18H14z" fill="#3b2f4a"/>
+  <path d="M10 64c2-12 11-18 22-18s20 6 22 18z" fill="#5b6fb5"/>
+  <rect x="27" y="38" width="10" height="10" rx="3" fill="#e2b48f"/>
+  <ellipse cx="32" cy="29" rx="11" ry="12.5" fill="#efc39d"/>
+  <path d="M20 27c2-9 8-12 13-12s10 3 11 10c-6-1-12-3-15-7-2 4-5 7-9 9z" fill="#3b2f4a"/>
+  <circle cx="27.5" cy="30" r="1.4" fill="#2b2233"/>
+  <circle cx="36.5" cy="30" r="1.4" fill="#2b2233"/>
+  <path d="M28.5 35.5c2 1.6 5 1.6 7 0" stroke="#a5604a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+</svg>

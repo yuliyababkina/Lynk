@@ -16,8 +16,9 @@ import { DetailDrawer } from "@/components/yarowa/detail-drawer";
 import { RenewalReviewCard } from "@/components/yarowa/renewal-review-card";
 import { TicketStatusMenu } from "@/components/yarowa/ticket-status-menu";
 import { CriticalityIcon } from "@/components/yarowa/criticality-icon";
+import { AssigneePicker } from "@/components/yarowa/assignee-picker";
 import { useI18n } from "@/lib/i18n-context";
-import { Heading } from "@/shared/ui/typography";
+import { Heading, Text } from "@/shared/ui/typography";
 import { translateTicketTitle, translateAgeLabel } from "@/lib/ticket-i18n";
 import { relationshipId } from "@/lib/db";
 import { PRINCIPAL_ID } from "@/data";
@@ -67,10 +68,18 @@ export function TicketDrawer({
     setTicketStatus,
     suppliers: SUPPLIERS,
     unreadFor,
+    tickets: TICKETS,
+    users,
+    currentUser,
+    setTicketAssignee,
   } = useLynkData();
   const { t } = useI18n();
   const status: TicketStatus = ticketStatusById.get(ticket.id) ?? "To do";
   const PrimaryActionIcon = ACTION_ICON[ticket.primaryAction];
+  /* The `ticket` prop is the copy the row was clicked with; the assignee is read
+     live so a change in the row or here shows in both at once. */
+  const assigneeId = TICKETS.find((x) => x.id === ticket.id)?.assigneeId ?? ticket.assigneeId ?? null;
+  const assignee = users.find((u) => u.id === assigneeId) ?? null;
 
   /* A ticket names its entity by display name, so the conversation is found
      the same way "Open supplier" already finds the profile. A ticket about
@@ -109,10 +118,29 @@ export function TicketDrawer({
             </Badge>
             <Badge variant="neutral">{t(sourceLabel[ticket.source])}</Badge>
           </div>
-          <TicketStatusMenu status={status} onChange={(s) => setTicketStatus(ticket, s)} />
         </div>
       }
     >
+      {/* Ownership first: status and assignee, label left / value right, so
+          both are in view the moment the drawer opens. */}
+      <div className="mb-4 grid grid-cols-[88px_1fr] items-center gap-x-3 gap-y-2 border-b border-border pb-4">
+        <Text variant="small" as="div">{t("Status")}</Text>
+        <div>
+          <TicketStatusMenu status={status} onChange={(s) => setTicketStatus(ticket, s)} />
+        </div>
+        <Text variant="small" as="div">{t("Assignee")}</Text>
+        <div className="min-w-0 -ml-1.5">
+          <AssigneePicker
+            variant="field"
+            align="start"
+            assignee={assignee}
+            currentUser={currentUser}
+            users={users}
+            onChange={(id) => setTicketAssignee(ticket, id)}
+          />
+        </div>
+      </div>
+
       <Heading level={3} className="mb-3">{translateTicketTitle(ticket.title, t)}</Heading>
 
         <div className="grid grid-cols-2 gap-3 text-xs mb-4">

@@ -1329,6 +1329,25 @@ const DE: Record<string, string> = {
   "Compliance flag raised on Framework Contract": "Compliance-Hinweis zum Rahmenvertrag gesetzt",
   "Contract renewal reminder triggered": "Erinnerung zur Vertragsverlängerung ausgelöst",
   "Profile last updated — annual review": "Profil zuletzt aktualisiert — jährliche Prüfung",
+
+  // Task assignment (LYNK-115)
+  "Assigned to me": "Mir zugewiesen",
+  "My team": "Mein Team",
+  Unassigned: "Nicht zugewiesen",
+  "Filter by assignee": "Nach Zuständigkeit filtern",
+  "Nothing assigned to you": "Ihnen ist nichts zugewiesen",
+  "Nothing assigned to your team": "Ihrem Team ist nichts zugewiesen",
+  "No unassigned tasks": "Keine nicht zugewiesenen Aufgaben",
+  "Assigned to {name} · {team}": "Zugewiesen an {name} · {team}",
+  "Change assignee, currently {name}": "Zuständigkeit ändern, aktuell {name}",
+  "Search people…": "Personen suchen…",
+  "No one found.": "Niemand gefunden.",
+  "Assign to me": "Mir zuweisen",
+  "(you)": "(Sie)",
+  "Procurement North": "Einkauf Nord",
+  "Procurement South": "Einkauf Süd",
+  Status: "Status",
+  Assignee: "Zuständig",
 };
 
 const STORAGE_KEY = "lynk-lang";
