@@ -17,17 +17,16 @@
 
 alter table suppliers alter column wo_system set default 'Unknown';
 
-update suppliers set wo_system = 'SAP'
- where id in ('techparts', 'riedel')
-   and stage = 'Supplier'
-   and wo_system = 'Unknown';
-
-with ranked as (
-  select id, row_number() over (order by name) - 1 as rn
-    from suppliers
-   where stage = 'Supplier' and wo_system = 'Unknown'
-)
+-- One statement, so the SQL editor can't run only part of it.
 update suppliers s
-   set wo_system = (array['Planon','IBM Maximo','Aareon','Yardi','Haufe iX-Haus','MRI Software'])[(r.rn % 6) + 1]
-  from ranked r
- where s.id = r.id;
+   set wo_system = case
+         when s.id in ('techparts', 'riedel') then 'SAP'
+         else (array['Planon','IBM Maximo','Aareon','Yardi','Haufe iX-Haus','MRI Software'])[(r.rn % 6) + 1]
+       end
+  from (
+    select id, row_number() over (order by name) - 1 as rn
+      from suppliers
+     where stage = 'Supplier' and wo_system = 'Unknown'
+  ) r
+ where s.id = r.id
+returning s.id, s.name, s.wo_system;
