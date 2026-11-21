@@ -27,7 +27,7 @@ create table if not exists suppliers (
   stage text not null check (stage in ('Prospect','Supplier')),
   -- Which work order system the company receives work orders through. An
   -- attribute, not a lifecycle stage. Mirrors WO_SYSTEMS in src/lib/wo-systems.ts.
-  wo_system text not null default 'Enable (Yarowa)' check (wo_system in (
+  wo_system text not null default 'Unknown' check (wo_system in (
     'Enable (Yarowa)','SAP','Planon','IBM Maximo','Eptura (Archibus)','Infor EAM','Aareon',
     'Haufe iX-Haus','MRI Software','Yardi','Rimo R5 (Switzerland)','Other','None / manual','Unknown'
   )),

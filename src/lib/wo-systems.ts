@@ -29,7 +29,7 @@ export const WO_SYSTEMS = [
 
 export type WoSystem = (typeof WO_SYSTEMS)[number];
 
-/** Prospects and companies we know nothing about. */
+/** Prospects and companies we know nothing about. The table shows "—" for it. */
 export const DEFAULT_WO_SYSTEM: WoSystem = "Unknown";
 
 /** Narrows a raw DB value; anything unrecognised becomes the default. */
