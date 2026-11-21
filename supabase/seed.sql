@@ -133,12 +133,24 @@ insert into suppliers (id, name, stage, trade, region, compliance, rating, open_
   '[{"name":"Andreas Peters","role":"Owner","email":"andreas@peters-fm.de","phone":"+49 211 1234 029","primary":true}]',
   '{NRW}', '{"Facility management"}', null, null, null, '7 days ago');
 
--- WO management system. Demo values (PO sync, 17 Nov 2026): only systems that
--- can connect to Lynk matter, so the table never shows 'Unknown'. Everyone is
--- on Enable, with a couple of SAP rows as a showcase.
-update suppliers set wo_system = 'Enable (Yarowa)';
+-- WO management system (UX sync, 20 Nov 2026). Mirrors
+-- migrations/2026-11-19_wo_system_demo_values.sql: Enable for the former
+-- Service Providers, SAP for TechParts and Riedel, an existing
+-- system from WO_SYSTEMS for every other supplier. Prospects stay 'Unknown'
+-- and show "—" in the table.
+update suppliers set wo_system = 'Enable (Yarowa)'
+  where id in ('schmidt', 'zimmer', 'neumann', 'lang', 'peters');
 update suppliers set wo_system = 'SAP'
   where id in ('techparts', 'riedel');
+with ranked as (
+  select id, row_number() over (order by name) - 1 as rn
+    from suppliers
+   where stage = 'Supplier' and wo_system = 'Unknown'
+)
+update suppliers s
+   set wo_system = (array['Planon','IBM Maximo','Aareon','Yardi','Haufe iX-Haus','MRI Software'])[(r.rn % 6) + 1]
+  from ranked r
+ where s.id = r.id;
 
 -- ─────────────────────────────────────────────────────────────────────────
 -- COMPLIANCE DOCUMENTS

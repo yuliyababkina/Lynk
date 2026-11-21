@@ -139,8 +139,9 @@ export function SuppliersOverview({
                       <Badge variant="neutral">{t(formatStageLabel(s.stage))}</Badge>
                     </TableCell>
                     <TableCell className="px-4 py-3 whitespace-normal">
+                      {/* Not known yet (prospects): a dash, never the word "Unknown". */}
                       {s.woSystem === DEFAULT_WO_SYSTEM ? (
-                        <span className="text-muted-foreground">{t(s.woSystem)}</span>
+                        <span className="text-muted-foreground">—</span>
                       ) : (
                         t(s.woSystem)
                       )}
