@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { Contract, DataGovernanceRequest, OnboardingCase, Supplier, SupplierDoc, Ticket } from "../types";
 import type { TVars } from "./i18n";
 import { contractEndPhrase, duePhrase, expiryPhrase, parseDisplayDate, renewalDueDays } from "./date-phrases";
-import { resolveTicketTarget, type TicketTargetData } from "./ticket-target";
+import { findLinkedObject, resolveTicketObject, resolveTicketTarget, type TicketTargetData } from "./ticket-target";
 import { buildPanelModel, onboardingStage } from "./ticket-panel";
 import { STANDARD_DOCUMENT_TYPES } from "./onboarding-documents";
 
@@ -105,6 +105,84 @@ describe("date phrases", () => {
     expect(duePhrase(-82, "19 Apr 2026", t)).toBe("Was due 82 days ago · 19 Apr 2026");
     expect(contractEndPhrase(8, "18 Jul 2026", t)).toBe("Ends in 8 days · 18 Jul 2026");
     expect(contractEndPhrase(null, "31 Jan 2024", t)).toBe("Ended · 31 Jan 2024");
+  });
+});
+
+describe("resolveTicketObject — one resolver for every source", () => {
+  const d = doc({});
+  const c = contract({});
+  const r = request({});
+  const o = onbCase({});
+  const all = data({ docs: [d], contracts: [c], dataGovernanceRequests: [r], onboardingCases: [o] });
+
+  it.each([
+    ["compliance-monitoring", "Müller Logistik KG", "doc-004", { kind: "document", doc: d }],
+    ["contracts", "Thiel Metallbau GmbH", "c7", { kind: "contract", contract: c }],
+    ["data-governance", "BauParts GmbH", "dgr-1", { kind: "data-change", request: r }],
+    ["onboarding", "Bauer Sanitär GmbH", "onb-1", { kind: "onboarding", caseItem: o, supplier: undefined, docs: [] }],
+  ] as const)("%s: follows the target id", (source, entityName, targetId, expected) => {
+    expect(resolveTicketObject(ticket({ source, entityName, targetId }), all)).toEqual(expected);
+  });
+
+  it.each([
+    ["compliance-monitoring", "Müller Logistik KG"],
+    ["contracts", "Thiel Metallbau GmbH"],
+    ["data-governance", "BauParts GmbH"],
+    ["onboarding", "Bauer Sanitär GmbH"],
+  ] as const)("%s: a target id with no record is null, never a guess", (source, entityName) => {
+    // A stale id: nothing by that id, and the title matches nothing either.
+    const tk = ticket({ source, entityName, targetId: "gone", title: "Something else — 3 days" });
+    expect(resolveTicketObject(tk, data())).toBeNull();
+  });
+
+  it.each([
+    ["compliance-monitoring", "doc-004"],
+    ["contracts", "c7"],
+    ["data-governance", "dgr-1"],
+    ["onboarding", "onb-1"],
+  ] as const)("%s: an id pointing at another company's record is null", (source, targetId) => {
+    expect(resolveTicketObject(ticket({ source, entityName: "Someone Else GmbH", targetId }), all)).toBeNull();
+  });
+
+  it("data governance without an id: the company's one open request", () => {
+    const tk = ticket({ source: "data-governance", entityName: "BauParts GmbH", targetId: undefined });
+    expect(resolveTicketObject(tk, all)).toEqual({ kind: "data-change", request: r });
+    const closed = data({ dataGovernanceRequests: [request({ status: "Approved" })] });
+    expect(resolveTicketObject(tk, closed)).toBeNull();
+  });
+
+  it("onboarding without an id: the company's only case", () => {
+    const tk = ticket({ source: "onboarding", entityName: "Bauer Sanitär GmbH", targetId: undefined });
+    expect(resolveTicketObject(tk, all)?.kind).toBe("onboarding");
+  });
+
+  it("two equally good matches are not guessed between", () => {
+    const twin = doc({ id: "doc-004b" });
+    expect(resolveTicketObject(ticket({ targetId: undefined }), data({ docs: [d, twin] }))).toBeNull();
+  });
+
+  it.each(["data-quality", "prospect"] as const)("%s: no record by design", (source) => {
+    expect(resolveTicketObject(ticket({ source, targetId: "doc-004" }), all)).toBeNull();
+    expect(resolveTicketTarget(ticket({ source }), all).kind).toBe("no-object");
+  });
+
+  it("the panel calls a missing record not-found", () => {
+    expect(resolveTicketTarget(ticket({ targetId: "gone", title: "Nope — 1 day" }), data()).kind).toBe("not-found");
+  });
+});
+
+describe("findLinkedObject — the lookup App.navigate uses", () => {
+  const all = data({ docs: [doc({})], contracts: [contract({})] });
+
+  it("finds a record by kind and id", () => {
+    expect(findLinkedObject("document", "doc-004", all)?.kind).toBe("document");
+    expect(findLinkedObject("contract", "c7", all)?.kind).toBe("contract");
+  });
+
+  it("is null for an unknown id, a missing id, or the wrong kind", () => {
+    expect(findLinkedObject("document", "doc-999", all)).toBeNull();
+    expect(findLinkedObject("document", undefined, all)).toBeNull();
+    expect(findLinkedObject("contract", "doc-004", all)).toBeNull();
   });
 });
 

@@ -30,6 +30,18 @@ export type TicketTarget =
   | { kind: "no-object" }
   | { kind: "not-found" };
 
+/** A record a ticket can link to — what the resolver returns. */
+export type LinkedObject = Extract<TicketTarget, { kind: "document" | "contract" | "data-change" | "onboarding" }>;
+export type LinkedKind = LinkedObject["kind"];
+
+/** Which kind of record each ticket source links to. Sources not listed have no record by design. */
+export const SOURCE_KIND: Partial<Record<Ticket["source"], LinkedKind>> = {
+  "compliance-monitoring": "document",
+  contracts: "contract",
+  "data-governance": "data-change",
+  onboarding: "onboarding",
+};
+
 export interface TicketTargetData {
   docs: SupplierDoc[];
   contracts: Contract[];
@@ -62,52 +74,95 @@ export function onboardingDocsFor(supplier: Supplier | undefined, docs: Supplier
   return Array.from(new Map(docs.filter((d) => d.supplierId === supplier.id).map((d) => [d.id, d])).values());
 }
 
-export function resolveTicketTarget(ticket: Ticket, data: TicketTargetData): TicketTarget {
-  const entity = ticket.entityName;
-  const byId = <T extends { id: string }>(list: T[]) =>
-    ticket.targetId ? list.find((x) => x.id === ticket.targetId) : undefined;
+function onboardingObject(caseItem: OnboardingCase, data: TicketTargetData): LinkedObject {
+  const supplier = onboardingSupplierFor(caseItem, data.suppliers);
+  return { kind: "onboarding", caseItem, supplier, docs: onboardingDocsFor(supplier, data.docs) };
+}
 
-  switch (ticket.source) {
-    case "compliance-monitoring": {
-      const linked = byId(data.docs);
-      if (linked) return linked.supplierName === entity ? { kind: "document", doc: linked } : { kind: "not-found" };
+/** The company a record belongs to, to check a link never crosses companies. */
+function ownerOf(o: LinkedObject): string {
+  switch (o.kind) {
+    case "document":
+      return o.doc.supplierName;
+    case "contract":
+      return o.contract.supplierName;
+    case "data-change":
+      return o.request.supplierName;
+    case "onboarding":
+      return o.caseItem.companyName;
+  }
+}
+
+/**
+ * One record by kind and id, or null. The single lookup behind both the ticket
+ * panel and App.navigate ("Open in …", chat context links), so a record is
+ * found the same way wherever it is opened from.
+ */
+export function findLinkedObject(kind: LinkedKind, id: string | undefined | null, data: TicketTargetData): LinkedObject | null {
+  if (!id) return null;
+  switch (kind) {
+    case "document": {
+      const doc = data.docs.find((d) => d.id === id);
+      return doc ? { kind, doc } : null;
+    }
+    case "contract": {
+      const contract = data.contracts.find((c) => c.id === id);
+      return contract ? { kind, contract } : null;
+    }
+    case "data-change": {
+      const request = data.dataGovernanceRequests.find((r) => r.id === id);
+      return request ? { kind, request } : null;
+    }
+    case "onboarding": {
+      const caseItem = data.onboardingCases.find((c) => c.id === id);
+      return caseItem ? onboardingObject(caseItem, data) : null;
+    }
+  }
+}
+
+/**
+ * The record a ticket is about, for every source, or null when there is none
+ * to show — no record by design, a stale id, or nothing that matches safely.
+ */
+export function resolveTicketObject(ticket: Ticket, data: TicketTargetData): LinkedObject | null {
+  const kind = SOURCE_KIND[ticket.source];
+  if (!kind) return null;
+  const entity = ticket.entityName;
+
+  const linked = findLinkedObject(kind, ticket.targetId, data);
+  // A target id that points at another company's record is never followed.
+  if (linked) return ownerOf(linked) === entity ? linked : null;
+
+  // No usable id: match on the company plus what the title names, only when exactly one fits.
+  switch (kind) {
+    case "document": {
       const subject = titleSubject(ticket.title);
       const doc = only(data.docs.filter((d) => d.supplierName === entity && d.documentName === subject));
-      return doc ? { kind: "document", doc } : { kind: "not-found" };
+      return doc ? { kind, doc } : null;
     }
-    case "contracts": {
-      const linked = byId(data.contracts);
-      if (linked)
-        return linked.supplierName === entity ? { kind: "contract", contract: linked } : { kind: "not-found" };
+    case "contract": {
       const ref = ticket.title.match(/[A-Z]{2,4}-\d{4}-\d{4}/)?.[0];
-      const contract = ref
-        ? only(data.contracts.filter((c) => c.supplierName === entity && c.ref === ref))
-        : undefined;
-      return contract ? { kind: "contract", contract } : { kind: "not-found" };
+      const contract = ref ? only(data.contracts.filter((c) => c.supplierName === entity && c.ref === ref)) : undefined;
+      return contract ? { kind, contract } : null;
     }
-    case "data-governance": {
-      const linked = byId(data.dataGovernanceRequests);
-      if (linked)
-        return linked.supplierName === entity ? { kind: "data-change", request: linked } : { kind: "not-found" };
+    case "data-change": {
       const request = only(
         data.dataGovernanceRequests.filter((r) => r.supplierName === entity && OPEN_REQUEST.includes(r.status))
       );
-      return request ? { kind: "data-change", request } : { kind: "not-found" };
+      return request ? { kind, request } : null;
     }
     case "onboarding": {
-      const linked = byId(data.onboardingCases);
-      const caseItem = linked
-        ? linked.companyName === entity
-          ? linked
-          : undefined
-        : only(data.onboardingCases.filter((c) => c.companyName === entity));
-      if (!caseItem) return { kind: "not-found" };
-      const supplier = onboardingSupplierFor(caseItem, data.suppliers);
-      return { kind: "onboarding", caseItem, supplier, docs: onboardingDocsFor(supplier, data.docs) };
+      const caseItem = only(data.onboardingCases.filter((c) => c.companyName === entity));
+      return caseItem ? onboardingObject(caseItem, data) : null;
     }
-    default:
-      return { kind: "no-object" };
   }
+}
+
+/** The resolver's answer as the panel uses it: the record, "not-found", or "no-object" by design. */
+export function resolveTicketTarget(ticket: Ticket, data: TicketTargetData): TicketTarget {
+  const object = resolveTicketObject(ticket, data);
+  if (object) return object;
+  return SOURCE_KIND[ticket.source] ? { kind: "not-found" } : { kind: "no-object" };
 }
 
 /** The id the workspace selects for this target, so "Open in …" lands on the record. */
