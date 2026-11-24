@@ -9,6 +9,7 @@ import { ChatDock } from "@/components/yarowa/chat-dock";
 import { useChatDock, type ChatConversation } from "@/shared/hooks/use-chat-dock";
 import { TopHeader } from "@/components/yarowa/top-header";
 import { TicketDrawer } from "@/components/yarowa/ticket-drawer";
+import { contractTicket } from "@/lib/ticket-target";
 import { ComplianceDrawer } from "@/components/yarowa/compliance-drawer";
 import { DocumentLightbox } from "@/components/yarowa/document-lightbox";
 import { Toaster } from "@/components/yarowa/toast";
@@ -103,6 +104,7 @@ export default function App({ embedded = false }: AppProps = {}) {
   const {
     tickets: TICKETS,
     docs: DOCS,
+    contracts: CONTRACTS,
     suppliers: SUPPLIERS,
     onboardingCases: ONBOARDING_CASES,
     resolvedTicketIds,
@@ -152,6 +154,8 @@ export default function App({ embedded = false }: AppProps = {}) {
   const [activeTicket, setActiveTicket] = useState<Ticket | null>(null);
   const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(null);
   const [pendingSelected, setPendingSelected] = useState<string | null>(null);
+  /* "Open full review" from a ticket: the onboarding case opens in its review. */
+  const [pendingReview, setPendingReview] = useState(false);
   const [activeDoc, setActiveDoc] = useState<SupplierDoc | null>(null);
   const [reviewDoc, setReviewDoc] = useState<SupplierDoc | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -209,8 +213,12 @@ export default function App({ embedded = false }: AppProps = {}) {
     setRole(null);
   }
 
-  function navigate(v: View, selectedId?: string) {
-    setActiveTicket(null);
+  function navigate(v: View, selectedId?: string, opts?: { review?: boolean }) {
+    // Contracts have no panel of their own: the contract opens in the ticket
+    // panel, as it does from a row in Contract Management.
+    const contract = v === "contracts" && selectedId ? CONTRACTS.find((c) => c.id === selectedId) : undefined;
+    setActiveTicket(contract ? ticketForContract(contract) : null);
+    setPendingReview(Boolean(opts?.review));
     // Opening a ticket in Compliance Monitoring should surface the linked
     // document's drawer, not merely highlight its row.
     const doc = v === "compliance" && selectedId ? DOCS.find((d) => d.id === selectedId) : undefined;
@@ -340,6 +348,16 @@ export default function App({ embedded = false }: AppProps = {}) {
       },
       ...overrides,
     });
+  }
+
+  /* A contract opens as its open Task Queue ticket when it has one, so status
+     and assignee are the real ones; otherwise as a ticket built from it. */
+  function ticketForContract(c: Contract): Ticket {
+    return (
+      TICKETS.find(
+        (x) => x.source === "contracts" && x.targetId === c.id && !resolvedTicketIds.has(x.id)
+      ) ?? contractTicket(c)
+    );
   }
 
   function selectTicket(t: Ticket) {
@@ -487,7 +505,11 @@ export default function App({ embedded = false }: AppProps = {}) {
             )}
             {view === "data-governance" && <DataGovernance initialSelectedId={pendingSelected} />}
             {view === "onboarding" && (
-              <Onboarding initialSelectedId={pendingSelected} onOpenChat={openSupplierChat} />
+              <Onboarding
+                initialSelectedId={pendingSelected}
+                initialReviewing={pendingReview}
+                onOpenChat={openSupplierChat}
+              />
             )}
             {view === "compliance" && (
               <ComplianceMonitoring
@@ -502,20 +524,7 @@ export default function App({ embedded = false }: AppProps = {}) {
             )}
             {view === "contracts" && (
               <ContractManagement
-                onSelectContract={(c: Contract) =>
-                  selectTicket({
-                    id: `contract-${c.id}`,
-                    title: `${c.ref} — ${c.supplierName}`,
-                    criticality: c.status === "Renewal Urgent" ? "critical" : "medium",
-                    entityName: c.supplierName,
-                    entityType: "Supplier",
-                    ageLabel: c.timeLeftLabel,
-                    primaryAction: "Renew",
-                    source: "contracts",
-                    category: "Contracts",
-                    targetId: c.id,
-                  })
-                }
+                onSelectContract={(c: Contract) => selectTicket(ticketForContract(c))}
                 initialSelectedId={pendingSelected}
               />
             )}
@@ -528,6 +537,7 @@ export default function App({ embedded = false }: AppProps = {}) {
             <ComplianceDrawer doc={activeDoc} onClose={() => setActiveDoc(null)} onReview={setReviewDoc} />
           ) : activeTicket ? (
             <TicketDrawer
+              key={activeTicket.id}
               ticket={activeTicket}
               onClose={() => setActiveTicket(null)}
               onNavigate={navigate}

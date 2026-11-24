@@ -1,5 +1,5 @@
-import { useMemo, useState, type ComponentProps } from "react";
-import { FileText, ExternalLink, Building2, MapPin, Mail, Phone, CheckCircle2, AlertTriangle, XCircle, Trash2, Loader2, Bell, Ban, ArrowRight, MessageSquare } from "lucide-react";
+import { useMemo, useState } from "react";
+import { CheckCircle2, AlertTriangle, XCircle, Trash2, Loader2, Bell, Ban, ArrowRight, MessageSquare } from "lucide-react";
 import { useLynkData } from "../lib/lynk-data-context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,25 +21,16 @@ import {
   type Cell,
 } from "@/lib/onboarding-columns";
 import { toast } from "@/lib/toast";
-import { PRINCIPAL_COMPANY, PROCUREMENT_MANAGER, PROCUREMENT_MANAGER_ROLE } from "@/lib/principal";
+import { useInviteReminder } from "@/shared/hooks/use-invite-reminder";
+import { onboardingDocsFor, onboardingSupplierFor } from "@/lib/ticket-target";
+import { OnboardingApplicationBody } from "@/components/yarowa/onboarding-application-body";
 import { relationshipId, onboardingSupplierId } from "@/lib/db";
 import { PRINCIPAL_ID } from "@/data";
 import { ProspectReview, type ProspectReviewProps } from "./ProspectReview";
-import type { DocStatus, OnboardingStatus, OnboardingCase } from "../types";
+import type { OnboardingStatus, OnboardingCase } from "../types";
 import type { ProspectDecision } from "../lib/db";
 import { useI18n } from "@/lib/i18n-context";
 import { Heading, Text } from "@/shared/ui/typography";
-
-// Uploaded-document status → badge (mirrors the supplier portal).
-type BadgeVariant = NonNullable<ComponentProps<typeof Badge>["variant"]>;
-const DOC_STATUS_META: Record<DocStatus, { label: string; variant: BadgeVariant }> = {
-  valid: { label: "Valid", variant: "success-outline" },
-  "warning-60": { label: "Expiring", variant: "orange-outline" },
-  "warning-30": { label: "Expiring", variant: "warning-outline" },
-  "pending-review": { label: "Pending review", variant: "warning-outline" },
-  "rejected-resubmit": { label: "Resubmit", variant: "critical-outline" },
-  blocked: { label: "Blocked", variant: "critical-outline" },
-};
 
 /**
  * One stage column: a checkmark when the stage is finished, a badge while it
@@ -109,9 +100,12 @@ const URGENCY_RANK: Record<OnboardingStatus, number> = {
 
 export function Onboarding({
   initialSelectedId,
+  initialReviewing = false,
   onOpenChat,
 }: {
   initialSelectedId?: string | null;
+  /** Open the selected case straight in the full-page review ("Open full review" in a ticket). */
+  initialReviewing?: boolean;
   /** Passed through to the prospect review, which opens the shell's chat dock. */
   onOpenChat: ProspectReviewProps["onOpenChat"];
 }) {
@@ -130,42 +124,11 @@ export function Onboarding({
   const [tab, setTab] = useState<OnbTab>("All");
   const { t: tr, lang } = useI18n();
   const [selected, setSelected] = useState<string | null>(initialSelectedId ?? null);
-  const [reviewing, setReviewing] = useState(false);
+  const [reviewing, setReviewing] = useState(initialReviewing && Boolean(initialSelectedId));
   const [deletingCase, setDeletingCase] = useState<OnboardingCase | null>(null);
   const [revokingCase, setRevokingCase] = useState<OnboardingCase | null>(null);
 
-  /* Re-sends the original invitation email. Best-effort, like the first send:
-     the reminder is a nudge, so a mail failure must not look like a hard error. */
-  async function sendReminder(c: OnboardingCase) {
-    if (!c.email || !c.inviteToken) {
-      toast({
-        title: tr("No live invitation to remind about"),
-        description: tr("Send a new invitation instead."),
-        tone: "warning",
-      });
-      return;
-    }
-    try {
-      const res = await fetch("/api/send-invite", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          to: c.email,
-          companyName: c.companyName,
-          contactName: c.contactName,
-          link: `${window.location.origin}/?invite=${c.inviteToken}`,
-          principal: PRINCIPAL_COMPANY,
-          sender: PROCUREMENT_MANAGER,
-          senderRole: PROCUREMENT_MANAGER_ROLE,
-        }),
-      });
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? "failed");
-      toast({ title: tr("Reminder sent"), description: c.email, tone: "success" });
-    } catch (e) {
-      console.error("[Lynk] reminder email failed:", e);
-      toast({ title: tr("Could not send the reminder"), description: c.email, tone: "critical" });
-    }
-  }
+  const sendReminder = useInviteReminder();
 
   function actionsFor(c: OnboardingCase): RowAction[] {
     const items: RowAction[] = [];
@@ -189,9 +152,7 @@ export function Onboarding({
     return items;
   }
 
-  const linkedFor = (c: OnboardingCase) =>
-    SUPPLIERS.find((s) => s.id === c.id.replace(/^onb-/, "")) ??
-    SUPPLIERS.find((s) => s.name === c.companyName);
+  const linkedFor = (c: OnboardingCase) => onboardingSupplierFor(c, SUPPLIERS);
 
   // Clicking a prospect with a full submitted profile opens the review stepper;
   // legacy invitation-only cases just show the timeline panel.
@@ -229,17 +190,8 @@ export function Onboarding({
   // Prospects that came through the onboarding wizard use the case id
   // `onb-<supplierId>`, so we can pull the full submitted profile + documents
   // straight from the shared suppliers / supplier_docs data.
-  const linkedSupplier = selectedCase
-    ? SUPPLIERS.find((s) => s.id === selectedCase.id.replace(/^onb-/, "")) ??
-      SUPPLIERS.find((s) => s.name === selectedCase.companyName)
-    : undefined;
-  // De-dupe by id (primary key) so the review never renders duplicate rows even
-  // if the in-memory list briefly carries an optimistic + fetched copy.
-  const submittedDocs = linkedSupplier
-    ? Array.from(
-        new Map(DOCS.filter((d) => d.supplierId === linkedSupplier.id).map((d) => [d.id, d])).values()
-      )
-    : [];
+  const linkedSupplier = selectedCase ? linkedFor(selectedCase) : undefined;
+  const submittedDocs = onboardingDocsFor(linkedSupplier, DOCS);
   const primaryContact = linkedSupplier?.contacts?.find((c) => c.primary) ?? linkedSupplier?.contacts?.[0];
 
   // Full-page review stepper for a submitted prospect.
@@ -410,73 +362,12 @@ export function Onboarding({
 
           {linkedSupplier ? (
             <>
-              {/* Submitted profile — the data the prospect filled in the wizard */}
-              <SectionLabel icon={<Building2 className="w-3.5 h-3.5" />}>{tr("Company details")}</SectionLabel>
-              <dl className="space-y-2 mb-4">
-                <ReviewField label={tr("Legal name")} value={linkedSupplier.name} />
-                <ReviewField label={tr("VAT ID")} value={linkedSupplier.vatId || "—"} />
-                <ReviewField label={tr("Trade")} value={linkedSupplier.trade ? tr(linkedSupplier.trade) : "—"} />
-                <ReviewField label={tr("Region")} value={linkedSupplier.region ? tr(linkedSupplier.region) : "—"} />
-              </dl>
+              {/* Submitted profile and documents — the same body the ticket panel shows. */}
+              <OnboardingApplicationBody supplier={linkedSupplier} docs={submittedDocs} className="mb-4" />
 
-              <SectionLabel icon={<MapPin className="w-3.5 h-3.5" />}>{tr("Registered address")}</SectionLabel>
-              <p className="text-sm mb-4">{linkedSupplier.address || "—"}</p>
-
-              {primaryContact && (
-                <>
-                  <SectionLabel>{tr("Primary contact")}</SectionLabel>
-                  <div className="text-sm mb-1">{primaryContact.name}</div>
-                  {primaryContact.email && (
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <Mail className="w-3 h-3" /> {primaryContact.email}
-                    </div>
-                  )}
-                  {primaryContact.phone && (
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5 mb-4">
-                      <Phone className="w-3 h-3" /> {primaryContact.phone}
-                    </div>
-                  )}
-                </>
-              )}
-
-              {/* Uploaded documents */}
-              <SectionLabel icon={<FileText className="w-3.5 h-3.5" />}>
-                {tr("Documents ({count})", { count: submittedDocs.length })}
-              </SectionLabel>
-              <div className="space-y-1.5 mb-4">
-                {submittedDocs.length === 0 && (
-                  <p className="text-xs text-muted-foreground">{tr("No documents submitted yet.")}</p>
-                )}
-                {submittedDocs.map((doc) => {
-                  const meta = DOC_STATUS_META[doc.status] ?? { label: doc.status, variant: "warning-outline" };
-                  const openable = Boolean(doc.fileUrl);
-                  return (
-                    <Button
-                      key={doc.id}
-                      type="button"
-                      variant="ghost"
-                      disabled={!openable}
-                      onClick={() => openable && window.open(doc.fileUrl, "_blank", "noopener")}
-                      className={`h-auto w-full justify-between gap-2 rounded-md border-border px-2.5 py-2 text-left font-normal whitespace-normal disabled:pointer-events-auto disabled:opacity-100 ${
-                        openable
-                          ? "cursor-pointer hover:bg-secondary/50 dark:hover:bg-secondary/50"
-                          : "cursor-default hover:bg-transparent dark:hover:bg-transparent"
-                      }`}
-                    >
-                      <span className="flex items-center gap-2 min-w-0">
-                        <FileText className="size-3.5 text-muted-foreground shrink-0" />
-                        <Text variant="label" as="span" className="truncate">{tr(doc.documentName)}</Text>
-                        {openable && <ExternalLink className="size-3 text-muted-foreground shrink-0" />}
-                      </span>
-                      <Badge variant={meta.variant} className="shrink-0">
-                        {tr(meta.label)}
-                      </Badge>
-                    </Button>
-                  );
-                })}
-              </div>
-
-              <SectionLabel>{tr("PM Review")}</SectionLabel>
+              <Text variant="eyebrow" as="div" className="mb-2">
+                {tr("PM Review")}
+              </Text>
               <ReviewActions
                 key={selectedCase.id}
                 caseItem={selectedCase}
@@ -665,27 +556,6 @@ function DeleteCaseDialog({
         )}
       </DialogContent>
     </Dialog>
-  );
-}
-
-/* `children` is the English source where these are called; the label and the
-   field below translate what they are handed, like the portal's own Field. */
-function SectionLabel({ icon, children }: { icon?: React.ReactNode; children: React.ReactNode }) {
-  return (
-    <Text variant="eyebrow" as="div" className="flex items-center gap-1.5 mb-2">
-      {icon}
-      {children}
-    </Text>
-  );
-}
-
-function ReviewField({ label, value }: { label: string; value: string }) {
-  const { t } = useI18n();
-  return (
-    <div className="flex items-baseline justify-between gap-3">
-      <dt className="text-xs text-muted-foreground shrink-0">{t(label)}</dt>
-      <dd className="text-sm text-right truncate">{value}</dd>
-    </div>
   );
 }
 

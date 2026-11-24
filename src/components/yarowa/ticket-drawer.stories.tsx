@@ -4,6 +4,14 @@ import { LynkDataProvider } from "@/lib/LynkDataContext";
 import type { Ticket } from "@/types";
 import { TicketDrawer } from "./ticket-drawer";
 
+/*
+ * Stories run on the static mock data (Supabase is off), which holds no
+ * documents, contracts, requests or cases a ticket could link to. So these
+ * stories cover the panel's skeleton and its two record-less states; each
+ * record's body has its own story (Custom/Fact List, Custom/Data Change Body,
+ * Custom/Onboarding Application Body), and the status rules are unit-tested in
+ * src/lib/ticket-panel.test.ts.
+ */
 const TICKET: Ticket = {
   id: "ticket_1",
   // Quoted on purpose: scripts/check-custom.mjs reads the first `title` property
@@ -24,8 +32,6 @@ const meta = {
   component: TicketDrawer,
   tags: ["ai-generated"],
   parameters: { layout: "fullscreen" },
-  /* The linked document / contract / request cards come from LynkDataProvider,
-     so a ticket whose entity is not in the mock data shows only its header. */
   decorators: [
     (Story) => (
       <LynkDataProvider>
@@ -48,42 +54,46 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** The primary action resolves the ticket with that action. */
-export const DocumentCompliance: Story = {
+/** The linked document can't be found: the panel says so, shows no other record, and keeps Escalate. */
+export const LinkedRecordNotFound: Story = {
   play: async ({ canvas, userEvent, args }) => {
-    await userEvent.click(await canvas.findByRole("button", { name: /request renewal/i }));
-    await expect(args.onResolve).toHaveBeenCalledWith(args.ticket, "Request Renewal");
+    await expect(await canvas.findByText(/linked record not found/i)).toBeInTheDocument();
+    await expect(canvas.queryByText(/review this item/i)).not.toBeInTheDocument();
+    await userEvent.click(canvas.getByRole("button", { name: /escalate/i }));
+    await expect(args.onResolve).toHaveBeenCalledWith(args.ticket, "Escalate");
   },
 };
 
-/** "Escalate" as the primary action hides the separate Escalate button. */
-export const EscalatePrimary: Story = {
-  args: { ticket: { ...TICKET, id: "ticket_2", criticality: "high", primaryAction: "Escalate" } },
+/** A profile task has no single record; it keeps its own action as the recommendation. */
+export const ProfileTask: Story = {
+  args: {
+    ticket: {
+      ...TICKET,
+      id: "ticket_2",
+      "title": "Profile completeness 61% — below 65% threshold",
+      criticality: "high",
+      primaryAction: "Request",
+      source: "data-quality",
+      category: "Onboarding",
+    },
+  },
+  play: async ({ canvas, userEvent, args }) => {
+    await userEvent.click(await canvas.findByRole("button", { name: /^request$/i }));
+    await expect(args.onResolve).toHaveBeenCalledWith(args.ticket, "Request");
+  },
 };
 
-export const Contract: Story = {
+/** A prospect entity carries a small "Prospect" badge next to its name. */
+export const ProspectEntity: Story = {
   args: {
     ticket: {
       ...TICKET,
       id: "ticket_3",
-      "title": "Framework contract up for renewal",
-      criticality: "medium",
-      primaryAction: "Start Renewal",
-      source: "contracts",
-      category: "Contracts",
-    },
-  },
-};
-
-export const Onboarding: Story = {
-  args: {
-    ticket: {
-      ...TICKET,
-      id: "ticket_4",
-      "title": "Onboarding invitation stale",
-      criticality: "low",
+      "title": "Invitation stale — 31 days without response",
+      criticality: "high",
+      entityName: "Bauer Sanitär GmbH",
       entityType: "Prospect",
-      primaryAction: "Send Reminder",
+      primaryAction: "Remind",
       source: "onboarding",
       category: "Onboarding",
     },
