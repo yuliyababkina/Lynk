@@ -24,6 +24,7 @@ import { toast } from "@/lib/toast";
 import { useInviteReminder } from "@/shared/hooks/use-invite-reminder";
 import { onboardingDocsFor, onboardingSupplierFor } from "@/lib/ticket-target";
 import { OnboardingApplicationBody } from "@/components/yarowa/onboarding-application-body";
+import { ProspectDecisionActions } from "@/components/yarowa/prospect-decision-actions";
 import { relationshipId, onboardingSupplierId } from "@/lib/db";
 import { PRINCIPAL_ID } from "@/data";
 import { ProspectReview, type ProspectReviewProps } from "./ProspectReview";
@@ -593,19 +594,6 @@ function ReviewActions({
   onReview: (id: string, name: string, decision: ProspectDecision, note?: string) => Promise<void>;
 }) {
   const { t } = useI18n();
-  const [mode, setMode] = useState<"idle" | "changes" | "reject">("idle");
-  const [note, setNote] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  async function decide(decision: ProspectDecision, n?: string) {
-    setBusy(true);
-    try {
-      await onReview(supplierId, supplierName, decision, n);
-    } finally {
-      setBusy(false);
-    }
-  }
-
   // Already decided — show the outcome (matches the flow diagram's end states).
   if (caseItem.status === "Accepted") {
     return (
@@ -631,56 +619,11 @@ function ReviewActions({
     );
   }
 
-  if (mode === "idle") {
-    return (
-      <div className="space-y-2">
-        <Button variant="success" className="w-full" disabled={busy} onClick={() => decide("accept")}>
-          {t("Accept application")}
-        </Button>
-        <div className="flex gap-2">
-          <Button variant="outline" className="flex-1" disabled={busy} onClick={() => setMode("changes")}>
-            {t("Request changes")}
-          </Button>
-          <Button variant="danger" className="flex-1" disabled={busy} onClick={() => setMode("reject")}>
-            {t("Reject")}
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
+  // Still open: the same decision block the ticket panel shows.
   return (
-    <div className="space-y-2">
-      <Textarea
-        value={note}
-        onChange={(e) => setNote(e.target.value)}
-        rows={3}
-        placeholder={
-          mode === "changes" ? t("What does the supplier need to change?") : t("Reason for rejection")
-        }
-        className="field-sizing-fixed min-h-0 border-border bg-background p-2 text-sm"
-      />
-      <div className="flex gap-2">
-        <Button
-          variant="outline"
-          className="flex-1"
-          disabled={busy}
-          onClick={() => {
-            setMode("idle");
-            setNote("");
-          }}
-        >
-          {t("Cancel")}
-        </Button>
-        <Button
-          variant={mode === "reject" ? "danger" : "default"}
-          className="flex-1"
-          disabled={busy || !note.trim()}
-          onClick={() => decide(mode === "changes" ? "changes" : "reject", note.trim())}
-        >
-          {mode === "changes" ? t("Send feedback") : t("Confirm rejection")}
-        </Button>
-      </div>
-    </div>
+    <ProspectDecisionActions
+      companyName={supplierName}
+      onDecide={(decision, note) => onReview(supplierId, supplierName, decision, note)}
+    />
   );
 }

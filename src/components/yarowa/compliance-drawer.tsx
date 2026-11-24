@@ -1,38 +1,27 @@
 /**
- * @custom   Right-hand panel for one compliance document: status badge,
- *           expiry metadata, status callout, recommended actions or the
- *           renewal review card, and the document history timeline. Domain
- *           logic (status → callout/actions) no shadcn component carries.
- *           Composes Badge, Button, AlertBanner, ActionCard, RenewalReviewCard.
+ * @custom   Right-hand panel for one compliance document: status badge, date
+ *           facts, the status alert and actions, the renewal review card, and
+ *           the document history timeline. The alert and actions come from the
+ *           same rules as the ticket panel (documentPanel in lib/ticket-panel).
+ *           Composes Badge, Button, Separator, AlertBanner, ActionCard,
+ *           FactList, RenewalReviewCard and RevokeAccessDialog.
  * @approved Yuliya Babkina, 2026-11-18
  */
-import {
-  X, ShieldAlert, XCircle, Clock, CheckCircle2, AlertTriangle,
-  Upload, Bell, Send, Ban, FileText, type LucideIcon,
-} from "lucide-react";
-import type { SupplierDoc, DocStatus, ComplianceEventType } from "@/types";
+import { useState } from "react";
+import { X, Clock, CheckCircle2, Upload, Bell, Send, Ban, FileText, type LucideIcon } from "lucide-react";
+import type { SupplierDoc, ComplianceEventType } from "@/types";
 import { Badge } from "@/components/ui/badge";
-import { AlertBanner, type AlertBannerType } from "@/components/yarowa/alert-banner";
+import { AlertBanner } from "@/components/yarowa/alert-banner";
 import { ActionCard } from "@/components/yarowa/action-card";
 import { RenewalReviewCard } from "@/components/yarowa/renewal-review-card";
 import { FactList } from "@/components/yarowa/fact-list";
-import { COMPLIANCE_STATUS_META, documentFacts } from "@/lib/ticket-panel";
+import { COMPLIANCE_STATUS_META, documentFacts, documentPanel } from "@/lib/ticket-panel";
+import { RevokeAccessDialog } from "@/components/yarowa/revoke-access-dialog";
+import { Separator } from "@/components/ui/separator";
 import { toast } from "@/lib/toast";
 import { useI18n } from "@/lib/i18n-context";
-import { translateStatusNote } from "@/lib/ticket-i18n";
-import type { Tone } from "@/lib/tones";
 import { Button } from "@/components/ui/button";
 import { Heading, Text } from "@/shared/ui/typography";
-
-// Status callout — icon, tint and heading that frame the "what needs attention" note.
-const CALLOUT_META: Record<DocStatus, { icon: LucideIcon; title: string; className: string; iconColor: string }> = {
-  blocked: { icon: ShieldAlert, title: "Supplier blocked from work orders", className: "bg-critical-soft", iconColor: "text-critical-ink" },
-  "rejected-resubmit": { icon: XCircle, title: "Resubmission required", className: "bg-critical-soft", iconColor: "text-critical-ink" },
-  "pending-review": { icon: Clock, title: "Awaiting your review", className: "bg-medium-soft", iconColor: "text-medium-ink" },
-  "warning-60": { icon: AlertTriangle, title: "Expiring soon", className: "bg-warning-soft", iconColor: "text-warning-ink" },
-  "warning-30": { icon: AlertTriangle, title: "30-day auto-notification sent", className: "bg-chart-orange-soft", iconColor: "text-chart-orange-ink" },
-  valid: { icon: CheckCircle2, title: "Document valid", className: "bg-success-soft", iconColor: "text-success-ink" },
-};
 
 // Document-history timeline — icon + colour per event type.
 const EVENT_META: Record<ComplianceEventType, { icon: LucideIcon; color: string }> = {
@@ -55,20 +44,8 @@ export function ComplianceDrawer({
 }) {
   const { t } = useI18n();
   const status = COMPLIANCE_STATUS_META[doc.status];
-  const callout = CALLOUT_META[doc.status];
-  const CalloutIcon = callout.icon;
-
-  const statusCallout = doc.statusNote ? (
-    <div className={`flex gap-2.5 rounded-lg p-3 ${callout.className}`}>
-      <CalloutIcon size={16} className={`shrink-0 mt-0.5 ${callout.iconColor}`} aria-hidden="true" />
-      <div>
-        <Heading level={4} as="div">{t(callout.title)}</Heading>
-        <div className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-          {translateStatusNote(doc.statusNote, t)}
-        </div>
-      </div>
-    </div>
-  ) : null;
+  const panel = documentPanel(doc, t);
+  const [revoking, setRevoking] = useState(false);
 
   function sendReminder() {
     toast({
@@ -94,73 +71,8 @@ export function ComplianceDrawer({
     onClose();
   }
 
-  function escalate() {
-    toast({
-      title: t("Escalated to manager"),
-      description: t("{document} — {supplier} flagged for review.", {
-        document: t(doc.documentName),
-        supplier: doc.supplierName,
-      }),
-      tone: "warning",
-    });
-    onClose();
-  }
-
-  // The "what to do next" alert shown for actionable documents without a pending
-  // renewal. Uses the same wording pattern as the design example.
-  const RECOMMENDATION: Partial<Record<DocStatus, { type: AlertBannerType; title: string; body: string }>> = {
-    "warning-60": {
-      type: "warning",
-      title: t("60-day window — action recommended"),
-      body: t("Send a manual reminder now to give the supplier time to prepare their renewal."),
-    },
-    "warning-30": {
-      type: "warning",
-      title: t("30-day window — action recommended"),
-      body: t("The 30-day auto-notification has been sent. A manual reminder can prompt a faster response."),
-    },
-    blocked: {
-      type: "error",
-      title: t("Expired — supplier blocked"),
-      body: t("This document has expired and the supplier is blocked from new work orders until a renewal is uploaded and accepted."),
-    },
-    "rejected-resubmit": {
-      type: "error",
-      title: t("Resubmission required"),
-      body: t("The last upload was rejected in review. Ask the supplier to correct and re-submit the document."),
-    },
-  };
-  const recommendation = RECOMMENDATION[doc.status];
-
-  type Action = { tone: Tone; icon: LucideIcon; title: string; description: string; onClick: () => void };
-  const remindAction: Action = {
-    tone: "info",
-    icon: Send,
-    title: t("Send Manual Reminder"),
-    description:
-      doc.status === "rejected-resubmit"
-        ? t("Ask {supplier} to correct and re-upload", { supplier: doc.supplierName })
-        : t("Notify {supplier} to upload their renewal", { supplier: doc.supplierName }),
-    onClick: sendReminder,
-  };
-  // Already-blocked docs can't be revoked again — offer escalation instead.
-  const secondAction: Action =
-    doc.status === "blocked"
-      ? {
-          tone: "danger",
-          icon: AlertTriangle,
-          title: t("Escalate to Manager"),
-          description: t("Flag this blocked supplier for management review"),
-          onClick: escalate,
-        }
-      : {
-          tone: "danger",
-          icon: Ban,
-          title: t("Revoke Supplier Access"),
-          description: t("Block immediately — re-enable when document is renewed"),
-          onClick: revoke,
-        };
-  const actions: Action[] = [remindAction, secondAction];
+  const remind = panel.actions.find((a) => a.id === "doc-remind");
+  const canRevoke = panel.actions.some((a) => a.id === "doc-revoke");
 
   return (
     <div className="w-[380px] shrink-0 border-l border-border bg-card h-full overflow-y-auto animate-in slide-in-from-right-6 fade-in duration-200">
@@ -205,31 +117,46 @@ export function ComplianceDrawer({
           </a>
         )}
 
-        {doc.renewal ? (
+        {panel.alert && (
+          <AlertBanner type={panel.alert.type} title={panel.alert.title}>
+            {panel.alert.body}
+          </AlertBanner>
+        )}
+
+        {panel.renewalReview && <RenewalReviewCard doc={doc} onReview={() => onReview(doc)} />}
+
+        {/* Same actions as the ticket panel: the reminder first, Revoke apart
+            and confirmed (only for a rejected resubmission). */}
+        {remind && (
+          <ActionCard
+            tone="info"
+            icon={Send}
+            title={remind.label}
+            description={
+              doc.status === "rejected-resubmit"
+                ? t("Ask {supplier} to correct and re-upload", { supplier: doc.supplierName })
+                : t("Notify {supplier} to upload their renewal", { supplier: doc.supplierName })
+            }
+            onClick={sendReminder}
+          />
+        )}
+        {canRevoke && (
           <>
-            {statusCallout}
-            <RenewalReviewCard doc={doc} onReview={() => onReview(doc)} />
+            <Separator />
+            <ActionCard
+              tone="danger"
+              icon={Ban}
+              title={t("Revoke supplier access")}
+              description={t("Block immediately — re-enable when document is renewed")}
+              onClick={() => setRevoking(true)}
+            />
+            <RevokeAccessDialog
+              open={revoking}
+              onOpenChange={setRevoking}
+              supplierName={doc.supplierName}
+              onConfirm={revoke}
+            />
           </>
-        ) : recommendation ? (
-          <>
-            <AlertBanner type={recommendation.type} title={recommendation.title}>
-              {recommendation.body}
-            </AlertBanner>
-            <div className="space-y-2">
-              {actions.map((a) => (
-                <ActionCard
-                  key={a.title}
-                  tone={a.tone}
-                  icon={a.icon}
-                  title={a.title}
-                  description={a.description}
-                  onClick={a.onClick}
-                />
-              ))}
-            </div>
-          </>
-        ) : (
-          statusCallout
         )}
 
         {/* Document history */}

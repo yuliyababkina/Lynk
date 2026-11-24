@@ -250,10 +250,9 @@ export default function App({ embedded = false }: AppProps = {}) {
   }
 
   // A renewal decision is the same act no matter where it was triggered from, so
-  // it clears the lightbox, closes the compliance drawer, and resolves the linked
-  // dashboard ticket — keeping the ticket consistent across every space. The
-  // actual document status change and ticket resolution are persisted via
-  // LynkDataContext (decideRenewal / resolveTicket), so they survive a reload.
+  // it clears the lightbox and closes the compliance drawer. The document status
+  // and the linked ticket are persisted in LynkDataContext.decideRenewal, so
+  // every caller gets them and they survive a reload.
   function decideRenewal(doc: SupplierDoc, decision: "accept" | "reject") {
     persistDecideRenewal(doc, decision);
     if (decision === "accept") {
@@ -277,11 +276,9 @@ export default function App({ embedded = false }: AppProps = {}) {
     }
     setReviewDoc(null);
     setActiveDoc(null);
-    const linked = TICKETS.find((t) => t.source === "compliance-monitoring" && t.targetId === doc.id);
-    if (linked) {
-      persistResolveTicket(linked, decision === "accept" ? "Review" : "Escalate");
-      setActiveTicket((cur) => (cur?.id === linked.id ? null : cur));
-    }
+    // An accepted renewal settles its ticket (closed in decideRenewal), so its
+    // panel closes too. A rejected one stays open on the resubmission state.
+    if (decision === "accept") setActiveTicket(null);
   }
 
   function openProfile(id: string) {

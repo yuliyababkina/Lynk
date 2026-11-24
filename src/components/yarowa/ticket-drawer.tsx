@@ -4,8 +4,9 @@
  *           history, links, Escalate / Chat) around the record's own body —
  *           the same document facts, change-request body and application body
  *           its workspace shows. Status rules live in lib/ticket-panel.ts.
- *           Domain workflow over DetailDrawer; composes Badge, Button, Dialog,
- *           Textarea, AlertBanner, FactList, DataChangeBody,
+ *           Domain workflow over DetailDrawer; composes Badge, Button,
+ *           Separator, AlertBanner, FactList, DataChangeBody,
+ *           ProspectDecisionActions, RevokeAccessDialog,
  *           OnboardingApplicationBody, RenewalReviewCard, TicketStatusMenu and
  *           AssigneePicker.
  * @approved Yuliya Babkina, 2026-11-18
@@ -44,19 +45,19 @@ import {
   type TicketTarget,
 } from "@/lib/ticket-target";
 import { buildPanelModel, type PanelAction, type PanelActionId, type PanelEvent } from "@/lib/ticket-panel";
+import type { ProspectDecision } from "@/lib/db";
 import { useInviteReminder } from "@/shared/hooks/use-invite-reminder";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea";
 import { DetailDrawer } from "@/components/yarowa/detail-drawer";
 import { AlertBanner } from "@/components/yarowa/alert-banner";
 import { FactList } from "@/components/yarowa/fact-list";
 import { DataChangeBody } from "@/components/yarowa/data-change-body";
 import { OnboardingApplicationBody } from "@/components/yarowa/onboarding-application-body";
 import { RenewalReviewCard } from "@/components/yarowa/renewal-review-card";
+import { RevokeAccessDialog } from "@/components/yarowa/revoke-access-dialog";
+import { ProspectDecisionActions } from "@/components/yarowa/prospect-decision-actions";
 import { TicketStatusMenu } from "@/components/yarowa/ticket-status-menu";
 import { CriticalityIcon } from "@/components/yarowa/criticality-icon";
 import { AssigneePicker } from "@/components/yarowa/assignee-picker";
@@ -92,9 +93,8 @@ const ACTION_ICONS: Partial<Record<PanelActionId, LucideIcon>> = {
   "contract-renew": RefreshCw,
 };
 
-/** Actions that ask before they run; the two onboarding decisions also need a note. */
-const CONFIRMED: PanelActionId[] = ["doc-revoke", "onb-reject", "onb-request-changes"];
-const NEEDS_NOTE: PanelActionId[] = ["onb-reject", "onb-request-changes"];
+/** Application decisions render as ProspectDecisionActions, the same block Onboarding uses. */
+const DECISIONS: PanelActionId[] = ["onb-accept", "onb-request-changes", "onb-reject"];
 
 function chatContextFor(target: TicketTarget, ticket: Ticket, label: string): ChatContext {
   const id = targetRecordId(target) ?? ticket.id;
@@ -139,8 +139,7 @@ export function TicketDrawer({
   } = useLynkData();
   const { t } = useI18n();
   const sendInviteReminder = useInviteReminder();
-  const [confirming, setConfirming] = useState<PanelAction | null>(null);
-  const [note, setNote] = useState("");
+  const [revoking, setRevoking] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const status: TicketStatus = ticketStatusById.get(ticket.id) ?? "To do";
@@ -171,7 +170,7 @@ export function TicketDrawer({
     onOpenChat?.(chatSupplier.id, chatContextFor(target, ticket, model.objectName ?? title));
   };
 
-  async function run(action: PanelAction, withNote?: string) {
+  async function run(action: PanelAction) {
     switch (action.id) {
       case "doc-remind":
         return onResolve(ticket, "Remind");
@@ -196,14 +195,6 @@ export function TicketDrawer({
         if (target.kind !== "onboarding") return;
         if (await sendInviteReminder(target.caseItem, { quietSuccess: true })) onResolve(ticket, "Remind");
         return;
-      case "onb-accept":
-      case "onb-request-changes":
-      case "onb-reject": {
-        if (target.kind !== "onboarding" || !target.supplier) return;
-        const decision = action.id === "onb-accept" ? "accept" : action.id === "onb-reject" ? "reject" : "changes";
-        await reviewProspect(target.supplier.id, target.supplier.name, decision, withNote);
-        return onResolve(ticket, action.id === "onb-accept" ? "Accept" : action.id === "onb-reject" ? "Reject" : "Request changes");
-      }
       case "contract-review":
         return onResolve(ticket, "Review");
       case "contract-renew":
@@ -214,9 +205,8 @@ export function TicketDrawer({
   }
 
   async function press(action: PanelAction) {
-    if (CONFIRMED.includes(action.id)) {
-      setNote("");
-      setConfirming(action);
+    if (action.id === "doc-revoke") {
+      setRevoking(true);
       return;
     }
     setBusy(true);
@@ -227,20 +217,17 @@ export function TicketDrawer({
     }
   }
 
-  async function confirm() {
-    if (!confirming) return;
-    setBusy(true);
-    try {
-      await run(confirming, note.trim() || undefined);
-      setConfirming(null);
-    } finally {
-      setBusy(false);
-    }
+  async function decide(decision: ProspectDecision, note?: string) {
+    if (target.kind !== "onboarding" || !target.supplier) return;
+    await reviewProspect(target.supplier.id, target.supplier.name, decision, note);
+    onResolve(ticket, decision === "accept" ? "Accept" : decision === "reject" ? "Reject" : "Request changes");
   }
 
-  const primary = model.actions.find((a) => a.emphasis === "primary");
-  const secondary = model.actions.filter((a) => a.emphasis === "secondary");
-  const destructive = model.actions.filter((a) => a.emphasis === "destructive");
+  const decisions = model.actions.some((a) => DECISIONS.includes(a.id));
+  const buttons = model.actions.filter((a) => !DECISIONS.includes(a.id));
+  const primary = buttons.find((a) => a.emphasis === "primary");
+  const secondary = buttons.filter((a) => a.emphasis === "secondary");
+  const destructive = buttons.filter((a) => a.emphasis === "destructive");
 
   const actionButton = (a: PanelAction) => {
     const Icon = a.id === "ticket-primary" ? ACTION_ICON[ticket.primaryAction] : ACTION_ICONS[a.id];
@@ -261,13 +248,6 @@ export function TicketDrawer({
       </Button>
     );
   };
-
-  const subject =
-    target.kind === "onboarding"
-      ? target.caseItem.companyName
-      : target.kind === "document"
-        ? target.doc.supplierName
-        : ticket.entityName;
 
   return (
     <DetailDrawer
@@ -388,7 +368,23 @@ export function TicketDrawer({
                 {destructive.map(actionButton)}
               </>
             )}
+            {decisions && target.kind === "onboarding" && (
+              <ProspectDecisionActions
+                companyName={target.caseItem.companyName}
+                canAccept={model.actions.some((a) => a.id === "onb-accept")}
+                onDecide={decide}
+              />
+            )}
           </section>
+        )}
+
+        {target.kind === "document" && (
+          <RevokeAccessDialog
+            open={revoking}
+            onOpenChange={setRevoking}
+            supplierName={target.doc.supplierName}
+            onConfirm={() => run({ id: "doc-revoke", label: "", emphasis: "destructive" })}
+          />
         )}
 
         {model.history.length > 0 && <History events={model.history} />}
@@ -443,54 +439,6 @@ export function TicketDrawer({
         )}
       </div>
 
-      <Dialog open={Boolean(confirming)} onOpenChange={(o) => !o && !busy && setConfirming(null)}>
-        <DialogContent showCloseButton={false} className="sm:max-w-[440px]">
-          <DialogTitle>
-            {confirming?.id === "doc-revoke"
-              ? t("Revoke {supplier}'s access?", { supplier: subject })
-              : confirming?.id === "onb-reject"
-                ? t("Reject {company}'s application?", { company: subject })
-                : t("Request changes from {company}", { company: subject })}
-          </DialogTitle>
-          <DialogDescription className="text-sm text-muted-foreground">
-            {confirming?.id === "doc-revoke"
-              ? t("They can't be assigned new work orders until the document is renewed and accepted.")
-              : confirming?.id === "onb-reject"
-                ? t("The prospect is told the application was rejected, with your reason. This can't be undone.")
-                : t("The prospect sees your note and can resubmit.")}
-          </DialogDescription>
-          {confirming && NEEDS_NOTE.includes(confirming.id) && (
-            <div className="space-y-1.5">
-              <Label htmlFor="ticket-decision-note" className="block text-xs leading-4 text-muted-foreground">
-                {confirming.id === "onb-reject"
-                  ? t("Reason for rejection")
-                  : t("What does the supplier need to change?")}
-              </Label>
-              <Textarea
-                id="ticket-decision-note"
-                autoFocus
-                rows={3}
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                className="field-sizing-fixed min-h-0 border-border bg-background p-2 text-sm"
-              />
-            </div>
-          )}
-          <div className="flex gap-2 pt-2">
-            <Button variant="outline" className="flex-1" disabled={busy} onClick={() => setConfirming(null)}>
-              {t("Cancel")}
-            </Button>
-            <Button
-              variant={confirming?.emphasis === "destructive" ? "danger" : "default"}
-              className="flex-1"
-              disabled={busy || (Boolean(confirming) && NEEDS_NOTE.includes(confirming!.id) && !note.trim())}
-              onClick={confirm}
-            >
-              {confirming?.id === "onb-request-changes" ? t("Send feedback") : confirming?.label}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </DetailDrawer>
   );
 }

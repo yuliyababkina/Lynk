@@ -4,17 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertBanner } from "@/components/yarowa/alert-banner";
-import type { Contract, ContractStatus } from "../types";
+import type { Contract } from "../types";
+import { CONTRACT_STATUS_VARIANT } from "@/lib/ticket-panel";
 import { useI18n } from "@/lib/i18n-context";
 import { Heading, Text } from "@/shared/ui/typography";
-
-const STATUS_TONE: Record<ContractStatus, "success" | "warning" | "danger" | "info" | "neutral"> = {
-  Active: "success",
-  "Expiring Soon": "warning",
-  "Renewal Urgent": "danger",
-  "Renewal in Progress": "info",
-  "Opted Out": "neutral",
-};
 
 const TABS = ["All", "Urgent", "Expiring", "Active", "In Progress", "Closed"] as const;
 
@@ -119,7 +112,7 @@ export function ContractManagement({
                     </TableCell>
                     <TableCell className="px-4 py-3 whitespace-normal">{c.timeLeftLabel}</TableCell>
                     <TableCell className="px-4 py-3 whitespace-normal">
-                      <Badge variant={STATUS_TONE[c.status]}>{c.status}</Badge>
+                      <Badge variant={CONTRACT_STATUS_VARIANT[c.status]}>{tr(c.status)}</Badge>
                     </TableCell>
                   </TableRow>
                 ))}
