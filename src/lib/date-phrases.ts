@@ -74,3 +74,11 @@ export function renewalDueDays(timeLeftLabel: string, renewalBy: string, endDate
   if (left === null || gap === null) return null;
   return left - gap;
 }
+
+/** A past date: "Today · 25 Nov 2026" / "Yesterday · …" / "14 days ago · 11 Nov 2026". */
+export function sincePhrase(days: number | null, date: string, t: Translate): string {
+  if (days === null || days < 0) return date;
+  if (days === 0) return t("Today · {date}", { date });
+  if (days === 1) return t("Yesterday · {date}", { date });
+  return t("{n} days ago · {date}", { n: days, date });
+}

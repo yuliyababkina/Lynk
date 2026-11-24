@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import type { OnboardingCase } from "@/types";
 import { toast } from "@/lib/toast";
 import { useI18n } from "@/lib/i18n-context";
+import { useLynkData } from "@/lib/lynk-data-context";
 import { PRINCIPAL_COMPANY, PROCUREMENT_MANAGER, PROCUREMENT_MANAGER_ROLE } from "@/lib/principal";
 
 /**
@@ -17,6 +18,7 @@ import { PRINCIPAL_COMPANY, PROCUREMENT_MANAGER, PROCUREMENT_MANAGER_ROLE } from
  */
 export function useInviteReminder() {
   const { t } = useI18n();
+  const { recordInviteReminder } = useLynkData();
   return useCallback(
     async (c: OnboardingCase, opts?: { quietSuccess?: boolean }): Promise<boolean> => {
       if (!c.email || !c.inviteToken) {
@@ -42,6 +44,7 @@ export function useInviteReminder() {
           }),
         });
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? "failed");
+        recordInviteReminder(c.id);
         if (!opts?.quietSuccess) toast({ title: t("Reminder sent"), description: c.email, tone: "success" });
         return true;
       } catch (e) {
@@ -50,6 +53,6 @@ export function useInviteReminder() {
         return false;
       }
     },
-    [t]
+    [t, recordInviteReminder]
   );
 }

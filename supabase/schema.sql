@@ -115,7 +115,8 @@ create table if not exists contracts (
   renewal_by text,
   notice_period text,
   time_left_label text,
-  status text not null
+  status text not null,
+  renewal_sent_at text                                  -- display date; set when a renewal contract goes out
 );
 
 -- ── Master data governance (four-eyes approval) ─────────────────────────────
@@ -129,7 +130,10 @@ create table if not exists data_governance_requests (
   reason text,
   fields jsonb not null default '[]'::jsonb,            -- {label,before,after,sensitive}[]
   status text not null,
-  approval_step integer not null default 1
+  approval_step integer not null default 1,
+  endorsed_by text references users(id) on delete set null,  -- first review (four eyes)
+  endorsed_at text,
+  rejection_reason text
 );
 
 -- ── Onboarding / prospect pipeline ──────────────────────────────────────────
@@ -145,7 +149,9 @@ create table if not exists onboarding_cases (
   -- (?invite=<invite_token>) so the app can resolve which case a click
   -- belongs to without requiring a login.
   email text,
-  invite_token text
+  invite_token text,
+  invited_at text,                                      -- display dates
+  last_reminder_at text
 );
 
 create unique index if not exists onboarding_cases_invite_token_key

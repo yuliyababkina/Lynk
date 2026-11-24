@@ -7,8 +7,9 @@
  *           Domain workflow over DetailDrawer; composes Badge, Button,
  *           Separator, AlertBanner, FactList, DataChangeBody,
  *           ProspectDecisionActions, RevokeAccessDialog,
- *           OnboardingApplicationBody, RenewalReviewCard, TicketStatusMenu and
- *           AssigneePicker.
+ *           OnboardingApplicationBody, RenewalReviewCard, TicketStatusMenu,
+ *           AssigneePicker, and AlertDialog / Dialog for the reject reason and
+ *           the contact-email change.
  * @approved Yuliya Babkina, 2026-11-18
  */
 import { useMemo, useState } from "react";
@@ -21,6 +22,7 @@ import {
   CheckCheck,
   Eye,
   Link2,
+  Mail,
   MessageSquare,
   PencilLine,
   RefreshCw,
@@ -35,7 +37,7 @@ import { useLynkData } from "@/lib/lynk-data-context";
 import { ACTION_ICON } from "@/lib/action-icons";
 import { useI18n } from "@/lib/i18n-context";
 import { translateAgeLabel, translateTicketTitle } from "@/lib/ticket-i18n";
-import { relationshipId } from "@/lib/db";
+import { relationshipId, todayDisplayDate } from "@/lib/db";
 import { toast } from "@/lib/toast";
 import { PRINCIPAL_ID } from "@/data";
 import {
@@ -50,6 +52,26 @@ import { useInviteReminder } from "@/shared/hooks/use-invite-reminder";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { DetailDrawer } from "@/components/yarowa/detail-drawer";
 import { AlertBanner } from "@/components/yarowa/alert-banner";
 import { FactList } from "@/components/yarowa/fact-list";
@@ -86,6 +108,7 @@ const ACTION_ICONS: Partial<Record<PanelActionId, LucideIcon>> = {
   "dgr-final": CheckCheck,
   "dgr-reject": X,
   "onb-remind": Bell,
+  "onb-change-email": Mail,
   "onb-accept": Check,
   "onb-request-changes": PencilLine,
   "onb-reject": XCircle,
@@ -136,11 +159,18 @@ export function TicketDrawer({
     currentUser,
     setTicketAssignee,
     reviewProspect,
+    endorseDataChange,
+    approveDataChange,
+    rejectDataChange,
+    updateOnboardingEmail,
+    renewContract,
   } = useLynkData();
   const { t } = useI18n();
   const sendInviteReminder = useInviteReminder();
   const [revoking, setRevoking] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [rejectingChange, setRejectingChange] = useState(false);
+  const [changingEmail, setChangingEmail] = useState(false);
 
   const status: TicketStatus = ticketStatusById.get(ticket.id) ?? "To do";
   /* The `ticket` prop is the copy the row was clicked with; the assignee is read
@@ -152,7 +182,11 @@ export function TicketDrawer({
     () => resolveTicketTarget(ticket, { docs, contracts, dataGovernanceRequests, onboardingCases, suppliers }),
     [ticket, docs, contracts, dataGovernanceRequests, onboardingCases, suppliers]
   );
-  const model = buildPanelModel(ticket, status, target, t);
+  const model = buildPanelModel(ticket, status, target, t, {
+    currentUserId: currentUser.id,
+    userName: (id) => users.find((u) => u.id === id)?.name,
+    today: todayDisplayDate(),
+  });
   const title = translateTicketTitle(ticket.title, t);
   const recordId = targetRecordId(target);
   const targetView = sourceToView[ticket.source];
@@ -186,11 +220,13 @@ export function TicketDrawer({
         });
         return;
       case "dgr-endorse":
+        if (target.kind !== "data-change") return;
+        await endorseDataChange(target.request.id);
         return onResolve(ticket, "Endorse");
       case "dgr-final":
+        if (target.kind !== "data-change") return;
+        await approveDataChange(target.request.id);
         return onResolve(ticket, "Final approval");
-      case "dgr-reject":
-        return onResolve(ticket, "Reject change");
       case "onb-remind":
         if (target.kind !== "onboarding") return;
         if (await sendInviteReminder(target.caseItem, { quietSuccess: true })) onResolve(ticket, "Remind");
@@ -198,6 +234,7 @@ export function TicketDrawer({
       case "contract-review":
         return onResolve(ticket, "Review");
       case "contract-renew":
+        if (target.kind === "contract") await renewContract(target.contract.id);
         return onResolve(ticket, "Renew");
       default:
         return onResolve(ticket, ticket.primaryAction);
@@ -205,10 +242,9 @@ export function TicketDrawer({
   }
 
   async function press(action: PanelAction) {
-    if (action.id === "doc-revoke") {
-      setRevoking(true);
-      return;
-    }
+    if (action.id === "doc-revoke") return setRevoking(true);
+    if (action.id === "dgr-reject") return setRejectingChange(true);
+    if (action.id === "onb-change-email") return setChangingEmail(true);
     setBusy(true);
     try {
       await run(action);
@@ -240,7 +276,7 @@ export function TicketDrawer({
             ? "w-full border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
             : "w-full"
         }
-        disabled={busy}
+        disabled={busy || a.disabled}
         onClick={() => press(a)}
       >
         {Icon && <Icon size={14} />}
@@ -248,6 +284,15 @@ export function TicketDrawer({
       </Button>
     );
   };
+  const actionBlock = (a: PanelAction) =>
+    a.note ? (
+      <div key={a.id} className="space-y-1">
+        {actionButton(a)}
+        <Text variant="small" as="div">{a.note}</Text>
+      </div>
+    ) : (
+      actionButton(a)
+    );
 
   return (
     <DetailDrawer
@@ -358,10 +403,10 @@ export function TicketDrawer({
             {primary && (
               <div className="space-y-1.5">
                 <Text variant="eyebrow" as="div">{t("Recommended")}</Text>
-                {actionButton(primary)}
+                {actionBlock(primary)}
               </div>
             )}
-            {secondary.map(actionButton)}
+            {secondary.map(actionBlock)}
             {destructive.length > 0 && (
               <>
                 <Separator className="my-3" />
@@ -384,6 +429,31 @@ export function TicketDrawer({
             onOpenChange={setRevoking}
             supplierName={target.doc.supplierName}
             onConfirm={() => run({ id: "doc-revoke", label: "", emphasis: "destructive" })}
+          />
+        )}
+
+        {target.kind === "data-change" && (
+          <RejectChangeDialog
+            open={rejectingChange}
+            onOpenChange={setRejectingChange}
+            supplierName={target.request.supplierName}
+            onConfirm={async (reason) => {
+              await rejectDataChange(target.request.id, reason);
+              onResolve(ticket, "Reject change");
+            }}
+          />
+        )}
+
+        {target.kind === "onboarding" && (
+          <ContactEmailDialog
+            open={changingEmail}
+            onOpenChange={setChangingEmail}
+            companyName={target.caseItem.companyName}
+            email={target.caseItem.email ?? ""}
+            onSave={async (email) => {
+              await updateOnboardingEmail(target.caseItem.id, email);
+              toast({ title: t("Contact email updated"), description: email, tone: "success" });
+            }}
           />
         )}
 
@@ -468,5 +538,144 @@ function History({ events }: { events: PanelEvent[] }) {
         </Button>
       )}
     </section>
+  );
+}
+
+/** Asks why a data change is rejected; the reason is shown on the rejected request. */
+function RejectChangeDialog({
+  open,
+  onOpenChange,
+  supplierName,
+  onConfirm,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  supplierName: string;
+  onConfirm: (reason: string) => Promise<void>;
+}) {
+  const { t } = useI18n();
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+  async function confirm() {
+    setBusy(true);
+    try {
+      await onConfirm(reason.trim());
+      setReason("");
+      onOpenChange(false);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <AlertDialog open={open} onOpenChange={(o) => !busy && onOpenChange(o)}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{t("Reject {supplier}'s change?", { supplier: supplierName })}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {t("The current values stay in place. Your reason is kept with the request.")}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="space-y-1.5">
+          <Label htmlFor="reject-change-reason" className="block text-xs leading-4 text-muted-foreground">
+            {t("Reason for rejection")}
+          </Label>
+          <Textarea
+            id="reject-change-reason"
+            autoFocus
+            rows={3}
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            className="field-sizing-fixed min-h-0 border-border bg-background p-2 text-sm"
+          />
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={busy}>{t("Cancel")}</AlertDialogCancel>
+          {/* A plain Button, not AlertDialogAction: the dialog stays open until it is saved. */}
+          <Button variant="danger" disabled={busy || !reason.trim()} onClick={confirm}>
+            {t("Reject change")}
+          </Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** Corrects where an unanswered invitation goes. */
+function ContactEmailDialog({
+  open,
+  onOpenChange,
+  companyName,
+  email,
+  onSave,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  companyName: string;
+  email: string;
+  onSave: (email: string) => Promise<void>;
+}) {
+  const { t } = useI18n();
+  const [value, setValue] = useState(email);
+  const [busy, setBusy] = useState(false);
+  const trimmed = value.trim();
+  const valid = EMAIL.test(trimmed) && trimmed !== email;
+  async function save() {
+    setBusy(true);
+    try {
+      await onSave(trimmed);
+      onOpenChange(false);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (busy) return;
+        if (o) setValue(email);
+        onOpenChange(o);
+      }}
+    >
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{t("Change contact email")}</DialogTitle>
+          <DialogDescription>
+            {t("Reminders for {company} go to the new address. The invitation link stays the same.", {
+              company: companyName,
+            })}
+          </DialogDescription>
+        </DialogHeader>
+        <form
+          className="space-y-1.5"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (valid && !busy) save();
+          }}
+        >
+          <Label htmlFor="contact-email" className="block text-xs leading-4 text-muted-foreground">
+            {t("Contact email")}
+          </Label>
+          <Input
+            id="contact-email"
+            type="email"
+            autoFocus
+            value={value}
+            aria-invalid={trimmed !== "" && !EMAIL.test(trimmed)}
+            onChange={(e) => setValue(e.target.value)}
+          />
+        </form>
+        <DialogFooter>
+          <Button variant="outline" disabled={busy} onClick={() => onOpenChange(false)}>
+            {t("Cancel")}
+          </Button>
+          <Button disabled={busy || !valid} onClick={save}>
+            {t("Save email")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

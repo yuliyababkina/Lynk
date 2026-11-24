@@ -33,12 +33,18 @@ import {
   insertChatMessageDb,
   markChatReadDb,
   deleteChatForRelationshipDb,
+  acceptRenewalDb,
+  setDataChangeDb,
+  updateOnboardingCaseDb,
+  renewContractDb,
+  todayDisplayDate,
   type LynkDataset,
   type ProspectDecision,
 } from "./db";
 import { isSupabaseConfigured } from "./supabase";
 import { useI18n } from "./i18n-context";
 import { resolveTicketTarget } from "./ticket-target";
+import { daysBetween } from "./date-phrases";
 import {
   PRINCIPAL_COMPANY,
   PROCUREMENT_MANAGER,
@@ -49,6 +55,7 @@ import { PRINCIPAL_ID, USERS } from "../data";
 import type {
   Ticket,
   SupplierDoc,
+  DataGovernanceRequest,
   Catalogue,
   OnboardingCase,
   TicketStatus,
@@ -88,6 +95,16 @@ export interface LynkDataValue extends LynkDataset {
   companyApprovedIds: Set<string>;
   setCompanyApproved: (supplierId: string, approved: boolean) => void;
   decideRenewal: (doc: SupplierDoc, decision: "accept" | "reject") => void;
+  /** Four-eyes review of a master-data change, as the current user. */
+  endorseDataChange: (requestId: string) => Promise<void>;
+  approveDataChange: (requestId: string) => Promise<void>;
+  rejectDataChange: (requestId: string, reason: string) => Promise<void>;
+  /** Corrects where an onboarding invitation goes; reminders use the new address. */
+  updateOnboardingEmail: (caseId: string, email: string) => Promise<void>;
+  /** Records that a reminder went out today, for "Last reminder". */
+  recordInviteReminder: (caseId: string) => void;
+  /** Sends the renewal contract: the contract waits for the supplier's signature. */
+  renewContract: (contractId: string) => Promise<void>;
   addOnboardingCase: (c: OnboardingCase) => void;
   /** Removes an onboarding case for good. A reason is required and is written to
    * the activity log, which is the only place it survives the deletion. An
@@ -296,17 +313,28 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
 
   const decideRenewal = useCallback((doc: SupplierDoc, decision: "accept" | "reject") => {
     const nextStatus = decision === "accept" ? "valid" : "rejected-resubmit";
+    // Accepting makes the upload the current document: its expiry and file.
+    const r = doc.renewal;
+    const days = r?.validUntil ? (daysBetween(todayDisplayDate(), r.validUntil) ?? undefined) : undefined;
+    const promoted: Partial<SupplierDoc> =
+      decision === "accept" && r
+        ? {
+            ...(r.validUntil ? { expiryDate: r.validUntil, daysUntilExpiry: days ?? doc.daysUntilExpiry } : {}),
+            ...(r.filePath ? { filePath: r.filePath, fileUrl: r.fileUrl } : {}),
+          }
+        : {};
     setData((prev) =>
       prev
         ? {
             ...prev,
             docs: prev.docs.map((d) =>
-              d.id === doc.id ? { ...d, status: nextStatus, renewal: undefined } : d
+              d.id === doc.id ? { ...d, ...promoted, status: nextStatus, renewal: undefined } : d
             ),
           }
         : prev
     );
-    setDocStatusDb(doc.id, nextStatus).catch(console.error);
+    if (decision === "accept") acceptRenewalDb(doc, days).catch(console.error);
+    else setDocStatusDb(doc.id, nextStatus).catch(console.error);
     logActivity(doc.supplierName, `Renewal ${decision}ed — ${doc.documentName}`).catch(console.error);
     // A rejected renewal leaves the ticket open: the document now needs a
     // resubmission, which is still the manager's to chase.
@@ -455,7 +483,8 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const addOnboardingCase = useCallback(
-    (c: OnboardingCase) => {
+    (invited: OnboardingCase) => {
+      const c = { ...invited, invitedAt: invited.invitedAt ?? todayDisplayDate() };
       setData((prev) =>
         prev ? { ...prev, onboardingCases: [c, ...prev.onboardingCases] } : prev
       );
@@ -576,7 +605,24 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
       metadata?: { documentType?: string; issuingInstitution?: string; expiryDate?: string; doesNotExpire?: boolean }
     ) => {
       assertTermsAccepted(supplierId);
-      const doc = await uploadSupplierDocument({ file, supplierId, supplierName, trade, documentName, metadata });
+      /* An established supplier re-uploading a document it already holds is
+         renewing it: the accepted document stays current until the renewal is
+         reviewed. A prospect's upload, or a first upload never accepted yet,
+         simply replaces the row. */
+      const supplier = data?.suppliers.find((x) => x.id === supplierId);
+      const isProspect = !supplier || String(supplier.stage).toLowerCase() === "prospect";
+      const existing = data?.docs.find((d) => d.supplierId === supplierId && d.documentName === documentName);
+      const renewalOf =
+        !isProspect && existing && (existing.status !== "pending-review" || existing.renewal) ? existing : undefined;
+      const doc = await uploadSupplierDocument({
+        file,
+        supplierId,
+        supplierName,
+        trade,
+        documentName,
+        metadata,
+        renewalOf,
+      });
       // Replace any existing document of the same type for this supplier (a new
       // upload supersedes the previous version), then surface it at the top.
       setData((prev) =>
@@ -592,9 +638,12 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
             }
           : prev
       );
-      logActivity(supplierName, `Document uploaded — ${doc.documentName}`).catch(console.error);
+      logActivity(
+        supplierName,
+        `${renewalOf ? "Renewal uploaded" : "Document uploaded"} — ${doc.documentName}`
+      ).catch(console.error);
     },
-    [assertTermsAccepted]
+    [assertTermsAccepted, data?.suppliers, data?.docs]
   );
 
   const reviewDocument = useCallback(
@@ -949,6 +998,115 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
     [data?.onboardingCases]
   );
 
+  const patchDataChange = useCallback(
+    async (requestId: string, patch: Partial<DataGovernanceRequest>, activity: string) => {
+      const current = data?.dataGovernanceRequests.find((r) => r.id === requestId);
+      if (!current) return;
+      const next = { ...current, ...patch };
+      setData((prev) =>
+        prev
+          ? {
+              ...prev,
+              dataGovernanceRequests: prev.dataGovernanceRequests.map((r) => (r.id === requestId ? next : r)),
+            }
+          : prev
+      );
+      await setDataChangeDb(requestId, {
+        status: next.status,
+        approvalStep: next.approvalStep,
+        endorsedBy: patch.endorsedBy,
+        endorsedAt: patch.endorsedAt,
+        rejectionReason: patch.rejectionReason,
+      });
+      logActivity(current.supplierName, `${activity} — ${current.category} change`, undefined, currentUser.name).catch(
+        console.error
+      );
+    },
+    [data?.dataGovernanceRequests, currentUser.name]
+  );
+
+  const endorseDataChange = useCallback(
+    (requestId: string) =>
+      patchDataChange(
+        requestId,
+        {
+          status: "Endorsed — Awaiting 2nd Approval",
+          approvalStep: 2,
+          endorsedBy: currentUser.id,
+          endorsedAt: todayDisplayDate(),
+        },
+        "Endorsed (first review)"
+      ),
+    [patchDataChange, currentUser.id]
+  );
+
+  const approveDataChange = useCallback(
+    async (requestId: string) => {
+      // Four eyes: whoever gave the first review cannot also give the final one.
+      const r = data?.dataGovernanceRequests.find((x) => x.id === requestId);
+      if (r?.endorsedBy === currentUser.id) throw new Error("The first reviewer cannot give final approval.");
+      await patchDataChange(requestId, { status: "Approved", approvalStep: 2 }, "Final approval");
+    },
+    [patchDataChange, data?.dataGovernanceRequests, currentUser.id]
+  );
+
+  const rejectDataChange = useCallback(
+    (requestId: string, reason: string) =>
+      patchDataChange(requestId, { status: "Rejected", rejectionReason: reason.trim() }, "Change rejected"),
+    [patchDataChange]
+  );
+
+  const patchOnboardingCase = useCallback((caseId: string, patch: Partial<OnboardingCase>) => {
+    setData((prev) =>
+      prev
+        ? {
+            ...prev,
+            onboardingCases: prev.onboardingCases.map((c) => (c.id === caseId ? { ...c, ...patch } : c)),
+          }
+        : prev
+    );
+  }, []);
+
+  const updateOnboardingEmail = useCallback(
+    async (caseId: string, email: string) => {
+      const trimmed = email.trim();
+      const c = data?.onboardingCases.find((x) => x.id === caseId);
+      patchOnboardingCase(caseId, { email: trimmed });
+      await updateOnboardingCaseDb(caseId, { email: trimmed });
+      if (c) logActivity(c.companyName, `Contact email changed to ${trimmed}`).catch(console.error);
+    },
+    [data?.onboardingCases, patchOnboardingCase]
+  );
+
+  const recordInviteReminder = useCallback(
+    (caseId: string) => {
+      const today = todayDisplayDate();
+      patchOnboardingCase(caseId, { lastReminderAt: today });
+      updateOnboardingCaseDb(caseId, { lastReminderAt: today }).catch(console.error);
+    },
+    [patchOnboardingCase]
+  );
+
+  const renewContract = useCallback(
+    async (contractId: string) => {
+      const today = todayDisplayDate();
+      const c = data?.contracts.find((x) => x.id === contractId);
+      setData((prev) =>
+        prev
+          ? {
+              ...prev,
+              contracts: prev.contracts.map((x) =>
+                x.id === contractId ? { ...x, status: "Renewal in Progress" as const, renewalSentAt: today } : x
+              ),
+            }
+          : prev
+      );
+      await renewContractDb(contractId, today);
+      if (c) logActivity(c.supplierName, `Renewal contract sent — ${c.ref}`).catch(console.error);
+    },
+    [data?.contracts]
+  );
+
   const persistCatalogue = useCallback((c: Catalogue) => {
     upsertCatalogueDb(c).catch(console.error);
   }, []);
@@ -970,6 +1128,12 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
       companyApprovedIds,
       setCompanyApproved,
       decideRenewal,
+      endorseDataChange,
+      approveDataChange,
+      rejectDataChange,
+      updateOnboardingEmail,
+      recordInviteReminder,
+      renewContract,
       addOnboardingCase,
       deleteOnboardingCase,
       setCatalogues,
@@ -1007,6 +1171,12 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
     companyApprovedIds,
     setCompanyApproved,
     decideRenewal,
+    endorseDataChange,
+    approveDataChange,
+    rejectDataChange,
+    updateOnboardingEmail,
+    recordInviteReminder,
+    renewContract,
     addOnboardingCase,
     deleteOnboardingCase,
     setCatalogues,

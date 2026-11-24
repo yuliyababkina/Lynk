@@ -14,7 +14,15 @@ import type {
 import type { TVars } from "./i18n";
 import type { DocBadgeVariant } from "./document-status";
 import { STANDARD_DOCUMENT_TYPES } from "./onboarding-documents";
-import { contractDaysLeft, contractEndPhrase, duePhrase, expiryPhrase, renewalDueDays } from "./date-phrases";
+import {
+  contractDaysLeft,
+  contractEndPhrase,
+  daysBetween,
+  duePhrase,
+  expiryPhrase,
+  renewalDueDays,
+  sincePhrase,
+} from "./date-phrases";
 import type { TicketTarget } from "./ticket-target";
 
 type Translate = (source: string, vars?: TVars) => string;
@@ -37,6 +45,7 @@ export type PanelActionId =
   | "dgr-final"
   | "dgr-reject"
   | "onb-remind"
+  | "onb-change-email"
   | "onb-accept"
   | "onb-request-changes"
   | "onb-reject"
@@ -49,6 +58,18 @@ export interface PanelAction {
   label: string;
   /** At most one "primary" per panel; "destructive" sits apart and asks to confirm. */
   emphasis: "primary" | "secondary" | "destructive";
+  /** Shown but not pressable; `note` says why. */
+  disabled?: boolean;
+  note?: string;
+}
+
+/** Who is looking, for rules that depend on it (four eyes). */
+export interface PanelContext {
+  currentUserId?: string;
+  /** Display name for a user id. */
+  userName?: (id: string) => string | undefined;
+  /** Today as a display date, for "N days ago". */
+  today?: string;
 }
 
 export interface PanelFact {
@@ -157,6 +178,10 @@ export function documentFacts(doc: SupplierDoc, t: Translate): PanelFact[] {
         { label: t("Current document expires"), value: expires },
         ...(doc.renewal
           ? [
+              {
+                label: t("Renewal valid until"),
+                value: doc.renewal.validUntil ?? t("Not stated on the upload"),
+              },
               {
                 label: t("Renewal uploaded"),
                 value: t("{date} · {who}", { date: doc.renewal.uploadedAt, who: doc.renewal.uploadedBy }),
@@ -335,9 +360,14 @@ function contractModel(c: Contract, t: Translate): PanelModel {
     case "Renewal in Progress":
       return {
         ...base,
+        facts: c.renewalSentAt
+          ? [{ label: t("New contract sent"), value: c.renewalSentAt }, ...base.facts]
+          : base.facts,
         alert: {
           type: "neutral",
-          title: t("New contract sent, waiting for signature"),
+          title: c.renewalSentAt
+            ? t("New contract sent {date}, waiting for signature", { date: c.renewalSentAt })
+            : t("New contract sent, waiting for signature"),
           body: t("The supplier has the renewal contract. Nothing to do until they sign."),
         },
         actions: [],
@@ -362,14 +392,24 @@ function contractModel(c: Contract, t: Translate): PanelModel {
 
 /* ── Data governance ──────────────────────────────────────────────────── */
 
-function dataChangeModel(r: DataGovernanceRequest, t: Translate): PanelModel {
+function dataChangeModel(r: DataGovernanceRequest, t: Translate, ctx: PanelContext): PanelModel {
+  const endorser = r.endorsedBy ? (ctx.userName?.(r.endorsedBy) ?? r.endorsedBy) : undefined;
+  const history: PanelEvent[] = [{ date: r.requestedAt, event: t("Change requested"), actor: r.requestedBy }];
+  if (endorser) history.unshift({ date: r.endorsedAt ?? "—", event: t("Endorsed — first review"), actor: endorser });
   const base = {
     objectLabel: t("Change request"),
     objectName: t("{category} change", { category: t(r.category) }),
     objectSub: t("Requested by {who} · {when}", { who: r.requestedBy, when: r.requestedAt }),
     objectStatus: { label: t(r.status), variant: DATA_CHANGE_STATUS_VARIANT[r.status] },
-    facts: [],
-    history: [{ date: r.requestedAt, event: t("Change requested"), actor: r.requestedBy }],
+    facts: endorser
+      ? [
+          {
+            label: t("First review"),
+            value: r.endorsedAt ? t("{who} · {date}", { who: endorser, date: r.endorsedAt }) : endorser,
+          },
+        ]
+      : [],
+    history,
   };
   const reject: PanelAction = { id: "dgr-reject", label: t("Reject change"), emphasis: "secondary" };
 
@@ -396,7 +436,18 @@ function dataChangeModel(r: DataGovernanceRequest, t: Translate): PanelModel {
           title: t("Awaiting final approval"),
           body: t("The first review is done. A second approver gives final approval before the change takes effect."),
         },
-        actions: [{ id: "dgr-final", label: t("Final approval"), emphasis: "primary" }, reject],
+        actions: [
+          r.endorsedBy && r.endorsedBy === ctx.currentUserId
+            ? {
+                id: "dgr-final",
+                label: t("Final approval"),
+                emphasis: "primary",
+                disabled: true,
+                note: t("You did the first review. Another approver must give final approval."),
+              }
+            : { id: "dgr-final", label: t("Final approval"), emphasis: "primary" },
+          reject,
+        ],
         escalate: true,
       };
     case "Approved":
@@ -409,7 +460,13 @@ function dataChangeModel(r: DataGovernanceRequest, t: Translate): PanelModel {
     default:
       return {
         ...base,
-        alert: { type: "error", title: t("Change rejected"), body: t("This change was rejected and not applied.") },
+        alert: {
+          type: "error",
+          title: t("Change rejected"),
+          body: r.rejectionReason
+            ? t("Rejected: {reason} The change was not applied.", { reason: r.rejectionReason })
+            : t("This change was rejected and not applied."),
+        },
         actions: [],
         escalate: false,
       };
@@ -466,7 +523,13 @@ export function onboardingStage(c: OnboardingCase, docs: SupplierDoc[]): Onboard
   }
 }
 
-function onboardingModel(c: OnboardingCase, supplier: Supplier | undefined, docs: SupplierDoc[], t: Translate): PanelModel {
+function onboardingModel(
+  c: OnboardingCase,
+  supplier: Supplier | undefined,
+  docs: SupplierDoc[],
+  t: Translate,
+  ctx: PanelContext
+): PanelModel {
   const stage = onboardingStage(c, docs);
   const base = {
     objectLabel: t("Application"),
@@ -486,13 +549,19 @@ function onboardingModel(c: OnboardingCase, supplier: Supplier | undefined, docs
 
   switch (stage) {
     case "invite": {
-      const invitation = c.status === "Stale" ? "Stale" : c.status === "Opened" ? "Opened" : "Sent";
-      const days = t("{n} days", { n: c.daysNoResponse });
+      // The invitation is as old as the silence after it: the stored count.
+      const invited = c.invitedAt
+        ? sincePhrase(c.daysNoResponse, c.invitedAt, t)
+        : t("{n} days ago", { n: c.daysNoResponse });
+      const reminderDays = c.lastReminderAt && ctx.today ? daysBetween(c.lastReminderAt, ctx.today) : null;
       return {
         ...base,
         facts: [
-          { label: t("Invitation"), value: t(invitation), tone: c.status === "Stale" ? "danger" : undefined },
-          { label: t("No response for"), value: days },
+          { label: t("Invited"), value: invited, tone: c.status === "Stale" ? "danger" : undefined },
+          {
+            label: t("Last reminder"),
+            value: c.lastReminderAt ? sincePhrase(reminderDays, c.lastReminderAt, t) : t("None sent yet"),
+          },
         ],
         alert:
           c.status === "Stale"
@@ -514,7 +583,7 @@ function onboardingModel(c: OnboardingCase, supplier: Supplier | undefined, docs
                   title: t("No response yet"),
                   body: t("The invitation hasn't been opened yet."),
                 },
-        actions: [remind],
+        actions: [remind, { id: "onb-change-email", label: t("Change contact email"), emphasis: "secondary" }],
         escalate: true,
       };
     }
@@ -604,7 +673,8 @@ export function buildPanelModel(
   ticket: Ticket,
   ticketStatus: TicketStatus,
   target: TicketTarget,
-  t: Translate
+  t: Translate,
+  ctx: PanelContext = {}
 ): PanelModel {
   let model: PanelModel;
   switch (target.kind) {
@@ -615,10 +685,10 @@ export function buildPanelModel(
       model = contractModel(target.contract, t);
       break;
     case "data-change":
-      model = dataChangeModel(target.request, t);
+      model = dataChangeModel(target.request, t, ctx);
       break;
     case "onboarding":
-      model = onboardingModel(target.caseItem, target.supplier, target.docs, t);
+      model = onboardingModel(target.caseItem, target.supplier, target.docs, t, ctx);
       break;
     case "no-object":
       // Profile tasks have no single record by design; they keep the action

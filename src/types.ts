@@ -125,6 +125,11 @@ export interface RenewalUpload {
   fileSize: string;
   uploadedAt: string;
   uploadedBy: string;
+  /** Expiry of the uploaded file (display date), as the supplier confirmed it. */
+  validUntil?: string;
+  /** The uploaded file itself; it becomes the current file once accepted. */
+  filePath?: string;
+  fileUrl?: string;
 }
 
 export interface SupplierDoc {
@@ -170,6 +175,8 @@ export interface Contract {
   noticePeriod: string;
   timeLeftLabel: string;
   status: ContractStatus;
+  /** When the renewal contract went out for signature (display date). */
+  renewalSentAt?: string;
 }
 
 export interface DataGovernanceRequest {
@@ -183,6 +190,11 @@ export interface DataGovernanceRequest {
   fields: { label: string; before: string; after: string; sensitive?: boolean }[];
   status: "Awaiting Review" | "Endorsed — Awaiting 2nd Approval" | "Approved" | "Rejected";
   approvalStep: 1 | 2;
+  /** User id of whoever gave the first review. They can't also give final approval. */
+  endorsedBy?: string;
+  endorsedAt?: string;
+  /** Why the change was rejected; shown wherever the rejected request is. */
+  rejectionReason?: string;
 }
 
 export type OnboardingStatus =
@@ -213,6 +225,9 @@ export interface OnboardingCase {
   /** Unique token embedded in the invite's magic link (?invite=<inviteToken>)
    * so a click can be resolved back to this case without a login. */
   inviteToken?: string;
+  /** When the invitation was sent, and the last reminder after it (display dates). */
+  invitedAt?: string;
+  lastReminderAt?: string;
 }
 
 /**
