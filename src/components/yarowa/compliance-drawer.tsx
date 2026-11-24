@@ -15,24 +15,14 @@ import { Badge } from "@/components/ui/badge";
 import { AlertBanner, type AlertBannerType } from "@/components/yarowa/alert-banner";
 import { ActionCard } from "@/components/yarowa/action-card";
 import { RenewalReviewCard } from "@/components/yarowa/renewal-review-card";
+import { FactList } from "@/components/yarowa/fact-list";
+import { COMPLIANCE_STATUS_META, documentFacts } from "@/lib/ticket-panel";
 import { toast } from "@/lib/toast";
 import { useI18n } from "@/lib/i18n-context";
 import { translateStatusNote } from "@/lib/ticket-i18n";
 import type { Tone } from "@/lib/tones";
 import { Button } from "@/components/ui/button";
 import { Heading, Text } from "@/shared/ui/typography";
-
-// Badge-variant name per status (distinct from the ActionCard `Tone` scale).
-type BadgeTone = "success" | "warning" | "orange" | "danger" | "info" | "neutral" | "purple";
-
-const STATUS_META: Record<DocStatus, { label: string; tone: BadgeTone }> = {
-  valid: { label: "Valid", tone: "success" },
-  "warning-60": { label: "60-Day Warning", tone: "warning" },
-  "warning-30": { label: "30-Day Auto-Notify", tone: "orange" },
-  "pending-review": { label: "Pending Review", tone: "info" },
-  "rejected-resubmit": { label: "Rejected — Resubmit", tone: "danger" },
-  blocked: { label: "Blocked", tone: "neutral" },
-};
 
 // Status callout — icon, tint and heading that frame the "what needs attention" note.
 const CALLOUT_META: Record<DocStatus, { icon: LucideIcon; title: string; className: string; iconColor: string }> = {
@@ -54,16 +44,6 @@ const EVENT_META: Record<ComplianceEventType, { icon: LucideIcon; color: string 
   upload: { icon: Upload, color: "text-success-ink" },
 };
 
-/* The label arrives translated; the value beside it is a date and stays as it comes. */
-function MetaField({ label, value, valueClassName }: { label: string; value: string; valueClassName?: string }) {
-  return (
-    <div>
-      <Text as="div" variant="eyebrow" className="mb-0.5">{label}</Text>
-      <Text as="div" variant="label" className={valueClassName}>{value}</Text>
-    </div>
-  );
-}
-
 export function ComplianceDrawer({
   doc,
   onClose,
@@ -74,15 +54,9 @@ export function ComplianceDrawer({
   onReview: (doc: SupplierDoc) => void;
 }) {
   const { t } = useI18n();
-  const status = STATUS_META[doc.status];
+  const status = COMPLIANCE_STATUS_META[doc.status];
   const callout = CALLOUT_META[doc.status];
   const CalloutIcon = callout.icon;
-
-  /* Same two keys the compliance table uses for its expiry column. */
-  const daysLabel =
-    doc.daysUntilExpiry < 0
-      ? t("Expired {days}d ago", { days: Math.abs(doc.daysUntilExpiry) })
-      : t("{days}d remaining", { days: doc.daysUntilExpiry });
 
   const statusCallout = doc.statusNote ? (
     <div className={`flex gap-2.5 rounded-lg p-3 ${callout.className}`}>
@@ -214,18 +188,10 @@ export function ComplianceDrawer({
       </div>
 
       <div className="p-4 space-y-4">
-        <Badge variant={status.tone}>{t(status.label)}</Badge>
+        <Badge variant={status.variant}>{t(status.label)}</Badge>
 
-        {/* Metadata */}
-        <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-          <MetaField label={t("Expiry date")} value={doc.expiryDate} />
-          <MetaField
-            label={t("Days remaining")}
-            value={daysLabel}
-            valueClassName={doc.daysUntilExpiry < 0 ? "text-critical-ink" : undefined}
-          />
-          {doc.autoNotified && <MetaField label={t("Auto-notified")} value={doc.autoNotified} />}
-        </div>
+        {/* The same date facts the ticket panel shows for this document. */}
+        <FactList facts={documentFacts(doc, t)} />
 
         {doc.fileUrl && (
           <a

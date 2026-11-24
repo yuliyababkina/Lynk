@@ -12,6 +12,12 @@ export const ACTION_RESULT: Record<string, { title: string; tone: ToastTone }> =
   Remind: { title: "Reminder sent", tone: "default" },
   Request: { title: "Request sent", tone: "default" },
   Escalate: { title: "Escalated to manager", tone: "warning" },
+  Endorse: { title: "Endorsed — sent for final approval", tone: "success" },
+  "Final approval": { title: "Change approved", tone: "success" },
+  "Reject change": { title: "Change rejected", tone: "warning" },
+  Accept: { title: "Application accepted", tone: "success" },
+  Reject: { title: "Application rejected", tone: "warning" },
+  "Request changes": { title: "Changes requested", tone: "default" },
 };
 
 export function actionResult(action: string) {
