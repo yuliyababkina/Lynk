@@ -11,6 +11,7 @@ import type {
   Catalogue,
   CatalogueSupplier,
   DocStatus,
+  RenewalUpload,
   TicketStatus,
   ComplianceEvent,
   ChatMessage,
@@ -151,6 +152,7 @@ function mapContract(row: any): Contract {
     noticePeriod: row.notice_period,
     timeLeftLabel: row.time_left_label,
     status: row.status,
+    renewalSentAt: row.renewal_sent_at ?? undefined,
   };
 }
 
@@ -167,6 +169,9 @@ function mapDgr(row: any): DataGovernanceRequest {
     fields: row.fields ?? [],
     status: row.status,
     approvalStep: row.approval_step,
+    endorsedBy: row.endorsed_by ?? undefined,
+    endorsedAt: row.endorsed_at ?? undefined,
+    rejectionReason: row.rejection_reason ?? undefined,
   };
 }
 
@@ -181,6 +186,8 @@ function mapOnboarding(row: any): OnboardingCase {
     criticality: row.criticality,
     email: row.email ?? undefined,
     inviteToken: row.invite_token ?? undefined,
+    invitedAt: row.invited_at ?? undefined,
+    lastReminderAt: row.last_reminder_at ?? undefined,
   };
 }
 
@@ -404,6 +411,95 @@ export async function setTicketAssigneeDb(ticketId: string, assigneeId: string |
   }
 }
 
+/**
+ * Updates one row, writing `extra` (columns added by a migration that may not
+ * have been run yet) alongside `base`. If the extra columns are missing the
+ * row is still updated with `base`, so the action itself never fails on them.
+ * See supabase/migrations/2026-11-25_ticket_panel_dates_and_reviews.sql.
+ */
+async function updateWithOptionalColumns(
+  table: string,
+  id: string,
+  base: Record<string, unknown>,
+  extra: Record<string, unknown>
+) {
+  if (!isSupabaseConfigured) return;
+  const { error } = await supabase.from(table).update({ ...base, ...extra }).eq("id", id);
+  if (!error) return;
+  console.warn(`[Lynk] ${table}: saving without ${Object.keys(extra).join(", ")} —`, error.message);
+  if (Object.keys(base).length === 0) return;
+  const { error: fallbackError } = await supabase.from(table).update(base).eq("id", id);
+  if (fallbackError) console.error(`[Lynk] ${table} update failed:`, fallbackError.message);
+}
+
+/** Today as a stored display date: "25 Nov 2026". */
+export function todayDisplayDate(now = new Date()): string {
+  return displayExpiry(now.toISOString().slice(0, 10));
+}
+
+/** A data change moves through the four-eyes review. */
+export async function setDataChangeDb(
+  requestId: string,
+  patch: {
+    status: DataGovernanceRequest["status"];
+    approvalStep: 1 | 2;
+    endorsedBy?: string;
+    endorsedAt?: string;
+    rejectionReason?: string;
+  }
+) {
+  const extra: Record<string, unknown> = {};
+  if (patch.endorsedBy !== undefined) extra.endorsed_by = patch.endorsedBy;
+  if (patch.endorsedAt !== undefined) extra.endorsed_at = patch.endorsedAt;
+  if (patch.rejectionReason !== undefined) extra.rejection_reason = patch.rejectionReason;
+  await updateWithOptionalColumns(
+    "data_governance_requests",
+    requestId,
+    { status: patch.status, approval_step: patch.approvalStep },
+    extra
+  );
+}
+
+/** Contact email and reminder date of an onboarding case. */
+export async function updateOnboardingCaseDb(caseId: string, patch: { email?: string; lastReminderAt?: string }) {
+  await updateWithOptionalColumns(
+    "onboarding_cases",
+    caseId,
+    patch.email !== undefined ? { email: patch.email } : {},
+    patch.lastReminderAt !== undefined ? { last_reminder_at: patch.lastReminderAt } : {}
+  );
+}
+
+/** A renewal contract went out: the contract waits for the supplier's signature. */
+export async function renewContractDb(contractId: string, sentAt: string) {
+  await updateWithOptionalColumns(
+    "contracts",
+    contractId,
+    { status: "Renewal in Progress" },
+    { renewal_sent_at: sentAt }
+  );
+}
+
+/**
+ * Accepting an uploaded renewal makes it the current document: its expiry and
+ * file replace the old ones, and the renewal slot is emptied.
+ */
+export async function acceptRenewalDb(doc: SupplierDoc, daysUntilExpiry: number | undefined) {
+  if (!isSupabaseConfigured) return;
+  const r = doc.renewal;
+  const patch: Record<string, unknown> = { status: "valid", renewal: null };
+  if (r?.validUntil) {
+    patch.expiry_date = r.validUntil;
+    if (daysUntilExpiry !== undefined) patch.days_until_expiry = daysUntilExpiry;
+  }
+  if (r?.filePath) {
+    patch.file_path = r.filePath;
+    patch.file_url = r.fileUrl ?? null;
+  }
+  const { error } = await supabase.from("supplier_docs").update(patch).eq("id", doc.id);
+  if (error) console.error("[Lynk] acceptRenewalDb failed:", error.message);
+}
+
 export async function setDocStatusDb(docId: string, status: DocStatus) {
   if (!isSupabaseConfigured) return;
   const { error } = await supabase
@@ -463,6 +559,7 @@ export async function insertOnboardingCaseDb(c: OnboardingCase) {
     invite_token: c.inviteToken ?? null,
   });
   if (error) console.error("[Lynk] insertOnboardingCaseDb failed:", error.message);
+  else if (c.invitedAt) await updateWithOptionalColumns("onboarding_cases", c.id, {}, { invited_at: c.invitedAt });
 }
 
 /**
@@ -611,10 +708,17 @@ export async function uploadSupplierDocument(params: {
     expiryDate?: string;
     doesNotExpire?: boolean;
   };
+  /**
+   * The supplier's current, accepted document of this type. A new upload is
+   * then a renewal: it waits in `renewal` for review, and the current document
+   * — its expiry and file — stays what counts until the renewal is accepted.
+   */
+  renewalOf?: SupplierDoc;
 }): Promise<SupplierDoc> {
-  const { file, supplierId, supplierName, trade = "", documentName, metadata } = params;
+  const { file, supplierId, supplierName, trade = "", documentName, metadata, renewalOf } = params;
   const name = documentName || file.name.replace(/\.pdf$/i, "");
   const slug = docSlug(name);
+  if (renewalOf) return uploadRenewal(file, renewalOf, supplierName, metadata);
   // Deterministic per (supplier, document type): a new upload of the same type
   // REPLACES the previous version rather than piling up duplicates.
   const id = `doc-${supplierId}-${slug}`;
@@ -691,6 +795,52 @@ export async function uploadSupplierDocument(params: {
   const { error: fallbackError } = await supabase.from("supplier_docs").insert(base);
   if (fallbackError) throw new Error(`Saving document failed: ${fallbackError.message}`);
 
+  return doc;
+}
+
+function formatFileSizeKb(bytes: number): string {
+  return bytes >= 1024 * 1024 ? `${(bytes / (1024 * 1024)).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
+}
+
+async function uploadRenewal(
+  file: File,
+  current: SupplierDoc,
+  uploadedBy: string,
+  metadata?: { expiryDate?: string; doesNotExpire?: boolean }
+): Promise<SupplierDoc> {
+  const uploadedAt = todayDisplayDate();
+  const renewal: RenewalUpload = {
+    fileName: file.name,
+    fileSize: formatFileSizeKb(file.size),
+    uploadedAt,
+    uploadedBy,
+    validUntil: metadata?.doesNotExpire ? undefined : displayExpiry(metadata?.expiryDate) || undefined,
+  };
+  const doc: SupplierDoc = {
+    ...current,
+    status: "pending-review",
+    statusNote: "Renewal uploaded by supplier — awaiting review.",
+    renewal,
+    history: [
+      ...current.history,
+      { date: uploadedAt, event: "Renewal document uploaded by supplier", actor: uploadedBy, type: "upload" },
+    ],
+  };
+  if (!isSupabaseConfigured) return doc;
+
+  const storagePath = `${current.supplierId}/${docSlug(current.documentName)}-renewal-${Date.now()}.pdf`;
+  const { error: uploadError } = await supabase.storage
+    .from(DOCUMENTS_BUCKET)
+    .upload(storagePath, file, { contentType: "application/pdf" });
+  if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
+  renewal.filePath = storagePath;
+  renewal.fileUrl = supabase.storage.from(DOCUMENTS_BUCKET).getPublicUrl(storagePath).data.publicUrl;
+
+  const { error } = await supabase
+    .from("supplier_docs")
+    .update({ status: doc.status, status_note: doc.statusNote, renewal, history: doc.history })
+    .eq("id", current.id);
+  if (error) throw new Error(`Saving the renewal failed: ${error.message}`);
   return doc;
 }
 

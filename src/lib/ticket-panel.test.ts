@@ -187,10 +187,21 @@ describe("buildPanelModel — compliance", () => {
     const m = model(
       doc({
         status: "pending-review",
-        renewal: { fileName: "f.pdf", fileSize: "1 MB", uploadedAt: "28 Jun 2026, 08:30", uploadedBy: "Anna" },
+        renewal: {
+          fileName: "f.pdf",
+          fileSize: "1 MB",
+          uploadedAt: "28 Jun 2026, 08:30",
+          uploadedBy: "Anna",
+          validUntil: "12 Aug 2028",
+        },
       })
     );
-    expect(m.facts.map((f) => f.label)).toEqual(["Current document expires", "Renewal uploaded"]);
+    // Both dates: what counts today, and what the upload would replace it with.
+    expect(m.facts.map((f) => [f.label, f.value])).toEqual([
+      ["Current document expires", "Expires in 49 days · 6 Aug 2026"],
+      ["Renewal valid until", "12 Aug 2028"],
+      ["Renewal uploaded", "28 Jun 2026, 08:30 · Anna"],
+    ]);
     expect(m.renewalReview).toBe(true);
     expect(m.actions).toEqual([]);
     expect(m.escalate).toBe(false);
@@ -258,8 +269,12 @@ describe("buildPanelModel — compliance", () => {
 });
 
 describe("buildPanelModel — data governance", () => {
+  const users: Record<string, string> = { "u-me": "Sabine Müller", "u-jonas": "Jonas Becker" };
   const model = (r: DataGovernanceRequest) =>
-    buildPanelModel(ticket({ source: "data-governance" }), "To do", { kind: "data-change", request: r }, t);
+    buildPanelModel(ticket({ source: "data-governance" }), "To do", { kind: "data-change", request: r }, t, {
+      currentUserId: "u-me",
+      userName: (id) => users[id],
+    });
 
   it("awaiting review: endorse first, reject second, Escalate", () => {
     const m = model(request({}));
@@ -270,9 +285,32 @@ describe("buildPanelModel — data governance", () => {
     expect(m.escalate).toBe(true);
   });
 
-  it("endorsed: final approval", () => {
-    const m = model(request({ status: "Endorsed — Awaiting 2nd Approval", approvalStep: 2 }));
-    expect(m.actions[0].id).toBe("dgr-final");
+  it("endorsed by a colleague: final approval is yours to give", () => {
+    const m = model(
+      request({ status: "Endorsed — Awaiting 2nd Approval", approvalStep: 2, endorsedBy: "u-jonas", endorsedAt: "23 Jun 2026" })
+    );
+    expect(m.actions[0]).toMatchObject({ id: "dgr-final", emphasis: "primary" });
+    expect(m.actions[0].disabled).toBeUndefined();
+    expect(m.facts).toEqual([{ label: "First review", value: "Jonas Becker · 23 Jun 2026" }]);
+    expect(m.history[0]).toEqual({ date: "23 Jun 2026", event: "Endorsed — first review", actor: "Jonas Becker" });
+  });
+
+  it("endorsed by you: final approval disabled, with the reason", () => {
+    const m = model(request({ status: "Endorsed — Awaiting 2nd Approval", approvalStep: 2, endorsedBy: "u-me" }));
+    expect(m.actions[0]).toMatchObject({
+      id: "dgr-final",
+      disabled: true,
+      note: "You did the first review. Another approver must give final approval.",
+    });
+    expect(m.actions[1].id).toBe("dgr-reject");
+  });
+
+  it("rejected: the reason is in the alert", () => {
+    const m = model(request({ status: "Rejected", rejectionReason: "Account holder does not match." }));
+    expect(m.alert).toMatchObject({
+      type: "error",
+      body: "Rejected: Account holder does not match. The change was not applied.",
+    });
   });
 
   it.each(["Approved", "Rejected"] as const)("%s: no actions, Chat only", (status) => {
@@ -296,11 +334,25 @@ describe("buildPanelModel — onboarding", () => {
   });
 
   const model = (c: OnboardingCase, docs: SupplierDoc[] = [], supplier?: Supplier) =>
-    buildPanelModel(ticket({ source: "onboarding" }), "To do", { kind: "onboarding", caseItem: c, supplier, docs }, t);
+    buildPanelModel(ticket({ source: "onboarding" }), "To do", { kind: "onboarding", caseItem: c, supplier, docs }, t, {
+      today: "25 Nov 2026",
+    });
 
-  it("stale invitation: send reminder, Escalate", () => {
-    const m = model(onbCase({}));
-    expect(m.actions.map((a) => [a.id, a.emphasis])).toEqual([["onb-remind", "primary"]]);
+  it("invitation never reminded: says so", () => {
+    const m = model(onbCase({ status: "Pending", daysNoResponse: 0, invitedAt: "25 Nov 2026" }));
+    expect(m.facts.map((f) => f.value)).toEqual(["Today · 25 Nov 2026", "None sent yet"]);
+  });
+
+  it("stale invitation: send reminder, change email, Escalate", () => {
+    const m = model(onbCase({ invitedAt: "25 Oct 2026", lastReminderAt: "11 Nov 2026" }));
+    expect(m.facts.map((f) => [f.label, f.value])).toEqual([
+      ["Invited", "31 days ago · 25 Oct 2026"],
+      ["Last reminder", "14 days ago · 11 Nov 2026"],
+    ]);
+    expect(m.actions.map((a) => [a.id, a.emphasis])).toEqual([
+      ["onb-remind", "primary"],
+      ["onb-change-email", "secondary"],
+    ]);
     expect(m.escalate).toBe(true);
     expect(m.fullReview).toBe(false);
   });
@@ -355,8 +407,10 @@ describe("buildPanelModel — contracts", () => {
     ]);
   });
 
-  it("renewal in progress: waiting for signature, Chat only", () => {
-    const m = model(contract({ status: "Renewal in Progress", timeLeftLabel: "Expired" }));
+  it("renewal in progress: says when the new contract went out, Chat only", () => {
+    const m = model(contract({ status: "Renewal in Progress", timeLeftLabel: "Expired", renewalSentAt: "20 Nov 2026" }));
+    expect(m.facts[0]).toEqual({ label: "New contract sent", value: "20 Nov 2026" });
+    expect(m.alert?.title).toBe("New contract sent 20 Nov 2026, waiting for signature");
     expect(m.actions).toEqual([]);
     expect(m.escalate).toBe(false);
   });

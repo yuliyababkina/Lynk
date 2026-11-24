@@ -61,6 +61,7 @@ export function DocumentLightbox({
             <div className="text-xs text-muted-foreground truncate">
               {doc.renewal.fileSize} · {t("Uploaded {date}", { date: doc.renewal.uploadedAt })} ·{" "}
               {doc.renewal.uploadedBy}
+              {doc.renewal.validUntil && <> · {t("Valid until {date}", { date: doc.renewal.validUntil })}</>}
             </div>
           </div>
           <Button

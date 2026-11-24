@@ -1453,6 +1453,31 @@ const DE: Record<string, string> = {
   "{missing} missing, {rejected} rejected": "{missing} fehlend, {rejected} abgelehnt",
   "{n} days": "{n} Tage",
   "“{note}”": "„{note}“",
+  // LYNK-117 gaps: renewal validity, four-eyes reviewer, invitation dates, contract sent date
+  "Renewal valid until": "Erneuerung gültig bis",
+  "Not stated on the upload": "Beim Upload nicht angegeben",
+  "First review": "Erstprüfung",
+  "{who} · {date}": "{who} · {date}",
+  "Endorsed — first review": "Befürwortet — Erstprüfung",
+  "You did the first review. Another approver must give final approval.":
+    "Sie haben die Erstprüfung durchgeführt. Die finale Freigabe muss eine andere Person erteilen.",
+  "Rejected: {reason} The change was not applied.": "Abgelehnt: {reason} Die Änderung wurde nicht übernommen.",
+  "Reject {supplier}'s change?": "Änderung von {supplier} ablehnen?",
+  "The current values stay in place. Your reason is kept with the request.":
+    "Die aktuellen Werte bleiben bestehen. Ihr Grund wird bei der Anfrage gespeichert.",
+  "Last reminder": "Letzte Erinnerung",
+  "None sent yet": "Noch keine gesendet",
+  "{n} days ago": "vor {n} Tagen",
+  "Today · {date}": "Heute · {date}",
+  "Yesterday · {date}": "Gestern · {date}",
+  "{n} days ago · {date}": "vor {n} Tagen · {date}",
+  "Change contact email": "Kontakt-E-Mail ändern",
+  "Save email": "E-Mail speichern",
+  "Contact email updated": "Kontakt-E-Mail aktualisiert",
+  "Reminders for {company} go to the new address. The invitation link stays the same.":
+    "Erinnerungen an {company} gehen an die neue Adresse. Der Einladungslink bleibt gleich.",
+  "New contract sent": "Neuer Vertrag gesendet",
+  "New contract sent {date}, waiting for signature": "Neuer Vertrag am {date} gesendet, wartet auf Unterschrift",
 };
 
 const STORAGE_KEY = "lynk-lang";
