@@ -38,6 +38,7 @@ import {
 } from "./db";
 import { isSupabaseConfigured } from "./supabase";
 import { useI18n } from "./i18n-context";
+import { resolveTicketTarget } from "./ticket-target";
 import {
   PRINCIPAL_COMPANY,
   PROCUREMENT_MANAGER,
@@ -270,6 +271,29 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  /*
+   * A document that becomes valid settles the tickets about it, whichever screen
+   * made it valid (renewal review, prospect review). Tickets are matched with the
+   * same rule the ticket panel uses, so a ticket without a target id is closed
+   * too — and a ticket about another company's document never is.
+   */
+  const closeDocumentTickets = useCallback(
+    (doc: SupplierDoc, action: string) => {
+      if (!data) return;
+      const open = data.tickets.filter(
+        (tk) =>
+          tk.source === "compliance-monitoring" &&
+          (ticketStatusById.get(tk.id) ?? "To do") !== "Resolved" &&
+          (() => {
+            const target = resolveTicketTarget(tk, data);
+            return target.kind === "document" && target.doc.id === doc.id;
+          })()
+      );
+      for (const tk of open) resolveTicket(tk, action);
+    },
+    [data, ticketStatusById, resolveTicket]
+  );
+
   const decideRenewal = useCallback((doc: SupplierDoc, decision: "accept" | "reject") => {
     const nextStatus = decision === "accept" ? "valid" : "rejected-resubmit";
     setData((prev) =>
@@ -284,7 +308,10 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
     );
     setDocStatusDb(doc.id, nextStatus).catch(console.error);
     logActivity(doc.supplierName, `Renewal ${decision}ed — ${doc.documentName}`).catch(console.error);
-  }, []);
+    // A rejected renewal leaves the ticket open: the document now needs a
+    // resubmission, which is still the manager's to chase.
+    if (decision === "accept") closeDocumentTickets(doc, "Review");
+  }, [closeDocumentTickets]);
 
   /**
    * Narrates a lifecycle event into the conversation. Called from the mutations
@@ -586,6 +613,7 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
           : prev
       );
       setDocReviewDb(docId, status, note ?? null).catch(console.error);
+      if (decision === "approve" && doc) closeDocumentTickets(doc, "Review");
 
       /* A decline is a message to the supplier, so it becomes one — with a link
          back to the document it is about. The existing statusNote behaviour is
@@ -605,7 +633,7 @@ export function LynkDataProvider({ children }: { children: ReactNode }) {
         }).catch(console.error);
       }
     },
-    [data?.docs, sendMessage]
+    [data?.docs, sendMessage, closeDocumentTickets]
   );
 
   const updateDocMetadata = useCallback(

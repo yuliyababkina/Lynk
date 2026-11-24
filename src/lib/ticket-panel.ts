@@ -176,7 +176,8 @@ export function documentFacts(doc: SupplierDoc, t: Translate): PanelFact[] {
   }
 }
 
-function documentModel(doc: SupplierDoc, t: Translate): PanelModel {
+/** The panel rules for one document; the Compliance drawer renders the same alert and actions. */
+export function documentPanel(doc: SupplierDoc, t: Translate): PanelModel {
   const meta = COMPLIANCE_STATUS_META[doc.status];
   const remind: PanelAction = { id: "doc-remind", label: t("Send manual reminder"), emphasis: "primary" };
   const base = {
@@ -186,6 +187,9 @@ function documentModel(doc: SupplierDoc, t: Translate): PanelModel {
     objectStatus: { label: t(meta.label), variant: meta.variant },
     facts: documentFacts(doc, t),
     history: [...doc.history].reverse().map((h) => ({ date: h.date, event: t(h.event), actor: h.actor })),
+    // An uploaded renewal is reviewed whatever the status: a blocked document
+    // with a renewal waiting is unblocked by reviewing it.
+    renewalReview: Boolean(doc.renewal),
   };
 
   switch (doc.status) {
@@ -224,7 +228,6 @@ function documentModel(doc: SupplierDoc, t: Translate): PanelModel {
           body: t("Accept it to replace the current document, or reject it to ask the supplier for a new upload."),
         },
         actions: [],
-        renewalReview: Boolean(doc.renewal),
         escalate: false,
       };
     case "rejected-resubmit": {
@@ -606,7 +609,7 @@ export function buildPanelModel(
   let model: PanelModel;
   switch (target.kind) {
     case "document":
-      model = documentModel(target.doc, t);
+      model = documentPanel(target.doc, t);
       break;
     case "contract":
       model = contractModel(target.contract, t);

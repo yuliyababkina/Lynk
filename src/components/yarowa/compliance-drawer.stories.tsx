@@ -36,10 +36,11 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** 60-day window: a recommendation plus the two follow-up actions. */
+/** 60-day window: the expiry as a phrase and a reminder — no Revoke. */
 export const Warning60: Story = {
   play: async ({ canvas, userEvent, args }) => {
-    await expect(canvas.getByText("Days remaining")).toBeVisible();
+    await expect(canvas.getByText("Expires in 42 days · 30 Dec 2026")).toBeInTheDocument();
+    await expect(canvas.queryByText(/revoke supplier access/i)).not.toBeInTheDocument();
     await userEvent.click(canvas.getByRole("button", { name: /close/i }));
     await expect(args.onClose).toHaveBeenCalled();
   },
@@ -51,7 +52,28 @@ export const Warning30: Story = {
   },
 };
 
-/** Expired: the second action becomes "Escalate to Manager". */
+/** Rejected: Revoke sits apart from the reminder and asks before it runs. */
+export const RejectedResubmit: Story = {
+  args: {
+    doc: {
+      ...BASE,
+      status: "rejected-resubmit",
+      history: [
+        ...BASE.history,
+        { date: "4 Nov 2026", event: "Rejected — missing signature page", actor: "Sabine Müller", type: "blocked" },
+      ],
+    },
+  },
+  play: async ({ canvas, canvasElement, userEvent, args }) => {
+    await expect(canvas.getByText(/rejected in review: missing signature page/i)).toBeInTheDocument();
+    await userEvent.click(canvas.getByText(/revoke supplier access/i));
+    const body = canvasElement.ownerDocument.body;
+    await expect(body.querySelector('[role="alertdialog"]')).toBeTruthy();
+    await expect(args.onClose).not.toHaveBeenCalled();
+  },
+};
+
+/** Expired: a reminder only — escalation belongs to the ticket's footer. */
 export const Blocked: Story = {
   args: {
     doc: {

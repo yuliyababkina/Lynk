@@ -227,6 +227,16 @@ describe("buildPanelModel — compliance", () => {
     expect(m.escalate).toBe(true);
   });
 
+  it("blocked with a renewal uploaded: the review card shows", () => {
+    const m = model(
+      doc({
+        status: "blocked",
+        renewal: { fileName: "f.pdf", fileSize: "1 MB", uploadedAt: "13 Jun 2026, 09:44", uploadedBy: "Petra" },
+      })
+    );
+    expect(m.renewalReview).toBe(true);
+  });
+
   it("valid: no action needed, Chat only", () => {
     const m = model(doc({ status: "valid" }));
     expect(m.alert?.title).toBe("No action needed");
