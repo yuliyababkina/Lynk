@@ -361,11 +361,23 @@ function contractModel(c: Contract, t: Translate): PanelModel {
     case "Expiring Soon":
       return {
         ...base,
-        alert: {
-          type: "warning",
-          title: t("Renewal decision coming up"),
-          body: t("Review the contract and decide on renewal by {date}.", { date: c.renewalBy }),
-        },
+        // The status can lag the deadline: once the decision date has passed,
+        // the alert says so, matching the "Renewal decision due" fact.
+        alert:
+          renewalDays !== null && renewalDays < 0
+            ? {
+                type: "error",
+                title: t("Renewal decision overdue"),
+                body: t("The renewal decision was due on {date}. Review the contract and decide before it ends on {end}.", {
+                  date: c.renewalBy,
+                  end: c.endDate,
+                }),
+              }
+            : {
+                type: "warning",
+                title: t("Renewal decision coming up"),
+                body: t("Review the contract and decide on renewal by {date}.", { date: c.renewalBy }),
+              },
         actions: [
           { id: "contract-review", label: t("Review contract"), emphasis: "primary" },
           { ...renew, emphasis: "secondary" },

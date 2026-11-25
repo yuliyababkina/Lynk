@@ -498,6 +498,19 @@ describe("buildPanelModel — contracts", () => {
     ]);
   });
 
+  it("expiring soon, decision date passed: the alert says overdue, like the fact", () => {
+    const m = model(contract({ status: "Expiring Soon", timeLeftLabel: "74d left", endDate: "31 Aug 2026", renewalBy: "31 May 2026" }));
+    expect(m.facts[1].value).toBe("Was due 18 days ago · 31 May 2026");
+    expect(m.alert?.type).toBe("error");
+    expect(m.alert?.title).toBe("Renewal decision overdue");
+    expect(m.actions.map((a) => a.id)).toEqual(["contract-review", "contract-renew"]);
+  });
+
+  it("expiring soon, decision date ahead: still coming up", () => {
+    const m = model(contract({ status: "Expiring Soon", timeLeftLabel: "180d left", endDate: "31 Dec 2026", renewalBy: "30 Sep 2026" }));
+    expect(m.alert?.title).toBe("Renewal decision coming up");
+  });
+
   it("renewal in progress: says when the new contract went out, Chat only", () => {
     const m = model(contract({ status: "Renewal in Progress", timeLeftLabel: "Expired", renewalSentAt: "20 Nov 2026" }));
     expect(m.facts[0]).toEqual({ label: "New contract sent", value: "20 Nov 2026" });

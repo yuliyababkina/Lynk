@@ -167,6 +167,8 @@ const DE: Record<string, string> = {
   OPENED: "GEÖFFNET",
   "What needs attention": "Was Aufmerksamkeit erfordert",
   "Renewal contract sent for signature": "Verlängerungsvertrag zur Unterschrift gesendet",
+  "The renewal decision was due on {date}. Review the contract and decide before it ends on {end}.":
+    "Die Verlängerungsentscheidung war am {date} fällig. Prüfen Sie den Vertrag und entscheiden Sie vor dem Ende am {end}.",
   "Open in {view}": "In {view} öffnen",
   "Expires {date}": "Läuft ab am {date}",
 
