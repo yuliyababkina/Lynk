@@ -20,6 +20,7 @@ import {
   daysBetween,
   duePhrase,
   expiryPhrase,
+  parseDisplayDate,
   renewalDueDays,
   sincePhrase,
 } from "./date-phrases";
@@ -139,6 +140,19 @@ export const ONBOARDING_STATUS_VARIANT: Record<OnboardingStatus, DocBadgeVariant
   Accepted: "success",
   Rejected: "danger",
 };
+
+/**
+ * A history built from stored dates, newest first. Events are given oldest
+ * first; one whose date isn't stored is left out rather than shown undated, so
+ * the list never claims more than the record knows.
+ */
+function datedHistory(events: { date?: string; event: string }[]): PanelEvent[] {
+  return events
+    .filter((e): e is PanelEvent => Boolean(e.date))
+    .map((e, i) => ({ e, i, at: parseDisplayDate(e.date) }))
+    .sort((a, b) => (a.at !== null && b.at !== null && a.at !== b.at ? b.at - a.at : b.i - a.i))
+    .map(({ e }) => e);
+}
 
 /* ── Compliance ───────────────────────────────────────────────────────── */
 
@@ -327,7 +341,8 @@ function contractModel(c: Contract, t: Translate): PanelModel {
     objectSub: t(c.type),
     objectStatus: { label: t(c.status), variant: CONTRACT_STATUS_VARIANT[c.status] },
     facts: contractFacts(c, t),
-    history: [],
+    // The only contract event with a stored date is the renewal going out.
+    history: datedHistory([{ date: c.renewalSentAt, event: t("Renewal contract sent for signature") }]),
   };
   const renew: PanelAction = { id: "contract-renew", label: t("Renew contract"), emphasis: "primary" };
 
@@ -346,11 +361,23 @@ function contractModel(c: Contract, t: Translate): PanelModel {
     case "Expiring Soon":
       return {
         ...base,
-        alert: {
-          type: "warning",
-          title: t("Renewal decision coming up"),
-          body: t("Review the contract and decide on renewal by {date}.", { date: c.renewalBy }),
-        },
+        // The status can lag the deadline: once the decision date has passed,
+        // the alert says so, matching the "Renewal decision due" fact.
+        alert:
+          renewalDays !== null && renewalDays < 0
+            ? {
+                type: "error",
+                title: t("Renewal decision overdue"),
+                body: t("The renewal decision was due on {date}. Review the contract and decide before it ends on {end}.", {
+                  date: c.renewalBy,
+                  end: c.endDate,
+                }),
+              }
+            : {
+                type: "warning",
+                title: t("Renewal decision coming up"),
+                body: t("Review the contract and decide on renewal by {date}.", { date: c.renewalBy }),
+              },
         actions: [
           { id: "contract-review", label: t("Review contract"), emphasis: "primary" },
           { ...renew, emphasis: "secondary" },
@@ -537,7 +564,12 @@ function onboardingModel(
     objectSub: [c.contactName, c.email].filter(Boolean).join(" · "),
     objectStatus: { label: t(c.status), variant: ONBOARDING_STATUS_VARIANT[c.status] },
     facts: [] as PanelFact[],
-    history: [] as PanelEvent[],
+    // Status changes (submitted, changes requested, accepted…) carry no stored
+    // date, so only the invitation and the last reminder are listed.
+    history: datedHistory([
+      { date: c.invitedAt, event: t("Invitation sent") },
+      { date: c.lastReminderAt, event: t("Reminder sent") },
+    ]),
     // Before the prospect applies there is nothing to review, even when a
     // profile shell already exists.
     fullReview: Boolean(supplier) && stage !== "invite" && stage !== "draft",

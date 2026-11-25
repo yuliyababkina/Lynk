@@ -460,6 +460,19 @@ describe("buildPanelModel — onboarding", () => {
     expect(m.actions.map((a) => [a.id, a.emphasis])).toEqual([["onb-remind", "secondary"]]);
     expect(m.escalate).toBe(false);
   });
+
+  it("history: invitation and last reminder, newest first", () => {
+    const m = model(onbCase({ invitedAt: "25 Oct 2026", lastReminderAt: "11 Nov 2026" }));
+    expect(m.history).toEqual([
+      { date: "11 Nov 2026", event: "Reminder sent" },
+      { date: "25 Oct 2026", event: "Invitation sent" },
+    ]);
+  });
+
+  it("history: no stored dates, no invented events", () => {
+    const m = model(onbCase({ status: "Rejected", reviewNote: "Insurance expired." }), all);
+    expect(m.history).toEqual([]);
+  });
 });
 
 describe("buildPanelModel — contracts", () => {
@@ -485,12 +498,30 @@ describe("buildPanelModel — contracts", () => {
     ]);
   });
 
+  it("expiring soon, decision date passed: the alert says overdue, like the fact", () => {
+    const m = model(contract({ status: "Expiring Soon", timeLeftLabel: "74d left", endDate: "31 Aug 2026", renewalBy: "31 May 2026" }));
+    expect(m.facts[1].value).toBe("Was due 18 days ago · 31 May 2026");
+    expect(m.alert?.type).toBe("error");
+    expect(m.alert?.title).toBe("Renewal decision overdue");
+    expect(m.actions.map((a) => a.id)).toEqual(["contract-review", "contract-renew"]);
+  });
+
+  it("expiring soon, decision date ahead: still coming up", () => {
+    const m = model(contract({ status: "Expiring Soon", timeLeftLabel: "180d left", endDate: "31 Dec 2026", renewalBy: "30 Sep 2026" }));
+    expect(m.alert?.title).toBe("Renewal decision coming up");
+  });
+
   it("renewal in progress: says when the new contract went out, Chat only", () => {
     const m = model(contract({ status: "Renewal in Progress", timeLeftLabel: "Expired", renewalSentAt: "20 Nov 2026" }));
     expect(m.facts[0]).toEqual({ label: "New contract sent", value: "20 Nov 2026" });
     expect(m.alert?.title).toBe("New contract sent 20 Nov 2026, waiting for signature");
     expect(m.actions).toEqual([]);
     expect(m.escalate).toBe(false);
+    expect(m.history).toEqual([{ date: "20 Nov 2026", event: "Renewal contract sent for signature" }]);
+  });
+
+  it("history: empty without a stored renewal date", () => {
+    expect(model(contract({})).history).toEqual([]);
   });
 });
 
