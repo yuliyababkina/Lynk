@@ -460,6 +460,19 @@ describe("buildPanelModel — onboarding", () => {
     expect(m.actions.map((a) => [a.id, a.emphasis])).toEqual([["onb-remind", "secondary"]]);
     expect(m.escalate).toBe(false);
   });
+
+  it("history: invitation and last reminder, newest first", () => {
+    const m = model(onbCase({ invitedAt: "25 Oct 2026", lastReminderAt: "11 Nov 2026" }));
+    expect(m.history).toEqual([
+      { date: "11 Nov 2026", event: "Reminder sent" },
+      { date: "25 Oct 2026", event: "Invitation sent" },
+    ]);
+  });
+
+  it("history: no stored dates, no invented events", () => {
+    const m = model(onbCase({ status: "Rejected", reviewNote: "Insurance expired." }), all);
+    expect(m.history).toEqual([]);
+  });
 });
 
 describe("buildPanelModel — contracts", () => {
@@ -491,6 +504,11 @@ describe("buildPanelModel — contracts", () => {
     expect(m.alert?.title).toBe("New contract sent 20 Nov 2026, waiting for signature");
     expect(m.actions).toEqual([]);
     expect(m.escalate).toBe(false);
+    expect(m.history).toEqual([{ date: "20 Nov 2026", event: "Renewal contract sent for signature" }]);
+  });
+
+  it("history: empty without a stored renewal date", () => {
+    expect(model(contract({})).history).toEqual([]);
   });
 });
 

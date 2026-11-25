@@ -166,8 +166,7 @@ const DE: Record<string, string> = {
   TYPE: "TYP",
   OPENED: "GEÖFFNET",
   "What needs attention": "Was Aufmerksamkeit erfordert",
-  "Review this item and take the recommended action below, or open the full record for more context.":
-    "Prüfen Sie diesen Eintrag und führen Sie die empfohlene Aktion unten aus, oder öffnen Sie den vollständigen Datensatz für mehr Kontext.",
+  "Renewal contract sent for signature": "Verlängerungsvertrag zur Unterschrift gesendet",
   "Open in {view}": "In {view} öffnen",
   "Expires {date}": "Läuft ab am {date}",
 
