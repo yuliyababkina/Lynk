@@ -9,7 +9,7 @@ import { ChatDock } from "@/components/yarowa/chat-dock";
 import { useChatDock, type ChatConversation } from "@/shared/hooks/use-chat-dock";
 import { TopHeader } from "@/components/yarowa/top-header";
 import { TicketDrawer } from "@/components/yarowa/ticket-drawer";
-import { contractTicket } from "@/lib/ticket-target";
+import { contractTicket, findLinkedObject, type LinkedKind } from "@/lib/ticket-target";
 import { ComplianceDrawer } from "@/components/yarowa/compliance-drawer";
 import { DocumentLightbox } from "@/components/yarowa/document-lightbox";
 import { Toaster } from "@/components/yarowa/toast";
@@ -64,6 +64,14 @@ export type View =
   | "reporting"
   | "service-catalogue";
 
+/** The record kind a workspace selects, for the views that open one record. */
+const VIEW_KIND: Partial<Record<View, LinkedKind>> = {
+  compliance: "document",
+  contracts: "contract",
+  "data-governance": "data-change",
+  onboarding: "onboarding",
+};
+
 const VIEW_LABEL: Record<View, string> = {
   dashboard: "Dashboard",
   suppliers: "Suppliers Overview",
@@ -107,6 +115,7 @@ export default function App({ embedded = false }: AppProps = {}) {
     contracts: CONTRACTS,
     suppliers: SUPPLIERS,
     onboardingCases: ONBOARDING_CASES,
+    dataGovernanceRequests: DATA_GOVERNANCE_REQUESTS,
     resolvedTicketIds,
     resolveTicket: persistResolveTicket,
     unresolveTicket,
@@ -214,18 +223,32 @@ export default function App({ embedded = false }: AppProps = {}) {
   }
 
   function navigate(v: View, selectedId?: string, opts?: { review?: boolean }) {
+    // The same lookup the ticket panel resolves its record with, so "Open in …"
+    // and a chat context link land on the record the panel showed.
+    const kind = VIEW_KIND[v];
+    const object = kind
+      ? findLinkedObject(kind, selectedId, {
+          docs: DOCS,
+          contracts: CONTRACTS,
+          dataGovernanceRequests: DATA_GOVERNANCE_REQUESTS,
+          onboardingCases: ONBOARDING_CASES,
+          suppliers: SUPPLIERS,
+        })
+      : null;
     // Contracts have no panel of their own: the contract opens in the ticket
     // panel, as it does from a row in Contract Management.
-    const contract = v === "contracts" && selectedId ? CONTRACTS.find((c) => c.id === selectedId) : undefined;
+    const contract = object?.kind === "contract" ? object.contract : undefined;
     setActiveTicket(contract ? ticketForContract(contract) : null);
     setPendingReview(Boolean(opts?.review));
     // Opening a ticket in Compliance Monitoring should surface the linked
     // document's drawer, not merely highlight its row.
-    const doc = v === "compliance" && selectedId ? DOCS.find((d) => d.id === selectedId) : undefined;
+    const doc = object?.kind === "document" ? object.doc : undefined;
     setActiveDoc(doc ?? null);
     // Opening that drawer takes the rail, so the chat gives it up.
     if (doc) chat.close();
-    setPendingSelected(selectedId ?? null);
+    // A record view only selects a record that exists; a stale id opens the
+    // workspace with nothing selected rather than something else.
+    setPendingSelected(kind ? (object ? (selectedId ?? null) : null) : (selectedId ?? null));
     setView(v);
   }
 
@@ -500,9 +523,14 @@ export default function App({ embedded = false }: AppProps = {}) {
                 onOpenChat={openSupplierChat}
               />
             )}
-            {view === "data-governance" && <DataGovernance initialSelectedId={pendingSelected} />}
+            {/* Keyed by the record so a second "Open in …" while the workspace is
+                already showing still opens the new record. */}
+            {view === "data-governance" && (
+              <DataGovernance key={pendingSelected ?? ""} initialSelectedId={pendingSelected} />
+            )}
             {view === "onboarding" && (
               <Onboarding
+                key={`${pendingSelected ?? ""}:${pendingReview}`}
                 initialSelectedId={pendingSelected}
                 initialReviewing={pendingReview}
                 onOpenChat={openSupplierChat}
